@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+../src/scribbu report -o report.csv ${srcdir}/data
+cp -v report.csv report.last.csv
+head -n1 report.csv > report.$$.csv
+tail -n+2 report.csv | sort >> report.$$.csv
+mv -v report.$$.csv report.csv
+diff report.csv ${srcdir}/data/report-golden.csv
+exit $?

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+../src/scribbu split --suffix=A ${srcdir}/data/Pogues\,\ The\ -\ Lorca\'s\ Novena.mp3
+md5sum -c ${srcdir}/data/splitA.md5 || exit 1
+../src/scribbu split --suffix=B ${srcdir}/data/红颜旧.mp3 
+md5sum -c ${srcdir}/data/splitB.md5 || exit 1
+
+exit 0

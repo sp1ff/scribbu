@@ -1,0 +1,70 @@
+This directory contains the 0.1 release of scribbu.
+
+See the file NEWS for the user-visible changes from previous releases.
+
+Please check the system-specific notes below for any caveats related to
+your operating system.
+
+For general building and installation instructions, see the file INSTALL.
+
+
+scribbu is free software.  See the file COPYING for copying conditions.
+scribbu is copyright by Michael Herstine.  Copyright notices
+condense sequential years into a range; e.g. "1987-1994" means all years
+from 1987 to 1994 inclusive.
+
+What is it?
+-----------
+
+scribbu is a C++ library and command-line tool for working with ID3 tags.
+
+Downloading
+-----------
+
+You can find the project at https://github.com/sp1ff/scribbu.
+
+Documentation
+-------------
+
+scribbu is a C++ library & associated command-line tool for working
+with ID3 tags. It was born when I retired my last Windows machine &
+could no longer use Winamp to manage my library of digital music. It
+is very crude presently; it can only read tags and do things with that
+information like report on them or rename files based on them.
+
+I got the project name from the cool project name generator at
+http://mrsharpoblunto.github.io/foswig.js/.
+
+
+Development
+-----------
+
+Cf. "Git Access" below. Vagrant is used; refer to the Vagrantfile for
+the development prerequisites.
+
+Bug Reporting
+-------------
+
+sp1ff@pobox.com
+
+
+Git Access
+----------
+
+https://github.com/sp1ff/scribbu.
+
+System-specific Notes
+---------------------
+
+Unix & Mac only.
+
+Ports
+-----
+
+None.
+
+
+-------------------------------------------------------------------------------
+Copyright (C) 2015, 2016 Michael G. Herstine
+
+
