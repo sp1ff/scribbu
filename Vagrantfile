@@ -39,6 +39,15 @@ sudo apt-get -y install libssl-dev
 sudo apt-get -y install flex
 sudo apt-get -y install bison
 
+# Voltron
+sudo apt-get -y install python3-pip
+sudo apt-get -y install git
+git clone https://github.com/snare/voltron
+cd voltron && ./install.sh
+
+# Hook for personal shell configuration
+echo 'if [ -f /vagrant/.vmbashrc ]; then . /vagrant/.vmbashrc; fi' >> .bashrc 
+
 echo "Provisioning...done."
 date > /etc/vagrant.provision_end
 

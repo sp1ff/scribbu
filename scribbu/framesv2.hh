@@ -25,23 +25,6 @@
 
 namespace scribbu {
 
-  class iconv_error: public virtual boost::exception,
-                     public virtual std::runtime_error
-  {
-  public:
-    iconv_error(int err):
-      std::runtime_error(""), errno_(err)
-    { }
-    int get_errno() const
-    { return errno_; }
-    virtual const char * what() const noexcept;
-
-  private:
-    int errno_;
-    mutable std::shared_ptr<std::string> pwhat_;
-
-  };
-
   namespace detail {
 
     template <typename forward_input_iterator>
@@ -81,35 +64,6 @@ namespace scribbu {
 
       return p;
     }
-
-    /// guard class for iconv descriptors
-    class iconv_guard {
-    public:
-      iconv_guard(const char *tocode, const char *fromcode)
-      {
-        using std::stringstream;
-        cd_ = iconv_open(tocode, fromcode);
-        if ((iconv_t)-1 == cd_) {
-          throw iconv_error(errno);
-        }
-      }
-      ~iconv_guard() {
-        if (-1 == iconv_close(cd_)) {
-          throw iconv_error(errno);
-        }
-      }
-      operator iconv_t() const {
-        return cd_;
-      }
-    private:
-      iconv_t cd_;
-    }; // End class iconv_guard.
-
-    // TODO: Re-design this API, once I figure out the details in all versions
-    // of the ID3v2 spec
-    std::string to_utf8(iconv_t              cd,
-                        const unsigned char *pbuf,
-                        std::size_t          cbbuf);
 
   } // End namespace detail.
 
@@ -151,6 +105,8 @@ namespace scribbu {
     return !(lhs == rhs);
   }
 
+  std::ostream& operator<<(std::ostream &os, const scribbu::frame_id3 &x);
+
   /// ID3v2.3 & .4 identifier-- a simple UDT representing a four-character,
   /// ASCII-encoded frame ID for use in hashed collections
   class frame_id4
@@ -189,10 +145,9 @@ namespace scribbu {
     return !(lhs == rhs);
   }
 
-}
+  std::ostream& operator<<(std::ostream &os, const scribbu::frame_id4 &x);
 
-std::ostream& operator<<(std::ostream &os, const scribbu::frame_id3 &x);
-std::ostream& operator<<(std::ostream &os, const scribbu::frame_id4 &x);
+}
 
 namespace std {
 

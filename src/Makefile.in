@@ -108,7 +108,8 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_scribbu_OBJECTS = scribbu.$(OBJEXT) command.$(OBJEXT) \
-	command-utilities.$(OBJEXT) rename.$(OBJEXT) report.$(OBJEXT) \
+	command-utilities.$(OBJEXT) dump.$(OBJEXT) execute.$(OBJEXT) \
+	find.$(OBJEXT) rename.$(OBJEXT) report.$(OBJEXT) \
 	split.$(OBJEXT)
 scribbu_OBJECTS = $(am_scribbu_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -337,6 +338,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 scribbu_SOURCES = scribbu.cc command.hh command.cc		\
 		  command-utilities.hh command-utilities.cc	\
+	          dump.hh dump.cc                               \
+		  execute.hh execute.cc                         \
+		  find.hh find.cc                               \
 	       	  rename.hh rename.cc				\
 	       	  report.hh report.cc				\
 		  split.hh split.cc
@@ -450,6 +454,9 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/command-utilities.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/command.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dump.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execute.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/find.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rename.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/report.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scribbu.Po@am__quote@

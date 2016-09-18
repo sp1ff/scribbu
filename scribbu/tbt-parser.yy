@@ -1,6 +1,6 @@
 %{
   /**
-   * \file tbt.yy
+   * \file tbt-parser.yy
    *
    * \brief GNU bison grammar specification for tag-based-templates
    *
@@ -51,7 +51,7 @@
 
   scribbu::tbt_support::year_format year_format;
   scribbu::tbt_support::all_source_preference all_source_preference;
-  scribbu::tbt_support::v1_encoding v1_encoding;
+  scribbu::id3v1_encoding id3v1_encoding;
   scribbu::tbt_support::the_xform the_xform;
   scribbu::tbt_support::capitalization capitalization;
   scribbu::tbt_support::output_encoding output_encoding;
@@ -153,7 +153,7 @@
 
 %type <year_format>           year_opt;
 %type <all_source_preference> all_source_preference;
-%type <v1_encoding>           v1_encoding;
+%type <id3v1_encoding>           id3v1_encoding;
 %type <the_xform>             the_xform;
 %type <capitalization>        cap_xform;
 %type <text>                  replace_ws;
@@ -341,9 +341,9 @@ aacet_opt: all_source_preference {
              using namespace scribbu::tbt_support;
              $$ = new std::pair<const aacet_opt, boost::any>(aacet_opt::all_source_preference, boost::any($1));
            }
-         | v1_encoding {
+         | id3v1_encoding {
              using namespace scribbu::tbt_support;
-             $$ = new std::pair<const aacet_opt, boost::any>(aacet_opt::v1_encoding, boost::any($1));
+             $$ = new std::pair<const aacet_opt, boost::any>(aacet_opt::id3v1_encoding, boost::any($1));
            }
          | the_xform {
              using namespace scribbu::tbt_support;
@@ -486,29 +486,29 @@ all_source_preference: PREF_V2 {
                        }
                        ;
 
-v1_encoding: V1ENCODING EQUAL AUTO {
-               $$ = scribbu::tbt_support::v1_encoding::automatic;
+id3v1_encoding: V1ENCODING EQUAL AUTO {
+               $$ = scribbu::id3v1_encoding::automatic;
              }
            | V1ENCODING EQUAL ISO8859_1 {
-               $$ = scribbu::tbt_support::v1_encoding::iso8859_1;
+               $$ = scribbu::id3v1_encoding::iso8859_1;
              }
            | V1ENCODING EQUAL ASCII {
-               $$ = scribbu::tbt_support::v1_encoding::ascii;
+               $$ = scribbu::id3v1_encoding::ascii;
              }
            | V1ENCODING EQUAL CP1252 {
-               $$ = scribbu::tbt_support::v1_encoding::cp1252;
+               $$ = scribbu::id3v1_encoding::cp1252;
              }
            | V1ENCODING EQUAL UTF8 {
-               $$ = scribbu::tbt_support::v1_encoding::utf_8;
+               $$ = scribbu::id3v1_encoding::utf_8;
              }
            | V1ENCODING EQUAL UTF16_BE {
-               $$ = scribbu::tbt_support::v1_encoding::utf_16_be;
+               $$ = scribbu::id3v1_encoding::utf_16_be;
              }
            | V1ENCODING EQUAL UTF16_LE {
-               $$ = scribbu::tbt_support::v1_encoding::utf_16_le;
+               $$ = scribbu::id3v1_encoding::utf_16_le;
              }
            | V1ENCODING EQUAL UTF32 {
-               $$ = scribbu::tbt_support::v1_encoding::utf_32;
+               $$ = scribbu::id3v1_encoding::utf_32;
              }
            ;
 

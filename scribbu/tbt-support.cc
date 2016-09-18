@@ -126,7 +126,7 @@ scribbu::tbt_support::operator<<(std::ostream &os, aacet_opt opt)
   case scribbu::tbt_support::aacet_opt::all_source_preference:
     os << "(all)source prefs";
     break;
-  case scribbu::tbt_support::aacet_opt::v1_encoding:
+  case scribbu::tbt_support::aacet_opt::id3v1_encoding:
     os << "ID3v1 encoding";
     break;
   case scribbu::tbt_support::aacet_opt::the_xform:
@@ -244,79 +244,6 @@ scribbu::tbt_support::duplicate_option::duplicate_option(scribbu::tbt_support::s
   std::stringstream stm;
   stm << "duplicate option " << opt;
   pwhat_.reset(new std::string(stm.str()));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                           class tab_based_term                            //
-///////////////////////////////////////////////////////////////////////////////
-
-std::string
-scribbu::tbt_support::tag_based_term::v1_text_to_utf8(const unsigned char *pbuf,
-                                      std::size_t          cbbuf,
-                                      scribbu::tbt_support::v1_encoding          v1enc) const
-{
-  using scribbu::tbt_support::v1_encoding;
-
-  const char * const ISO88591 = "ISO-8859-1";
-  const char * const ASCII    = "ASCII";
-  const char * const CP1252   = "CP1252";
-  const char * const UTF8     = "UTF-8";
-  const char * const UTF16BE  = "UCS-2BE";
-  const char * const UTF16LE  = "UCS-2LE";
-  const char * const UTF32    = "UTF-32";
-
-  if (v1_encoding::automatic == v1enc) {
-    if (3 <= cbbuf && 0xef == pbuf[0] &&
-        0xbb == pbuf[1] && 0xbf == pbuf[2]) {
-      v1enc = v1_encoding::utf_8;
-    }
-    else if (2 <= cbbuf && 0xfe == pbuf[0] && 0xff == pbuf[1]) {
-      v1enc = v1_encoding::utf_16_be;
-    }
-    else if (2 <= cbbuf && 0xff == pbuf[0] && 0xfe == pbuf[1]) {
-      v1enc = v1_encoding::utf_16_be;
-    }
-  }
-
-  std::string result;
-
-  if (v1_encoding::automatic == v1enc) {
-
-    const std::vector<const char*> GUESSES({{
-      ISO88591, ASCII, CP1252, UTF8, UTF16BE, UTF16LE, UTF32
-    }});
-
-    for (auto g: GUESSES) {
-      try {
-        scribbu::detail::iconv_guard guard(UTF8, g);
-        result = scribbu::detail::to_utf8(guard, pbuf, cbbuf);
-        break;
-      } catch (const iconv_error&) {
-        // Move on to the next guess...
-      }
-    }
-
-  }
-  else {
-
-    const std::map<v1_encoding, const char*> LOOKUP({
-      {v1_encoding::iso8859_1, ISO88591},
-      {v1_encoding::ascii,     ASCII},
-      {v1_encoding::cp1252,    CP1252},
-      {v1_encoding::utf_8,     UTF8},
-      {v1_encoding::utf_16_be, UTF16BE},
-      {v1_encoding::utf_16_le, UTF16LE},
-      {v1_encoding::utf_32,    UTF32}});
-
-    const char *E = LOOKUP.at(v1enc);
-    scribbu::detail::iconv_guard guard(UTF8, E);
-    result = scribbu::detail::to_utf8(guard, pbuf, cbbuf);
-
-  }
-
-  return result;
-
 }
 
 
@@ -512,7 +439,7 @@ scribbu::tbt_support::encoded_by::evaluate(const file_info  & /*fi    */,
 
   std::string encoded_by = source_text(v1.begin(), v1.end(), v2,
                                        all_source_preference::id3v2_only,
-                                       v1_encoding::automatic);
+                                       id3v1_encoding::automatic);
 
   // TODO: return xform_and_encode(encoded_by, out_);
   return encoded_by;
@@ -538,7 +465,7 @@ scribbu::tbt_support::year::evaluate(const file_info  & /*fi    */,
 
   std::string year = source_text(v1.begin(), v1.end(), v2,
                                  all_source_preference::prefer_id3v2,
-                                 v1_encoding::automatic);
+                                 id3v1_encoding::automatic);
 
   // TODO: return xform_and_encode(year);
   return year;

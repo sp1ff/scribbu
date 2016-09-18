@@ -81,7 +81,8 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = scribbu
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	tbt-parser.hh tbt-parser.cc tbt-lexer.cc \
+	tbt-parser.hh tbt-parser.cc tbt-lexer.cc program-parser.hh \
+	program-parser.cc program-lexer.cc \
 	$(top_srcdir)/build-aux/depcomp $(top_srcdir)/build-aux/ylwrap \
 	$(include_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -137,10 +138,11 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libscribbu_la_LIBADD =
-am_libscribbu_la_OBJECTS = tbt-parser.lo tbt-lexer.lo scribbu.lo \
-	id3v1.lo framesv2.lo framesv22.lo framesv23.lo framesv24.lo \
-	id3v2.lo id3v22.lo id3v23.lo id3v24.lo id3v2-utils.lo \
-	tbt-support.lo
+am_libscribbu_la_OBJECTS = tbt-parser.lo tbt-lexer.lo \
+	program-parser.lo program-lexer.lo scribbu.lo id3v1.lo \
+	framesv2.lo framesv22.lo framesv23.lo framesv24.lo id3v2.lo \
+	id3v22.lo id3v23.lo id3v24.lo id3v2-utils.lo tbt-support.lo \
+	program-support.lo
 libscribbu_la_OBJECTS = $(am_libscribbu_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -379,12 +381,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-BUILT_SOURCES = tbt-parser.cc tbt-parser.hh tbt-lexer.cc tbt-lexer.hh
+BUILT_SOURCES = tbt-parser.cc tbt-parser.hh tbt-lexer.cc tbt-lexer.hh program-parser.cc program-parser.hh program-lexer.cc program-lexer.hh
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES)
 lib_LTLIBRARIES = libscribbu.la
-libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc tbt-support.cc
-include_HEADERS = scribbu.hh errors.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh tbt-support.hh
+libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll program-parser.yy program-lexer.ll scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc tbt-support.cc program-support.cc
+include_HEADERS = scribbu.hh errors.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh tbt-support.hh program-support.hh
 AM_CXXFLAGS = -std=c++11
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -459,6 +461,9 @@ clean-libLTLIBRARIES:
 tbt-parser.hh: tbt-parser.cc
 	@if test ! -f $@; then rm -f tbt-parser.cc; else :; fi
 	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) tbt-parser.cc; else :; fi
+program-parser.hh: program-parser.cc
+	@if test ! -f $@; then rm -f program-parser.cc; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) program-parser.cc; else :; fi
 
 libscribbu.la: $(libscribbu_la_OBJECTS) $(libscribbu_la_DEPENDENCIES) $(EXTRA_libscribbu_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libscribbu_la_OBJECTS) $(libscribbu_la_LIBADD) $(LIBS)
@@ -479,6 +484,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v22.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v23.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v24.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/program-lexer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/program-parser.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/program-support.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scribbu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tbt-lexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tbt-parser.Plo@am__quote@
@@ -659,6 +667,9 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f program-lexer.cc
+	-rm -f program-parser.cc
+	-rm -f program-parser.hh
 	-rm -f tbt-lexer.cc
 	-rm -f tbt-parser.cc
 	-rm -f tbt-parser.hh

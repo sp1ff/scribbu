@@ -55,35 +55,9 @@ namespace
     return r;
   }
 
-  std::string escape_for_csv(const std::string &s)
-  {
-    // If there are no commas, return 's'. If there *are* commas, return "s'",
-    // where s' is s with all occurrenecs of '"' doubled.
-
-    std::size_t comma = s.find(',');
-    if (std::string::npos == comma) {
-      return s;
-    }
-
-    std::string r("\"");
-    for (std::size_t i = 0, n = s.length(); i < n; ) {
-      std::size_t dquote = s.find('"', i);
-      r.append(s.substr(i, dquote - i));
-      if (std::string::npos == dquote) {
-        break;
-      }
-      r += "\"\"";
-      i = dquote + 1;
-    }
-
-    r += '"';
-
-    return r;
-  }
-
   std::string prep_for_csv(const std::string &s)
   {
-    return escape_for_csv(make_printable(s));
+    return scribbu::escape_for_csv(make_printable(s), ',');
   }
 
 }

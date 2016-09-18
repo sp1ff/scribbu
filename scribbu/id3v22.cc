@@ -109,6 +109,13 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
   parse(is);
 }
 
+// /*virtual*/ void
+// scribbu::id3v2_2_tag::print_on(std::ostream &os) const
+// {
+
+
+// }
+
 /*virtual*/
 std::size_t
 scribbu::id3v2_2_tag::all_comments(std::vector<scribbu::comments> &out) const

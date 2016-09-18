@@ -1,3 +1,4 @@
+#include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
 
 
@@ -5,6 +6,10 @@
 //                         class id3v1_tag                                  //
 //////////////////////////////////////////////////////////////////////////////
 
+/*static*/ const scribbu::compact_id3v1_formatter
+scribbu::id3v1_tag::DEF_ID3V1_FORMATTER(scribbu::id3v1_encoding::automatic,
+                                        scribbu::id3v1_genre_expansion::none,
+                                        ',');
 
 /**
  * \brief Construct using an input stream known to be currently
@@ -18,12 +23,11 @@
  * up the tag (IOW, the tag is at the end of stream is).
  *
  *
- * The tag header (i.e. the ASCII text "TAG" or "TAG+")cannot be used
- * to distinguish a standard ID3v1 tag from an extended ID3v1 tag
- * because there's no way of distinguishing between an extended tag,
- * or a standard tag where the first character of the song title is
- * '+' (since the first four bytes in either case will be the ASCII
- * text "TAG+").
+ * The tag header (i.e. the ASCII text "TAG" or "TAG+") cannot be used to
+ * distinguish a standard ID3v1 tag from an extended ID3v1 tag because there's
+ * no way of distinguishing between an extended tag, or a standard tag where
+ * the first character of the song title is '+' (since the first four bytes in
+ * either case will be the ASCII text "TAG+").
  *
  * So, rather than use the header to distinguish the two cases, we use
  * the size of the tag. Since the ID3v1 tag is defined to be at the
@@ -362,6 +366,87 @@ scribbu::id3v1_tag::init_extended(unsigned char *p)
 //                          free functions                                  //
 //////////////////////////////////////////////////////////////////////////////
 
+std::string
+scribbu::id3v1_text_to_utf8(const unsigned char *pbuf,
+                            std::size_t          cbbuf,
+                            id3v1_encoding       v1enc)
+{
+  using scribbu::id3v1_encoding;
+
+  const char * const ISO88591 = "ISO-8859-1";
+  const char * const ASCII    = "ASCII";
+  const char * const CP1252   = "CP1252";
+  const char * const UTF8     = "UTF-8";
+  const char * const UTF16BE  = "UCS-2BE";
+  const char * const UTF16LE  = "UCS-2LE";
+  const char * const UTF32    = "UTF-32";
+
+  if (id3v1_encoding::automatic == v1enc) {
+    if (3 <= cbbuf && 0xef == pbuf[0] &&
+        0xbb == pbuf[1] && 0xbf == pbuf[2]) {
+      v1enc = id3v1_encoding::utf_8;
+    }
+    else if (2 <= cbbuf && 0xfe == pbuf[0] && 0xff == pbuf[1]) {
+      v1enc = id3v1_encoding::utf_16_be;
+    }
+    else if (2 <= cbbuf && 0xff == pbuf[0] && 0xfe == pbuf[1]) {
+      v1enc = id3v1_encoding::utf_16_be;
+    }
+  }
+
+  std::string result;
+
+  if (id3v1_encoding::automatic == v1enc) {
+
+    const std::vector<const char*> GUESSES({{
+      ISO88591, ASCII, CP1252, UTF8, UTF16BE, UTF16LE, UTF32
+    }});
+
+    for (auto g: GUESSES) {
+      try {
+        scribbu::detail::iconv_guard guard(UTF8, g);
+        result = scribbu::detail::to_utf8(guard, pbuf, cbbuf);
+        break;
+      } catch (const iconv_error&) {
+        // Move on to the next guess...
+      }
+    }
+
+  }
+  else {
+
+    const std::map<id3v1_encoding, const char*> LOOKUP({
+      {id3v1_encoding::iso8859_1, ISO88591},
+      {id3v1_encoding::ascii,     ASCII},
+      {id3v1_encoding::cp1252,    CP1252},
+      {id3v1_encoding::utf_8,     UTF8},
+      {id3v1_encoding::utf_16_be, UTF16BE},
+      {id3v1_encoding::utf_16_le, UTF16LE},
+      {id3v1_encoding::utf_32,    UTF32}});
+
+    const char *E = LOOKUP.at(v1enc);
+    scribbu::detail::iconv_guard guard(UTF8, E);
+    result = scribbu::detail::to_utf8(guard, pbuf, cbbuf);
+
+  }
+
+  // While the spec asks that all fields be padded with null bytes (i.e. 0
+  // value), some apps, notably WinAmp, pad with spaces (i.e. ASCII 32) (\ref
+  // scribbu_id3v1_refs_2 "[2]"). Strip any trailing spaces here (if the caller
+  // wants the raw value for a text field, that's available as part of the
+  // id3v1_tag interface, too).
+  std::size_t last = result.find_last_not_of(' ');
+  if (std::string::npos != last) {
+    result.erase(last + 1);
+  }
+  else {
+    result.clear();
+  }
+
+  return result;
+
+} // End free function v1_text_to_utf8.
+
 scribbu::id3v1_info scribbu::ends_in_id3v1(std::istream &is)
 {
   const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | std::ios::badbit;
@@ -417,8 +502,9 @@ std::unique_ptr<scribbu::id3v1_tag>
 scribbu::process_id3v1(std::istream &is)
 {
   std::unique_ptr<scribbu::id3v1_tag> p;
+  std::istream::streampos here = is.tellg();
   scribbu::id3v1_info I = scribbu::ends_in_id3v1(is);
-  if (id3_v1_tag_type::none != I.type_) {
+  if (id3_v1_tag_type::none != I.type_ && here == I.start_) {
     p.reset(new id3v1_tag(is));
   }
   return p;

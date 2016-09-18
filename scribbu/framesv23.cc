@@ -1,4 +1,5 @@
-#include <framesv23.hh>
+#include <scribbu/scribbu.hh>
+#include <scribbu/framesv23.hh>
 
 
 

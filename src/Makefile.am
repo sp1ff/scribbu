@@ -1,6 +1,9 @@
 bin_PROGRAMS = scribbu
 scribbu_SOURCES = scribbu.cc command.hh command.cc		\
 		  command-utilities.hh command-utilities.cc	\
+	          dump.hh dump.cc                               \
+		  execute.hh execute.cc                         \
+		  find.hh find.cc                               \
 	       	  rename.hh rename.cc				\
 	       	  report.hh report.cc				\
 		  split.hh split.cc

@@ -1,6 +1,7 @@
 #ifndef FRAMESV24_HH_INCLUDED
 #define FRAMESV24_HH_INCLUDED 1
 
+#include <scribbu/scribbu.hh>
 #include <scribbu/framesv2.hh>
 #include <scribbu/framesv23.hh>
 

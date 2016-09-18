@@ -4,7 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/regex.hpp>
-#include <boost/spirit/include/qi.hpp>
+// TODO: #include <boost/spirit/include/qi.hpp>
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>

@@ -62,6 +62,8 @@ namespace scribbu {
       return compression_;
     }
 
+    // virtual void print_on(std::ostream &os) const;
+
     virtual std::string album() const {
       return text_frame_as_utf8("TAL");
     }

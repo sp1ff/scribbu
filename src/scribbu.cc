@@ -1,6 +1,9 @@
 #include "config.h"
 #include "command.hh"
 #include "command-utilities.hh"
+#include "dump.hh"
+#include "find.hh"
+#include "execute.hh"
 #include "rename.hh"
 #include "report.hh"
 #include "split.hh"
@@ -21,12 +24,19 @@ namespace {
   }
 
   std::map<command, handler_type> COMMANDS = {
-    { command::rename, handler_type(handle_rename) },
-    { command::report, handler_type(handle_report) },
-    { command::split,  handler_type(handle_split)  }
+    { command::dump,   handler_type(handle_dump)    },
+    { command::find,   handler_type(handle_find)    },
+    { command::rename, handler_type(handle_rename)  },
+    { command::report, handler_type(handle_report)  },
+    { command::run,    handler_type(handle_execute) },
+    { command::split,  handler_type(handle_split)   }
   };
 
-  const std::string USAGE("scribbu -- tag your music\n\n");
+  const std::string USAGE("scribbu -- tag your music\n\n"
+    "Usage: scribbu SUB-COMMAND [OPTIONS...]\n\n"
+    "Where SUB-COMMAND is one of dump, find, rename, report, run, split\n"
+    "Get detailed help for each sub-command by running:\n"
+    "    scribbu SUB_COMMAND --help\n");
 
 }
 
@@ -51,9 +61,11 @@ main(int argc, char * argv[])
     ("man", "print the " PACKAGE " usage message including developer-only"
      " options & exit with status zero");
 
+  const vector<string> DEFAULT_COMMANDS{{ std::string("run") }};
+
   po::options_description hidden;
   hidden.add_options()
-    ("sub-command", po::value<vector<string>>());
+    ("sub-command", po::value<vector<string>>()->default_value(DEFAULT_COMMANDS, "run"));
 
   po::options_description global;
   global.add(gopts).add(xgopts);

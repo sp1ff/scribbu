@@ -1,3 +1,4 @@
+#include <scribbu.hh>
 #include <framesv22.hh>
 
 

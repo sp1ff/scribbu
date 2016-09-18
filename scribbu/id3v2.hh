@@ -433,6 +433,8 @@ namespace scribbu {
       return unsync_;
     }
 
+    // virtual void print_on(std::ostream &os) const = 0;
+
     virtual std::string album() const = 0;
     virtual std::string artist() const = 0;
     virtual std::string content_type() const = 0;
@@ -491,6 +493,9 @@ namespace scribbu {
     bool unsync_;
 
   }; // End class id3v2_tag.
+
+  std::ostream&
+  operator<<(std::ostream &os, const id3v2_tag&);
 
   // TODO: Would be nice to offer a version that takes a range, but specialized
   // for arrays

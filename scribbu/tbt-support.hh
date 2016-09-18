@@ -1,13 +1,13 @@
 #ifndef TBT_SUPPORT_HH_INCLUDED
 #define TBT_SUPPORT_HH_INCLUDED 1
 
+#include <boost/any.hpp>
+#include <boost/optional.hpp>
+
 #include <scribbu/scribbu.hh>
 #include <scribbu/errors.hh>
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
-
-#include <boost/any.hpp>
-#include <boost/optional.hpp>
 
 namespace scribbu
 {
@@ -57,10 +57,6 @@ namespace scribbu
       { return "invalid template"; }
     };
 
-    enum class v1_encoding {
-      automatic, iso8859_1, ascii, cp1252, utf_8,
-        utf_16_be, utf_16_le, utf_32,
-    };
     enum class the_xform {
       nil, make_prefix, make_suffix
     };
@@ -90,7 +86,7 @@ namespace scribbu
     std::ostream& operator<<(std::ostream &os, file_opt opt);
 
     enum class aacet_opt {
-      all_source_preference, v1_encoding, the_xform,
+      all_source_preference, id3v1_encoding, the_xform,
       cap_xform, ws_xforms, output_encoding
     };
 
@@ -160,13 +156,13 @@ namespace scribbu
                               forward_input_iterator              p1,
                               const boost::optional<std::string> &v2,
                               all_source_preference               pref,
-                              v1_encoding                         v1enc) const
+                              id3v1_encoding                         v1enc) const
       {
         if (pref == all_source_preference::prefer_id3v2) {
           if (v2 && !v2->empty()) {
             return *v2;
           } else if (p0 != p1) {
-            std::string s = v1_text_to_utf8(p0, p1, v1enc);
+            std::string s = id3v1_text_to_utf8(p0, p1, v1enc);
             if (!s.empty()) {
               return s;
             }
@@ -179,7 +175,7 @@ namespace scribbu
           throw missing_source_text(pref);
         } else if (pref == all_source_preference::prefer_id3v1) {
           if (p0 != p1) {
-            std::string s = v1_text_to_utf8(p0, p1, v1enc);
+            std::string s = id3v1_text_to_utf8(p0, p1, v1enc);
             if (!s.empty()) {
               return s;
             }
@@ -189,7 +185,7 @@ namespace scribbu
           throw missing_source_text(pref);
         } else {
           if (p0 != p1) {
-            std::string s = v1_text_to_utf8(p0, p1, v1enc);
+            std::string s = id3v1_text_to_utf8(p0, p1, v1enc);
             if (!s.empty()) {
               return s;
             }
@@ -198,32 +194,13 @@ namespace scribbu
         }
       }
 
-    private:
-      template <typename forward_input_iterator>
-      std::string v1_text_to_utf8(forward_input_iterator p0,
-                                  forward_input_iterator p1,
-                                  v1_encoding            v1enc) const
-      {
-        if (p0 == p1) {
-          return std::string();
-        }
-
-        std::size_t cb = std::distance(p0, p1);
-        std::unique_ptr<unsigned char[]> p(new unsigned char[cb]);
-        std::copy(p0, p1, p.get());
-        return v1_text_to_utf8(p.get(), cb, v1enc);
-      }
-      std::string v1_text_to_utf8(const unsigned char *pbuf,
-                                  std::size_t          cbbuf,
-                                  v1_encoding          v1enc) const;
-
     };
 
     class aacet_term: public tag_based_term
     {
     public:
       aacet_term(all_source_preference sp  = all_source_preference::prefer_id3v2,
-                 v1_encoding           v1  = v1_encoding::automatic,
+                 id3v1_encoding           v1  = id3v1_encoding::automatic,
                  the_xform             the = the_xform::make_suffix,
                  capitalization        cap = capitalization::capitalize,
                  bool                  cmp = false,
@@ -248,8 +225,8 @@ namespace scribbu
           case scribbu::tbt_support::aacet_opt::all_source_preference:
             sp_ = any_cast<all_source_preference>(p0->second);
             break;
-          case scribbu::tbt_support::aacet_opt::v1_encoding:
-            v1_ = any_cast<v1_encoding>(p0->second);
+          case scribbu::tbt_support::aacet_opt::id3v1_encoding:
+            v1_ = any_cast<id3v1_encoding>(p0->second);
             break;
           case scribbu::tbt_support::aacet_opt::the_xform:
             the_ = any_cast<the_xform>(p0->second);
@@ -294,7 +271,7 @@ namespace scribbu
 
     private:
       all_source_preference sp_;
-      v1_encoding           v1_;
+      id3v1_encoding           v1_;
       the_xform             the_;
       capitalization        cap_;
       bool                  compress_ws_;
@@ -401,12 +378,12 @@ namespace scribbu
     {
     public:
       album(all_source_preference sp  = all_source_preference::prefer_id3v2,
-             v1_encoding           v1  = v1_encoding::automatic,
-             the_xform             the = the_xform::make_suffix,
-             capitalization        cap = capitalization::capitalize,
-             bool                  cmp = false,
-             std::string           rep = std::string(),
-             output_encoding       out = output_encoding::utf_8):
+            id3v1_encoding           v1  = id3v1_encoding::automatic,
+            the_xform             the = the_xform::make_suffix,
+            capitalization        cap = capitalization::capitalize,
+            bool                  cmp = false,
+            std::string           rep = std::string(),
+            output_encoding       out = output_encoding::utf_8):
         aacet_term(sp, v1, the, cap, cmp, rep, out)
       { }
       virtual std::string evaluate(const file_info  & /*fi    */,
@@ -421,7 +398,7 @@ namespace scribbu
     {
     public:
       artist(all_source_preference sp  = all_source_preference::prefer_id3v2,
-             v1_encoding           v1  = v1_encoding::automatic,
+             id3v1_encoding           v1  = id3v1_encoding::automatic,
              the_xform             the = the_xform::make_suffix,
              capitalization        cap = capitalization::capitalize,
              bool                  cmp = false,
@@ -440,7 +417,7 @@ namespace scribbu
     {
     public:
       content_type(all_source_preference sp  = all_source_preference::prefer_id3v2,
-                   v1_encoding           v1  = v1_encoding::automatic,
+                   id3v1_encoding           v1  = id3v1_encoding::automatic,
                    the_xform             the = the_xform::make_suffix,
                    capitalization        cap = capitalization::capitalize,
                    bool                  cmp = false,
@@ -459,7 +436,7 @@ namespace scribbu
     {
     public:
       title(all_source_preference sp  = all_source_preference::prefer_id3v2,
-            v1_encoding           v1  = v1_encoding::automatic,
+            id3v1_encoding           v1  = id3v1_encoding::automatic,
             the_xform             the = the_xform::make_suffix,
             capitalization        cap = capitalization::capitalize,
             bool                  cmp = false,

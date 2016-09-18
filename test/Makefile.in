@@ -105,10 +105,11 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_unit_OBJECTS = unit.$(OBJEXT) id3v1.$(OBJEXT) framesv2.$(OBJEXT) \
-	framesv22.$(OBJEXT) framesv23.$(OBJEXT) framesv24.$(OBJEXT) \
-	id3v2.$(OBJEXT) id3v22.$(OBJEXT) id3v23.$(OBJEXT) \
-	id3v24.$(OBJEXT) id3v2-utils.$(OBJEXT)
+am_unit_OBJECTS = unit.$(OBJEXT) scribbu.$(OBJEXT) id3v1.$(OBJEXT) \
+	framesv2.$(OBJEXT) framesv22.$(OBJEXT) framesv23.$(OBJEXT) \
+	framesv24.$(OBJEXT) id3v2.$(OBJEXT) id3v22.$(OBJEXT) \
+	id3v23.$(OBJEXT) id3v24.$(OBJEXT) id3v2-utils.$(OBJEXT) \
+	program-parser.$(OBJEXT)
 unit_OBJECTS = $(am_unit_OBJECTS)
 am__DEPENDENCIES_1 =
 unit_DEPENDENCIES = ../scribbu/libscribbu.la $(am__DEPENDENCIES_1) \
@@ -520,7 +521,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 TESTS = $(check_PROGRAMS) test-report test-split
-unit_SOURCES = unit.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc
+unit_SOURCES = unit.cc scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc \
+	program-parser.cc
+
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = -std=c++11
 AM_LDFLAGS = -all-static -static $(BOOST_LDFLAGS)
@@ -596,6 +599,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v22.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v23.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v24.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/program-parser.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scribbu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unit.Po@am__quote@
 
 .cc.o:
