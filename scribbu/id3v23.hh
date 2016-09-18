@@ -131,6 +131,9 @@ namespace scribbu {
     };
 
   public:
+    virtual std::string print() const
+    { return std::string("Hello from ID3v2.3!"); }
+
     bool experimental() const {
       return experimental_;
     }

@@ -10,6 +10,7 @@
 #include <boost/exception/all.hpp>
 #include <boost/shared_array.hpp>
 
+#include <scribbu/scribbu.hh>
 #include <scribbu/errors.hh>
 #include <scribbu/framesv2.hh>
 
@@ -417,6 +418,24 @@ namespace scribbu {
     id3v2_tag(const id3v2_info &H);
 
   public:
+    virtual std::string print() const = 0;
+
+    template <typename char_type, typename char_traits>
+    void print_on(std::basic_ostream<char_type, char_traits> &os) const
+    {
+      using namespace std;
+
+      string s = print();
+
+      char_type buf[s.length() + 1];
+
+      const ctype<char_type> &C = use_facet<ctype<char_type>>(os.getloc());
+      C.widen(s.c_str(), s.c_str() + s.length(), buf);
+      buf[s.length()] = (char_type) 0;
+
+      os << buf;
+    }
+
     unsigned char version() const {
       return version_;
     }
@@ -432,8 +451,6 @@ namespace scribbu {
     bool unsynchronised() const {
       return unsync_;
     }
-
-    // virtual void print_on(std::ostream &os) const = 0;
 
     virtual std::string album() const = 0;
     virtual std::string artist() const = 0;
@@ -494,8 +511,12 @@ namespace scribbu {
 
   }; // End class id3v2_tag.
 
+  inline
   std::ostream&
-  operator<<(std::ostream &os, const id3v2_tag&);
+  operator<<(std::ostream &os, const id3v2_tag &tag)
+  {
+    return scribbu::detail::insert(os, tag);
+  }
 
   // TODO: Would be nice to offer a version that takes a range, but specialized
   // for arrays

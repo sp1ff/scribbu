@@ -58,11 +58,12 @@ namespace scribbu {
     id3v2_2_tag(std::istream &is, const id3v2_info &H);
 
   public:
+    virtual std::string print() const
+    { return std::string("Hello from ID3v2.2!"); }
+
     bool compression() const {
       return compression_;
     }
-
-    // virtual void print_on(std::ostream &os) const;
 
     virtual std::string album() const {
       return text_frame_as_utf8("TAL");

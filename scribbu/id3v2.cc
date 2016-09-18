@@ -419,11 +419,3 @@ scribbu::id3v2_tag::id3v2_tag(const id3v2_info &H):
     throw no_tag();
   }
 }
-
-// std::ostream&
-// scribbu::operator<<(std::ostream    &os,
-//                     const id3v2_tag &tag)
-// {
-//   tag.print_on(os);
-//   return os;
-// }

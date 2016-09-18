@@ -196,6 +196,9 @@ namespace scribbu {
     id3v2_4_tag(std::istream &is, const id3v2_info &H);
 
   public:
+    virtual std::string print() const
+    { return std::string("Hello from ID3v2.4!"); }
+
     bool has_extended_header() const {
       return (bool) pext_header_;
     }

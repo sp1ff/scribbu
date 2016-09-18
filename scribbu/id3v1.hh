@@ -300,7 +300,7 @@ namespace scribbu {
 
   std::string id3v1_text_to_utf8(const unsigned char *pbuf,
                                  std::size_t          cbbuf,
-                                 id3v1_encoding          v1enc);
+                                 id3v1_encoding       v1enc);
 
   template <typename forward_input_iterator>
   std::string id3v1_text_to_utf8(forward_input_iterator p0,

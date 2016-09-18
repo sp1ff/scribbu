@@ -200,4 +200,10 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
   BOOST_CHECK(text == TXT1);
 
 
+  std::stringstream stm;
+  stm << tagv2_2;
+  std::string s = stm.str();
+
+  BOOST_CHECK( s == "Hello from ID3v2.2!" );
+
 } // End test_id3v2_2_tag.
