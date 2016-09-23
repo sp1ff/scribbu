@@ -109,12 +109,13 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
   parse(is);
 }
 
-// /*virtual*/ void
-// scribbu::id3v2_2_tag::print_on(std::ostream &os) const
-// {
+/*virtual*/
+std::string
+scribbu::id3v2_2_tag::to_string() const
+{
 
 
-// }
+}
 
 /*virtual*/
 std::size_t

@@ -418,14 +418,14 @@ namespace scribbu {
     id3v2_tag(const id3v2_info &H);
 
   public:
-    virtual std::string print() const = 0;
+    virtual std::string to_string() const = 0;
 
     template <typename char_type, typename char_traits>
     void print_on(std::basic_ostream<char_type, char_traits> &os) const
     {
       using namespace std;
 
-      string s = print();
+      string s = to_sting();
 
       char_type buf[s.length() + 1];
 

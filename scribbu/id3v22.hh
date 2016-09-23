@@ -58,8 +58,7 @@ namespace scribbu {
     id3v2_2_tag(std::istream &is, const id3v2_info &H);
 
   public:
-    virtual std::string print() const
-    { return std::string("Hello from ID3v2.2!"); }
+    virtual std::string to_string() const;
 
     bool compression() const {
       return compression_;
