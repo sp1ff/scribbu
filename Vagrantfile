@@ -33,6 +33,7 @@ cd boost_1_57_0
 sudo ./b2 --build-type=complete --layout=versioned install
 
 sudo apt-get -y install autoconf
+sudo apt-get -y install autoconf-archive
 sudo apt-get -y install automake
 sudo apt-get -y install libtool
 sudo apt-get -y install libssl-dev

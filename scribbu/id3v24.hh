@@ -9,7 +9,11 @@
  *
  * \section scribbu_id3v24_intro Introduction
  *
- * TODO: Write me!
+ * ID3v2.4 is the latest version published, dated November 1, 2000. Notably, it
+ * allows textual data to  be encoded in UTF-8, which was  a common practice in
+ * earlier tags (despite the standard, since  it was not supported yet) because
+ * it has several noticeable advantages over UTF-16. Another new feature allows
+ * the addition of a tag to the end of the file before other tags (like ID3v1).
  *
  *
  * \section scribbu_id3v24_discuss "Discussion"
@@ -101,6 +105,13 @@
  */
 
 namespace scribbu {
+
+  class id3v2_4_tag;
+
+  struct id3v2_4_tag_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const id3v2_4_tag&) = 0;
+  };
 
   // TODO: "appended tag"!?
   /**
@@ -196,8 +207,9 @@ namespace scribbu {
     id3v2_4_tag(std::istream &is, const id3v2_info &H);
 
   public:
-    virtual std::string print() const
-    { return std::string("Hello from ID3v2.4!"); }
+
+    virtual void accept_for_print(id3v2_acyclic_visitor &V,
+                                  std::ostream          &os) const;
 
     bool has_extended_header() const {
       return (bool) pext_header_;
@@ -206,6 +218,10 @@ namespace scribbu {
       return experimental_;
     }
     bool has_footer() const;
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                       inherited from id3v2_tag                        //
+    ///////////////////////////////////////////////////////////////////////////
 
     virtual std::string album() const {
       return text_frame_as_utf8("TALB");
@@ -251,36 +267,71 @@ namespace scribbu {
       return frame_map_.count("TYER");
     }
 
-    virtual std::size_t all_comments(std::vector<scribbu::comments> &out) const;
-    virtual std::size_t all_play_counts(std::vector<scribbu::play_count> &out) const;
-    virtual std::size_t all_udts(std::vector<scribbu::user_defined_text> &out) const;
-    virtual std::size_t all_ufids(std::vector<scribbu::unique_file_id> &out) const;
+    virtual std::size_t
+    all_comments(std::vector<scribbu::comments> &out) const;
+    virtual std::size_t
+    all_play_counts(std::vector<scribbu::play_count> &out) const;
+    virtual std::size_t
+    all_udts(std::vector<scribbu::user_defined_text> &out) const;
+    virtual std::size_t
+    all_ufids(std::vector<scribbu::unique_file_id> &out) const;
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                       frame parser registration                       //
+    ///////////////////////////////////////////////////////////////////////////
 
     /// Convenience typedef for a functor taking an ID3v2.4 frame ID and a
     /// buffer producing an id3v2_4_frame.
-    typedef std::function<std::unique_ptr<id3v2_4_frame> (const frame_id4                      &id,
-                                                          const unsigned char                  *p,
-                                                          std::size_t                           cb,
-                                                          tag_alter_preservation                tag_alter_preservation,
-                                                          file_alter_preservation               file_alter_preservation,
-                                                          read_only                             read_only,
-                                                          const boost::optional<unsigned char> &encryption_method,
-                                                          const boost::optional<unsigned char> &group_id,
-                                                          bool                                   compressed,
-                                                          bool                                   unsynchronisation,
-                                                          const boost::optional<std::size_t>    &data_len_ind)>
-      frame_parser;
+    typedef
+    std::function<
+      std::unique_ptr<id3v2_4_frame>
+      (const frame_id4                      &id,
+       const unsigned char                  *p,
+       std::size_t                           cb,
+       tag_alter_preservation                tag_alter_preservation,
+       file_alter_preservation               file_alter_preservation,
+       read_only                             read_only,
+       const boost::optional<unsigned char> &encryption_method,
+       const boost::optional<unsigned char> &group_id,
+       bool                                   compressed,
+       bool                                   unsynchronisation,
+       const boost::optional<std::size_t>    &data_len_ind)>
+    frame_parser;
+
+    /**
+     * \brief Determine whether the framework has a parser for a given frame ID
+     *
+     *
+     * \param id [in] Frame ID of interest
+     *
+     * \return bool indicating whether the framework has a (fixed & immutable)
+     * parser for this frame ID
+     *
+     *
+     * This class understands a set of ID3v2.2 frames. It permits callers to
+     * register  parsers for  new frames,  as  well as  to replace  existing
+     * parsers. It reservers, however, a small set of frame parsers on which
+     * implementation code depends.
+     *
+     *
+     */
+
+    static bool has_framework_parser(const frame_id4 &x);
 
     typedef std::pair<const frame_id4, frame_parser> frame_parser_registration;
 
     /// Retrieve a copy of the default set of frame parsers-- thread-safe
     template <typename forward_output_iterator>
-    static forward_output_iterator get_default_frame_parsers(forward_output_iterator p) {
+    static forward_output_iterator
+    get_default_frame_parsers(forward_output_iterator p) {
       std::lock_guard<std::mutex> guard(mutex_);
       return std::copy(default_parsers_.begin(), default_parsers_.end(), p);
     }
 
-    static void register_default_frame_parser(const frame_id4 &id, const frame_parser &F);
+    /// true => F is a new frame parser, false => another was replaced; will
+    /// throw if \a id names a frame whose parser is reserved by the framework
+    static void
+    register_default_frame_parser(const frame_id4 &id, const frame_parser &F);
 
     /// Not thread-safe
     template <typename forward_output_iterator>
@@ -299,17 +350,123 @@ namespace scribbu {
     };
     friend struct static_initializer;
 
+    /// Convenience typedef for a member function taking an ID3v2.4 frame ID, a
+    /// position, and a buffer producing an id3v2_4_frame; these are reserved
+    /// by the framework
+    typedef std::unique_ptr<id3v2_4_frame>
+    (id3v2_4_tag::*reserved_frame_parser)(
+      const frame_id4                        &id,
+      std::ptrdiff_t                          i,
+      const unsigned char                    *pb,
+      std::size_t                             cb,
+      tag_alter_preservation                  tag_alter_preservation,
+      file_alter_preservation                 file_alter_preservation,
+      read_only                               read_only,
+      const boost::optional<unsigned char>   &encryption_method,
+      const boost::optional<unsigned char>   &group_id,
+      bool                                   compressed,
+      bool                                   unsynchronisation,
+      const boost::optional<std::size_t>    &data_len_ind);
+
   private:
 
     std::tuple<boost::shared_array<unsigned char>, std::size_t>
-    decompress(const unsigned char *p, std::size_t cb, std::size_t uncompressed_size) const;
+    decompress(const unsigned char *p,
+               std::size_t          cb,
+               std::size_t          uncompressed_size) const;
 
     std::tuple<boost::shared_array<unsigned char>, std::size_t>
-    decrypt(const unsigned char *p, std::size_t cb, unsigned char method) const;
+    decrypt(const unsigned char *p,
+            std::size_t          cb,
+            unsigned char        method) const;
 
     bool encryption_method_regd(unsigned char method) const {
       return 0 != encryption_methods_.count(method);
     }
+
+    void register_encryption_method(const ENCR_2_4 &encr);
+
+    std::unique_ptr<scribbu::id3v2_4_frame>
+    create_COMM(const frame_id4                    &/*id*/,
+                std::ptrdiff_t                        i,
+                const unsigned char                  *p,
+                std::size_t                           cb,
+                tag_alter_preservation                tag_alter_preservation,
+                file_alter_preservation               file_alter_preservation,
+                read_only                             read_only,
+                const boost::optional<unsigned char> &encryption_method,
+                const boost::optional<unsigned char> &group_id,
+                bool                                   compressed,
+                bool                                   unsynchronisation,
+                const boost::optional<std::size_t>    &data_len_ind);
+    std::unique_ptr<scribbu::id3v2_4_frame>
+    create_PCNT(const frame_id4                    &/*id*/,
+                std::ptrdiff_t                        i,
+                const unsigned char                  *p,
+                std::size_t                           cb,
+                tag_alter_preservation                tag_alter_preservation,
+                file_alter_preservation               file_alter_preservation,
+                read_only                             read_only,
+                const boost::optional<unsigned char> &encryption_method,
+                const boost::optional<unsigned char> &group_id,
+                bool                                   compressed,
+                bool                                   unsynchronisation,
+                const boost::optional<std::size_t>    &data_len_ind);
+    std::unique_ptr<scribbu::id3v2_4_frame>
+    create_UFID(const frame_id4                    &/*id*/,
+                std::ptrdiff_t                        i,
+                const unsigned char                  *p,
+                std::size_t                           cb,
+                tag_alter_preservation                tag_alter_preservation,
+                file_alter_preservation               file_alter_preservation,
+                read_only                             read_only,
+                const boost::optional<unsigned char> &encryption_method,
+                const boost::optional<unsigned char> &group_id,
+                bool                                   compressed,
+                bool                                   unsynchronisation,
+                const boost::optional<std::size_t>    &data_len_ind);
+    std::unique_ptr<scribbu::id3v2_4_frame>
+    create_TXXX(const frame_id4                    &/*id*/,
+                std::ptrdiff_t                        i,
+                const unsigned char                  *p,
+                std::size_t                           cb,
+                tag_alter_preservation                tag_alter_preservation,
+                file_alter_preservation               file_alter_preservation,
+                read_only                             read_only,
+                const boost::optional<unsigned char> &encryption_method,
+                const boost::optional<unsigned char> &group_id,
+                bool                                   compressed,
+                bool                                   unsynchronisation,
+                const boost::optional<std::size_t>    &data_len_ind);
+    std::unique_ptr<scribbu::id3v2_4_frame>
+    create_text_frame(
+      const frame_id4                    &/*id*/,
+      std::ptrdiff_t                        i,
+      const unsigned char                  *p,
+      std::size_t                           cb,
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                   compressed,
+      bool                                   unsynchronisation,
+      const boost::optional<std::size_t>    &data_len_ind);
+
+    /// Retrieve a copy of the set of reserved frame parsers-- thread-safe
+    template <typename forward_output_iterator>
+    static forward_output_iterator
+    get_reserved_frame_parsers(forward_output_iterator p) {
+      std::lock_guard<std::mutex> guard(mutex_);
+      return std::copy(reserved_parsers_.begin(),
+                       reserved_parsers_.end(), p);
+    }
+
+    // Nifty Counter Idiom...
+    static std::mutex& mutex_;
+    static std::unordered_map<frame_id4, frame_parser> &default_parsers_;
+    static std::unordered_map<frame_id4, reserved_frame_parser>
+    &reserved_parsers_;
 
     void parse(std::istream &is, bool extended);
 
@@ -327,21 +484,20 @@ namespace scribbu {
                 const unsigned char *                  p0,
                 const unsigned char *                  p1) const;
 
-    void register_encryption_method(const ENCR_2_4 &encr);
     /// Lookup a text frame, convert its data from its native encoding to
     /// UTF-8, return as a string
     std::string text_frame_as_utf8(const frame_id4 &id) const;
 
   private:
 
-    // Nifty Counter Idiom...
-    static std::mutex& mutex_;
-    static std::unordered_map<frame_id4, frame_parser> &default_parsers_;
-
     /// frame id => frame parser lookup
     typedef std::unordered_map<frame_id4, frame_parser> parser_map_type;
+    /// frame id => reserved frame parser lookup
+    typedef std::unordered_map<frame_id3, reserved_frame_parser>
+    reserved_parser_map_type;
     /// frame id => frame location lookup
-    typedef std::unordered_multimap<frame_id4, std::ptrdiff_t> frame_lookup_type;
+    typedef std::unordered_multimap<frame_id4, std::ptrdiff_t>
+    frame_lookup_type;
     /// polymorphic collection of frames
     typedef std::vector<std::unique_ptr<id3v2_4_frame>> frames_type;
 
@@ -352,7 +508,15 @@ namespace scribbu {
     std::size_t padding_;
     std::unordered_map<unsigned char, ENCR_2_4> encryption_methods_;
     frames_type frames_;
+
+    // Convenience data structures
     frame_lookup_type frame_map_;
+    std::unordered_map<std::ptrdiff_t, COMM_2_4*> comments_;
+    std::unordered_map<std::ptrdiff_t, PCNT_2_4*> play_counts_;
+    std::unordered_map<std::ptrdiff_t, UFID_2_4*> ufids_;
+    std::unordered_map<std::ptrdiff_t, TXXX_2_4*> udts_;
+    std::unordered_map<std::ptrdiff_t, id3v2_4_text_frame*> texts_pos_;
+    std::unordered_multimap<frame_id4, id3v2_4_text_frame*> text_;
 
   }; // End class id3v2_4_tag.
 

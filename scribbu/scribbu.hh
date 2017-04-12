@@ -1,15 +1,16 @@
 #ifndef SCRIBBU_H_INCLUDED
 #define SCRIBBU_H_INCLUDED 1
 
-#include <iconv.h>
 #include <iomanip>
 #include <sstream>
+
+#include <iconv.h>
 #include <boost/filesystem.hpp>
 #include <openssl/err.h>
 
 namespace scribbu {
 
-  /// Library initialization
+  /// Library initialization TODO: Add a parameter naming the default internal stream encoding
   void static_initialize();
 
   /// Library cleanup
@@ -28,6 +29,9 @@ namespace scribbu {
    * itself).
    *
    * \todo Add atime & mtime
+   *
+   *
+   * TODO: Is this class needed?
    *
    *
    */
@@ -62,6 +66,9 @@ namespace scribbu {
    * describing that file
    *
    *
+   * TODO: This is ugly-- needed?
+   *
+   *
    */
 
   std::pair<std::unique_ptr<std::istream>, file_info>
@@ -83,8 +90,7 @@ namespace scribbu {
                      public virtual std::runtime_error
   {
   public:
-    iconv_error(int err):
-      std::runtime_error(""), errno_(err)
+    iconv_error(int err): std::runtime_error(""), errno_(err)
     { }
     int get_errno() const
     { return errno_; }

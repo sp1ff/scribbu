@@ -65,11 +65,18 @@ namespace scribbu {
     frame_id3  id() const {
       return id_;
     }
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     frame_id3 id_;
 
   }; // End class id3v2_2_frame.
+
+  struct id3v2_2_frame_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const id3v2_2_frame &x) = 0;
+  };
 
   class unknown_id3v2_2_frame: public id3v2_2_frame {
 
@@ -120,13 +127,18 @@ namespace scribbu {
     unique_file_id file_id() const {
       return unique_file_id_;
     }
-
-    static std::unique_ptr<id3v2_2_frame> create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     unique_file_id unique_file_id_;
 
   }; // End class UFI.
+
+  struct UFI_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const UFI &x) = 0;
+  };
 
   /**
    * \class id3v2_2_text_frame
@@ -207,14 +219,19 @@ namespace scribbu {
     unsigned char unicode() const {
       return unicode_;
     }
-
-    static std::unique_ptr<id3v2_2_frame> create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     unsigned char unicode_;
     std::vector<unsigned char> text_;
 
   }; // End class id3v2_2_text_frame.
+
+  struct id3v2_2_text_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const id3v2_2_text_frame &x) = 0;
+  };
 
   /**
    * \class TXX
@@ -264,13 +281,18 @@ namespace scribbu {
     user_defined_text udt() const {
       return user_defined_text_;
     }
-
-    static std::unique_ptr<id3v2_2_frame> create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     user_defined_text user_defined_text_;
 
   }; // End class TXX.
+
+  struct TXX_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const TXX &x) = 0;
+  };
 
   /// Comments
   class COM: public id3v2_2_frame {
@@ -287,12 +309,17 @@ namespace scribbu {
     comments data() const {
       return comments_;
     }
-
-    static std::unique_ptr<id3v2_2_frame> create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     comments comments_;
 
+  };
+
+  struct COM_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const COM &x) = 0;
   };
 
   /// play count
@@ -310,12 +337,17 @@ namespace scribbu {
     play_count count() const {
       return count_;
     }
-
-    static std::unique_ptr<id3v2_2_frame> create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     play_count count_;
 
+  };
+
+  struct CNT_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const CNT &x) = 0;
   };
 
   /// Popularimeter
@@ -334,7 +366,11 @@ namespace scribbu {
       return popularimeter_;
     }
 
-    static std::unique_ptr<id3v2_2_frame> create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    inline static std::unique_ptr<scribbu::id3v2_2_frame>
+    create(const frame_id3& /*id*/, const unsigned char *p, std::size_t cb)
+    {
+      return std::unique_ptr<scribbu::id3v2_2_frame>( new POP(p, p + cb) );
+    }
 
   private:
     popularimeter popularimeter_;

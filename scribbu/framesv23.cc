@@ -1,6 +1,57 @@
 #include <scribbu/scribbu.hh>
 #include <scribbu/framesv23.hh>
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                            class id3v2_3_frame                            //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::id3v2_3_frame::accept_for_print(id3v2_acyclic_visitor &P,
+                                         std::ostream          &os) const
+{
+  id3v2_3_frame_printer *p = dynamic_cast<id3v2_3_frame_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                                class UFID                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::UFID::accept_for_print(id3v2_acyclic_visitor &P,
+                                std::ostream          &os) const
+{
+  UFID_printer *p = dynamic_cast<UFID_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+/*static*/
+std::unique_ptr<scribbu::id3v2_3_frame>
+scribbu::UFID::create(
+  const frame_id4                    &/*id*/,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  const boost::optional<std::size_t>   &decompressed_size)
+{
+  return std::unique_ptr<id3v2_3_frame>(
+    new UFID(p, p + cb, tag_alter_preservation,
+             file_alter_preservation, read_only,
+             encryption_method, group_id,
+             decompressed_size));
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,20 +83,105 @@ std::string scribbu::id3v2_3_text_frame::as_utf8() const
 }
 
 /*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
-scribbu::id3v2_3_text_frame::create(const frame_id4                      &id,
-                                    const unsigned char                  *p,
-                                    std::size_t                           cb,
-                                    tag_alter_preservation                tag_alter_preservation,
-                                    file_alter_preservation               file_alter_preservation,
-                                    read_only                             read_only,
-                                    const boost::optional<unsigned char> &encryption_method,
-                                    const boost::optional<unsigned char> &group_id,
-                                    const boost::optional<std::size_t>   &decompressed_size)
+scribbu::id3v2_3_text_frame::create(
+    const frame_id4                      &id,
+    const unsigned char                  *p,
+    std::size_t                           cb,
+    tag_alter_preservation                tag_alter_preservation,
+    file_alter_preservation               file_alter_preservation,
+    read_only                             read_only,
+    const boost::optional<unsigned char> &encryption_method,
+    const boost::optional<unsigned char> &group_id,
+    const boost::optional<std::size_t>   &decompressed_size)
 {
-  return std::unique_ptr<id3v2_3_frame>(new id3v2_3_text_frame(id, p, p + cb, tag_alter_preservation,
-                                                               file_alter_preservation, read_only,
-                                                               encryption_method, group_id,
-                                                               decompressed_size));
+  return std::unique_ptr<id3v2_3_frame>(
+    new id3v2_3_text_frame(id, p, p + cb, tag_alter_preservation,
+                           file_alter_preservation, read_only,
+                           encryption_method, group_id,
+                           decompressed_size));
+}
+
+/*virtual*/
+void
+scribbu::id3v2_3_text_frame::accept_for_print(id3v2_acyclic_visitor &P,
+                                              std::ostream          &os) const
+{
+  id3v2_3_text_printer *p = dynamic_cast<id3v2_3_text_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                                class TXXX                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::TXXX::accept_for_print(id3v2_acyclic_visitor &P,
+                                std::ostream          &os) const
+{
+  TXXX_printer *p = dynamic_cast<TXXX_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+/*static*/
+std::unique_ptr<scribbu::id3v2_3_frame>
+scribbu::TXXX::create(
+  const frame_id4                      &id,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  const boost::optional<std::size_t>   &decompressed_size)
+{
+  return std::unique_ptr<id3v2_3_frame>(
+    new TXXX(p, p + cb, tag_alter_preservation,
+             file_alter_preservation, read_only,
+             encryption_method, group_id,
+             decompressed_size));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                                class PCNT                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::PCNT::accept_for_print(id3v2_acyclic_visitor &P,
+                                std::ostream          &os) const
+{
+  PCNT_printer *p = dynamic_cast<PCNT_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+/*static*/
+std::unique_ptr<scribbu::id3v2_3_frame>
+scribbu::PCNT::create(
+  const frame_id4                      &id,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  const boost::optional<std::size_t>   &decompressed_size)
+{
+  return std::unique_ptr<id3v2_3_frame>(
+    new PCNT(p, p + cb, tag_alter_preservation,
+             file_alter_preservation, read_only,
+             encryption_method, group_id,
+             decompressed_size));
 }
 
 
@@ -53,22 +189,6 @@ scribbu::id3v2_3_text_frame::create(const frame_id4                      &id,
 //                     miscellaneous creation functions                      //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
-scribbu::UFID::create(const frame_id4                      &/*id*/,
-                      const unsigned char                  *p,
-                      std::size_t                           cb,
-                      tag_alter_preservation                tag_alter_preservation,
-                      file_alter_preservation               file_alter_preservation,
-                      read_only                             read_only,
-                      const boost::optional<unsigned char> &encryption_method,
-                      const boost::optional<unsigned char> &group_id,
-                      const boost::optional<std::size_t>   &decompressed_size)
-{
-  return std::unique_ptr<id3v2_3_frame>(new UFID(p, p + cb, tag_alter_preservation,
-                                                 file_alter_preservation, read_only,
-                                                 encryption_method, group_id,
-                                                 decompressed_size));
-}
 
 /*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
 scribbu::ENCR::create(const frame_id4                      &/*id*/,
@@ -88,23 +208,6 @@ scribbu::ENCR::create(const frame_id4                      &/*id*/,
 }
 
 /*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
-scribbu::TXXX::create(const frame_id4                      &id,
-                      const unsigned char                  *p,
-                      std::size_t                           cb,
-                      tag_alter_preservation                tag_alter_preservation,
-                      file_alter_preservation               file_alter_preservation,
-                      read_only                             read_only,
-                      const boost::optional<unsigned char> &encryption_method,
-                      const boost::optional<unsigned char> &group_id,
-                      const boost::optional<std::size_t>   &decompressed_size)
-{
-  return std::unique_ptr<id3v2_3_frame>(new TXXX(p, p + cb, tag_alter_preservation,
-                                                 file_alter_preservation, read_only,
-                                                 encryption_method, group_id,
-                                                 decompressed_size));
-}
-
-/*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
 scribbu::COMM::create(const frame_id4                      &id,
                       const unsigned char                  *p,
                       std::size_t                           cb,
@@ -116,23 +219,6 @@ scribbu::COMM::create(const frame_id4                      &id,
                       const boost::optional<std::size_t>   &decompressed_size)
 {
   return std::unique_ptr<id3v2_3_frame>(new COMM(p, p + cb, tag_alter_preservation,
-                                                 file_alter_preservation, read_only,
-                                                 encryption_method, group_id,
-                                                 decompressed_size));
-}
-
-/*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
-scribbu::PCNT::create(const frame_id4                      &id,
-                      const unsigned char                  *p,
-                      std::size_t                           cb,
-                      tag_alter_preservation                tag_alter_preservation,
-                      file_alter_preservation               file_alter_preservation,
-                      read_only                             read_only,
-                      const boost::optional<unsigned char> &encryption_method,
-                      const boost::optional<unsigned char> &group_id,
-                      const boost::optional<std::size_t>   &decompressed_size)
-{
-  return std::unique_ptr<id3v2_3_frame>(new PCNT(p, p + cb, tag_alter_preservation,
                                                  file_alter_preservation, read_only,
                                                  encryption_method, group_id,
                                                  decompressed_size));

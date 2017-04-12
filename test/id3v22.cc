@@ -204,6 +204,6 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
   stm << tagv2_2;
   std::string s = stm.str();
 
-  BOOST_CHECK( s == "Hello from ID3v2.2!" );
+  BOOST_CHECK( s == "ID3v2.2 tag" );
 
 } // End test_id3v2_2_tag.

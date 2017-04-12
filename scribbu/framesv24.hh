@@ -64,16 +64,17 @@ namespace scribbu {
     };
 
   public:
-    id3v2_4_frame(const frame_id4                      &id,
-                  std::size_t                           size,
-                  tag_alter_preservation                tag_alter_preservation,
-                  file_alter_preservation               file_alter_preservation,
-                  read_only                             read_only,
-                  const boost::optional<unsigned char> &encryption_method,
-                  const boost::optional<unsigned char> &group_id,
-                  bool                                  compressed,
-                  bool                                  unsynchronised,
-                  const boost::optional<std::size_t>   &data_len_indicator):
+    id3v2_4_frame(
+      const frame_id4                      &id,
+      std::size_t                           size,
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                  compressed,
+      bool                                  unsynchronised,
+      const boost::optional<std::size_t>   &data_len_indicator):
       id3v2_3_plus_frame(id, size, tag_alter_preservation,
                          file_alter_preservation, read_only,
                          encryption_method, group_id),
@@ -81,38 +82,44 @@ namespace scribbu {
       unsynchronised_(unsynchronised),
       data_len_indicator_(data_len_indicator)
     { }
-    id3v2_4_frame(const char                            id[4],
-                  std::size_t                           size,
-                  tag_alter_preservation                tag_alter_preservation,
-                  file_alter_preservation               file_alter_preservation,
-                  read_only                             read_only,
-                  const boost::optional<unsigned char> &encryption_method,
-                  const boost::optional<unsigned char> &group_id,
-                  bool                                  compressed,
-                  bool                                  unsynchronised,
-                  const boost::optional<std::size_t>   &data_len_indicator):
+    id3v2_4_frame(
+      const char                            id[4],
+      std::size_t                           size,
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                  compressed,
+      bool                                  unsynchronised,
+      const boost::optional<std::size_t>   &data_len_indicator):
       id3v2_4_frame(frame_id4(id), size, tag_alter_preservation,
                     file_alter_preservation, read_only, encryption_method,
                     group_id, compressed, unsynchronised,
                     data_len_indicator)
     { }
-    id3v2_4_frame(unsigned char                         id0,
-                  unsigned char                         id1,
-                  unsigned char                         id2,
-                  unsigned char                         id3,
-                  std::size_t                           size,
-                  tag_alter_preservation                tag_alter_preservation,
-                  file_alter_preservation               file_alter_preservation,
-                  read_only                             read_only,
-                  const boost::optional<unsigned char> &encryption_method,
-                  const boost::optional<unsigned char> &group_id,
-                  bool                                  compressed,
-                  bool                                  unsynchronised,
-                  const boost::optional<std::size_t>   &data_len_indicator):
+    id3v2_4_frame(
+      unsigned char                         id0,
+      unsigned char                         id1,
+      unsigned char                         id2,
+      unsigned char                         id3,
+      std::size_t                           size,
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                  compressed,
+      bool                                  unsynchronised,
+      const boost::optional<std::size_t>   &data_len_indicator):
       id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), size,
                          tag_alter_preservation, file_alter_preservation,
                          read_only, encryption_method, group_id)
     { }
+
+  public:
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
 
   private:
     bool                         compressed_;
@@ -121,63 +128,71 @@ namespace scribbu {
 
   }; // End class id3v2_4_frame.
 
+  struct id3v2_4_frame_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const id3v2_4_frame &x) = 0;
+  };
+
   class unknown_id3v2_4_frame: public id3v2_4_frame {
 
   public:
 
     template <typename forward_input_iterator>
-    unknown_id3v2_4_frame(const frame_id4                      &id,
-                          tag_alter_preservation                tag_alter_preservation,
-                          file_alter_preservation               file_alter_preservation,
-                          read_only                             read_only,
-                          const boost::optional<unsigned char> &encryption_method,
-                          const boost::optional<unsigned char> &group_id,
-                          bool                                  compressed,
-                          bool                                  unsynchronised,
-                          const boost::optional<std::size_t>   &data_len_indicator,
-                          forward_input_iterator                p0,
-                          forward_input_iterator                p1):
-      id3v2_4_frame(id, p1 - p0, tag_alter_preservation, file_alter_preservation,
-                    read_only, encryption_method, group_id, compressed,
-                    unsynchronised, data_len_indicator),
+    unknown_id3v2_4_frame(
+      const frame_id4                      &id,
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                  compressed,
+      bool                                  unsynchronised,
+      const boost::optional<std::size_t>   &data_len_indicator,
+      forward_input_iterator                p0,
+      forward_input_iterator                p1):
+      id3v2_4_frame(id, p1 - p0, tag_alter_preservation,
+                    file_alter_preservation, read_only, encryption_method,
+                    group_id, compressed, unsynchronised, data_len_indicator),
       data_(p0, p1)
     { }
     template <typename forward_input_iterator>
-    unknown_id3v2_4_frame(unsigned char                         id0,
-                          unsigned char                         id1,
-                          unsigned char                         id2,
-                          unsigned char                         id3,
-                          tag_alter_preservation                tag_alter_preservation,
-                          file_alter_preservation               file_alter_preservation,
-                          read_only                             read_only,
-                          const boost::optional<unsigned char> &encryption_method,
-                          const boost::optional<unsigned char> &group_id,
-                          bool                                  compressed,
-                          bool                                  unsynchronised,
-                          const boost::optional<std::size_t>   &data_len_indicator,
-                          forward_input_iterator                p0,
-                          forward_input_iterator                p1):
+    unknown_id3v2_4_frame(
+      unsigned char                         id0,
+      unsigned char                         id1,
+      unsigned char                         id2,
+      unsigned char                         id3,
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                  compressed,
+      bool                                  unsynchronised,
+      const boost::optional<std::size_t>   &data_len_indicator,
+      forward_input_iterator                p0,
+      forward_input_iterator                p1):
       unknown_id3v2_4_frame(frame_id4(id0, id1, id2), tag_alter_preservation,
-                            file_alter_preservation, read_only, encryption_method,
-                            group_id, compressed, unsynchronised,
-                            data_len_indicator, p0, p1)
+                            file_alter_preservation, read_only,
+                            encryption_method, group_id, compressed,
+                            unsynchronised, data_len_indicator, p0, p1)
     { }
     template <typename forward_input_iterator>
-    unknown_id3v2_4_frame(const char                            id[4],
-                          tag_alter_preservation                tag_alter_preservation,
-                          file_alter_preservation               file_alter_preservation,
-                          read_only                             read_only,
-                          const boost::optional<unsigned char> &encryption_method,
-                          const boost::optional<unsigned char> &group_id,
-                          bool                                  compressed,
-                          bool                                  unsynchronised,
-                          const boost::optional<std::size_t>   &data_len_indicator,
-                          forward_input_iterator                p0,
-                          forward_input_iterator                p1):
+    unknown_id3v2_4_frame(
+      const char                            id[4],
+      tag_alter_preservation                tag_alter_preservation,
+      file_alter_preservation               file_alter_preservation,
+      read_only                             read_only,
+      const boost::optional<unsigned char> &encryption_method,
+      const boost::optional<unsigned char> &group_id,
+      bool                                  compressed,
+      bool                                  unsynchronised,
+      const boost::optional<std::size_t>   &data_len_indicator,
+      forward_input_iterator                p0,
+      forward_input_iterator                p1):
       unknown_id3v2_4_frame(frame_id4(id), tag_alter_preservation,
-                            file_alter_preservation, read_only, encryption_method,
-                            group_id, compressed, unsynchronised,
-                            data_len_indicator, p0, p1)
+                            file_alter_preservation, read_only,
+                            encryption_method, group_id, compressed,
+                            unsynchronised, data_len_indicator, p0, p1)
     { }
 
   public:
@@ -205,8 +220,9 @@ namespace scribbu {
              bool                                  unsynchronised,
              const boost::optional<std::size_t>   &data_len_indicator):
       id3v2_4_frame("UFID", p1 - p0, tag_alter_preservation,
-                    file_alter_preservation, read_only, encryption_method, group_id,
-                    compressed, unsynchronised, data_len_indicator),
+                    file_alter_preservation, read_only,
+                    encryption_method, group_id, compressed, unsynchronised,
+                    data_len_indicator),
       unique_file_id_(p0, p1)
     { }
 
@@ -214,22 +230,31 @@ namespace scribbu {
       return unique_file_id_;
     }
 
-    static std::unique_ptr<id3v2_4_frame> create(const frame_id4                      &id,
-                                                 const unsigned char                  *p,
-                                                 std::size_t                           cb,
-                                                 tag_alter_preservation                tag_alter_preservation,
-                                                 file_alter_preservation               file_alter_preservation,
-                                                 read_only                             read_only,
-                                                 const boost::optional<unsigned char> &encryption_method,
-                                                 const boost::optional<unsigned char> &group_id,
-                                                 bool                                  compressed,
-                                                 bool                                  unsynchronised,
-                                                 const boost::optional<std::size_t>   &data_len_indicator);
+    virtual void accept_for_print(id3v2_acyclic_visitor &P,
+                                  std::ostream          &os) const;
+
+    static std::unique_ptr<id3v2_4_frame>
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tag_alter_preservation,
+           file_alter_preservation               file_alter_preservation,
+           read_only                             read_only,
+           const boost::optional<unsigned char> &encryption_method,
+           const boost::optional<unsigned char> &group_id,
+           bool                                  compressed,
+           bool                                  unsynchronised,
+           const boost::optional<std::size_t>   &data_len_indicator);
 
   private:
     unique_file_id unique_file_id_;
 
   }; // End class UFID_2_4.
+
+  struct UFID_2_4_printer: public id3v2_acyclic_visitor
+  {
+    virtual void print_on(std::ostream&, const UFID_2_4 &x) = 0;
+  };
 
   class ENCR_2_4: public id3v2_4_frame {
 

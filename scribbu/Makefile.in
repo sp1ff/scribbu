@@ -141,8 +141,8 @@ libscribbu_la_LIBADD =
 am_libscribbu_la_OBJECTS = tbt-parser.lo tbt-lexer.lo \
 	program-parser.lo program-lexer.lo scribbu.lo id3v1.lo \
 	framesv2.lo framesv22.lo framesv23.lo framesv24.lo id3v2.lo \
-	id3v22.lo id3v23.lo id3v24.lo id3v2-utils.lo tbt-support.lo \
-	program-support.lo
+	id3v22.lo id3v23.lo id3v24.lo id3v2-utils.lo id3v2-printers.lo \
+	tbt-support.lo program-support.lo
 libscribbu_la_OBJECTS = $(am_libscribbu_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -385,8 +385,8 @@ BUILT_SOURCES = tbt-parser.cc tbt-parser.hh tbt-lexer.cc tbt-lexer.hh program-pa
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES)
 lib_LTLIBRARIES = libscribbu.la
-libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll program-parser.yy program-lexer.ll scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc tbt-support.cc program-support.cc
-include_HEADERS = scribbu.hh errors.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh tbt-support.hh program-support.hh
+libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll program-parser.yy program-lexer.ll scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc id3v2-printers.cc tbt-support.cc program-support.cc
+include_HEADERS = scribbu.hh errors.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh id3v2-printers.hh tbt-support.hh program-support.hh
 AM_CXXFLAGS = -std=c++11
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -479,6 +479,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv23.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv24.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v1.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v2-printers.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v2-utils.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v22.Plo@am__quote@

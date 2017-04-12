@@ -5,7 +5,14 @@
 //                         id3v2_2_tag nifty counter                         //
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef std::unordered_map<scribbu::frame_id3, scribbu::id3v2_2_tag::frame_parser> def_reg_type;
+typedef
+std::unordered_map<scribbu::frame_id3, scribbu::id3v2_2_tag::frame_parser>
+def_reg_type;
+
+typedef
+std::unordered_map<scribbu::frame_id3,
+                   scribbu::id3v2_2_tag::reserved_frame_parser>
+reserved_reg_type;
 
 static unsigned int nifty_counter_ = 0;
 
@@ -17,6 +24,11 @@ static typename
 std::aligned_storage< sizeof(def_reg_type), alignof(def_reg_type)>::type
 map_buf_;
 
+static typename
+std::aligned_storage< sizeof(reserved_reg_type),
+                      alignof(reserved_reg_type)>::type
+reserved_buf_;
+
 /*static*/ std::mutex&
 scribbu::id3v2_2_tag::mutex_ =
   reinterpret_cast<std::mutex&>(mutex_buf_);
@@ -25,55 +37,68 @@ scribbu::id3v2_2_tag::mutex_ =
 scribbu::id3v2_2_tag::default_parsers_ =
   reinterpret_cast<def_reg_type&>(map_buf_);
 
+/*static*/ reserved_reg_type&
+scribbu::id3v2_2_tag::reserved_parsers_ =
+  reinterpret_cast<reserved_reg_type&>(reserved_buf_);
+
 scribbu::id3v2_2_tag::static_initializer::static_initializer()
 {
   if (0 == nifty_counter_++) {
     new (&id3v2_2_tag::mutex_) std::mutex();
     new (&id3v2_2_tag::default_parsers_) def_reg_type();
+    new (&id3v2_2_tag::reserved_parsers_) reserved_reg_type();
 
 #   define REG(id, tag) \
-    id3v2_2_tag::default_parsers_.insert(std::make_pair(frame_id3((id)), tag::create)) \
+    id3v2_2_tag::default_parsers_.insert( \
+        std::make_pair(frame_id3((id)), tag::create)) \
 
-    REG("UFI", UFI);
-    REG("TT1", id3v2_2_text_frame);
-    REG("TT2", id3v2_2_text_frame);
-    REG("TT3", id3v2_2_text_frame);
-    REG("TP1", id3v2_2_text_frame);
-    REG("TP2", id3v2_2_text_frame);
-    REG("TP3", id3v2_2_text_frame);
-    REG("TP4", id3v2_2_text_frame);
-    REG("TCM", id3v2_2_text_frame);
-    REG("TXT", id3v2_2_text_frame);
-    REG("TLA", id3v2_2_text_frame);
-    REG("TCO", id3v2_2_text_frame);
-    REG("TAL", id3v2_2_text_frame);
-    REG("TPA", id3v2_2_text_frame);
-    REG("TRK", id3v2_2_text_frame);
-    REG("TRC", id3v2_2_text_frame);
-    REG("TYE", id3v2_2_text_frame);
-    REG("TDA", id3v2_2_text_frame);
-    REG("TIM", id3v2_2_text_frame);
-    REG("TRD", id3v2_2_text_frame);
-    REG("TMT", id3v2_2_text_frame);
-    REG("TFT", id3v2_2_text_frame);
-    REG("TBP", id3v2_2_text_frame);
-    REG("TCR", id3v2_2_text_frame);
-    REG("TPB", id3v2_2_text_frame);
-    REG("TEN", id3v2_2_text_frame);
-    REG("TSS", id3v2_2_text_frame);
-    REG("TOF", id3v2_2_text_frame);
-    REG("TLE", id3v2_2_text_frame);
-    REG("TSI", id3v2_2_text_frame);
-    REG("TDY", id3v2_2_text_frame);
-    REG("TKE", id3v2_2_text_frame);
-    REG("TOT", id3v2_2_text_frame);
-    REG("TOA", id3v2_2_text_frame);
-    REG("TOL", id3v2_2_text_frame);
-    REG("TOR", id3v2_2_text_frame);
-    REG("TXX", TXX);
-    REG("COM", COM);
-    REG("CNT", CNT);
+#   define RREG(id, pfn) \
+    id3v2_2_tag::reserved_parsers_.insert( \
+        std::make_pair(frame_id3((id)), &id3v2_2_tag::pfn)) \
+
+    RREG("CNT", create_CNT);
+    RREG("COM", create_COM);
+    RREG("TXX", create_TXX);
+    RREG("UFI", create_UFI);
+    RREG("TT1", create_text_frame);
+    RREG("TT2", create_text_frame);
+    RREG("TT3", create_text_frame);
+    RREG("TP1", create_text_frame);
+    RREG("TP2", create_text_frame);
+    RREG("TP3", create_text_frame);
+    RREG("TP4", create_text_frame);
+    RREG("TCM", create_text_frame);
+    RREG("TXT", create_text_frame);
+    RREG("TLA", create_text_frame);
+    RREG("TCO", create_text_frame);
+    RREG("TAL", create_text_frame);
+    RREG("TPA", create_text_frame);
+    RREG("TRK", create_text_frame);
+    RREG("TRC", create_text_frame);
+    RREG("TYE", create_text_frame);
+    RREG("TDA", create_text_frame);
+    RREG("TIM", create_text_frame);
+    RREG("TRD", create_text_frame);
+    RREG("TMT", create_text_frame);
+    RREG("TFT", create_text_frame);
+    RREG("TBP", create_text_frame);
+    RREG("TCR", create_text_frame);
+    RREG("TPB", create_text_frame);
+    RREG("TEN", create_text_frame);
+    RREG("TSS", create_text_frame);
+    RREG("TOF", create_text_frame);
+    RREG("TLE", create_text_frame);
+    RREG("TSI", create_text_frame);
+    RREG("TDY", create_text_frame);
+    RREG("TKE", create_text_frame);
+    RREG("TOT", create_text_frame);
+    RREG("TOA", create_text_frame);
+    RREG("TOL", create_text_frame);
+    RREG("TOR", create_text_frame);
+
     REG("POP", POP);
+
+#   undef RREG
 #   undef REG
 
   }
@@ -84,6 +109,7 @@ scribbu::id3v2_2_tag::static_initializer::~static_initializer()
   if (0 == --nifty_counter_) {
     (&id3v2_2_tag::mutex_)->~mutex();
     (&id3v2_2_tag::default_parsers_)->~unordered_map();
+    (&id3v2_2_tag::reserved_parsers_)->~unordered_map();
   }
 }
 
@@ -109,109 +135,155 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
   parse(is);
 }
 
-/*virtual*/
-std::string
-scribbu::id3v2_2_tag::to_string() const
+/*virtual*/ void
+scribbu::id3v2_2_tag::accept_for_print(id3v2_acyclic_visitor &V,
+                                       std::ostream          &os) const
 {
+  id3v2_2_tag_printer *p = dynamic_cast<id3v2_2_tag_printer*>(&V);
+  if (p) {
+    p->print_on(os, *this);
+  }
 
+  for (std::ptrdiff_t i = 0; i < frames_.size(); ++i) {
 
-}
+    if (comments_.count(i)) {
+      comments_.at(i)->accept_for_print(V, os);
+    }
+    else if (play_counts_.count(i)) {
+      play_counts_.at(i)->accept_for_print(V, os);
+    }
+    else if (ufids_.count(i)) {
+      ufids_.at(i)->accept_for_print(V, os);
+    }
+    else if (udts_.count(i)) {
+      udts_.at(i)->accept_for_print(V, os);
+    }
+    else if (texts_pos_.count(i)) {
+      texts_pos_.at(i)->accept_for_print(V, os);
+    }
+    else {
+      frames_.at(i)->accept_for_print(V, os);
+    }
+
+  } // End iteration over frames.
+
+} // End id3v2_2_tag::accept_for_print.
 
 /*virtual*/
 std::size_t
 scribbu::id3v2_2_tag::all_comments(std::vector<scribbu::comments> &out) const
 {
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-
-  const frame_id3 ID("COM");
-
-  std::size_t nout = 0;
-  for (std::ptrdiff_t i = 0, n = frames_.size(); i < n; ++i) {
-    if (ID == frames_[i]->id()) {
-      const COM &F = dynamic_cast<const COM&>(*frames_[i]);
-      out.push_back(F.data());
-      ++nout;
-    }
+  for (auto p: comments_) {
+    out.push_back(p.second->data());
   }
-
-  return nout;
-
+  return comments_.size();
 }
 
 /*virtual*/
 std::size_t
 scribbu::id3v2_2_tag::all_play_counts(std::vector<scribbu::play_count> &out) const
 {
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-
-  const frame_id3 ID("CNT");
-
-  std::size_t nout = 0;
-  for (std::ptrdiff_t i = 0, n = frames_.size(); i < n; ++i) {
-    if (ID == frames_[i]->id()) {
-      const CNT &F = dynamic_cast<const CNT&>(*frames_[i]);
-      out.push_back(F.count());
-      ++nout;
-    }
+  for (auto p: play_counts_) {
+    out.push_back(p.second->count());
   }
-
-  return nout;
-
-}
-
-/*virtual*/
-std::size_t
-scribbu::id3v2_2_tag::all_ufids(std::vector<scribbu::unique_file_id> &out) const
-{
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-
-  const frame_id3 ID("UFI");
-
-  std::size_t nout = 0;
-  for (std::ptrdiff_t i = 0, n = frames_.size(); i < n; ++i) {
-    if (ID == frames_[i]->id()) {
-      const UFI &F = dynamic_cast<const UFI&>(*frames_[i]);
-      out.push_back(F.file_id());
-      ++nout;
-    }
-  }
-
-  return nout;
-
+  return play_counts_.size();
 }
 
 /*virtual*/
 std::size_t
 scribbu::id3v2_2_tag::all_udts(std::vector<scribbu::user_defined_text> &out) const
 {
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-  using scribbu::frame_id3;
-  using scribbu::TXX;
-
-  const frame_id3 ID("TXX");
-
-  std::size_t nout = 0;
-  for (std::ptrdiff_t i = 0, n = frames_.size(); i < n; ++i) {
-    if (ID == frames_[i]->id()) {
-      const TXX &F = dynamic_cast<const TXX&>(*frames_[i]);
-      out.push_back(F.udt());
-      ++nout;
-    }
+  for (auto p: udts_) {
+    out.push_back(p.second->udt());
   }
-
-  return nout;
-
+  return udts_.size();
 }
 
-/*static*/ bool
-scribbu::id3v2_2_tag::register_default_frame_parser(const frame_id3 &id, const frame_parser &F)
+/*virtual*/
+std::size_t
+scribbu::id3v2_2_tag::all_ufids(std::vector<scribbu::unique_file_id> &out) const
+{
+  for (auto p: ufids_) {
+    out.push_back(p.second->file_id());
+  }
+  return ufids_.size();
+}
+
+/*static*/
+bool
+scribbu::id3v2_2_tag::has_framework_parser(const frame_id3 &id)
+{
+  return "COM" == id || "CNT" == id || "UFI" == id || "TXX" == id || id.text();
+}
+
+/*static*/
+bool
+scribbu::id3v2_2_tag::register_default_frame_parser(const frame_id3 &id,
+                                                    const frame_parser &F)
 {
   std::lock_guard<std::mutex> guard(mutex_);
   return default_parsers_.insert(std::make_pair(id, F)).second;
+}
+
+std::unique_ptr<scribbu::id3v2_2_frame>
+scribbu::id3v2_2_tag::create_COM(const frame_id3   &/*id*/,
+                                 std::ptrdiff_t       i,
+                                 const unsigned char *p,
+                                 std::size_t          cb)
+{
+  // TODO: Make this exception-safe
+  COM *pf = new COM(p, p + cb);
+  comments_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<scribbu::id3v2_2_frame>( pf );
+}
+
+std::unique_ptr<scribbu::id3v2_2_frame>
+scribbu::id3v2_2_tag::create_CNT(const frame_id3   &/*id*/,
+                                 std::ptrdiff_t       i,
+                                 const unsigned char *p,
+                                 std::size_t          cb)
+{
+  // TODO: Make this exception-safe
+  CNT *pf = new CNT(p, p + cb);
+  play_counts_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<scribbu::id3v2_2_frame>( pf );
+}
+
+std::unique_ptr<scribbu::id3v2_2_frame>
+scribbu::id3v2_2_tag::create_UFI(const frame_id3     & /*id*/,
+                                 std::ptrdiff_t       i,
+                                 const unsigned char *p,
+                                 std::size_t          cb)
+{
+  // TODO: Make this exception-safe
+  UFI *pf = new UFI(p, p + cb);
+  ufids_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<scribbu::id3v2_2_frame>( pf );
+}
+
+std::unique_ptr<scribbu::id3v2_2_frame>
+scribbu::id3v2_2_tag::create_TXX(const frame_id3   &/*id*/,
+                                 std::ptrdiff_t       i,
+                                 const unsigned char *p,
+                                 std::size_t          cb)
+{
+  // TODO: Make this exception-safe
+  TXX *pf = new TXX(p, p + cb);
+  udts_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<scribbu::id3v2_2_frame>( pf );
+}
+
+std::unique_ptr<scribbu::id3v2_2_frame>
+scribbu::id3v2_2_tag::create_text_frame(const frame_id3     &id,
+                                        std::ptrdiff_t       i,
+                                        const unsigned char *p,
+                                        std::size_t          cb)
+{
+  // TODO: Make this exception-safe
+  id3v2_2_text_frame *pf = new id3v2_2_text_frame(id, p, p + cb);
+  texts_pos_.insert(std::make_pair(i, pf));
+  text_.insert(std::make_pair(id, pf));
+  return std::unique_ptr<scribbu::id3v2_2_frame>( pf );
 }
 
 /**
@@ -252,8 +324,6 @@ scribbu::id3v2_2_tag::register_default_frame_parser(const frame_id3 &id, const f
 void scribbu::id3v2_2_tag::parse(std::istream &is)
 {
   using scribbu::detail::unsigned_from_non_sync_safe;
-
-  static const frame_id3 COM("COM");
 
   // Copy off the stream's exception mask, in case the caller is
   // counting on it...
@@ -298,7 +368,7 @@ void scribbu::id3v2_2_tag::parse(std::istream &is)
       // sec. 3.2.
 
       // 2. The tag contains padding after all the frames & we've reached
-      // that; I"The tag consists of a header, frames and
+      // that; "The tag consists of a header, frames and
       // optional padding" -- "ID3 tag version 2.2", sec. 2.0.
 
       // 3. The tag is corrupt
@@ -324,10 +394,10 @@ void scribbu::id3v2_2_tag::parse(std::istream &is)
       // OK-- unpack the frame size...
       cb_frame = unsigned_from_non_sync_safe(p0[3], p0[4], p0[5]);
       // use that to parse the frame & add the new frame to our collection...
-      frames_.push_back(parse_frame(id, p0 + 6, p0 + 6 + cb_frame));
+      std::size_t n = frames_.size() - 1;
+      frames_.push_back(parse_frame(id, n, p0 + 6, p0 + 6 + cb_frame));
       // & note the location of that frame in our lookup table.
-      frame_map_.insert(std::make_pair(id, frames_.size() - 1));
-
+      frame_map_.insert(std::make_pair(id, n));
     } // End iteration over frames.
 
   } catch (const std::exception &ex) {
@@ -340,23 +410,31 @@ void scribbu::id3v2_2_tag::parse(std::istream &is)
 
 std::unique_ptr<scribbu::id3v2_2_frame>
 scribbu::id3v2_2_tag::parse_frame(const frame_id3     &id,
+                                  std::ptrdiff_t       i,
                                   const unsigned char *p0,
-                                  const unsigned char *p1) const
+                                  const unsigned char *p1)
 {
-  parser_map_type::const_iterator p = parsers_.find(id);
-  if (parsers_.end() == p) {
-    return std::unique_ptr<id3v2_2_frame>(new unknown_id3v2_2_frame(id, p0, p1));
+  reserved_parser_map_type::const_iterator p = reserved_parsers_.find(id);
+  if (reserved_parsers_.end() != p) {
+    return (this->*(p->second))(id, i, p0, p1 - p0);
   }
   else {
-    return p->second(id, p0, p1 - p0);
+    parser_map_type::const_iterator p = parsers_.find(id);
+    if (parsers_.end() != p) {
+      return p->second(id, p0, p1 - p0);
+    }
+    else {
+      return std::unique_ptr<id3v2_2_frame>(new unknown_id3v2_2_frame(id, p0, p1));
+    }
   }
 }
 
 /// Lookup a text frame, convert its data from its native encoding to
 /// UTF-8, return as a string
-std::string scribbu::id3v2_2_tag::text_frame_as_utf8(const frame_id3 &id) const
+std::string
+scribbu::id3v2_2_tag::text_frame_as_utf8(const frame_id3 &id) const
 {
-  std::size_t n = frame_map_.count(id);
+  std::size_t n = text_.count(id);
   if (0 == n) {
     throw unknown_frame_error(id);
   }
@@ -364,12 +442,6 @@ std::string scribbu::id3v2_2_tag::text_frame_as_utf8(const frame_id3 &id) const
     throw duplicate_frame_error(id, n);
   }
 
-  std::ptrdiff_t idx = frame_map_.find(id)->second;
-
-  // TODO: Re-evaluate this to see if I can re-structure in such a way as to
-  // not need the dynamic cast...
-  const id3v2_2_text_frame &F = dynamic_cast<const id3v2_2_text_frame&>( *frames_[idx].get() );
-
-  return F.as_utf8();
+  return text_.find(id)->second->as_utf8();
 
 }

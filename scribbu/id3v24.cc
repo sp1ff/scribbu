@@ -8,7 +8,15 @@
 //                         id3v2_4_tag nifty counter                         //
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef std::unordered_map<scribbu::frame_id4, scribbu::id3v2_4_tag::frame_parser> def_reg_type;
+typedef
+std::unordered_map<scribbu::frame_id4,
+                   scribbu::id3v2_4_tag::frame_parser>
+def_reg_type;
+
+typedef
+std::unordered_map<scribbu::frame_id4,
+                   scribbu::id3v2_4_tag::reserved_frame_parser>
+reserved_reg_type;
 
 static unsigned int nifty_counter_ = 0;
 
@@ -20,6 +28,11 @@ static typename
 std::aligned_storage< sizeof(def_reg_type), alignof(def_reg_type)>::type
 map_buf_;
 
+static typename
+std::aligned_storage< sizeof(reserved_reg_type),
+                      alignof(reserved_reg_type)>::type
+reserved_buf_;
+
 /*static*/ std::mutex&
 scribbu::id3v2_4_tag::mutex_ =
   reinterpret_cast<std::mutex&>(mutex_buf_);
@@ -28,6 +41,10 @@ scribbu::id3v2_4_tag::mutex_ =
 scribbu::id3v2_4_tag::default_parsers_ =
   reinterpret_cast<def_reg_type&>(map_buf_);
 
+/*static*/ reserved_reg_type&
+scribbu::id3v2_4_tag::reserved_parsers_ =
+  reinterpret_cast<reserved_reg_type&>(reserved_buf_);
+
 scribbu::id3v2_4_tag::static_initializer::static_initializer()
 {
   if (0 == nifty_counter_++) {
@@ -35,53 +52,57 @@ scribbu::id3v2_4_tag::static_initializer::static_initializer()
     new (&id3v2_4_tag::default_parsers_) def_reg_type();
 
 #   define REG(id, tag) \
-    id3v2_4_tag::default_parsers_.insert(std::make_pair(frame_id4((id)), tag::create)) \
+    id3v2_4_tag::default_parsers_.insert( \
+      std::make_pair(frame_id4((id)), tag::create)) \
 
-    REG("UFID", UFID_2_4);
-    REG("ENCR", ENCR_2_4);
-    REG("TALB", id3v2_4_text_frame);
-    REG("TBPM", id3v2_4_text_frame);
-    REG("TCOM", id3v2_4_text_frame);
-    REG("TCON", id3v2_4_text_frame);
-    REG("TCOP", id3v2_4_text_frame);
-    REG("TDAT", id3v2_4_text_frame);
-    REG("TDLY", id3v2_4_text_frame);
-    REG("TENC", id3v2_4_text_frame);
-    REG("TEXT", id3v2_4_text_frame);
-    REG("TFLT", id3v2_4_text_frame);
-    REG("TIME", id3v2_4_text_frame);
-    REG("TIT1", id3v2_4_text_frame);
-    REG("TIT2", id3v2_4_text_frame);
-    REG("TIT3", id3v2_4_text_frame);
-    REG("TKEY", id3v2_4_text_frame);
-    REG("TLAN", id3v2_4_text_frame);
-    REG("TLEN", id3v2_4_text_frame);
-    REG("TMED", id3v2_4_text_frame);
-    REG("TOAL", id3v2_4_text_frame);
-    REG("TOFN", id3v2_4_text_frame);
-    REG("TOLY", id3v2_4_text_frame);
-    REG("TOPE", id3v2_4_text_frame);
-    REG("TORY", id3v2_4_text_frame);
-    REG("TOWN", id3v2_4_text_frame);
-    REG("TPE1", id3v2_4_text_frame);
-    REG("TPE2", id3v2_4_text_frame);
-    REG("TPE3", id3v2_4_text_frame);
-    REG("TPE4", id3v2_4_text_frame);
-    REG("TPOS", id3v2_4_text_frame);
-    REG("TPUB", id3v2_4_text_frame);
-    REG("TRCK", id3v2_4_text_frame);
-    REG("TRDA", id3v2_4_text_frame);
-    REG("TRSN", id3v2_4_text_frame);
-    REG("TRSO", id3v2_4_text_frame);
-    REG("TSIZ", id3v2_4_text_frame);
-    REG("TSRC", id3v2_4_text_frame);
-    REG("TSSE", id3v2_4_text_frame);
-    REG("TYER", id3v2_4_text_frame);
-    REG("TXXX", TXXX_2_4);
-    REG("COMM", COMM_2_4);
-    REG("PCNT", PCNT_2_4);
-    REG("POPM", POPM_2_4);
+#   define RREG(id, pfn) \
+    id3v2_4_tag::reserved_parsers_.insert( \
+        std::make_pair(frame_id4((id)), &id3v2_4_tag::pfn)) \
 
+    RREG("COMM", create_COMM);
+    RREG("PCNT", create_PCNT);
+    RREG("TXXX", create_TXXX);
+    RREG("UFID", create_UFID);
+    RREG("TALB", create_text_frame);
+    RREG("TBPM", create_text_frame);
+    RREG("TCOM", create_text_frame);
+    RREG("TCON", create_text_frame);
+    RREG("TCOP", create_text_frame);
+    RREG("TDAT", create_text_frame);
+    RREG("TDLY", create_text_frame);
+    RREG("TENC", create_text_frame);
+    RREG("TEXT", create_text_frame);
+    RREG("TFLT", create_text_frame);
+    RREG("TIME", create_text_frame);
+    RREG("TIT1", create_text_frame);
+    RREG("TIT2", create_text_frame);
+    RREG("TIT3", create_text_frame);
+    RREG("TKEY", create_text_frame);
+    RREG("TLAN", create_text_frame);
+    RREG("TLEN", create_text_frame);
+    RREG("TMED", create_text_frame);
+    RREG("TOAL", create_text_frame);
+    RREG("TOFN", create_text_frame);
+    RREG("TOLY", create_text_frame);
+    RREG("TOPE", create_text_frame);
+    RREG("TORY", create_text_frame);
+    RREG("TOWN", create_text_frame);
+    RREG("TPE1", create_text_frame);
+    RREG("TPE2", create_text_frame);
+    RREG("TPE3", create_text_frame);
+    RREG("TPE4", create_text_frame);
+    RREG("TPOS", create_text_frame);
+    RREG("TPUB", create_text_frame);
+    RREG("TRCK", create_text_frame);
+    RREG("TRDA", create_text_frame);
+    RREG("TRSN", create_text_frame);
+    RREG("TRSO", create_text_frame);
+    RREG("TSIZ", create_text_frame);
+    RREG("TSRC", create_text_frame);
+    RREG("TSSE", create_text_frame);
+    RREG("TYER", create_text_frame);
+
+#   undef RREG
 #   undef REG
   }
 }
@@ -91,6 +112,7 @@ scribbu::id3v2_4_tag::static_initializer::~static_initializer()
   if (0 == --nifty_counter_) {
     (&id3v2_4_tag::mutex_)->~mutex();
     (&id3v2_4_tag::default_parsers_)->~unordered_map();
+    (&id3v2_4_tag::reserved_parsers_)->~unordered_map();
   }
 }
 
@@ -342,6 +364,48 @@ scribbu::id3v2_4_tag::all_udts(std::vector<scribbu::user_defined_text> &out) con
 
   return nout;
 
+}
+
+/*virtual*/ void
+scribbu::id3v2_4_tag::accept_for_print(id3v2_acyclic_visitor &V,
+                                       std::ostream          &os) const
+{
+  id3v2_4_tag_printer *p = dynamic_cast<id3v2_4_tag_printer*>(&V);
+  if (p) {
+    p->print_on(os, *this);
+  }
+
+  for (std::ptrdiff_t i = 0; i < frames_.size(); ++i) {
+
+    if (comments_.count(i)) {
+      comments_.at(i)->accept_for_print(V, os);
+    }
+    else if (play_counts_.count(i)) {
+      play_counts_.at(i)->accept_for_print(V, os);
+    }
+    else if (ufids_.count(i)) {
+      ufids_.at(i)->accept_for_print(V, os);
+    }
+    else if (udts_.count(i)) {
+      udts_.at(i)->accept_for_print(V, os);
+    }
+    else if (texts_pos_.count(i)) {
+      texts_pos_.at(i)->accept_for_print(V, os);
+    }
+    else {
+      frames_.at(i)->accept_for_print(V, os);
+    }
+
+  } // End iteration over frames.
+
+} // End id3v2_4_tag::accept_for_print.
+
+/*static*/
+bool
+scribbu::id3v2_4_tag::has_framework_parser(const frame_id4 &id)
+{
+  return "COMM" == id || "PCNT" == id || "UFID" == id ||
+    "TXXX" == id || id.text();
 }
 
 std::tuple<boost::shared_array<unsigned char>, std::size_t>
@@ -656,6 +720,141 @@ void scribbu::id3v2_4_tag::register_encryption_method(const ENCR_2_4 &encr)
 
   encryption_methods_.insert(std::make_pair(encr.method().method_symbol(), encr));
 
+}
+
+/*static*/
+std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::id3v2_4_tag::create_COMM(
+  const frame_id4                    &/*id*/,
+  std::ptrdiff_t                        i,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  bool                                  compressed,
+  bool                                  unsynchronised,
+  const boost::optional<std::size_t>   &data_len_indicator)
+{
+  // TODO: Make this exception-safe
+  COMM_2_4 *pf = new COMM_2_4(p, p + cb,
+                              tag_alter_preservation,
+                              file_alter_preservation,
+                              read_only, encryption_method,
+                              group_id, compressed,
+                              unsynchronised, data_len_indicator);
+  comments_.insert(std::make_pair(i, pf));
+  return  std::unique_ptr<id3v2_4_frame>(pf);
+}
+
+/*static*/
+std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::id3v2_4_tag::create_PCNT(
+  const frame_id4                      &id,
+  std::ptrdiff_t                        i,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  bool                                  compressed,
+  bool                                  unsynchronised,
+  const boost::optional<std::size_t>   &data_len_indicator)
+{
+  // TODO: Make this exception-safe
+  PCNT_2_4 * pf = new PCNT_2_4(p, p + cb,
+                               tag_alter_preservation,
+                               file_alter_preservation,
+                               read_only, encryption_method,
+                               group_id, compressed,
+                               unsynchronised, data_len_indicator);
+  play_counts_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<id3v2_4_frame>(pf);
+}
+
+/*static*/
+std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::id3v2_4_tag::create_UFID(
+  const frame_id4                      &id,
+  std::ptrdiff_t                        i,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  bool                                  compressed,
+  bool                                  unsynchronised,
+  const boost::optional<std::size_t>   &data_len_indicator)
+{
+  // TODO: Make this exception-safe
+  UFID_2_4 *pf = new UFID_2_4(p, p + cb,
+                              tag_alter_preservation,
+                              file_alter_preservation,
+                              read_only, encryption_method,
+                              group_id, compressed,
+                              unsynchronised, data_len_indicator);
+  ufids_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<id3v2_4_frame>(pf);
+}
+
+std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::id3v2_4_tag::create_TXXX(
+  const frame_id4                    &/*id*/,
+  std::ptrdiff_t                        i,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  bool                                  compressed,
+  bool                                  unsynchronisation,
+  const boost::optional<std::size_t>   &data_len_ind)
+{
+  // TODO: Make this exception-safe
+  TXXX_2_4 *pf = new TXXX_2_4(p, p + cb,
+                              tag_alter_preservation,
+                              file_alter_preservation,
+                              read_only, encryption_method,
+                              group_id, compressed,
+                              unsynchronisation, data_len_ind);
+  udts_.insert(std::make_pair(i, pf));
+  return std::unique_ptr<id3v2_4_frame>(pf);
+}
+
+std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::id3v2_4_tag::create_text_frame(
+  const frame_id4                      &id,
+  std::ptrdiff_t                        i,
+  const unsigned char                  *p,
+  std::size_t                           cb,
+  tag_alter_preservation                tag_alter_preservation,
+  file_alter_preservation               file_alter_preservation,
+  read_only                             read_only,
+  const boost::optional<unsigned char> &encryption_method,
+  const boost::optional<unsigned char> &group_id,
+  bool                                  compressed,
+  bool                                  unsynchronisation,
+  const boost::optional<std::size_t>   &data_len_ind)
+{
+  // TODO: Make this exception-safe
+  id3v2_4_text_frame *pf =
+    new id3v2_4_text_frame(id, p, p + cb,
+                           tag_alter_preservation,
+                           file_alter_preservation,
+                           read_only, encryption_method,
+                           group_id, compressed,
+                           unsynchronisation, data_len_ind);
+  texts_pos_.insert(std::make_pair(i, pf));
+  text_.insert(std::make_pair(id, pf));
+  return std::unique_ptr<id3v2_4_frame>(pf);
 }
 
 /// Lookup a text frame, convert its data from its native encoding to

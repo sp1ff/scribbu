@@ -93,6 +93,9 @@ namespace scribbu {
     bool null() const {
       return 0 == id_[0] && 0 == id_[1] && 0 == id_[2];
     }
+    bool text() const {
+      return 'T' == id_[0] && ('X' != id_[1] || 'X' != id_[2]);
+    }
 
   private:
     bool experimental_;
@@ -133,6 +136,9 @@ namespace scribbu {
     bool null() const {
       return 0 == id_[0] && 0 == id_[1] && 0 == id_[2] && 0 == id_[3];
     }
+    bool text() const {
+      return 'T' == id_[0] && ('X' != id_[1] || 'X' != id_[2] || 'X' != id_[3]);
+    }
 
   private:
     bool experimental_;
@@ -167,6 +173,22 @@ namespace std {
 
 namespace scribbu {
 
+  /// Degenerate base class for acylclic visitors to the ID3v2 hierarchy
+  /// (Cf. http://condor.depaul.edu/dmumaugh/OOT/Design-Principles/acv.pdf)
+  /// In Progress: Expand this documentation
+  struct id3v2_acyclic_visitor
+  {
+    virtual ~id3v2_acyclic_visitor()
+    { }
+  };
+
+  /// Base class for all ID3v2 IOStream manipulators-- defines the iword/ pword
+  /// index used by all of them
+  struct id3v2_manip
+  {
+    static int index();
+  };
+
   /**
    * \brief Base class for all ID3v2 frames
    *
@@ -177,7 +199,8 @@ namespace scribbu {
    *
    */
 
-  class id3v2_frame {
+  class id3v2_frame
+  {
   public:
     /// N.B. the size parameter is the size of this frame, in bytes, *not*
     /// including the header, and after any resynchronisation, decompression,
@@ -198,6 +221,8 @@ namespace scribbu {
     std::size_t size() const {
       return size_;
     }
+    virtual void accept_for_print(id3v2_acyclic_visitor &V,
+                                  std::ostream          &os) const = 0;
   private:
     std::size_t size_;
     bool experimental_;

@@ -2,6 +2,38 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//                            class id3v2_4_frame                            //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::id3v2_4_frame::accept_for_print(id3v2_acyclic_visitor &P,
+                                         std::ostream          &os) const
+{
+  id3v2_4_frame_printer *p = dynamic_cast<id3v2_4_frame_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class UFID_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::UFID_2_4::accept_for_print(id3v2_acyclic_visitor &P,
+                                    std::ostream          &os) const
+{
+  UFID_2_4_printer *p = dynamic_cast<UFID_2_4_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 //                         class id3v2_4_text_frame                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -61,26 +93,6 @@ scribbu::id3v2_4_text_frame::create(const frame_id4                      &id,
 //                     miscellaneous creation functions                      //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
-scribbu::UFID_2_4::create(const frame_id4                      &id,
-                          const unsigned char                  *p,
-                          std::size_t                           cb,
-                          tag_alter_preservation                tag_alter_preservation,
-                          file_alter_preservation               file_alter_preservation,
-                          read_only                             read_only,
-                          const boost::optional<unsigned char> &encryption_method,
-                          const boost::optional<unsigned char> &group_id,
-                          bool                                  compressed,
-                          bool                                  unsynchronised,
-                          const boost::optional<std::size_t>   &data_len_indicator)
-{
-  return std::unique_ptr<id3v2_4_frame>(new UFID_2_4(p, p + cb,
-                                                     tag_alter_preservation,
-                                                     file_alter_preservation,
-                                                     read_only, encryption_method,
-                                                     group_id, compressed,
-                                                     unsynchronised, data_len_indicator));
-}
 
 /*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
 scribbu::ENCR_2_4::create(const frame_id4                      &id,
@@ -122,48 +134,6 @@ scribbu::TXXX_2_4::create(const frame_id4                      &id,
                                                        read_only, encryption_method,
                                                        group_id, compressed,
                                                        unsynchronised, data_len_indicator));
-}
-
-/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
-scribbu::COMM_2_4::create(const frame_id4                      &id,
-                          const unsigned char                  *p,
-                          std::size_t                           cb,
-                          tag_alter_preservation                tag_alter_preservation,
-                          file_alter_preservation               file_alter_preservation,
-                          read_only                             read_only,
-                          const boost::optional<unsigned char> &encryption_method,
-                          const boost::optional<unsigned char> &group_id,
-                          bool                                  compressed,
-                          bool                                  unsynchronised,
-                          const boost::optional<std::size_t>   &data_len_indicator)
-{
-  return std::unique_ptr<id3v2_4_frame>(new COMM_2_4(p, p + cb,
-                                                     tag_alter_preservation,
-                                                     file_alter_preservation,
-                                                     read_only, encryption_method,
-                                                     group_id, compressed,
-                                                     unsynchronised, data_len_indicator));
-}
-
-/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
-scribbu::PCNT_2_4::create(const frame_id4                      &id,
-                          const unsigned char                  *p,
-                          std::size_t                           cb,
-                          tag_alter_preservation                tag_alter_preservation,
-                          file_alter_preservation               file_alter_preservation,
-                          read_only                             read_only,
-                          const boost::optional<unsigned char> &encryption_method,
-                          const boost::optional<unsigned char> &group_id,
-                          bool                                  compressed,
-                          bool                                  unsynchronised,
-                          const boost::optional<std::size_t>   &data_len_indicator)
-{
-  return std::unique_ptr<id3v2_4_frame>(new PCNT_2_4(p, p + cb,
-                                                     tag_alter_preservation,
-                                                     file_alter_preservation,
-                                                     read_only, encryption_method,
-                                                     group_id, compressed,
-                                                     unsynchronised, data_len_indicator));
 }
 
 /*static*/ std::unique_ptr<scribbu::id3v2_4_frame>

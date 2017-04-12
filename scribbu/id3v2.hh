@@ -1,19 +1,6 @@
 #ifndef ID3V2_HH_INCLUDED
 #define ID3V2_HH_INCLUDED 1
 
-#include <exception>
-#include <iostream>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-
-#include <boost/exception/all.hpp>
-#include <boost/shared_array.hpp>
-
-#include <scribbu/scribbu.hh>
-#include <scribbu/errors.hh>
-#include <scribbu/framesv2.hh>
-
 /**
  * \page scribbu_id3v2
  *
@@ -163,45 +150,58 @@
  *
  */
 
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+
+#include <boost/exception/all.hpp>
+#include <boost/shared_array.hpp>
+
+#include <scribbu/scribbu.hh>
+#include <scribbu/errors.hh>
+#include <scribbu/framesv2.hh>
+
 namespace scribbu {
 
   namespace detail {
 
-    std::size_t unsigned_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2);
-    std::uint32_t uint32_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2,
-                                        unsigned char b3);
-    std::uint32_t uint32_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2,
-                                        unsigned char b3,
-                                        unsigned char b4);
-    std::size_t unsigned_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2,
-                                        unsigned char b3);
-    std::uint32_t uint32_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2);
-    std::size_t unsigned_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2);
-    std::uint32_t uint32_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2,
-                                            unsigned char b3);
-    std::size_t unsigned_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2,
-                                            unsigned char b3);
-    std::size_t unsigned_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2,
-                                        unsigned char b3,
-                                        unsigned char b4);
+    std::size_t   unsigned_from_sync_safe    (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2);
+    std::uint32_t uint32_from_sync_safe      (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2,
+                                              unsigned char b3);
+    std::uint32_t uint32_from_sync_safe      (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2,
+                                              unsigned char b3,
+                                              unsigned char b4);
+    std::size_t   unsigned_from_sync_safe    (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2,
+                                              unsigned char b3);
+    std::uint32_t uint32_from_non_sync_safe  (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2);
+    std::size_t   unsigned_from_non_sync_safe(unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2);
+    std::uint32_t uint32_from_non_sync_safe  (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2,
+                                              unsigned char b3);
+    std::size_t   unsigned_from_non_sync_safe(unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2,
+                                              unsigned char b3);
+    std::size_t   unsigned_from_sync_safe    (unsigned char b0,
+                                              unsigned char b1,
+                                              unsigned char b2,
+                                              unsigned char b3,
+                                              unsigned char b4);
   }
 
   class zlib_error: public virtual boost::exception,
@@ -263,27 +263,28 @@ namespace scribbu {
    * \brief Restore false sync signals in a buffer
    *
    *
-   * \param p [in] Address of the buffer to be resynchronized; note that the
-   * buffer will be resynchronized in-place
+   * \param p [in] Address of the buffer to be resynchronized; note
+   * that the buffer will be resynchronized in-place
    *
    * \param cb [in] The number of bytes in the buffer
    *
    * \return The number of bytes in the resynchronized buffer
    *
    *
-   * "Unsynchronisation"   refers   to   the    process   of   removing   false
-   * synchronisations when  writing an ID3v2  tag; cf.  sec.  5 of  the ID3v2.3
-   * specification, or  \ref scribbu_id3v2_unsync  "here" for  background.  For
-   * purposes of  this discussion, resynchronisation  refers to the  process of
-   * replacing each two-byte sequence 0xff, 0x00 with just 0xff in the provided
-   * buffer.
+   * "Unsynchronisation"  refers  to  the process  of  removing  false
+   * synchronisations when writing  an ID3v2 tag; cf.  sec.   5 of the
+   * ID3v2.3  specification, or  \ref scribbu_id3v2_unsync  "here" for
+   * background.  For  purposes of this  discussion, resynchronisation
+   * refers to the  process of replacing each  two-byte sequence 0xff,
+   * 0x00 with just 0xff in the provided buffer.
    *
-   * This  implementation   will  perform   the  resynchronisation   in  place;
+   * This implementation will perform  the resynchronisation in place;
    * i.e. given an input buffer like so:
    *
    \code
 
-     [0x00, 0x01, 0xff, 0x00, 0x02, 0x03, 0xff, 0x00, 0x04, 0x05, 0xff, 0x00, 0x06, 0x07]
+     [0x00, 0x01, 0xff, 0x00, 0x02, 0x03, 0xff, 0x00, 0x04, 0x05,
+     0xff, 0x00, 0x06, 0x07]
 
    \endcode
    *
@@ -291,23 +292,26 @@ namespace scribbu {
    *
    \code
 
-     [0x00, 0x01, 0xff, 0x02, 0x03, 0xff, 0x04, 0x05, 0xff, 0x06, 0x07, 0x00, 0x06, 0x07]
+     [0x00, 0x01, 0xff, 0x02, 0x03, 0xff, 0x04, 0x05, 0xff, 0x06,
+     0x07, 0x00, 0x06, 0x07]
 
    \endcode
    *
    * and return a value of eleven.
    *
-   * I chose this interface for two reasons,  the first being that it avoids an
-   * allocation  &  the  second  being  that the  copies  follow  a  particular
-   * pattern. In this example, we copy the following ranges:
+   * I chose this  interface for two reasons, the first  being that it
+   * avoids an allocation & the second  being that the copies follow a
+   * particular  pattern.  In  this  example, we  copy  the  following
+   * ranges:
    *
    * - [4,7) -> [3,6)
    * - [8,11) -> [6,9)
    * - [12,14) -> [9,11)
    *
-   * Note  that for  each successive  false sync  being restored,  we can  copy
-   * successively  larger  & larger  chunks  at  each  time, leaving  open  the
-   * possibility for optimization through loop unrolling, SSE, &c.
+   * Note that for  each successive false sync being  restored, we can
+   * copy successively  larger & larger  chunks at each  time, leaving
+   * open  the possibility  for optimization  through loop  unrolling,
+   * SSE, &c.
    *
    *
    */
@@ -320,9 +324,9 @@ namespace scribbu {
    * \brief Core ID3v2 functionality
    *
    *
-   * TODO: I suspect I can re-factor the 'parse' routines in each of the three
-   * subclasses into one (using the Template Pattern), but I want to get a
-   * working unit test suite in place, first.
+   * TODO: I suspect I can re-factor the 'parse' routines in each of
+   * the three subclasses into one (using the Template Pattern), but I
+   * want to get a working unit test suite in place, first.
    *
    *
    */
@@ -418,24 +422,6 @@ namespace scribbu {
     id3v2_tag(const id3v2_info &H);
 
   public:
-    virtual std::string to_string() const = 0;
-
-    template <typename char_type, typename char_traits>
-    void print_on(std::basic_ostream<char_type, char_traits> &os) const
-    {
-      using namespace std;
-
-      string s = to_sting();
-
-      char_type buf[s.length() + 1];
-
-      const ctype<char_type> &C = use_facet<ctype<char_type>>(os.getloc());
-      C.widen(s.c_str(), s.c_str() + s.length(), buf);
-      buf[s.length()] = (char_type) 0;
-
-      os << buf;
-    }
-
     unsigned char version() const {
       return version_;
     }
@@ -468,38 +454,59 @@ namespace scribbu {
     virtual std::size_t has_title() const = 0;
     virtual std::size_t has_year() const = 0;
 
-    virtual std::size_t all_comments(std::vector<scribbu::comments> &out) const = 0;
-    virtual std::size_t all_play_counts(std::vector<scribbu::play_count> &out) const = 0;
-    virtual std::size_t all_udts(std::vector<scribbu::user_defined_text> &out) const = 0;
-    virtual std::size_t all_ufids(std::vector<scribbu::unique_file_id> &out) const = 0;
+    virtual std::size_t
+    all_comments(std::vector<scribbu::comments> &out) const = 0;
+    virtual std::size_t
+    all_play_counts(std::vector<scribbu::play_count> &out) const = 0;
+    virtual std::size_t
+    all_udts(std::vector<scribbu::user_defined_text> &out) const = 0;
+    virtual std::size_t
+    all_ufids(std::vector<scribbu::unique_file_id> &out) const = 0;
 
     template <typename forward_output_iterator>
-    forward_output_iterator get_all_comments(forward_output_iterator p) const {
+    forward_output_iterator
+    get_all_comments(forward_output_iterator p) const {
       std::vector<scribbu::comments> C;
       all_comments(C);
       return std::copy(C.begin(), C.end(), p);
     }
 
     template <typename forward_output_iterator>
-    forward_output_iterator get_all_play_counts(forward_output_iterator p) const {
+    forward_output_iterator
+    get_all_play_counts(forward_output_iterator p) const {
       std::vector<scribbu::play_count> P;
       all_play_counts(P);
       return std::copy(P.begin(), P.end(), p);
     }
 
     template <typename forward_output_iterator>
-    forward_output_iterator get_all_udts(forward_output_iterator p) const {
+    forward_output_iterator
+    get_all_udts(forward_output_iterator p) const {
       std::vector<scribbu::user_defined_text> P;
       all_udts(P);
       return std::copy(P.begin(), P.end(), p);
     }
 
     template <typename forward_output_iterator>
-    forward_output_iterator get_all_ufids(forward_output_iterator p) const {
+    forward_output_iterator
+    get_all_ufids(forward_output_iterator p) const {
       std::vector<scribbu::unique_file_id> P;
       all_ufids(P);
       return std::copy(P.begin(), P.end(), p);
     }
+
+    template <typename char_type, typename char_traits>
+    void print_on(std::basic_ostream<char_type, char_traits>& os) const
+    {
+      // TODO: basic_ios
+
+
+
+
+    }
+
+    virtual void accept_for_print(id3v2_acyclic_visitor &V,
+                                  std::ostream          &os) const = 0;
 
   private:
     // All derived from the standard ten-byte header
@@ -511,19 +518,19 @@ namespace scribbu {
 
   }; // End class id3v2_tag.
 
-  inline
-  std::ostream&
-  operator<<(std::ostream &os, const id3v2_tag &tag)
-  {
-    return scribbu::detail::insert(os, tag);
-  }
-
-  // TODO: Would be nice to offer a version that takes a range, but specialized
-  // for arrays
+  // TODO: Would be nice to offer a version that takes a range, but
+  // specialized for arrays
   std::string to_utf8(unsigned char        id3v2_version,
                       unsigned char        encoding,
                       const unsigned char *pbuf,
                       std::size_t          cbbuf);
+
+  template <typename char_type, typename char_traits>
+  std::basic_ostream<char_type, char_traits>&
+  operator<<(std::basic_ostream<char_type, char_traits>& os, const id3v2_2_tag &x)
+  {
+    return detail::insert(os, x);
+  }
 
 } // End namespace scribbu.
 

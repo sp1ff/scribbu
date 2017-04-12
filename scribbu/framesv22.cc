@@ -3,6 +3,37 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//                            class id3v2_2_frame                            //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void scribbu::id3v2_2_frame::accept_for_print(id3v2_acyclic_visitor &P,
+                                              std::ostream          &os) const
+{
+  id3v2_2_frame_printer *p = dynamic_cast<id3v2_2_frame_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                                 class UFI                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::UFI::accept_for_print(id3v2_acyclic_visitor &P,
+                               std::ostream          &os) const
+{
+  UFI_printer *p = dynamic_cast<UFI_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 //                         class id3v2_2_text_frame                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -30,42 +61,61 @@ std::string scribbu::id3v2_2_text_frame::as_utf8() const
   return to_utf8(guard, &(text_[0]), text_.size());
 }
 
-/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
-scribbu::id3v2_2_text_frame::create(const frame_id3& id, const unsigned char *p, std::size_t cb)
+/*virtual*/
+void
+scribbu::id3v2_2_text_frame::accept_for_print(id3v2_acyclic_visitor &P,
+                                              std::ostream          &os) const
 {
-  return std::unique_ptr<scribbu::id3v2_2_frame>( new id3v2_2_text_frame(id, p, p + cb) );
+  id3v2_2_text_printer *p = dynamic_cast<id3v2_2_text_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                                 class TXX                                 //
+///////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
-scribbu::UFI::create(const frame_id3& /*id*/, const unsigned char *p, std::size_t cb)
+/*virtual*/
+void
+scribbu::TXX::accept_for_print(id3v2_acyclic_visitor &P,
+                               std::ostream          &os) const
 {
-  return std::unique_ptr<scribbu::id3v2_2_frame>( new UFI(p, p + cb) );
+  TXX_printer *p = dynamic_cast<TXX_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
 }
 
-/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
-scribbu::TXX::create(const frame_id3& /*id*/, const unsigned char *p, std::size_t cb)
+
+///////////////////////////////////////////////////////////////////////////////
+//                                 class COM                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+void
+scribbu::COM:: accept_for_print(id3v2_acyclic_visitor &P,
+                                std::ostream          &os) const
 {
-  return std::unique_ptr<scribbu::id3v2_2_frame>( new TXX(p, p + cb) );
+  COM_printer *p = dynamic_cast<COM_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
 }
 
-/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
-scribbu::COM::create(const frame_id3& id, const unsigned char *p, std::size_t cb)
-{
-  return std::unique_ptr<scribbu::id3v2_2_frame>( new COM(p, p + cb) );
-}
+
+///////////////////////////////////////////////////////////////////////////////
+//                                 class CNT                                 //
+///////////////////////////////////////////////////////////////////////////////
 
-/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
-scribbu::CNT::create(const frame_id3& /*id*/, const unsigned char *p, std::size_t cb)
+/*virtual*/
+void
+scribbu::CNT:: accept_for_print(id3v2_acyclic_visitor &P,
+                                std::ostream          &os) const
 {
-  return std::unique_ptr<scribbu::id3v2_2_frame>( new CNT(p, p + cb) );
-}
-
-/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
-scribbu::POP::create(const frame_id3& /*id*/, const unsigned char *p, std::size_t cb)
-{
-  return std::unique_ptr<scribbu::id3v2_2_frame>( new POP(p, p + cb) );
+  CNT_printer *p = dynamic_cast<CNT_printer*>(&P);
+  if (p) {
+    p->print_on(os, *this);
+  }
 }
