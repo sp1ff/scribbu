@@ -1,25 +1,28 @@
 #include "config.h"
 #include "command-utilities.hh"
-#include "report.hh"
+
 #include <iomanip>
+
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/regex.hpp>
-#include <scribbu/scribbu.hh>
+
 #include <scribbu/id3v1.hh>
-#include <scribbu/id3v2.hh>
 #include <scribbu/id3v2-utils.hh>
+#include <scribbu/id3v2.hh>
+#include <scribbu/scribbu.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-const std::string USAGE("scribbu report -- generate a report\n"
-"\n"
-"scribbu report [option...] file-or-directory [file-or-directory...]\n"
-"\n"
-"Generate a report on one or more files. The idea is to have scribbu generate\n"
-"the data & export it to some other format more convenient for querying &\n"
-"reporting.\n");
+
+const std::string USAGE(R"(scribbu report -- generate a report
+
+scribbu report [option...] file-or-directory [file-or-directory...]
+
+Generate a report on one or more files. The idea is to have scribbu generate
+the data & export it to some other format more convenient for querying &
+reporting.)");
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -438,163 +441,164 @@ void sequential_strategy::process_directory(const fs::path &pth) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//                             handler                                        //
+////////////////////////////////////////////////////////////////////////////////
 
-int
-handle_report(const std::vector<std::string> &tokens,
-              help_level                      help)
-{
-  using namespace std;
+namespace {
 
-  int status = EXIT_SUCCESS;
+  int
+  handle_report(const std::vector<std::string>  &tokens,
+                help_level                       help,
+                const boost::optional<fs::path> &cfg)
+  {
+    using namespace std;
 
-  /////////////////////////////////////////////////////////////////////////////
-  //                                                                         //
-  //                       C O M M A N D   O P T I O N S                     //
-  //                                                                         //
-  // Let's divide the options in two ways:                                   //
-  //                                                                         //
-  // - public versus developer-only options                                  //
-  // - options permissible only on the command line versus options           //
-  //   permissible on the command line, configuration file, and the          //
-  //   environment                                                           //
-  //                                                                         //
-  //                            public   private                             //
-  //                          +--------+---------+                           //
-  //                cli-only  | clopts | xclopts |                           //
-  //                          +--------+---------+                           //
-  //                cli, cfg, |  opts  |  xopts  |                           //
-  //                & env     +--------+---------+                           //
-  //                                                                         //
-  /////////////////////////////////////////////////////////////////////////////
+    int status = EXIT_SUCCESS;
 
-  po::options_description clopts("command-line only options");
-  clopts.add_options()
-    ("config,c", po::value<fs::path>()->default_value(fs::path("~/.scribbu")),
-     "path (absolute or relative) to the config file")
-    ("help,h", "display the " PACKAGE " usage message & exit with status "
-     "zero");
+    /////////////////////////////////////////////////////////////////////////////
+    //                                                                         //
+    //                       C O M M A N D   O P T I O N S                     //
+    //                                                                         //
+    // Let's divide the options in two ways:                                   //
+    //                                                                         //
+    // - public versus developer-only options                                  //
+    // - options permissible only on the command line versus options           //
+    //   permissible on the command line, configuration file, and the          //
+    //   environment                                                           //
+    //                                                                         //
+    //                            public   private                             //
+    //                          +--------+---------+                           //
+    //                cli-only  | clopts | xclopts |                           //
+    //                          +--------+---------+                           //
+    //                cli, cfg, |  opts  |  xopts  |                           //
+    //                & env     +--------+---------+                           //
+    //                                                                         //
+    /////////////////////////////////////////////////////////////////////////////
 
-  po::options_description xclopts("command-line only developer options");
-  xclopts.add_options()
-    ("man", "display the " PACKAGE " usage message including developer-"
-     "only options & exit with status zero");
+    po::options_description clopts("command-line only options");
+    // None at this time...
 
-  po::options_description opts("general options");
-  opts.add_options()
-    // Work around to https://svn.boost.org/trac/boost/ticket/8535
-    ("arguments", po::value<std::vector<string>>()->required(), "one or more "
-     "files or directories to be examined; if a directory is given, it "
-     "will be searched recursively")
-    ("output,o", po::value<fs::path>()->required(), ".csv file to which the "
-     "results will be written");
+    po::options_description xclopts("command-line only developer options");
+    // None at this time...
 
-  po::options_description xopts("hidden options");
-
-  po::options_description docopts;
-  docopts.add(clopts).add(opts);
-
-  po::options_description nocli;
-  nocli.add(opts).add(xopts);
-
-  po::options_description all;
-  all.add(clopts).add(xclopts).add(opts).add(xopts);
-
-  po::positional_options_description popts;
-  popts.add("arguments", -1);
-
-  try {
-
-    if (help_level::regular == help) {
-      print_usage(cout, docopts, USAGE);
-    } else if (help_level::verbose == help) {
-      print_usage(cout, all, USAGE);
-    } else {
-
-      po::variables_map vm;
-
-      // Command line takes highest priority...
-      po::parsed_options parsed = po::command_line_parser(tokens).
-        options(all).
-        positional(popts).
-        run();
-
-      po::store(parsed, vm);
-
-      // followed by the configuration file...
-      fs::path cfg = vm["config"].as<fs::path>();
-      if (fs::exists(cfg)) {
-        fs::ifstream ifs(cfg);
-        parsed = po::parse_config_file(ifs, nocli);
-        po::store(parsed, vm);
-      } else if (!vm["config"].defaulted()) {
-        throw po::validation_error(po::validation_error::invalid_option_value,
-                                   cfg.string() + " does not exist");
-      }
-
-      // and finally any environment variables.
-      parsed = po::parse_environment(nocli, "SCRIBBU");
-      po::store(parsed, vm);
-
-      po::notify(vm);
-
-      // That's it-- the list of files and/or directories to be processed
-      // should be waiting for us in 'arguments'...
-
+    po::options_description opts("general options");
+    opts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      std::vector<fs::path> arguments;
-      for (auto s: vm["arguments"].as<std::vector<string>>()) {
-        arguments.push_back(fs::path(s));
+      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
+       "files or directories to be examined; if a directory is given, it "
+       "will be searched recursively")
+      ("output,o", po::value<fs::path>()->required(), ".csv file to which the "
+       "results will be written");
+
+    po::options_description xopts("hidden options");
+
+    po::options_description docopts;
+    docopts.add(clopts).add(opts);
+
+    po::options_description nocli;
+    nocli.add(opts).add(xopts);
+
+    po::options_description all;
+    all.add(clopts).add(xclopts).add(opts).add(xopts);
+
+    po::positional_options_description popts;
+    popts.add("arguments", -1);
+
+    try {
+
+      if (help_level::regular == help) {
+        print_usage(cout, docopts, USAGE);
+      } else if (help_level::verbose == help) {
+        print_usage(cout, all, USAGE);
+      } else {
+
+        po::variables_map vm;
+
+        // Command line takes highest priority...
+        po::parsed_options parsed = po::command_line_parser(tokens).
+          options(all).
+          positional(popts).
+          run();
+
+        po::store(parsed, vm);
+
+        // followed by the configuration file...
+        if (cfg) {
+          fs::ifstream ifs(cfg.get());
+          parsed = po::parse_config_file(ifs, nocli);
+          po::store(parsed, vm);
+        }
+
+        // and finally any environment variables.
+        parsed = po::parse_environment(nocli, "SCRIBBU");
+        po::store(parsed, vm);
+
+        po::notify(vm);
+
+        // That's it-- the list of files and/or directories to be processed
+        // should be waiting for us in 'arguments'...
+
+        // Work around to https://svn.boost.org/trac/boost/ticket/8535
+        std::vector<fs::path> arguments;
+        for (auto s: vm["arguments"].as<std::vector<string>>()) {
+          arguments.push_back(fs::path(s));
+        }
+
+        // Multi-threaded:
+
+        // - whip up a thread-safe reporter
+
+        // - whip up a queue
+
+        // - whip up a thread pool, giving it a reference to the queue & the reporter
+
+        // - whip up a crawler, giving it a reference to that thread
+        //   pool; the crawler will handle each file by pushing it onto
+        //   the queue (from the main thread)-- the threads will pull
+        //   items off the queue, process them, and send results to the
+        //   reporter
+
+        // - when the crawler has finished, it sets a flag & joins all
+        //   the threads in the thread pool; when that flag is set, and
+        //   a thread can pull no more items off the queue, it
+        //   terminates
+
+        // Single-threaded
+
+        // - whip up a non-thread-safe reporter
+
+        // - whip up a crawler, giving it a reference to the reporter;
+
+        // - the crawler will handle each file by processing it &
+        //   sending the results to the reporter
+
+        // TOOD: Implement the multi-threaded option
+
+        fs::path out = vm["output"].as<fs::path>();
+
+        std::shared_ptr<reporter> pr(new csv_reporter(out, 6));
+
+        std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
+
+        std::for_each(arguments.begin(), arguments.end(), std::ref(*ps));
+
       }
 
-      // Multi-threaded:
-
-      // - whip up a thread-safe reporter
-
-      // - whip up a queue
-
-      // - whip up a thread pool, giving it a reference to the queue & the reporter
-
-      // - whip up a crawler, giving it a reference to that thread
-      //   pool; the crawler will handle each file by pushing it onto
-      //   the queue (from the main thread)-- the threads will pull
-      //   items off the queue, process them, and send results to the
-      //   reporter
-
-      // - when the crawler has finished, it sets a flag & joins all
-      //   the threads in the thread pool; when that flag is set, and
-      //   a thread can pull no more items off the queue, it
-      //   terminates
-
-      // Single-threaded
-
-      // - whip up a non-thread-safe reporter
-
-      // - whip up a crawler, giving it a reference to the reporter;
-
-      // - the crawler will handle each file by processing it &
-      //   sending the results to the reporter
-
-      // TOOD: Implement the multi-threaded option
-
-      fs::path out = vm["output"].as<fs::path>();
-
-      std::shared_ptr<reporter> pr(new csv_reporter(out, 6));
-
-      std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
-
-      std::for_each(arguments.begin(), arguments.end(), std::ref(*ps));
-
+    } catch (const po::error &ex) {
+      cerr << ex.what() << endl;
+      print_usage(cerr, docopts, USAGE);
+      status = EXIT_INCORRECT_USAGE;
+    } catch (const std::exception &ex) {
+      cerr << ex.what() << endl;
+      status = EXIT_FAILURE;
     }
 
-  } catch (const po::error &ex) {
-    cerr << ex.what() << endl;
-    print_usage(cerr, docopts, USAGE);
-    status = EXIT_INCORRECT_USAGE;
-  } catch (const std::exception &ex) {
-    cerr << ex.what() << endl;
-    status = EXIT_FAILURE;
+    return status;
+
   }
 
-  return status;
+  register_command r("report", handle_report);
 
 }
+
+  

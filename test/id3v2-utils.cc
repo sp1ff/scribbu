@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
 {
   using scribbu::id3v2_tag;
 
-  const fs::path TEST_FILE("/vagrant/test/data/Pogues, The - Lorca's Novena.mp3");
+  const fs::path TEST_FILE("/vagrant/test/data/lorca.mp3");
 
   fs::ifstream ifs(TEST_FILE);
   std::unique_ptr<id3v2_tag> ptag = scribbu::maybe_read_id3v2(ifs);
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
 
 BOOST_AUTO_TEST_CASE( test_template_text )
 {
-  const fs::path TEST_FILE("/vagrant/test/data/Pogues, The - Lorca's Novena.mp3");
+  const fs::path TEST_FILE("/vagrant/test/data/lorca.mp3");
 
   using scribbu::template_processor;
 

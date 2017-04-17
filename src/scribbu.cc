@@ -1,33 +1,23 @@
-#include "config.h"
-#include "command.hh"
-#include "command-utilities.hh"
-#include "rename.hh"
-#include "report.hh"
-#include "split.hh"
 #include <iostream>
+
 #include <boost/lexical_cast.hpp>
-#include <boost/program_options.hpp>
+
+#include "config.h"
+#include "command-utilities.hh"
+
 #include <scribbu/scribbu.hh>
 
+namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 namespace {
 
-  void
-  print_version(std::ostream &os)
-  {
-    using namespace std;
-    os << PACKAGE_STRING << endl;
-  }
+  const std::string USAGE(R"(scribbu -- tag your music
 
-  std::map<command, handler_type> COMMANDS = {
-    { command::rename, handler_type(handle_rename) },
-    { command::report, handler_type(handle_report) },
-    { command::split,  handler_type(handle_split)  }
-  };
-
-  const std::string USAGE("scribbu -- tag your music\n\n");
-
+TODO: Write a usage message here...
+)");
+  
+  const fs::path DEFCFG("~/.scribbu");
 }
 
 int
@@ -36,13 +26,19 @@ main(int argc, char * argv[])
   using namespace std;
 
   using boost::lexical_cast;
+  using boost::optional;
 
   scribbu::static_initialize();
 
   int status = EXIT_SUCCESS;
 
+  // Global options, or options that apply to all sub-commands, should
+  // be defined here. Each sub-command will define & parse its own options
+  // separately.
   po::options_description gopts("Global options");
   gopts.add_options()
+    ("config,c", po::value<fs::path>()->default_value(DEFCFG),
+     "path (absolute or relative) to the config file")
     ("help,h", "print the " PACKAGE " usage message & exit with status zero")
     ("version,v", "print the " PACKAGE " version & exit with status zero");
 
@@ -55,7 +51,7 @@ main(int argc, char * argv[])
   hidden.add_options()
     ("sub-command", po::value<vector<string>>());
 
-  po::options_description global;
+  po::options_description global; // for error reporting, below.
   global.add(gopts).add(xgopts);
 
   try {
@@ -78,54 +74,76 @@ main(int argc, char * argv[])
     po::variables_map vm;
     po::store(parsed, vm);
 
-    // We can't just check for '--hep' (and so forth), because the
-    // user could have typed something like 'scribbu list --help', in
-    // which case they're seeking help on the list command
-    // specifically.
+    // At this point, any global options we've defined ('--help',
+    // '--version' &c) have been parsed out and placed in 'vm',
+    // regardless of where they appear. So if, for instance, the user
+    // typed something like 'scribbu list --help', (i.e. they're
+    // seeking help on the list command specifically), the '--help'
+    // has already been removed from 'opts' (see which below).
 
-    // --version is unambiguous
+    // Furthermore, different global options interact with
+    // sub-commands in different ways:
+
+    // 	 - version can only be given with no sub-command
+    // 	 - config can only be given *with* a sub-command
+    // 	 - help can be given either way, but it's behaviour will differ
+
+    // 'vm["sub-command"]' will only contain positional options, not
+    // flags. To get everything, we need to do this:
+    vector<string> opts = po::collect_unrecognized(parsed.options, po::include_positional);
+
     if (vm.count("version")) {
-      print_version(cout);
+      if (opts.size()) {
+	throw po::error("unrecognized argument: --version");
+      } else {
+	cout << PACKAGE_STRING << std::endl;
+      }
+    } else if (!vm["config"].defaulted() && !opts.size()) {
+      throw po::error("configuration specified, but nothing asked");
     } else {
-
+      
+      // If we're here, we going to do *something*, albeit as little
+      // as printing help; how much help was requested (if any)?
       help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level::regular;
-      } else if (vm.count("man")) {
+      if (vm.count("man")) {
         help = help_level::verbose;
+      } else if (vm.count("help")) {
+        help = help_level::regular;
       }
 
-      // 'vm["sub-command"]' will only contain positional options, not
-      // flags. To get everything, we need to do this:
-      vector<string> opts =
-        po::collect_unrecognized(parsed.options, po::include_positional);
+      // Was a config file given?
+      optional<fs::path> cfg;
+      fs::path pth = vm["config"].as<fs::path>();
+      if (fs::exists(pth)) {
+	cfg = pth;
+      } else if (!vm["config"].defaulted()) {
+	// If it was explicitly given, and it doesn't exist, that's an error.
+	throw po::error(pth.native() + " does not exist");
+      } 
 
       if (opts.size()) {
 
         // 'opts' is non-empty, so there's at least one element--
-        // convert that to a 'command'...
-        command cmd = lexical_cast<command>(opts.front());
+        // attempt to resolve the first element to a command...
+	handler_type f = get_sub_command(opts.front());
         // pop it...
         opts.erase(opts.begin());
-        // and use the 'command' as an index into a global lookup
-        // table of handlers.
-        status = COMMANDS[cmd](opts, help);
+        // and dispatch.
+        status = f(opts, help, cfg);
 
       } else {
 
-        // If help has been requested, give it & bail.
-        if (help_level::regular == help) {
-          print_usage(cout, gopts, USAGE);
-        } else if (help_level::verbose == help) {
+	// No sub-command has been given, so we're just printing help.
+        if (help_level::verbose == help) {
           print_usage(cout, global, USAGE);
         } else {
-          throw po::error("no command specified");
-        }
+          print_usage(cout, gopts, USAGE);
+	}
 
-      }
-    }
+      } // End if on 'opts' size.
+    } // End if on '--version' &c.
   } catch (const po::error &ex) {
-    cerr << ex.what() << endl;
+    cerr << ex.what() << endl; 
     print_usage(cerr, gopts, USAGE);
     status = EXIT_INCORRECT_USAGE;
   } catch (const std::exception &ex) {

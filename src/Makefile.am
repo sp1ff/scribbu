@@ -1,9 +1,6 @@
 bin_PROGRAMS = scribbu
-scribbu_SOURCES = scribbu.cc command.hh command.cc		\
-		  command-utilities.hh command-utilities.cc	\
-	       	  rename.hh rename.cc				\
-	       	  report.hh report.cc				\
-		  split.hh split.cc
+scribbu_SOURCES = scribbu.cc command-utilities.hh command-utilities.cc	\
+	       	  rename.cc report.cc split.cc dump.cc
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = -std=c++11
 AM_LDFLAGS  = -all-static -static $(BOOST_LDFLAGS)

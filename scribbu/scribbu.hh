@@ -1,6 +1,7 @@
 #ifndef SCRIBBU_H_INCLUDED
 #define SCRIBBU_H_INCLUDED 1
 
+#include <iostream>
 #include <boost/filesystem.hpp>
 
 namespace scribbu {

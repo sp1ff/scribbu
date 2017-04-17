@@ -101,8 +101,6 @@ am__aclocal_m4_deps = $(top_srcdir)/macros/ax_boost_base.m4 \
 	$(top_srcdir)/macros/ax_boost_unit_test_framework.m4 \
 	$(top_srcdir)/macros/ax_check_openssl.m4 \
 	$(top_srcdir)/macros/ax_check_zlib.m4 \
-	$(top_srcdir)/macros/ax_prog_bison.m4 \
-	$(top_srcdir)/macros/ax_prog_flex.m4 \
 	$(top_srcdir)/macros/libtool.m4 \
 	$(top_srcdir)/macros/ltoptions.m4 \
 	$(top_srcdir)/macros/ltsugar.m4 \

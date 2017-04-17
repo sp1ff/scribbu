@@ -94,8 +94,6 @@ am__aclocal_m4_deps = $(top_srcdir)/macros/ax_boost_base.m4 \
 	$(top_srcdir)/macros/ax_boost_unit_test_framework.m4 \
 	$(top_srcdir)/macros/ax_check_openssl.m4 \
 	$(top_srcdir)/macros/ax_check_zlib.m4 \
-	$(top_srcdir)/macros/ax_prog_bison.m4 \
-	$(top_srcdir)/macros/ax_prog_flex.m4 \
 	$(top_srcdir)/macros/libtool.m4 \
 	$(top_srcdir)/macros/ltoptions.m4 \
 	$(top_srcdir)/macros/ltsugar.m4 \
@@ -379,13 +377,16 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-BUILT_SOURCES = tbt-parser.cc tbt-parser.hh tbt-lexer.cc tbt-lexer.hh
+
+# Tell automake that these two must be built first; we say how below
+BUILT_SOURCES = tbt-parser.hh tbt-lexer.hh
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES)
+AM_CXXFLAGS = -std=c++11
 lib_LTLIBRARIES = libscribbu.la
 libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc tbt-support.cc
 include_HEADERS = scribbu.hh errors.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh tbt-support.hh
-AM_CXXFLAGS = -std=c++11
+DISTCLEANFILES = tbt-lexer.cc tbt-lexer.hh
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -655,6 +656,7 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -752,6 +754,11 @@ uninstall-am: uninstall-includeHEADERS uninstall-libLTLIBRARIES
 	tags tags-am uninstall uninstall-am uninstall-includeHEADERS \
 	uninstall-libLTLIBRARIES
 
+
+# automake will figure out how to make tbt-parser.hh, but we need to tell it how 
+# to make tbt-lexer.h:
+tbt-lexer.hh: Makefile
+	$(LEX) $(AM_LFLAGS) $(LFLAGS) $(srcdir)/tbt-lexer.ll
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

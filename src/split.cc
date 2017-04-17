@@ -1,28 +1,31 @@
 #include "config.h"
 #include "command-utilities.hh"
-#include "split.hh"
-#include <scribbu/id3v1.hh>
-#include <scribbu/id3v2.hh>
+
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+
+#include <scribbu/id3v1.hh>
+#include <scribbu/id3v2.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-const std::string USAGE("scribbu split -- split a file into ID3v2, track data, and ID3v1 tag\n"
-                        "\n"
-                        "scribbu split [OPTION...] INPUT\n"
-                        "\n"
-                        "Split a file into it's ID3v2 tag, track data, and\\or ID3v1 tag.\n"
-                        "\n");
-
+
 namespace {
+
+  const std::string USAGE(R"(scribbu split -- split a file into ID3v2, track data, and ID3v1 
+tag
+
+scribbu split [OPTION...] INPUT
+
+Split a file into it's ID3v2 tag, track data, and\\or ID3v1 tag.)");
 
   void xfer_bytes(std::istream   &in,
                   const fs::path &pth,
                   std::size_t     cb)
   {
-    const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | std::ios::badbit;
+    const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | 
+      std::ios::badbit;
 
     fs::ofstream ofs(pth, std::istream::binary);
     ofs.exceptions(EXC_MASK);
@@ -94,116 +97,116 @@ namespace {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//                             handler                                        //
+////////////////////////////////////////////////////////////////////////////////
 
-int
-handle_split(const std::vector<std::string> &tokens,
-             help_level                      help)
-{
-  using namespace std;
+namespace {
 
-  int status = EXIT_SUCCESS;
+  int
+  handle_split(const std::vector<std::string>  &tokens,
+               help_level                       help,
+               const boost::optional<fs::path> &cfg)
+  {
+    using namespace std;
 
-  /////////////////////////////////////////////////////////////////////////////
-  //                                                                         //
-  //                       C O M M A N D   O P T I O N S                     //
-  //                                                                         //
-  // Let's divide the options in two ways:                                   //
-  //                                                                         //
-  // - public versus developer-only options                                  //
-  // - options permissible only on the command line versus options           //
-  //   permissible on the command line, configuration file, and the          //
-  //   environment                                                           //
-  //                                                                         //
-  //                            public   private                             //
-  //                          +--------+---------+                           //
-  //                cli-only  | clopts | xclopts |                           //
-  //                          +--------+---------+                           //
-  //                cli, cfg, |  opts  |  xopts  |                           //
-  //                & env     +--------+---------+                           //
-  //                                                                         //
-  /////////////////////////////////////////////////////////////////////////////
+    int status = EXIT_SUCCESS;
 
-  po::options_description clopts("command-line only options");
-  clopts.add_options()
-    ("help,h", "display the " PACKAGE " usage message & exit with status "
-     "zero");
+    /////////////////////////////////////////////////////////////////////////////
+    //                                                                         //
+    //                       C O M M A N D   O P T I O N S                     //
+    //                                                                         //
+    // Let's divide the options in two ways:                                   //
+    //                                                                         //
+    // - public versus developer-only options                                  //
+    // - options permissible only on the command line versus options           //
+    //   permissible on the command line, configuration file, and the          //
+    //   environment                                                           //
+    //                                                                         //
+    //                            public   private                             //
+    //                          +--------+---------+                           //
+    //                cli-only  | clopts | xclopts |                           //
+    //                          +--------+---------+                           //
+    //                cli, cfg, |  opts  |  xopts  |                           //
+    //                & env     +--------+---------+                           //
+    //                                                                         //
+    /////////////////////////////////////////////////////////////////////////////
 
-  po::options_description xclopts("command-line only developer options");
-  xclopts.add_options()
-    ("config,c", po::value<fs::path>()->default_value(fs::path("~/.scribbu")),
-     "path (absolute or relative) to the config file")
-    ("man", "display the " PACKAGE " usage message including developer-"
-     "only options & exit with status zero");
+    po::options_description clopts("command-line only options");
+    // None at this time...
 
-  po::options_description opts("general options");
-  opts.add_options()
-    // Work around to https://svn.boost.org/trac/boost/ticket/8535
-    ("argument", po::value<std::string>()->required(), "input file")
-    ("suffix", po::value<std::string>()->default_value(std::string()),
-     "Optional suffix to be appended to all generated files");
+    po::options_description xclopts("command-line only developer options");
+    // None at this time...
 
-  po::options_description xopts("hidden options");
+    po::options_description opts("general options");
+    opts.add_options()
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      ("argument", po::value<std::string>()->required(), "input file")
+      ("suffix", po::value<std::string>()->default_value(std::string()),
+       "Optional suffix to be appended to all generated files");
 
-  po::options_description docopts;
-  docopts.add(clopts).add(opts);
+    po::options_description xopts("hidden options");
 
-  po::options_description nocli;
-  nocli.add(opts).add(xopts);
+    po::options_description docopts;
+    docopts.add(clopts).add(opts);
 
-  po::options_description all;
-  all.add(clopts).add(xclopts).add(opts).add(xopts);
+    po::options_description nocli;
+    nocli.add(opts).add(xopts);
 
-  po::positional_options_description popts;
-  popts.add("argument", 1);
+    po::options_description all;
+    all.add(clopts).add(xclopts).add(opts).add(xopts);
 
-  try {
+    po::positional_options_description popts;
+    popts.add("argument", 1);
 
-    if (help_level::regular == help) {
-      print_usage(cout, docopts, USAGE);
-    } else if (help_level::verbose == help) {
-      print_usage(cout, all, USAGE);
-    } else {
+    try {
 
-      po::variables_map vm;
+      if (help_level::regular == help) {
+        print_usage(cout, docopts, USAGE);
+      } else if (help_level::verbose == help) {
+        print_usage(cout, all, USAGE);
+      } else {
 
-      // Command line takes highest priority...
-      po::parsed_options parsed = po::command_line_parser(tokens).
-        options(all).
-        positional(popts).
-        run();
+        po::variables_map vm;
 
-      po::store(parsed, vm);
+        // Command line takes highest priority...
+        po::parsed_options parsed = po::command_line_parser(tokens).
+          options(all).
+          positional(popts).
+          run();
 
-      // followed by the configuration file...
-      fs::path cfg = vm["config"].as<fs::path>();
-      if (fs::exists(cfg)) {
-        fs::ifstream ifs(cfg);
-        parsed = po::parse_config_file(ifs, nocli);
         po::store(parsed, vm);
-      } else if (!vm["config"].defaulted()) {
-        throw po::validation_error(po::validation_error::invalid_option_value,
-                                   cfg.string() + " does not exist");
+
+        // followed by the configuration file...
+        if (cfg) {
+          fs::ifstream ifs(cfg.get());
+          parsed = po::parse_config_file(ifs, nocli);
+          po::store(parsed, vm);
+        }
+
+        // and finally any environment variables.
+        parsed = po::parse_environment(nocli, "SCRIBBU");
+        po::store(parsed, vm);
+
+        po::notify(vm);
+
+        split_file(fs::path(vm["argument"].as<std::string>()),
+                   vm["suffix"].as<std::string>());
       }
 
-      // and finally any environment variables.
-      parsed = po::parse_environment(nocli, "SCRIBBU");
-      po::store(parsed, vm);
-
-      po::notify(vm);
-
-      split_file(fs::path(vm["argument"].as<std::string>()),
-                 vm["suffix"].as<std::string>());
+    } catch (const po::error &ex) {
+      cerr << ex.what() << endl;
+      print_usage(cerr, docopts, USAGE);
+      status = EXIT_INCORRECT_USAGE;
+    } catch (const std::exception &ex) {
+      cerr << ex.what() << endl;
+      status = EXIT_FAILURE;
     }
 
-  } catch (const po::error &ex) {
-    cerr << ex.what() << endl;
-    print_usage(cerr, docopts, USAGE);
-    status = EXIT_INCORRECT_USAGE;
-  } catch (const std::exception &ex) {
-    cerr << ex.what() << endl;
-    status = EXIT_FAILURE;
+    return status;
+
   }
 
-  return status;
+  register_command r("split", handle_split);
 
 }
+

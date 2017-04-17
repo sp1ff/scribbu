@@ -555,8 +555,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 
   using namespace std;
 
-  const fs::path TEST_FILE_01("/vagrant/test/data/Opium Garden - Opium Chant Intro.mp3");
-  const fs::path TEST_FILE_02("/vagrant/test/data/U2 - Promenade.mp3");
+  const fs::path TEST_FILE_01("/vagrant/test/data/opium.mp3");
+  const fs::path TEST_FILE_02("/vagrant/test/data/u2-promenade.mp3");
 
   fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
   id3v2_3_tag tag01(ifs01);
@@ -715,7 +715,7 @@ BOOST_AUTO_TEST_CASE( test_funny_file )
   using namespace std;
   using scribbu::id3v2_3_tag;
 
-  const fs::path TEST_FILE("/vagrant/test/data/Nine Inch Nails - The Only Time.mp3");
+  const fs::path TEST_FILE("/vagrant/test/data/nin-only-time.mp3");
 
   fs::ifstream ifs(TEST_FILE, fs::ifstream::binary);
   id3v2_3_tag tag(ifs);

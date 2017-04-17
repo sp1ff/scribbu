@@ -30,7 +30,8 @@ std::string scribbu::detail::to_utf8(iconv_t              cd,
   std::size_t inbytesleft = cbbuf;
 
   // We can't know a priori how many octets the output buffer will require;
-  // cf. http://stackoverflow.com/questions/13297458/simple-utf8-utf16-string-conversion-with-iconv
+  // cf. 
+  // http://stackoverflow.com/questions/13297458/simple-utf8-utf16-string-conversion-with-iconv
   std::size_t cbout = cbbuf << 2;
   std::unique_ptr<char []> poutbuf(new char[cbout]);
 
