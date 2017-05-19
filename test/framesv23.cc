@@ -1,7 +1,9 @@
+#include <scribbu/framesv23.hh>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
+
 #include <scribbu/scribbu.hh>
-#include <scribbu/framesv23.hh>
 
 BOOST_AUTO_TEST_CASE( test_ufid )
 {
@@ -24,20 +26,19 @@ BOOST_AUTO_TEST_CASE( test_ufid )
 
   BOOST_CHECK( "UFID" == ufid.id() );
 
-  unique_file_id ufi = ufid.file_id();
   unsigned char buf[5];
-  BOOST_CHECK( buf + 5 == ufi.owner(buf) );
+  BOOST_CHECK( buf + 5 == ufid.ownerb(buf) );
   BOOST_CHECK( 's' == buf[0] && 'p' == buf[1] &&
                '1' == buf[2] && 'f' == buf[3] &&
                'f' == buf[4] );
-  BOOST_CHECK( buf + 3 == ufi.id(buf) );
+  BOOST_CHECK( buf + 3 == ufid.idb(buf) );
   BOOST_CHECK( 1 == buf[0] && 2 == buf[1] && 3 == buf[2] );
 
 } // End test_ufid.
 
-// TODO: Unit test class ENCR
+// TODO: Unit test class ENCR, once I get some data
 // TODO: Unit test class id3v2_3_text_frame
-// TODO: Unit test class TXXX
-// TODO: Unit test class COMM
-// TODO: Unit test class PCNT
-// TODO: Unit test class POPM
+// TODO: Unit test class TXXX, once I get some data
+// TODO: Unit test class COMM, once I get some data
+// TODO: Unit test class PCNT, once I get some data
+// TODO: Unit test class POPM, once I get some data

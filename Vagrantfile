@@ -38,6 +38,7 @@ sudo apt-get -y install libtool
 sudo apt-get -y install libssl-dev
 sudo apt-get -y install flex
 sudo apt-get -y install bison
+sudo apt-get -y install global
 
 echo "Provisioning...done."
 date > /etc/vagrant.provision_end
@@ -83,7 +84,7 @@ Vagrant.configure(2) do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
-  config.vm.synced_folder "/mnt/Took-Hall/mp3", "/mp3"
+  # config.vm.synced_folder "/mnt/Took-Hall/mp3", "/mp3"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific
@@ -99,6 +100,8 @@ Vagrant.configure(2) do |config|
 
     # http://serverfault.com/questions/409794/vagrant-virtualbox-cant-resolve-some-domains-from-w-in-vm
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    # http://stackoverflow.com/questions/19490652/how-to-sync-time-on-host-wake-up-within-virtualbox
+    vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000]
 
   end
 

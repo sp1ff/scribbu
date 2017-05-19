@@ -1,11 +1,16 @@
+#include <scribbu/id3v22.hh>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
+
 #include <scribbu/scribbu.hh>
-#include <scribbu/id3v22.hh>
 
 namespace fs = boost::filesystem;
 
 /**
+ * \brief id3v2_2_ tag unit tests
+ *
+ * Here's the test data:
  *
  \code
 
@@ -41,6 +46,8 @@ namespace fs = boost::filesystem;
    00089a
 
  \endcode
+ *
+ * broken out:
  *
  \code
 
@@ -118,46 +125,51 @@ namespace fs = boost::filesystem;
 
  \endcode
  *
+ *
  */
 
 BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 {
-  using scribbu::comments;
-  using scribbu::id3v2_2_tag;
-
-  using std::vector;
-  using std::back_inserter;
-
-  std::vector< id3v2_2_tag::frame_parser_registration > regs;
-  id3v2_2_tag::get_default_frame_parsers( std::back_inserter(regs) );
-  BOOST_CHECK( 0 != regs.size() );
+  using namespace std;
+  using namespace scribbu;
 
   const fs::path TEST_DATA_V2_2("/vagrant/test/data/id3v2.2.tag");
 
   fs::ifstream ifsv2_2(TEST_DATA_V2_2, fs::ifstream::binary);
 
-  id3v2_2_tag tagv2_2(ifsv2_2);
+  id3v2_2_tag tag(ifsv2_2);
 
-  BOOST_CHECK(2 == tagv2_2.version());
-  BOOST_CHECK(0 == tagv2_2.revision());
-  BOOST_CHECK(2192 == tagv2_2.size());
-  BOOST_CHECK(0 == tagv2_2.flags());
-  BOOST_CHECK(!tagv2_2.unsynchronised());
+  BOOST_CHECK(2 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(2192 == tag.size());
+  BOOST_CHECK(0 == tag.flags());
+  BOOST_CHECK(!tag.unsynchronised());
+  BOOST_CHECK(!tag.compression());
 
-  BOOST_TEST_MESSAGE( "Album: '" << tagv2_2.album() << "'." );
-  BOOST_TEST_MESSAGE( "Artist: '" << tagv2_2.artist() << "'." );
-  BOOST_TEST_MESSAGE( "Content Type: '" << tagv2_2.content_type() << "'." );
-  BOOST_TEST_MESSAGE( "Encoded by: '" << tagv2_2.encoded_by() << "'." );
-  BOOST_TEST_MESSAGE( "Title: '" << tagv2_2.title() << "'." );
+  BOOST_TEST_MESSAGE( "Album: '"        << tag.album()        << "'." );
+  BOOST_TEST_MESSAGE( "Artist: '"       << tag.artist()       << "'." );
+  BOOST_TEST_MESSAGE( "Content Type: '" << tag.content_type() << "'." );
+  BOOST_TEST_MESSAGE( "Encoded by: '"   << tag.encoded_by()   << "'." );
+  BOOST_TEST_MESSAGE( "Title: '"        << tag.title()        << "'." );
 
-  BOOST_CHECK("Mnemosyne's March (Demo)" == tagv2_2.album());
-  BOOST_CHECK("Murley Braid Quartet" == tagv2_2.artist());
-  BOOST_CHECK("(8)" == tagv2_2.content_type());
-  BOOST_CHECK("iTunes v6.0.4" == tagv2_2.encoded_by());
-  BOOST_CHECK("Sheep Walking" == tagv2_2.title());
+  BOOST_CHECK( tag.has_album()        );
+  BOOST_CHECK( tag.has_artist()       );
+  BOOST_CHECK( tag.has_content_type() );
+  BOOST_CHECK( tag.has_encoded_by()   );
+  BOOST_CHECK(!tag.has_languages()    );
+  BOOST_CHECK( tag.has_title()        );
+  BOOST_CHECK(!tag.has_track()        );
+  BOOST_CHECK( tag.has_year()         );
 
-  vector<comments> C;
-  tagv2_2.get_all_comments(back_inserter(C));
+  BOOST_CHECK("Mnemosyne's March (Demo)" == tag.album()        );
+  BOOST_CHECK("Murley Braid Quartet"     == tag.artist()       );
+  BOOST_CHECK("(8)"                      == tag.content_type() );
+  BOOST_CHECK("iTunes v6.0.4"            == tag.encoded_by()   );
+  BOOST_CHECK("Sheep Walking"            == tag.title()        );
+  BOOST_CHECK("2006"                     == tag.year()         );
+
+  vector<COM> C;
+  tag.get_comments(back_inserter(C));
   BOOST_CHECK(2 == C.size());
 
   const vector<unsigned char> DSC0({{'i', 'T', 'u', 'n', 'N', 'O', 'R', 'M', }});
@@ -173,30 +185,44 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
                                      ' ', '0', '0', '0', '0', '5', '5', '8',
                                      '2', ' ', '0', '0', '0', '0', 'D', 'F',
                                      '7', '8', 0}});
-  const comments &C0 = C[0];
+  const COM &C0 = C[0];
   char lang[3];
   vector<unsigned char> dsc, text;
   BOOST_CHECK(0 == C0.unicode());
   C0.lang(lang);
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
-  C0.description(back_inserter(dsc));
+  C0.descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == DSC0);
-  C0.text(back_inserter(text));
+  C0.textb(back_inserter(text));
   BOOST_CHECK(text == TXT0);
 
   dsc.resize(0);
   text.resize(0);
 
   const vector<unsigned char> DSC1({{'i', 'T', 'u', 'n', 'S', 'M', 'P', 'B'}});
-  const vector<unsigned char> TXT1({{' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '2', '1', '0', ' ', '0', '0', '0', '0', '0', '7', 'A', '2', ' ', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '4', 'A', '6', 'C', '4', 'E', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', ' ', '0', '0', '0', '0', '0', '0', '0', '0', 0}});
+  const vector<unsigned char> TXT1({{' ', '0', '0', '0', '0', '0', '0', '0',
+                                     '0', ' ', '0', '0', '0', '0', '0', '2',
+                                     '1', '0', ' ', '0', '0', '0', '0', '0',
+                                     '7', 'A', '2', ' ', '0', '0', '0', '0',
+                                     '0', '0', '0', '0', '0', '0', '4', 'A',
+                                     '6', 'C', '4', 'E', ' ', '0', '0', '0',
+                                     '0', '0', '0', '0', '0', ' ', '0', '0',
+                                     '0', '0', '0', '0', '0', '0', ' ', '0',
+                                     '0', '0', '0', '0', '0', '0', '0', ' ',
+                                     '0', '0', '0', '0', '0', '0', '0', '0',
+                                     ' ', '0', '0', '0', '0', '0', '0', '0',
+                                     '0', ' ', '0', '0', '0', '0', '0', '0',
+                                     '0', '0', ' ', '0', '0', '0', '0', '0',
+                                     '0', '0', '0', ' ', '0', '0', '0', '0',
+                                     '0', '0', '0', '0', 0}});
 
-  const comments &C1 = C[1];
+  const COM &C1 = C[1];
   BOOST_CHECK(0 == C1.unicode());
   C1.lang(lang);
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
-  C1.description(back_inserter(dsc));
+  C1.descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == DSC1);
-  C1.text(back_inserter(text));
+  C1.textb(back_inserter(text));
   BOOST_CHECK(text == TXT1);
 
 

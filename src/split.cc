@@ -1,8 +1,9 @@
 #include "config.h"
-#include "command-utilities.hh"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+
+#include "command-utilities.hh"
 
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
@@ -18,7 +19,9 @@ tag
 
 scribbu split [OPTION...] INPUT
 
-Split a file into it's ID3v2 tag, track data, and\\or ID3v1 tag.)");
+Split a file into it's ID3v2 tag, track data, and\or ID3v1 tag. The input files
+will be named "id3v2NS", N=0,1,2,..., "trackS" & "id3v1S", where S is the 
+--suffix option, if given.)");
 
   void xfer_bytes(std::istream   &in,
                   const fs::path &pth,
@@ -139,12 +142,13 @@ namespace {
 
     po::options_description opts("general options");
     opts.add_options()
-      // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("argument", po::value<std::string>()->required(), "input file")
       ("suffix", po::value<std::string>()->default_value(std::string()),
        "Optional suffix to be appended to all generated files");
 
     po::options_description xopts("hidden options");
+    xopts.add_options()
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      ("argument", po::value<std::string>()->required(), "input file");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
@@ -209,4 +213,3 @@ namespace {
   register_command r("split", handle_split);
 
 }
-

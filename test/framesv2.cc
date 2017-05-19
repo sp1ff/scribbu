@@ -1,7 +1,9 @@
+#include <scribbu/framesv2.hh>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
+
 #include <scribbu/scribbu.hh>
-#include <scribbu/framesv2.hh>
 
 BOOST_AUTO_TEST_CASE( test_frame_id3 )
 {

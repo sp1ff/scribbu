@@ -8,8 +8,10 @@
 #include <unordered_map>
 
 #include <boost/exception/all.hpp>
+#include <boost/optional/optional.hpp>
 #include <boost/shared_array.hpp>
 
+#include <scribbu/charsets.hh>
 #include <scribbu/errors.hh>
 #include <scribbu/framesv2.hh>
 
@@ -87,7 +89,6 @@
  * tag  size -  10). The  reason to  use 28  bits (representing  up to
  * 256MB) for  size description is  that we don't  want to run  out of
  * space here." \ref scribbu_id3v2_refs_2 "[2]"
- *
  *
  *
  * \section scribbu_id3v2_unsync Unsynchorisation
@@ -433,54 +434,61 @@ namespace scribbu {
       return unsync_;
     }
 
-    virtual std::string album() const = 0;
-    virtual std::string artist() const = 0;
-    virtual std::string content_type() const = 0;
-    virtual std::string encoded_by() const = 0;
-    virtual std::string languages() const = 0;
-    virtual std::string title() const = 0;
-    virtual std::string year() const = 0;
+    typedef scribbu::encoding encoding;
+
+    virtual
+    std::string
+    album(encoding dst = encoding::UTF_8,
+          on_no_encoding rsp = on_no_encoding::fail,
+          const boost::optional<encoding> &src = boost::none) const = 0;
+    virtual
+    std::string artist(encoding dst = encoding::UTF_8,
+                       on_no_encoding rsp = on_no_encoding::fail,
+                       const boost::optional<encoding> &src =
+                         boost::none) const = 0;
+    virtual
+    std::string
+    content_type(encoding dst = encoding::UTF_8,
+                 on_no_encoding rsp = on_no_encoding::fail,
+                 const boost::optional<encoding> &src =
+                   boost::none) const = 0;
+    virtual
+    std::string
+    encoded_by(encoding dst = encoding::UTF_8,
+               on_no_encoding rsp = on_no_encoding::fail,
+               const boost::optional<encoding> &src = boost::none) const = 0;
+    virtual
+    std::string
+    languages(encoding dst = encoding::UTF_8,
+              on_no_encoding rsp = on_no_encoding::fail,
+              const boost::optional<encoding> &src = boost::none) const = 0;
+    virtual
+    std::size_t play_count() const = 0;
+    virtual
+    std::string
+    title(encoding dst = encoding::UTF_8,
+          on_no_encoding rsp = on_no_encoding::fail,
+          const boost::optional<encoding> &src = boost::none) const = 0;
+    virtual
+    std::string
+    track(encoding dst = encoding::UTF_8,
+          on_no_encoding rsp = on_no_encoding::fail,
+          const boost::optional<encoding> &src = boost::none) const = 0;
+    virtual
+    std::string
+    year(encoding dst = encoding::UTF_8,
+         on_no_encoding rsp = on_no_encoding::fail,
+         const boost::optional<encoding> &src = boost::none) const = 0;
 
     virtual std::size_t has_album() const = 0;
     virtual std::size_t has_artist() const = 0;
     virtual std::size_t has_content_type() const = 0;
     virtual std::size_t has_encoded_by() const = 0;
     virtual std::size_t has_languages() const = 0;
+    virtual std::size_t has_play_count() const = 0;
     virtual std::size_t has_title() const = 0;
+    virtual std::size_t has_track() const = 0;
     virtual std::size_t has_year() const = 0;
-
-    virtual std::size_t all_comments(std::vector<scribbu::comments> &out) const = 0;
-    virtual std::size_t all_play_counts(std::vector<scribbu::play_count> &out) const = 0;
-    virtual std::size_t all_udts(std::vector<scribbu::user_defined_text> &out) const = 0;
-    virtual std::size_t all_ufids(std::vector<scribbu::unique_file_id> &out) const = 0;
-
-    template <typename forward_output_iterator>
-    forward_output_iterator get_all_comments(forward_output_iterator p) const {
-      std::vector<scribbu::comments> C;
-      all_comments(C);
-      return std::copy(C.begin(), C.end(), p);
-    }
-
-    template <typename forward_output_iterator>
-    forward_output_iterator get_all_play_counts(forward_output_iterator p) const {
-      std::vector<scribbu::play_count> P;
-      all_play_counts(P);
-      return std::copy(P.begin(), P.end(), p);
-    }
-
-    template <typename forward_output_iterator>
-    forward_output_iterator get_all_udts(forward_output_iterator p) const {
-      std::vector<scribbu::user_defined_text> P;
-      all_udts(P);
-      return std::copy(P.begin(), P.end(), p);
-    }
-
-    template <typename forward_output_iterator>
-    forward_output_iterator get_all_ufids(forward_output_iterator p) const {
-      std::vector<scribbu::unique_file_id> P;
-      all_ufids(P);
-      return std::copy(P.begin(), P.end(), p);
-    }
 
   private:
     // All derived from the standard ten-byte header
@@ -491,13 +499,6 @@ namespace scribbu {
     bool unsync_;
 
   }; // End class id3v2_tag.
-
-  // TODO: Would be nice to offer a version that takes a range, but specialized
-  // for arrays
-  std::string to_utf8(unsigned char        id3v2_version,
-                      unsigned char        encoding,
-                      const unsigned char *pbuf,
-                      std::size_t          cbbuf);
 
 } // End namespace scribbu.
 

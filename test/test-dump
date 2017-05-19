@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+../src/scribbu dump ${srcdir}/data/{lorca,opium}.mp3 > dump.$$.log
+# This is irritating, but we need to strip out the paths above
+# "data" since we do a dumb diff, below.
+sed -e 's_^".*/data_"data_' dump.$$.log > dump.log
+rm dump.$$.log
+diff dump.log ${srcdir}/data/golden-dump.log
+exit $?
+

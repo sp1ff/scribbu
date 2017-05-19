@@ -1,10 +1,11 @@
 #include "config.h"
-#include "command-utilities.hh"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+
+#include "command-utilities.hh"
 
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2-utils.hh>
@@ -17,8 +18,6 @@ namespace po = boost::program_options;
 
 namespace {
 
-  // TODO: Build this out to include all replacements, otpions & include
-  // a link to here in the relevent code
   const std::string USAGE(R"(scribbu rename -- rename .mp3 files
 
 scribbu rename [option...] file-or-directory [file-or-directory...]
@@ -27,11 +26,76 @@ Rename one or more files, and/or the files in one or more directories,
 according to their ID3 tags.
 
 The command will, by default, rename each file as:
+
     "<artist> - <title>.<extension>"
-The caller can customize this template, however:
-    - %a: album
-    - %A: artist
-    - %T: title)");
+
+The caller can customize this, however, using the --template option. This
+option accepts a string that mixes text with replacement parameters (such as
+title, artist, album &c).
+
+The replacement parameters begin with a % (escape % signs that do *not* start a
+replacement with a backslash). Each parameter has a one-characer short form as
+well as a long-form name. For example, artist can be represented as either 'A'
+or"artist". The short form would be %A, the long %(artist).
+
+If the long form is used, the action of the replacement paramter may,
+optionally, be modified by giving options after a colon. The options take the
+form: opt0&opt1&opt2&..., where opti is of the form name=value or just name. To
+continue the example, if we wanted the artist to always be taken from the ID3v1
+tag, and that field is encoded as ISO-8859-1, we could say:
+%(artist:v1-only&v1-encoding=iso-8859-1).
+
+Full list of replacement parameters & their options
+
+Tag-based replacements:
+
+replacement name, short form, long form(s)
+
+    - album: L, album
+    - artist: A, artist
+    - content type: G, {content-type,genre}
+    - encoded by: e, encoded-by
+    - title: T, title
+    - year: Y, year
+
+Tag-based replacements take the following options:
+
+    - source of the replacement text: prefer-v2, prefer-v1, v2-only, v1-only
+    - character encoding when the ID3v1 tag is used: v1-encoding={auto,
+      iso-8859-1,ascii,cp1252,utf-8,utf-16-be,utf-16,le,utf-32}
+    - handling "The ...": the(suffix),the=suffix,the=prefix
+    - capitalizing words: capitalization,capitalization={all-upper,all-lower}
+    - whitespace: compress, ws="TEXT"
+    - output character set: output=iso-8859-1,ascii,...
+
+e.g. %(artist:prefer-v2&v1-encoding=cp1252&the=suffixcompress) applied to
+a file whose ID3v2 tag had an artist frame of "The  Pogues" would produce
+"Pogues, The".
+
+In addition to the above, the year can be formatted as two digits or four
+by giving "yy" or "yyyy" in the options for that replacement.
+
+Filename-based replacement parameters:
+
+    - basename: b, basename
+    - extension: E, extension (incl. dot)
+
+These take the same "The", capitalization & whitespace options as tag-based 
+replacements.
+
+Replacements based on the track data:
+
+    - MD5 checksum: 5, md5
+    - size: S, size (bytes)
+
+TODO: Add options to express the track size in other units (KB, MB, &c)
+
+Both replacements take the following options:
+
+    - base: base={decimal,hex}
+    - case for hexadecimal digits: hex-case={U,L}
+
+)");
 
 }
 
@@ -197,14 +261,14 @@ namespace {
       ("template,t", po::value<std::string>()->default_value(DEFAULT_TEMPLATE),
        "Template by which to rename the files.")
       ("verbose,v", po::bool_switch()->default_value(DEFAULT_VERBOSE),
-       "Produce verbose output.")
+       "Produce verbose output.");
+
+    po::options_description xopts("hidden options");
+    xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
       ("arguments", po::value<std::vector<string>>()->required(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
-
-    po::options_description xopts("hidden options");
-    // None at this time...
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);

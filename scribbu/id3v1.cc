@@ -5,6 +5,14 @@
 //                         class id3v1_tag                                  //
 //////////////////////////////////////////////////////////////////////////////
 
+/*static*/ const boost::optional<scribbu::encoding>
+scribbu::id3v1_tag::DEF_SRC_ENCODING(encoding::ASCII);
+
+/*static*/ const scribbu::encoding
+scribbu::id3v1_tag::DEF_DST_ENCODING(encoding::UTF_8);
+
+/*static*/ const scribbu::on_no_encoding
+scribbu::id3v1_tag::DEF_ON_NO_ENCODING(on_no_encoding::fail);
 
 /**
  * \brief Construct using an input stream known to be currently
@@ -105,6 +113,130 @@ scribbu::id3v1_tag::id3v1_tag(std::istream &is,
     is.seekg(here, std::ios_base::beg);
     is.exceptions(exc_mask);
     throw invalid_tag();;
+  }
+
+}
+
+namespace scribbu {
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::album(const boost::optional<encoding> &src,
+                            encoding dst,
+                            on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(album_[0]), album_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::artist(const boost::optional<encoding> &src,
+                             encoding dst,
+                             on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(artist_[0]), artist_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::comment(const boost::optional<encoding> &src,
+                              encoding dst,
+                              on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(comment_[0]), comment_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::enh_genre(const boost::optional<encoding> &src,
+                                encoding dst,
+                                on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(ext_genre_[0]), ext_genre_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::start_time(const boost::optional<encoding> &src,
+                                 encoding dst,
+                                 on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(start_time_[0]), start_time_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::end_time(const boost::optional<encoding> &src,
+                               encoding dst,
+                               on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(end_time_[0]), end_time_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::title(const boost::optional<encoding> &src,
+                            encoding dst,
+                            on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(title_[0]), title_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
+  }
+
+  template<>
+  std::string
+  scribbu::id3v1_tag::year(const boost::optional<encoding> &src,
+                           encoding dst,
+                           on_no_encoding rsp) const
+  {
+    // TODO: Check code unit
+    using std::string;
+    using namespace scribbu;
+    return convert_encoding<string>(&(year_[0]), year_.size(),
+                                    src ? src.get() :
+                                    encoding_from_system_locale(),
+                                    dst, rsp);
   }
 
 }

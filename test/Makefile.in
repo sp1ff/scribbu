@@ -103,10 +103,12 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_unit_OBJECTS = unit.$(OBJEXT) id3v1.$(OBJEXT) framesv2.$(OBJEXT) \
-	framesv22.$(OBJEXT) framesv23.$(OBJEXT) framesv24.$(OBJEXT) \
-	id3v2.$(OBJEXT) id3v22.$(OBJEXT) id3v23.$(OBJEXT) \
-	id3v24.$(OBJEXT) id3v2-utils.$(OBJEXT)
+am_unit_OBJECTS = unit.$(OBJEXT) charsets.$(OBJEXT) ostream.$(OBJEXT) \
+	id3v1.$(OBJEXT) framesv2.$(OBJEXT) framesv22.$(OBJEXT) \
+	framesv23.$(OBJEXT) framesv24.$(OBJEXT) id3v2.$(OBJEXT) \
+	id3v22.$(OBJEXT) id3v23.$(OBJEXT) id3v24.$(OBJEXT) \
+	id3v2-utils.$(OBJEXT) pprinter.$(OBJEXT) \
+	csv-pprinter.$(OBJEXT) scribbu.$(OBJEXT)
 unit_OBJECTS = $(am_unit_OBJECTS)
 am__DEPENDENCIES_1 =
 unit_DEPENDENCIES = ../scribbu/libscribbu.la $(am__DEPENDENCIES_1) \
@@ -559,10 +561,13 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = data
-EXTRA_DIST = test-report test-split
-CLEANFILES = id3v20B id3v21B report.last.csv id3v20A trackB report.csv id3v1A trackA
-TESTS = $(check_PROGRAMS) test-report test-split
-unit_SOURCES = unit.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc
+EXTRA_DIST = test-split test-rename test-report test-dump
+CLEANFILES = id3v20B id3v21B report.last.csv id3v20A trackB report.csv id3v1A trackA Pogues,\ The\ --\ Lorca\'s\ Novena.mp3 dump.log
+TESTS = $(check_PROGRAMS) test-split test-rename test-report test-dump
+unit_SOURCES = unit.cc charsets.cc ostream.cc id3v1.cc framesv2.cc \
+	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
+	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc scribbu.cc
+
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = -std=c++11
 AM_LDFLAGS = -all-static -static $(BOOST_LDFLAGS)
@@ -628,6 +633,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charsets.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csv-pprinter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv22.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv23.Po@am__quote@
@@ -638,6 +645,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v22.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v23.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v24.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ostream.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pprinter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scribbu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unit.Po@am__quote@
 
 .cc.o:
@@ -914,6 +924,20 @@ unit.log: unit$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test-split.log: test-split
+	@p='test-split'; \
+	b='test-split'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test-rename.log: test-rename
+	@p='test-rename'; \
+	b='test-rename'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 test-report.log: test-report
 	@p='test-report'; \
 	b='test-report'; \
@@ -921,9 +945,9 @@ test-report.log: test-report
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-test-split.log: test-split
-	@p='test-split'; \
-	b='test-split'; \
+test-dump.log: test-dump
+	@p='test-dump'; \
+	b='test-dump'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

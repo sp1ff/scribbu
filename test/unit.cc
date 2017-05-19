@@ -1,8 +1,11 @@
+#include <scribbu/scribbu.hh>
+
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
-#include <scribbu/scribbu.hh>
+
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
+#include <scribbu/id3v2-utils.hh>
 
 namespace fs   = boost::filesystem;
 namespace test = boost::unit_test;
@@ -56,45 +59,49 @@ init_unit_test_suite(int   argc,
  *
  */
 
-// TODO:
-// BOOST_AUTO_TEST_CASE( test_file_processing )
-// {
-//   using namespace scribbu;
+BOOST_AUTO_TEST_CASE( test_file_processing )
+{
+  using namespace std;
+  using namespace scribbu;
 
-//   const fs::path TEST_FILE("/vagrant/test/data/Pogues, The - Lorca's Novena.mp3");
+  const fs::path TEST_FILE("/vagrant/test/data/lorca.mp3");
 
-//   const std::size_t DIGEST_SIZE = track_data::DIGEST_SIZE;
+  const size_t DIGEST_SIZE = track_data::DIGEST_SIZE;
 
-//   // 48ff9cadea7d842e9059db25159d2daa
-//   const unsigned char TEST_DIGEST[DIGEST_SIZE] = {
-//     0x48, 0xff, 0x9c, 0xad, 0xea, 0x7d, 0x84, 0x2e,
-//     0x90, 0x59, 0xdb, 0x25, 0x15, 0x9d, 0x2d, 0xaa
-//   };
+  // 48ff9cadea7d842e9059db25159d2daa
+  const unsigned char TEST_DIGEST[DIGEST_SIZE] = {
+    0x48, 0xff, 0x9c, 0xad, 0xea, 0x7d, 0x84, 0x2e,
+    0x90, 0x59, 0xdb, 0x25, 0x15, 0x9d, 0x2d, 0xaa
+  };
 
-//   std::unique_ptr<std::istream> pis;
-//   file_info            fi;
-//   std::tie(pis, fi) = open_file(TEST_FILE);
-//   BOOST_CHECK(pis && *pis);
-//   BOOST_CHECK(fs::path("/vagrant/test/data") == fi.parent());
-//   BOOST_CHECK(fs::path("Pogues, The - Lorca's Novena.mp3") == fi.filename());
-//   BOOST_CHECK(9878797UL == fi.size());
+  unique_ptr<istream> pis;
+  file_info            fi;
+  tie(pis, fi) = open_file(TEST_FILE);
+  BOOST_CHECK(pis && *pis);
+  BOOST_CHECK(fs::path("/vagrant/test/data") == fi.parent());
+  BOOST_CHECK(fs::path("lorca.mp3") == fi.filename());
+  BOOST_CHECK(9878797UL == fi.size());
 
-//   std::unique_ptr<id3v2_tag> pid3v2 = process_id3v2(*pis);
-//   BOOST_CHECK(pis && *pis);
-//   BOOST_CHECK(452961UL == pis->tellg());
-//   BOOST_REQUIRE(pid3v2);
-//   BOOST_CHECK(3 == pid3v2->version());
-//   BOOST_CHECK(0 == pid3v2->revision());
-//   BOOST_CHECK(452951 == pid3v2->size());
+  vector<unique_ptr<id3v2_tag>> v2tags;
+  read_all_id3v2(*pis, back_inserter(v2tags));
+  BOOST_CHECK(1 == v2tags.size());
 
-//   track_data tdata(*pis);
-//   BOOST_CHECK(*pis);
-//   BOOST_CHECK(9878669 == pis->tellg());
-//   unsigned char md5[DIGEST_SIZE];
-//   tdata.get_md5(md5);
-//   BOOST_CHECK(std::equal(md5, md5 + DIGEST_SIZE, TEST_DIGEST));
+  unique_ptr<id3v2_tag> &pid3v2 = v2tags.front();
+  BOOST_CHECK(pis && *pis);
+  BOOST_CHECK(452961UL == pis->tellg());
+  BOOST_REQUIRE(pid3v2);
+  BOOST_CHECK(3 == pid3v2->version());
+  BOOST_CHECK(0 == pid3v2->revision());
+  BOOST_CHECK(452951 == pid3v2->size());
 
-//   std::unique_ptr<scribbu::id3v1_tag> pid3v1 = process_id3v1(*pis);
-//   BOOST_CHECK(pid3v1);
+  track_data tdata(*pis);
+  BOOST_CHECK(*pis);
+  BOOST_CHECK(9878669 == pis->tellg());
+  unsigned char md5[DIGEST_SIZE];
+  tdata.get_md5(md5);
+  BOOST_CHECK(equal(md5, md5 + DIGEST_SIZE, TEST_DIGEST));
 
-// }
+  unique_ptr<scribbu::id3v1_tag> pid3v1 = process_id3v1(*pis);
+  BOOST_CHECK(pid3v1);
+
+}

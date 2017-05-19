@@ -1,9 +1,10 @@
-#include <scribbu/scribbu.hh>
-#include <scribbu/id3v2.hh>
 #include <scribbu/id3v2-utils.hh>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
+
+#include <scribbu/scribbu.hh>
+#include <scribbu/id3v2.hh>
 
 namespace fs = boost::filesystem;
 

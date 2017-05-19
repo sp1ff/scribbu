@@ -1,11 +1,13 @@
-#include <boost/filesystem/fstream.hpp>
-#include <boost/test/unit_test.hpp>
-#include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
-#include <scribbu/framesv2.hh>
 
 #include <iostream>
 #include <memory>
+
+#include <boost/filesystem/fstream.hpp>
+#include <boost/test/unit_test.hpp>
+
+#include <scribbu/scribbu.hh>
+#include <scribbu/framesv2.hh>
 
 namespace fs = boost::filesystem;
 
@@ -17,82 +19,91 @@ namespace fs = boost::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_id3v1_a )
 {
+  using namespace std;
   using namespace scribbu;
-
-  using std::back_inserter;
 
   const fs::path TEST_DATA("/vagrant/test/data/id3v1.2.3.tag");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 
-  id3v1_tag tag1(ifs);
+  id3v1_tag tag(ifs);
 
-  BOOST_CHECK(!tag1.enhanced());
-  BOOST_CHECK(!tag1.extended());
-  BOOST_CHECK(tag1.v1_1());
+  BOOST_CHECK(!tag.enhanced());
+  BOOST_CHECK(!tag.extended());
+  BOOST_CHECK(tag.v1_1());
 
-  BOOST_CHECK(0xff == tag1.genre());
+  BOOST_CHECK(0xff == tag.genre());
 
-  std::vector<unsigned char> album;
-  tag1.album(back_inserter(album));
-  const std::vector<unsigned char> ALBUM = {{
+  vector<unsigned char> album;
+  tag.album(back_inserter(album));
+  const vector<unsigned char> ALBUM = {{
       'H', 'e', 'l', 'l', '\'', 's', ' ', 'D', 'i', 't', 'c', 'h', ' ', '[',
       'E', 'x', 'p', 'a', 'n', 'd', 'e', 'd', ']', ' ', '(', 'U', 'S', ' ',
       'V', 'e'
     }};
   BOOST_CHECK(album == ALBUM);
 
-  std::vector<unsigned char> artist;
-  tag1.artist(back_inserter(artist));
-  const std::vector<unsigned char> ARTIST = {{
+  string s = tag.album<string>(encoding::ASCII, encoding::UTF_8,
+                                on_no_encoding::fail);
+  BOOST_CHECK(s == string{"Hell's Ditch [Expanded] (US Ve"});
+
+  vector<unsigned char> artist;
+  tag.artist(back_inserter(artist));
+  const vector<unsigned char> ARTIST = {{
       'T', 'h', 'e', ' ', 'P', 'o', 'g', 'u', 'e', 's', 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     }};
   BOOST_CHECK(artist == ARTIST);
 
-  std::vector<unsigned char> comment;
-  tag1.comment(back_inserter(comment));
-  const std::vector<unsigned char> COMMENT = {{
+  s = tag.artist<string>();
+  BOOST_CHECK(s == string{"The Pogues"});
+
+  vector<unsigned char> comment;
+  tag.comment(back_inserter(comment));
+  const vector<unsigned char> COMMENT = {{
       'A', 'm', 'a', 'z', 'o', 'n', '.', 'c', 'o', 'm', ' ', 'S', 'o', 'n',
       'g', ' ', 'I', 'D', ':', ' ', '2', '0', '3', '5', '5', '8', '2', '5',
     }};
   BOOST_CHECK(comment == COMMENT);
 
-  std::vector<unsigned char> genre2;
-  tag1.genre(back_inserter(genre2));
+  s = tag.comment<string>(encoding::UTF_8, encoding::ASCII);
+  BOOST_CHECK(s == string{"Amazon.com Song ID: 20355825"});
+
+  vector<unsigned char> genre2;
+  tag.enh_genre(back_inserter(genre2));
   BOOST_CHECK(genre2.empty());
+
+  s = tag.enh_genre<string>(encoding::ASCII);
+  BOOST_CHECK(s.empty());
 
   bool valid;
   unsigned char speed;
-  std::tie(valid, speed) = tag1.speed();
+  tie(valid, speed) = tag.speed();
   BOOST_CHECK(!valid);
 
-  std::vector<unsigned char> start_time;
-  tag1.genre(back_inserter(start_time));
-  BOOST_CHECK(start_time.empty());
-  std::vector<unsigned char> end_time;
-  tag1.genre(back_inserter(end_time));
-  BOOST_CHECK(end_time.empty());
-
-  std::vector<unsigned char> title;
-  tag1.title(back_inserter(title));
-  const std::vector<unsigned char> TITLE = {{
+  vector<unsigned char> title;
+  tag.title(back_inserter(title));
+  const vector<unsigned char> TITLE = {{
       'L', 'o', 'r', 'c', 'a', '\'', 's', ' ', 'N', 'o', 'v', 'e', 'n', 'a',
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     }};
   BOOST_CHECK(title == TITLE);
 
+  s = tag.title<string>(encoding::ISO_8859_1, encoding::ISO_8859_1);
+  BOOST_CHECK(s == string{"Lorca's Novena"});
+
   unsigned char track_number;
-  std::tie(valid, track_number) = tag1.track_number();
+  tie(valid, track_number) = tag.track_number();
   BOOST_CHECK(valid);
   BOOST_CHECK(0x05 == track_number);
 
   unsigned char year[4];
-  tag1.year(year);
+  tag.year(year);
   BOOST_CHECK('1' == year[0] && '9' == year[1] &&
               '9' == year[2] && '0' == year[3]);
+
+  s = tag.year<string>();
+  BOOST_CHECK(s == string{"1990"});
 }
 
 BOOST_AUTO_TEST_CASE( test_id3v1_b )
@@ -139,20 +150,13 @@ BOOST_AUTO_TEST_CASE( test_id3v1_b )
   BOOST_CHECK(comment == COMMENT);
 
   std::vector<unsigned char> genre2;
-  tag1.genre(back_inserter(genre2));
+  tag1.enh_genre(back_inserter(genre2));
   BOOST_CHECK(genre2.empty());
 
   bool valid;
   unsigned char speed;
   std::tie(valid, speed) = tag1.speed();
   BOOST_CHECK(!valid);
-
-  std::vector<unsigned char> start_time;
-  tag1.genre(back_inserter(start_time));
-  BOOST_CHECK(start_time.empty());
-  std::vector<unsigned char> end_time;
-  tag1.genre(back_inserter(end_time));
-  BOOST_CHECK(end_time.empty());
 
   std::vector<unsigned char> title;
   tag1.title(back_inserter(title));
@@ -226,7 +230,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_c )
   BOOST_CHECK(comment == COMMENT);
 
   std::vector<unsigned char> genre2;
-  tag1.genre(back_inserter(genre2));
+  tag1.enh_genre(back_inserter(genre2));
   const std::vector<unsigned char> GENRE2 = {{
       ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
       ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -322,20 +326,22 @@ BOOST_AUTO_TEST_CASE( test_elliot_goldenthal )
   vector<unsigned char> title;
   ptag->title(back_inserter(title));
 
+  string text;
+
+  text = convert_encoding<string>(&(title[0]), title.size(), encoding::UTF_8,
+                                  encoding::ISO_8859_1);
+  BOOST_CHECK("Easter Rebellion (Performed by" == text);
+
+  text = ptag->title<string>();
+  BOOST_CHECK("Easter Rebellion (Performed by" == text);
+
   vector<unsigned char> artist;
   ptag->artist(back_inserter(artist));
 
-  scribbu::detail::iconv_guard guard("UTF-8", "ISO-8859-1");
+  text = convert_encoding<string>(&(artist[0]), artist.size(), encoding::UTF_8,
+                                  encoding::ISO_8859_1);
+  BOOST_CHECK("Sinead O'Connor" == text);
 
-  unique_ptr<unsigned char[]> ptitle( new unsigned char[title.size()] );
-  copy(title.begin(), title.end(), ptitle.get());
-
-  unique_ptr<unsigned char[]> partist( new unsigned char[artist.size()] );
-  copy(artist.begin(), artist.end(), partist.get());
-
-  string text = scribbu::detail::to_utf8(guard, ptitle.get(), title.size());
-  BOOST_CHECK("Easter Rebellion (Performed by" == text);
-
-  text = scribbu::detail::to_utf8(guard, partist.get(), artist.size());
+  text = ptag->artist<string>();
   BOOST_CHECK("Sinead O'Connor" == text);
 }

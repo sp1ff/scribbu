@@ -1,16 +1,20 @@
+#include <scribbu/id3v24.hh>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 #include <scribbu/scribbu.hh>
-#include <scribbu/id3v24.hh>
 
 namespace fs = boost::filesystem;
 
 /**
+ * \brief Test against one of the few ID3v2.4 frames I have
  *
+ *
+ * The test data:
  *
  \code
 
-   vagrant@vagrant-ubuntu-trusty-64:/vagrant/test/data$ od -A x -t x1z -N 1024 id3v2.4.tag
+   vagrant@vagrant-ubuntu-trusty-64:/vagrant/test/data$ od -A x -t x1z id3v2.4.tag
    000000 49 44 33 04 00 00 00 00 08 43 54 50 45 31 00 00  >ID3......CTPE1..<
    000010 00 0e 00 00 00 4a 6f 61 6f 20 47 69 6c 62 65 72  >.....Joao Gilber<
    000020 74 6f 54 49 54 32 00 00 00 09 00 00 00 41 63 61  >toTIT2.......Aca<
@@ -18,9 +22,12 @@ namespace fs = boost::filesystem;
    000040 45 6c 61 20 45 20 43 61 72 69 6f 63 61 00 00 00  >Ela E Carioca...<
    000050 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
    *
-   000400
+   000440 00 00 00 00 00 00 00 00 00 00 00 00              >............<
+   00044d
 
  \endcode
+ *
+ * Broken out:
  *
  \code
 
@@ -49,7 +56,8 @@ namespace fs = boost::filesystem;
    00004d                                        00 00 00  padding
    000050 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  padding
    *
-   000400
+   000440 00 00 00 00 00 00 00 00 00 00 00 00              >............< (1024 bytes of padding)
+   00044d
 
    1. $00 00 08 43 => %0000 0000 %0000 0000 %0000 1000 %0100 0011
                       % 000 0000 % 000 0000 % 000 1000 % 100 0011
@@ -63,29 +71,38 @@ namespace fs = boost::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
 {
-  using scribbu::id3v2_4_tag;
-
-  std::vector< id3v2_4_tag::frame_parser_registration > regs;
-  id3v2_4_tag::get_default_frame_parsers( std::back_inserter(regs) );
-  BOOST_CHECK( 0 != regs.size() );
+  using namespace std;
+  using namespace scribbu;
 
   const fs::path TEST_DATA_V2_4("/vagrant/test/data/id3v2.4.tag");
 
   fs::ifstream ifsv2_4(TEST_DATA_V2_4, fs::ifstream::binary);
 
-  id3v2_4_tag tagv2_4(ifsv2_4);
-  BOOST_CHECK(4 == tagv2_4.version());
-  BOOST_CHECK(0 == tagv2_4.revision());
-  BOOST_CHECK(1091 == tagv2_4.size());
-  BOOST_CHECK(0 == tagv2_4.flags());
-  BOOST_CHECK(!tagv2_4.unsynchronised());
+  id3v2_4_tag tag(ifsv2_4);
+  BOOST_CHECK(4 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(1091 == tag.size());
+  BOOST_CHECK(0 == tag.flags());
+  BOOST_CHECK(!tag.has_extended_header());
+  BOOST_CHECK(!tag.has_footer());
+  BOOST_CHECK(!tag.unsynchronised());
+  BOOST_CHECK(1024 == tag.padding());
 
-  BOOST_TEST_MESSAGE( "Album: '" << tagv2_4.album() << "'." );
-  BOOST_TEST_MESSAGE( "Artist: '" << tagv2_4.artist() << "'." );
-  BOOST_TEST_MESSAGE( "Title: '" << tagv2_4.title() << "'." );
+  BOOST_TEST_MESSAGE( "Album: '" << tag.album() << "'." );
+  BOOST_TEST_MESSAGE( "Artist: '" << tag.artist() << "'." );
+  BOOST_TEST_MESSAGE( "Title: '" << tag.title() << "'." );
 
-  BOOST_CHECK("Ela E Carioca" == tagv2_4.album());
-  BOOST_CHECK("Joao Gilberto" == tagv2_4.artist());
-  BOOST_CHECK("Acapulco" == tagv2_4.title());
+  BOOST_CHECK( tag.has_album());
+  BOOST_CHECK( tag.has_artist());
+  BOOST_CHECK(!tag.has_content_type());
+  BOOST_CHECK(!tag.has_encoded_by());
+  BOOST_CHECK(!tag.has_languages());
+  BOOST_CHECK( tag.has_title());
+  BOOST_CHECK(!tag.has_track());
+  BOOST_CHECK(!tag.has_year());
+
+  BOOST_CHECK("Ela E Carioca" == tag.album());
+  BOOST_CHECK("Joao Gilberto" == tag.artist());
+  BOOST_CHECK("Acapulco" == tag.title());
 
 } // End test_id3v2_4_tag.

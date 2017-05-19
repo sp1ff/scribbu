@@ -9,7 +9,15 @@
 //                         id3v2_2_tag nifty counter                         //
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef std::unordered_map<scribbu::frame_id4, scribbu::id3v2_3_tag::frame_parser> def_reg_type;
+typedef
+std::unordered_map<scribbu::frame_id4,
+                   scribbu::id3v2_3_tag::generic_frame_parser>
+def_generic_reg_type;
+
+typedef
+std::unordered_map<scribbu::frame_id4,
+                   scribbu::id3v2_3_tag::text_frame_parser>
+def_text_reg_type;
 
 static unsigned int nifty_counter_ = 0;
 
@@ -18,72 +26,89 @@ std::aligned_storage<sizeof(std::mutex), alignof(std::mutex)>::type
 mutex_buf_;
 
 static typename
-std::aligned_storage< sizeof(def_reg_type), alignof(def_reg_type)>::type
-map_buf_;
+std::aligned_storage< sizeof(def_generic_reg_type),
+                      alignof(def_generic_reg_type)>::type
+generic_map_buf_;
+
+static typename
+std::aligned_storage< sizeof(def_text_reg_type),
+                      alignof(def_text_reg_type)>::type
+text_map_buf_;
 
 /*static*/ std::mutex&
 scribbu::id3v2_3_tag::mutex_ =
   reinterpret_cast<std::mutex&>(mutex_buf_);
 
-/*static*/ def_reg_type&
-scribbu::id3v2_3_tag::default_parsers_ =
-  reinterpret_cast<def_reg_type&>(map_buf_);
+/*static*/ def_generic_reg_type&
+scribbu::id3v2_3_tag::default_generic_parsers_ =
+  reinterpret_cast<def_generic_reg_type&>(generic_map_buf_);
+
+/*static*/ def_text_reg_type&
+scribbu::id3v2_3_tag::default_text_parsers_ =
+  reinterpret_cast<def_text_reg_type&>(text_map_buf_);
 
 scribbu::id3v2_3_tag::static_initializer::static_initializer()
 {
   if (0 == nifty_counter_++) {
     new (&id3v2_3_tag::mutex_) std::mutex();
-    new (&id3v2_3_tag::default_parsers_) def_reg_type();
+    new (&id3v2_3_tag::default_generic_parsers_) def_generic_reg_type();
+    new (&id3v2_3_tag::default_text_parsers_) def_text_reg_type();
 
-#   define REG(id, tag) \
-    id3v2_3_tag::default_parsers_.insert(std::make_pair(frame_id4((id)), tag::create)) \
+#   define REGG(id, tag)                           \
+    id3v2_3_tag::default_generic_parsers_.insert(  \
+    std::make_pair(frame_id4((id)), tag::create))  \
 
-    REG("UFID", UFID);
-    REG("ENCR", ENCR);
-    REG("TALB", id3v2_3_text_frame);
-    REG("TBPM", id3v2_3_text_frame);
-    REG("TCOM", id3v2_3_text_frame);
-    REG("TCON", id3v2_3_text_frame);
-    REG("TCOP", id3v2_3_text_frame);
-    REG("TDAT", id3v2_3_text_frame);
-    REG("TDLY", id3v2_3_text_frame);
-    REG("TENC", id3v2_3_text_frame);
-    REG("TEXT", id3v2_3_text_frame);
-    REG("TFLT", id3v2_3_text_frame);
-    REG("TIME", id3v2_3_text_frame);
-    REG("TIT1", id3v2_3_text_frame);
-    REG("TIT2", id3v2_3_text_frame);
-    REG("TIT3", id3v2_3_text_frame);
-    REG("TKEY", id3v2_3_text_frame);
-    REG("TLAN", id3v2_3_text_frame);
-    REG("TLEN", id3v2_3_text_frame);
-    REG("TMED", id3v2_3_text_frame);
-    REG("TOAL", id3v2_3_text_frame);
-    REG("TOFN", id3v2_3_text_frame);
-    REG("TOLY", id3v2_3_text_frame);
-    REG("TOPE", id3v2_3_text_frame);
-    REG("TORY", id3v2_3_text_frame);
-    REG("TOWN", id3v2_3_text_frame);
-    REG("TPE1", id3v2_3_text_frame);
-    REG("TPE2", id3v2_3_text_frame);
-    REG("TPE3", id3v2_3_text_frame);
-    REG("TPE4", id3v2_3_text_frame);
-    REG("TPOS", id3v2_3_text_frame);
-    REG("TPUB", id3v2_3_text_frame);
-    REG("TRCK", id3v2_3_text_frame);
-    REG("TRDA", id3v2_3_text_frame);
-    REG("TRSN", id3v2_3_text_frame);
-    REG("TRSO", id3v2_3_text_frame);
-    REG("TSIZ", id3v2_3_text_frame);
-    REG("TSRC", id3v2_3_text_frame);
-    REG("TSSE", id3v2_3_text_frame);
-    REG("TYER", id3v2_3_text_frame);
-    REG("TXXX", TXXX);
-    REG("COMM", COMM);
-    REG("PCNT", PCNT);
-    REG("POPM", POPM);
+#   define REGT(id, tag)                           \
+    id3v2_3_tag::default_text_parsers_.insert(  \
+    std::make_pair(frame_id4((id)), tag::create))  \
 
-#   undef REG
+    REGG("UFID", UFID);
+    REGG("ENCR", ENCR);
+    REGT("TALB", id3v2_3_text_frame);
+    REGT("TBPM", id3v2_3_text_frame);
+    REGT("TCOM", id3v2_3_text_frame);
+    REGT("TCON", id3v2_3_text_frame);
+    REGT("TCOP", id3v2_3_text_frame);
+    REGT("TDAT", id3v2_3_text_frame);
+    REGT("TDLY", id3v2_3_text_frame);
+    REGT("TENC", id3v2_3_text_frame);
+    REGT("TEXT", id3v2_3_text_frame);
+    REGT("TFLT", id3v2_3_text_frame);
+    REGT("TIME", id3v2_3_text_frame);
+    REGT("TIT1", id3v2_3_text_frame);
+    REGT("TIT2", id3v2_3_text_frame);
+    REGT("TIT3", id3v2_3_text_frame);
+    REGT("TKEY", id3v2_3_text_frame);
+    REGT("TLAN", id3v2_3_text_frame);
+    REGT("TLEN", id3v2_3_text_frame);
+    REGT("TMED", id3v2_3_text_frame);
+    REGT("TOAL", id3v2_3_text_frame);
+    REGT("TOFN", id3v2_3_text_frame);
+    REGT("TOLY", id3v2_3_text_frame);
+    REGT("TOPE", id3v2_3_text_frame);
+    REGT("TORY", id3v2_3_text_frame);
+    REGT("TOWN", id3v2_3_text_frame);
+    REGT("TPE1", id3v2_3_text_frame);
+    REGT("TPE2", id3v2_3_text_frame);
+    REGT("TPE3", id3v2_3_text_frame);
+    REGT("TPE4", id3v2_3_text_frame);
+    REGT("TPOS", id3v2_3_text_frame);
+    REGT("TPUB", id3v2_3_text_frame);
+    REGT("TRCK", id3v2_3_text_frame);
+    REGT("TRDA", id3v2_3_text_frame);
+    REGT("TRSN", id3v2_3_text_frame);
+    REGT("TRSO", id3v2_3_text_frame);
+    REGT("TSIZ", id3v2_3_text_frame);
+    REGT("TSRC", id3v2_3_text_frame);
+    REGT("TSSE", id3v2_3_text_frame);
+    REGT("TYER", id3v2_3_text_frame);
+    REGG("TXXX", TXXX);
+    REGG("PCNT", PCNT);
+    REGG("POPM", POPM);
+    // NB "COMM" intentionally omitted
+
+#   undef REGT
+#   undef REGG
   }
 }
 
@@ -91,7 +116,8 @@ scribbu::id3v2_3_tag::static_initializer::~static_initializer()
 {
   if (0 == --nifty_counter_) {
     (&id3v2_3_tag::mutex_)->~mutex();
-    (&id3v2_3_tag::default_parsers_)->~unordered_map();
+    (&id3v2_3_tag::default_generic_parsers_)->~unordered_map();
+    (&id3v2_3_tag::default_text_parsers_)->~unordered_map();
   }
 }
 
@@ -130,7 +156,10 @@ scribbu::id3v2_3_tag::id3v2_3_tag(std::istream &is):
   id3v2_tag(is),
   experimental_(flags() & 0x20)
 {
-  get_default_frame_parsers(std::inserter(parsers_, parsers_.begin()));
+  get_default_generic_frame_parsers(std::inserter(generic_parsers_,
+                                                  generic_parsers_.begin()));
+  get_default_text_frame_parsers(std::inserter(text_parsers_,
+                                               text_parsers_.begin()));
   parse(is, flags() & 0x40);
 }
 
@@ -139,111 +168,52 @@ scribbu::id3v2_3_tag::id3v2_3_tag(std::istream     &is,
   id3v2_tag(H),
   experimental_(flags() & 0x20)
 {
-  get_default_frame_parsers(std::inserter(parsers_, parsers_.begin()));
+  get_default_generic_frame_parsers(std::inserter(generic_parsers_,
+                                                  generic_parsers_.begin()));
+  get_default_text_frame_parsers(std::inserter(text_parsers_,
+                                               text_parsers_.begin()));
   parse(is, flags() & 0x40);
 }
 
-/*virtual*/
-std::size_t
-scribbu::id3v2_3_tag::all_comments(std::vector<scribbu::comments> &out) const
-{
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-
-  const frame_id4 ID("COMM");
-
-  std::size_t nout = 0;
-  for (std::ptrdiff_t i = 0, n = frames_.size(); i < n; ++i) {
-    if (ID == frames_[i]->id()) {
-      const COMM &F = dynamic_cast<const COMM&>(*frames_[i]);
-      out.push_back(F.data());
-      ++nout;
-    }
+/*virtual*/ std::size_t
+scribbu::id3v2_3_tag::play_count() const {
+  switch (has_play_count()) {
+  case 1:
+    return pcnts_.front().first->count();
+  case 0:
+    // TODO: Throw custom exception?
+    throw std::runtime_error("no play counts");
+  default:
+    // TODO: Throw custom exception?
+    throw std::runtime_error("multiple play counts");
   }
-
-  return nout;
-
 }
 
-/*virtual*/
-std::size_t
-scribbu::id3v2_3_tag::all_play_counts(std::vector<scribbu::play_count> &out) const
-{
 
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-
-  const frame_id4 ID("PCNT");
-
-  auto pend = frame_map_.end();
-
-  auto p = frame_map_.find(ID);
-  if (pend == p) {
-    return 0;
+/// Not thread-safe
+bool
+scribbu::id3v2_3_tag::register_generic_frame_parser(
+  const frame_id4 &id,
+  const generic_frame_parser &F) {
+  if (parsing_is_reserved(id)) {
+    // TODO: Throw a custom exception in this case
+    throw std::invalid_argument("frame " + id.as_string() +
+                                " is reserved for parsing");
   }
-
-  std::size_t nout = 0;
-  do {
-    const PCNT &F = dynamic_cast<const PCNT&>(*frames_[p->second]);
-    out.push_back(F.count());
-    ++p;
-    ++nout;
-  } while (pend != p && ID == p->first);
-
-  return nout;
-
+  generic_parsers_.insert(std::make_pair(id, F)).first;
 }
 
-/*virtual*/
-std::size_t
-scribbu::id3v2_3_tag::all_ufids(std::vector<scribbu::unique_file_id> &out) const
-{
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-
-  const frame_id4 ID("UFID");
-
-  auto pend = frame_map_.end();
-
-  auto p = frame_map_.find(ID);
-  if (pend == p) {
-    return 0;
+bool
+scribbu::id3v2_3_tag::register_text_frame_parser(const frame_id4 &id,
+                                                 const text_frame_parser &F) {
+  if (parsing_is_reserved(id)) {
+    // TODO: Throw a custom exception in this case
+    throw std::invalid_argument("frame " + id.as_string() +
+                                " is reserved for parsing");
   }
-
-  std::size_t nout = 0;
-  do {
-    const UFID &F = dynamic_cast<const UFID&>(*frames_[p->second]);
-    out.push_back(F.file_id());
-    ++p;
-    ++nout;
-  } while (pend != p && ID == p->first);
-
-  return nout;
-
+  text_parsers_.insert(std::make_pair(id, F)).first;
 }
 
-/*virtual*/
-std::size_t
-scribbu::id3v2_3_tag::all_udts(std::vector<scribbu::user_defined_text> &out) const
-{
-
-  // TODO: Re-evaluate so as to avoid the dynamic_cast
-  using scribbu::frame_id4;
-  using scribbu::TXXX;
-
-  const frame_id4 ID("TXXX");
-
-  std::size_t nout = 0;
-  for (std::ptrdiff_t i = 0, n = frames_.size(); i < n; ++i) {
-    if (ID == frames_[i]->id()) {
-      const TXXX &F = dynamic_cast<const TXXX&>(*frames_[i]);
-      out.push_back(F.udt());
-      ++nout;
-    }
-  }
-
-  return nout;
-
-}
 
 std::tuple<boost::shared_array<unsigned char>, std::size_t>
 scribbu::id3v2_3_tag::decompress(const unsigned char *p,
@@ -276,7 +246,9 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, bool extended)
   // counting on it...
   std::ios_base::iostate exc_mask = is.exceptions();
   // and set it to a value convenient for our use.
-  is.exceptions(std::ios_base::eofbit|std::ios_base::failbit|std::ios_base::badbit);
+  is.exceptions(std::ios_base::eofbit|
+                std::ios_base::failbit|
+                std::ios_base::badbit);
   // Also, save this so we can restore the stream to its original
   // state.
   std::istream::streampos here = is.tellg();
@@ -521,12 +493,10 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, bool extended)
         pread = pf.get();
       }
 
-      // OK-- parse the frame & add it to our collection...
-      frames_.push_back(parse_frame(id, tap, fap, ro, encryption_method,
-                                    group_id, decompressed_size,
-                                    pread, pread + cb_read));
-      // & note the position of the new frame in our map.
-      frame_map_.insert(std::make_pair(id, frames_.size() - 1));
+      // OK-- parse the frame (parse_frame will update all our internal
+      // datastructures).
+      parse_frame(id, tap, fap, ro, encryption_method, group_id,
+                  decompressed_size, pread, pread + cb_read);
 
     } // End iteration over frames.
 
@@ -537,63 +507,113 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, bool extended)
   }
 }
 
-std::unique_ptr<scribbu::id3v2_3_frame>
-scribbu::id3v2_3_tag::parse_frame(const frame_id4                       &id,
-                                  id3v2_3_frame::tag_alter_preservation  tag_alter_preservation,
-                                  id3v2_3_frame::file_alter_preservation file_alter_preservation,
-                                  id3v2_3_frame::read_only               read_only,
-                                  const boost::optional<unsigned char>  &encryption_method,
-                                  const boost::optional<unsigned char>  &group_id,
-                                  const boost::optional<std::size_t>    &decompressed_size,
-                                  const unsigned char *                  p0,
-                                  const unsigned char *                  p1) const
+void
+scribbu::id3v2_3_tag::parse_frame(
+  const frame_id4 &id,
+  id3v2_3_frame::tag_alter_preservation tap,
+  id3v2_3_frame::file_alter_preservation fap,
+  id3v2_3_frame::read_only read_only,
+  const boost::optional<unsigned char> &encmth,
+  const boost::optional<unsigned char> &group_id,
+  const boost::optional<std::size_t> &dcsz,
+  const unsigned char *p0,
+  const unsigned char *p1)
 {
-  parser_map_type::const_iterator p = parsers_.find(id);
-  if (parsers_.end() == p) {
-    return std::unique_ptr<id3v2_3_frame>(
-      new unknown_id3v2_3_frame(id, tag_alter_preservation,
-                                file_alter_preservation, read_only,
-                                encryption_method, group_id,
-                                decompressed_size, p0, p1));
+  using namespace std;
+
+  static const frame_id4 COMMID("COMM"), PCNTID("PCNT");
+
+  // COMM is handled specially-- the frame parser for "COMM" may not
+  // be replaced
+  if (COMMID == id) {
+    COMM *pcomm = new COMM(p0, p1, tap, fap, read_only, encmth,
+                           group_id, dcsz);
+    comms_.push_back(make_pair(pcomm, frames_.size()));
+    frames_.push_back(unique_ptr<id3v2_3_frame>(pcomm));
+  }
+  else if (PCNTID == id) {
+    PCNT *pcnt = new PCNT(p0, p1, tap, fap, read_only, encmth,
+                          group_id, dcsz);
+    pcnts_.push_back(make_pair(pcnt, frames_.size()));
+    frames_.push_back(unique_ptr<id3v2_3_frame>(pcnt));
   }
   else {
-    return p->second(id, p0, p1 - p0,
-                     tag_alter_preservation,
-                     file_alter_preservation,
-                     read_only,
-                     encryption_method,
-                     group_id,
-                     decompressed_size);
+
+    // check to see if we have a text frame parser registered for `id'...
+    auto pfn0 = text_parsers_.find(id);
+    if (text_parsers_.end() != pfn0) {
+
+      // we do: treat this frame as a text frame. Create an
+      // id3v2_2_text_frame...
+      auto ptr = pfn0->second(id, p0, p1 - p0, tap,
+                              fap, read_only,
+                              encmth, group_id,
+                              dcsz);
+      // enter the address thereof into our text frame index...
+      if (text_map_.count(id)) {
+        throw duplicate_frame_error(id, p1 - p0);
+      }
+      text_map_[id] = ptr.get();
+      // and move our ptr-to-id3v2_2_text_frame into our frame collection
+      // as a ptr-to-id3v2_2_frame.
+      frames_.push_back(unique_ptr<id3v2_3_frame>(std::move(ptr)));
+    }
+    else {
+
+      // We do not-- check to see if we have a generic parser registered...
+      auto pfn1 = generic_parsers_.find(id);
+      if (generic_parsers_.end() == pfn1) {
+        frames_.push_back(
+          unique_ptr<id3v2_3_frame>(
+             new unknown_id3v2_3_frame(id, tap,
+                                       fap, read_only,
+                                       encmth, group_id,
+                                       dcsz, p0, p1)));
+      }
+      else {
+        frames_.push_back(pfn1->second(id, p0, p1 - p0,
+                                       tap,
+                                       fap,
+                                       read_only, encmth,
+                                       group_id, dcsz));
+      }
+    }
   }
+
+  // and finally update our id index.
+  frame_map_.insert(std::make_pair(id, frames_.size() - 1));
+
+}
+
+/*static*/ bool
+scribbu::id3v2_3_tag::parsing_is_reserved(const frame_id4 &id)
+{
+  using namespace std;
+
+  vector<frame_id4> RSVD{ "COMM", "PCNT", "POPM" };
+
+  return RSVD.end() != find(RSVD.begin(), RSVD.end(), id);
 }
 
 void scribbu::id3v2_3_tag::register_encryption_method(const ENCR &encr) {
 
-  if (0 != encryption_methods_.count(encr.get_method().method_symbol())) {
+  if (0 != encryption_methods_.count(encr.method_symbol())) {
     // TODO: Throw a custom exception, here
+    throw std::runtime_error("duplicate encryption method");
   }
 
-  encryption_methods_.insert(std::make_pair(encr.get_method().method_symbol(), encr));
+  encryption_methods_.insert(std::make_pair(encr.method_symbol(), encr));
 
 }
 
 /// Lookup a text frame, convert its data from its native encoding to
 /// UTF-8, return as a string
-std::string scribbu::id3v2_3_tag::text_frame_as_utf8(const frame_id4 &id) const
+std::string
+scribbu::id3v2_3_tag::text_frame_as_str(
+  const frame_id4 &id,
+  encoding dst /*= encoding::UTF_8*/,
+  on_no_encoding rsp /*= on_no_encoding::fail*/,
+  const boost::optional<encoding> &src /*= boost::none*/) const
 {
-  std::size_t n = frame_map_.count(id);
-  if (0 == n) {
-    throw unknown_frame_error(id);
-  } else if (1 != n) {
-    throw duplicate_frame_error(id, n);
-  }
-
-  std::ptrdiff_t idx = frame_map_.find(id)->second;
-
-  // TODO: Re-evaluate this to see if I can re-structure in such a way as to
-  // not need the dynamic cast...
-  const id3v2_3_text_frame &F = dynamic_cast<const id3v2_3_text_frame&>( *frames_[idx].get() );
-
-  return F.as_utf8();
-
+  return text_map_.at(id)->as_str<std::string>(dst, rsp, src);
 }

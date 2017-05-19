@@ -1,8 +1,9 @@
+#include "config.h"
+
 #include <iostream>
 
 #include <boost/lexical_cast.hpp>
 
-#include "config.h"
 #include "command-utilities.hh"
 
 #include <scribbu/scribbu.hh>
@@ -14,7 +15,19 @@ namespace {
 
   const std::string USAGE(R"(scribbu -- tag your music
 
-TODO: Write a usage message here...
+scribbu is tool for managing your MP3 collection.
+
+Usage:
+    scribbu [OPTION...] SUB-COMMAND
+
+where SUB-COMMAND is one of:
+
+    - split: split a file into ID3v2 tag(s), track data, and ID3v1 tag
+    - rename: rename a file based on it's tag(s)
+    - report: generate a report on the contents of one or more directories
+    - dump: dump the tags for one or more files or directories
+
+For sub-command help, run 'scribbu SUB-COMMAND --help'
 )");
   
   const fs::path DEFCFG("~/.scribbu");
@@ -125,7 +138,7 @@ main(int argc, char * argv[])
 
         // 'opts' is non-empty, so there's at least one element--
         // attempt to resolve the first element to a command...
-	handler_type f = get_sub_command(opts.front());
+        handler_type f = get_sub_command(opts.front());
         // pop it...
         opts.erase(opts.begin());
         // and dispatch.

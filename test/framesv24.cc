@@ -1,9 +1,9 @@
-#include <boost/filesystem/fstream.hpp>
-#include <boost/test/unit_test.hpp>
-#include <scribbu/scribbu.hh>
 #include <scribbu/framesv24.hh>
 
-// TODO: Unit test UFID_2_4
+#include <boost/filesystem/fstream.hpp>
+#include <boost/test/unit_test.hpp>
+
+#include <scribbu/scribbu.hh>
 
 BOOST_AUTO_TEST_CASE( test_encr_2_4 )
 {
@@ -27,12 +27,18 @@ BOOST_AUTO_TEST_CASE( test_encr_2_4 )
                 false,
                 boost::none);
 
-  encryption_method M = encr.method();
   unsigned char buf[3];
-  BOOST_CHECK( buf + 2 == M.email(buf) );
+  BOOST_CHECK( buf + 2 == encr.emailb(buf) );
   BOOST_CHECK( 'm' == buf[0] && 'e' == buf[1] );
-  BOOST_CHECK( 1 == M.method_symbol() );
-  BOOST_CHECK( buf + 3 == M.data(buf) );
+  BOOST_CHECK( 1 == encr.method_symbol() );
+  BOOST_CHECK( buf + 3 == encr.datab(buf) );
   BOOST_CHECK( 1 == buf[0] && 2 == buf[1] && 3 == buf[2] );
 
 } // End test_encr_2_4.
+
+// TODO: Unit test class UFID_2_4, once I get some data
+// TODO: Unit test class id3v2_4_text_frame
+// TODO: Unit test class TXXX_2_4, once I get some data
+// TODO: Unit test class COMM_2_4, once I get some data
+// TODO: Unit test class PCNT_2_4, once I get some data
+// TODO: Unit test class POPM_2_4, once I get some data

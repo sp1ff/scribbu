@@ -1,13 +1,23 @@
 #include <scribbu/scribbu.hh>
-#include <scribbu/id3v1.hh>
+
+#include <type_traits>
+#include <unordered_map>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/log/common.hpp>
+
 #include <openssl/evp.h>
+
+#include <scribbu/id3v1.hh>
 
 namespace fs  = boost::filesystem;
 namespace src = boost::log::sources;
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                     library initialization & teardown                     //
+///////////////////////////////////////////////////////////////////////////////
+
 void
 scribbu::static_initialize()
 {
@@ -19,6 +29,11 @@ scribbu::static_cleanup()
 {
   EVP_cleanup();
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class file_info                              //
+///////////////////////////////////////////////////////////////////////////////
 
 scribbu::file_info::file_info(fs::path pth) {
 
@@ -41,6 +56,26 @@ scribbu::open_file(fs::path pth)
   std::unique_ptr<std::istream> pis(new fs::ifstream(pth, std::ios_base::binary));
   return std::make_pair(std::move(pis), fi);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                            class openssl_error                            //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/ const char *
+scribbu::openssl_error::what() const noexcept
+{
+  if ( ! pwhat_ ) {
+    pwhat_.reset(new std::string(ERR_error_string(err_, 0)));
+  }
+
+  return pwhat_->c_str();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                             class track_data                              //
+///////////////////////////////////////////////////////////////////////////////
 
 scribbu::track_data::track_data(std::istream &is)
 {
@@ -75,15 +110,16 @@ scribbu::track_data::track_data(std::istream &is)
   }
 
   // Compute an MD5 checksum of the file contents from 'here' to 'tag'
+  size_ = tag - here;
   is.seekg(here, std::ios_base::beg);
 
   EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
   if (! mdctx) {
-
+    throw new openssl_error();
   }
 
   if (! EVP_DigestInit_ex(mdctx, EVP_md5(), 0)) {
-
+    throw new openssl_error();
   }
 
   for (std::streamsize nleft = tag - here; nleft > 0; ) {
@@ -92,7 +128,7 @@ scribbu::track_data::track_data(std::istream &is)
 
     is.read((char*)BUF, nbytes);
     if (! EVP_DigestUpdate(mdctx, BUF, nbytes)) {
-
+      throw new openssl_error();
     }
 
     nleft -= nbytes;

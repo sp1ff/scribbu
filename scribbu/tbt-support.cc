@@ -252,10 +252,13 @@ scribbu::tbt_support::duplicate_option::duplicate_option(scribbu::tbt_support::s
 ///////////////////////////////////////////////////////////////////////////////
 
 std::string
-scribbu::tbt_support::tag_based_term::v1_text_to_utf8(const unsigned char *pbuf,
-                                      std::size_t          cbbuf,
-                                      scribbu::tbt_support::v1_encoding          v1enc) const
+scribbu::tbt_support::tag_based_term::v1_text_to_utf8(
+  const unsigned char              *pbuf,
+  std::size_t                       cbbuf,
+  scribbu::tbt_support::v1_encoding v1enc) const
 {
+  using scribbu::encoding;
+  using scribbu::convert_encoding;
   using scribbu::tbt_support::v1_encoding;
 
   const char * const ISO88591 = "ISO-8859-1";
@@ -280,38 +283,40 @@ scribbu::tbt_support::tag_based_term::v1_text_to_utf8(const unsigned char *pbuf,
   }
 
   std::string result;
-
   if (v1_encoding::automatic == v1enc) {
 
-    const std::vector<const char*> GUESSES({{
-      ISO88591, ASCII, CP1252, UTF8, UTF16BE, UTF16LE, UTF32
+    const std::vector<encoding> GUESSES({{
+      encoding::ASCII, encoding::ISO_8859_1, encoding::CP1252,
+      encoding::UTF_8, encoding::UTF_16BE, encoding::UTF_16LE,
+      encoding::UTF_32
     }});
 
     for (auto g: GUESSES) {
       try {
-        scribbu::detail::iconv_guard guard(UTF8, g);
-        result = scribbu::detail::to_utf8(guard, pbuf, cbbuf);
+        result = convert_encoding<std::string>(pbuf, cbbuf, g,
+                                               encoding::UTF_8);
         break;
       } catch (const iconv_error&) {
         // Move on to the next guess...
       }
     }
 
+    throw std::invalid_argument("unable to find encoding");
+
   }
   else {
 
-    const std::map<v1_encoding, const char*> LOOKUP({
-      {v1_encoding::iso8859_1, ISO88591},
-      {v1_encoding::ascii,     ASCII},
-      {v1_encoding::cp1252,    CP1252},
-      {v1_encoding::utf_8,     UTF8},
-      {v1_encoding::utf_16_be, UTF16BE},
-      {v1_encoding::utf_16_le, UTF16LE},
-      {v1_encoding::utf_32,    UTF32}});
+    const std::map<v1_encoding, encoding> LOOKUP({
+      {v1_encoding::ascii,     encoding::ASCII},
+      {v1_encoding::iso8859_1, encoding::ISO_8859_1},
+      {v1_encoding::cp1252,    encoding::CP1252},
+      {v1_encoding::utf_8,     encoding::UTF_8},
+      {v1_encoding::utf_16_be, encoding::UTF_16BE},
+      {v1_encoding::utf_16_le, encoding::UTF_16LE},
+      {v1_encoding::utf_32,    encoding::UTF_32}});
 
-    const char *E = LOOKUP.at(v1enc);
-    scribbu::detail::iconv_guard guard(UTF8, E);
-    result = scribbu::detail::to_utf8(guard, pbuf, cbbuf);
+    encoding src = LOOKUP.at(v1enc);
+    result = convert_encoding<std::string>(pbuf, cbbuf, src, encoding::UTF_8);
 
   }
 
@@ -437,7 +442,7 @@ scribbu::tbt_support::content_type::evaluate(const file_info  & /*fi    */,
   vector<unsigned char> v1;
   if (pid3v1) {
     // Try for extended ID3v1 info...
-    pid3v1->genre(back_inserter(v1));
+    pid3v1->enh_genre(back_inserter(v1));
     if (v1.empty()) {
       // but if we can't get that, fall back to ID3v1 genre.
       boost::optional<std::string> text = id3v1_tag::text_for_genre(pid3v1->genre());

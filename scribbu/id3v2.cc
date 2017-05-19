@@ -241,66 +241,6 @@ std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
 
 } // End free function resynchronise.
 
-std::string scribbu::to_utf8(unsigned char        id3v2_version,
-                             unsigned char        encoding,
-                             const unsigned char *pbuf,
-                             std::size_t          cbbuf)
-{
-    const char * const ISO88591 = "ISO-8859-1";
-    const char * const UCS2BE   = "UCS-2BE";
-    const char * const UCS2LE   = "UCS-2LE";
-    const char * const UCS2     = "UCS-2";
-    const char * const UTF16    = "UTF-16";
-    const char * const UTF16BE  = "UTF-16BE";
-
-    const char * encoding_text = 0;
-    if (2 == id3v2_version || 3 == id3v2_version) {
-
-      if (0 == encoding) {
-        encoding_text = ISO88591;
-      }
-      else if (1 == encoding) {
-        if (1 < cbbuf && 0xfe == pbuf[0] && 0xff == pbuf[1]) {
-          encoding_text = UCS2BE;
-        } else if (1 < cbbuf && 0xff == pbuf[0] && 0xfe == pbuf[1]) {
-          encoding_text = UCS2LE;
-        } else {
-          encoding_text = UCS2;
-        }
-      }
-
-    }
-    else if (4 == id3v2_version) {
-
-      if (3 == encoding) {
-        // TODO: Spec says this should be null-terminated; remove that null, if
-        // present.
-        return std::string(pbuf, pbuf + cbbuf);
-      }
-
-      if (0 == encoding) {
-        encoding_text = ISO88591;
-      }
-      else if (1 == encoding) {
-        encoding_text = UTF16;
-      }
-      else if (2 == encoding) {
-        encoding_text = UTF16BE;
-      }
-
-    }
-    else {
-      throw id3v2_tag::unknown_version(id3v2_version);
-    }
-
-    if (!encoding_text) {
-      throw std::runtime_error("Unknown encoding");
-    }
-
-    scribbu::detail::iconv_guard guard("UTF-8", encoding_text);
-    return scribbu::detail::to_utf8(guard, pbuf, cbbuf);
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             class zlib_error                              //

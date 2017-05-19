@@ -136,9 +136,10 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libscribbu_la_LIBADD =
 am_libscribbu_la_OBJECTS = tbt-parser.lo tbt-lexer.lo scribbu.lo \
-	id3v1.lo framesv2.lo framesv22.lo framesv23.lo framesv24.lo \
-	id3v2.lo id3v22.lo id3v23.lo id3v24.lo id3v2-utils.lo \
-	tbt-support.lo
+	charsets.lo ostream.lo id3v1.lo framesv2.lo framesv22.lo \
+	framesv23.lo framesv24.lo id3v2.lo id3v22.lo id3v23.lo \
+	id3v24.lo id3v2-utils.lo tbt-support.lo pprinter.lo \
+	csv-pprinter.lo
 libscribbu_la_OBJECTS = $(am_libscribbu_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -384,8 +385,8 @@ AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES)
 AM_CXXFLAGS = -std=c++11
 lib_LTLIBRARIES = libscribbu.la
-libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll scribbu.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc tbt-support.cc
-include_HEADERS = scribbu.hh errors.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh tbt-support.hh
+libscribbu_la_SOURCES = tbt-parser.yy tbt-lexer.ll scribbu.cc charsets.cc ostream.cc id3v1.cc framesv2.cc framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc id3v24.cc id3v2-utils.cc tbt-support.cc pprinter.cc csv-pprinter.cc
+include_HEADERS = scribbu.hh errors.hh charsets.hh ostream.hh id3v1.hh framesv2.hh framesv22.hh framesv23.hh framesv24.hh id3v2.hh id3v22.hh id3v23.hh id3v24.hh id3v2-utils.hh tbt-support.hh pprinter.hh csv-pprinter.hh
 DISTCLEANFILES = tbt-lexer.cc tbt-lexer.hh
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -470,6 +471,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/charsets.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csv-pprinter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv22.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/framesv23.Plo@am__quote@
@@ -480,6 +483,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v22.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v23.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id3v24.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ostream.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pprinter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scribbu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tbt-lexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tbt-parser.Plo@am__quote@

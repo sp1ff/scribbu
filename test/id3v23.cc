@@ -1,14 +1,17 @@
+#include <scribbu/id3v23.hh>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
+
 #include <scribbu/scribbu.hh>
-#include <scribbu/id3v23.hh>
 
 namespace fs = boost::filesystem;
 
-// TODO: Unsync: Bill LeFaive - Orlando.mp3
-
-
 /**
+ * \brief Test id3v2.3.tag (Lorca's Novena)
+ *
+ *
+ * Test data: this is a big one-- here's the first kilobyte:
  *
  \code
 
@@ -79,7 +82,16 @@ namespace fs = boost::filesystem;
    0003f0 30 07 b7 8d 3d 8e a6 26 88 33 4a 80 7e 67 50 6a  >0...=..&.3J.~gPj<
    000400
 
-   vagrant@vagrant-ubuntu-trusty-64:/vagrant/test/data$ od -A x -t x1z -j 115908 -N 1024 id3v2.3.tag
+  \endcode
+  *
+  * This is tough to read in the raw due to the APIC frame (Attached PICture)
+  * at offset 0x0158. This frame is 115554 (0x01c362) bytes in size. 0x0158 +
+  * 0x1c362 + 10 bytes (for the frame header) gives 0x1c4c4 = 115908. Resuming
+  * the hex dump:
+  *
+  \code
+
+   vagrant@vagrant-ubuntu-trusty-64:/vagrant/test/data$ od -A x -t x1z -j 115908 id3v2.3.tag
    01c4c4 50 52 49 56 00 00 04 62 00 00 77 77 77 2e 61 6d  >PRIV...b..www.am<
    01c4d4 61 7a 6f 6e 2e 63 6f 6d 00 3c 3f 78 6d 6c 20 76  >azon.com.<?xml v<
    01c4e4 65 72 73 69 6f 6e 3d 22 31 2e 30 22 20 65 6e 63  >ersion="1.0" enc<
@@ -154,10 +166,12 @@ namespace fs = boost::filesystem;
    01c924 3c 2f 75 69 74 73 3a 55 49 54 53 3e 00 00 00 00  ></uits:UITS>....<
    01c934 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
    *
-   01ccc4
+   06e954 00 00 00 00 00 00 00 00 00 00 00 00 00           >.............<
+   06e961
+   *
  \endcode
  *
- * ID3v2 header:
+ * Broken out, we have the ID3v2 header:
  *
  \code
 
@@ -332,15 +346,19 @@ namespace fs = boost::filesystem;
    01c8f4 70 59 64 57 7a 42 74 53 6d 33 62 74 7a 6a 47 44
    01c904 4f 6c 6a 67 31 65 79 4e 51 69 76 6f 30 41 37 62
    01c914 79 41 3d 3d 3c 2f 73 69 67 6e 61 74 75 72 65 3e
-   01c924 3c 2f 75 69 74 73 3a 55 49 54 53 3e 00
-   01c930 00...
+   01c924 3c 2f 75 69 74 73 3a 55 49 54 53 3e
 
- 1. 00 1b 52 57 = b0000 0000 0001 1011 0101 0010 0101 0111 =>
-    b 000 0000 001 1011 101 0010 101 0111 =>
-    b 0000 0000 0110 1110 1001 0101 0111 =
-    0x006e957 = 452951
+   01c930 00...  <== padding begins here
+   06e961 <== tag ends here [3]
 
- 2. <?xml version="1.0" encoding="UTF-8"?>\x0a<uits:UITS xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uits="http://www.udirector.net/schemas/2009/uits/1.1"><metadata><nonce>hDQgrTzB</nonce><Distributor>Amazon.com</Distributor><Time>1970-01-01T00:00:00Z</Time><ProductID type="UPC" completed="false">081227406769</ProductID><AssetID type="ISRC">GBAHT0400245</AssetID><TID version="1">73819-246900864443932112514276000</TID><Media algorithm="SHA256">2d7387a542080893053f4e092de7269fb263ce834a1e8416e282de06f81a7803</Media><PA>unspecified</PA><Copyright></Copyright><Extra type="TransactionType">Download - Paid</Extra></metadata><signature algorithm="RSA2048" canonicalization="none" keyID="dd0af29b41cd7d6d82593caf1ba9eaa6b756383f">NrGAEHN/XXue4idZRUCOTxF1wWzgItG+++IHKYLNEMzxww2R8SkR++dOaAKcJ4P5boEiAWPdGgSKcVi4Tc13Fx2P226o1io39zxU1RADCRnDm52iR7G4gIqhQnBj0+r47JJdQgt2NLXZHp+7ntwaRogGGIcVhX4DqgYxo0/dBgniN1zJGOxN1raGzB9EQI6CX3vXT5MC15/sZVFZy8IV8XmHoVQldQ8BGvQw6N9nwAElJS/FM7nipeXjYz2NhnzY2oRnOXevVTOPgpIX1iMbHxOdqB91enzr4Zz0teBSkvAYzA/HMGVFpYdWzBtSm3btzjGDOljg1eyNQivo0A7byA==</signature></uits:UITS>
+   1. 00 1b 52 57 = b0000 0000 0001 1011 0101 0010 0101 0111 =>
+      b 000 0000 001 1011 101 0010 101 0111 =>
+      b 0000 0000 0110 1110 1001 0101 0111 =
+      0x006e957 = 452951
+
+   2. <?xml version="1.0" encoding="UTF-8"?>\x0a<uits:UITS xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uits="http://www.udirector.net/schemas/2009/uits/1.1"><metadata><nonce>hDQgrTzB</nonce><Distributor>Amazon.com</Distributor><Time>1970-01-01T00:00:00Z</Time><ProductID type="UPC" completed="false">081227406769</ProductID><AssetID type="ISRC">GBAHT0400245</AssetID><TID version="1">73819-246900864443932112514276000</TID><Media algorithm="SHA256">2d7387a542080893053f4e092de7269fb263ce834a1e8416e282de06f81a7803</Media><PA>unspecified</PA><Copyright></Copyright><Extra type="TransactionType">Download - Paid</Extra></metadata><signature algorithm="RSA2048" canonicalization="none" keyID="dd0af29b41cd7d6d82593caf1ba9eaa6b756383f">NrGAEHN/XXue4idZRUCOTxF1wWzgItG+++IHKYLNEMzxww2R8SkR++dOaAKcJ4P5boEiAWPdGgSKcVi4Tc13Fx2P226o1io39zxU1RADCRnDm52iR7G4gIqhQnBj0+r47JJdQgt2NLXZHp+7ntwaRogGGIcVhX4DqgYxo0/dBgniN1zJGOxN1raGzB9EQI6CX3vXT5MC15/sZVFZy8IV8XmHoVQldQ8BGvQw6N9nwAElJS/FM7nipeXjYz2NhnzY2oRnOXevVTOPgpIX1iMbHxOdqB91enzr4Zz0teBSkvAYzA/HMGVFpYdWzBtSm3btzjGDOljg1eyNQivo0A7byA==</signature></uits:UITS>
+
+   3. 0x052031 = 335921  bytes of padding
 
  \endcode
  *
@@ -354,31 +372,81 @@ namespace fs = boost::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
 {
-  using scribbu::id3v2_3_tag;
-
-  std::vector< id3v2_3_tag::frame_parser_registration > regs;
-  id3v2_3_tag::get_default_frame_parsers( std::back_inserter(regs) );
-  BOOST_CHECK( 0 != regs.size() );
+  using namespace std;
+  using namespace scribbu;
 
   const fs::path TEST_DATA_V2_3("/vagrant/test/data/id3v2.3.tag");
 
   fs::ifstream ifsv2_3(TEST_DATA_V2_3, fs::ifstream::binary);
-  id3v2_3_tag tagv2_3(ifsv2_3);
+  id3v2_3_tag tag(ifsv2_3);
 
-  BOOST_CHECK(3 == tagv2_3.version());
-  BOOST_CHECK(0 == tagv2_3.revision());
-  BOOST_CHECK(452951 == tagv2_3.size());
-  BOOST_CHECK(0 == tagv2_3.flags());
-  BOOST_CHECK(!tagv2_3.unsynchronised());
+  BOOST_CHECK(3 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(452951 == tag.size());
+  BOOST_CHECK(0 == tag.flags());
+  BOOST_CHECK(!tag.unsynchronised());
+  BOOST_CHECK(!tag.experimental());
+  BOOST_CHECK(!tag.has_extended_header());
+  BOOST_CHECK(335921 == tag.padding());
 
-  BOOST_CHECK("Hell's Ditch [Expanded] (US Version)" == tagv2_3.album());
-  BOOST_CHECK("The Pogues" == tagv2_3.artist());
-  BOOST_CHECK("Pop" == tagv2_3.content_type());
-  BOOST_CHECK("Lorca's Novena" == tagv2_3.title());
+  BOOST_CHECK("Hell's Ditch [Expanded] (US Version)" == tag.album());
+  BOOST_CHECK("The Pogues" == tag.artist());
+  BOOST_CHECK("Pop" == tag.content_type());
+  BOOST_CHECK("Lorca's Novena" == tag.title());
+  BOOST_CHECK("Pop" == tag.content_type());
+  BOOST_CHECK("5" == tag.track());
+  BOOST_CHECK("1990" == tag.year());
+
+  BOOST_CHECK( tag.has_album());
+  BOOST_CHECK( tag.has_artist());
+  BOOST_CHECK( tag.has_content_type());
+  BOOST_CHECK(!tag.has_encoded_by());
+  BOOST_CHECK(!tag.has_languages());
+  BOOST_CHECK( tag.has_title());
+  BOOST_CHECK( tag.has_track());
+  BOOST_CHECK( tag.has_year());
+
+  vector<COMM> comments;
+  tag.get_comments(back_inserter(comments));
+  BOOST_CHECK(1 == comments.size());
+
+  vector<unsigned char> buf;
+  comments[0].descriptionb(back_inserter(buf));
+  BOOST_CHECK(buf.size());
+
+  const vector<unsigned char> GOLD1{
+    0xff, 0xfe, 0x41, 0x00, 0x6d, 0x00, 0x61, 0x00,
+    0x7a, 0x00, 0x6f, 0x00, 0x6e, 0x00, 0x2e, 0x00,
+    0x63, 0x00, 0x6f, 0x00, 0x6d, 0x00, 0x20, 0x00,
+    0x53, 0x00, 0x6f, 0x00, 0x6e, 0x00, 0x67, 0x00,
+    0x20, 0x00, 0x49, 0x00, 0x44, 0x00, 0x3a, 0x00,
+    0x20, 0x00, 0x32, 0x00, 0x30, 0x00, 0x33, 0x00,
+    0x35, 0x00, 0x35, 0x00, 0x38, 0x00, 0x32, 0x00,
+    0x35, 0x00, 0x34, 0x00 };
+
+  buf.erase(buf.begin(), buf.end());
+  comments[0].textb(back_inserter(buf));
+  BOOST_CHECK(buf == GOLD1);
+
+  string s = comments[0].description<string>();
+  BOOST_CHECK(s.empty());
+  s = comments[0].text<string>();
+  BOOST_CHECK(s == "Amazon.com Song ID: 203558254");
+
+  // TCOM/Composer & TPE3/Conducter just have a BOM
+  // TPE2/Band is "The Pogues"
+  // TCOP: "2004 Warner Music UK Ltd." (UCS2, LE BOM)
+  // TPOS frame (Part of a set): "1" (ISO-8859-1)
+  // APIC frame
+  // PRIV frame: Owner/ID: "amazon.com" (XML Doc)
 
 } // End test_id3v2_3_tag.
 
 /**
+ * \brief Test against two more ID3v2.3 files
+ *
+ *
+ * Test data for the first file (Opium Garden):
  *
  * \code
 
@@ -421,7 +489,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
 
  \endcode
  *
- * Decoded:
+ * Broken out:
  *
  \code
 
@@ -444,7 +512,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
    000039                            01                    Unicode encoding
    00003a                               ff fe              Little Endian BOM
    00003c                                     31 00        "1"
-   00003e                                           43 4f  COMM frame (Commens)
+   00003e                                           43 4f  COMM frame (Comments)
    000040 4d 4d
    000042       00 00 00 44                                frame is 68 bytes in length
    000046                   00 00                          no flags
@@ -540,7 +608,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
    1. %00 00 0f 76 = b0000 0000 0000 0000 0000 1111 0111 0110 =>
     0000 0000  000 0000  000 1111  111 0110 =>
     00000000000000000 0111 1111 0110 =>
-    0x07f6 = 2038 (=> track begins at 0x800
+    0x07f6 = 2038 (=> track begins at 0x800)
 
  \endcode
  *
@@ -549,11 +617,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
 
 BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 {
-  using scribbu::comments;
-  using scribbu::id3v2_3_tag;
-  using scribbu::to_utf8;
-
   using namespace std;
+  using namespace scribbu;
 
   const fs::path TEST_FILE_01("/vagrant/test/data/opium.mp3");
   const fs::path TEST_FILE_02("/vagrant/test/data/u2-promenade.mp3");
@@ -561,17 +626,37 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
   id3v2_3_tag tag01(ifs01);
 
+  BOOST_CHECK(!tag01.experimental());
+  BOOST_CHECK(!tag01.has_extended_header());
+  BOOST_CHECK(1522 == tag01.padding());
+
   BOOST_CHECK("Opium Gardens"      == tag01.album());
   BOOST_CHECK("Stephan Luke"       == tag01.artist());
   BOOST_CHECK("General Club Dance" == tag01.content_type());
   BOOST_CHECK("Winamp 5.552"       == tag01.encoded_by());
   BOOST_CHECK("Opium Chant Intro"  == tag01.title());
+  BOOST_CHECK("1"                  == tag01.track());
+  BOOST_CHECK("2003"               == tag01.year());
 
-  vector<comments> Comments;
-  tag01.get_all_comments(back_inserter(Comments));
+  BOOST_CHECK( tag01.has_album());
+  BOOST_CHECK( tag01.has_artist());
+  BOOST_CHECK( tag01.has_content_type());
+  BOOST_CHECK( tag01.has_encoded_by());
+  BOOST_CHECK(!tag01.has_languages());
+  BOOST_CHECK( tag01.has_title());
+  BOOST_CHECK( tag01.has_track());
+  BOOST_CHECK( tag01.has_year());
 
-  BOOST_CHECK(1 == Comments.size());
-  const comments &C = Comments.front();
+  // TPUB "Opium Music"
+  // TPOS "1/1"
+  // TCON "General Club Dance"
+  // UFID
+
+  vector<COMM> comments;
+  tag01.get_comments(back_inserter(comments));
+
+  BOOST_CHECK(1 == comments.size());
+  const COMM &C = comments.front();
 
   unsigned char lang[3];
   vector<unsigned char> desc, text;
@@ -581,12 +666,27 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   C.lang(lang);
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
 
-  C.description(back_inserter(desc));
-  std::string s = to_utf8(2, C.unicode(), &(desc[0]), desc.size());
+  vector<unsigned char> GOLD0 = vector<unsigned char>{0xff, 0xfe};
+  C.descriptionb(back_inserter(desc));
+  BOOST_CHECK(desc == GOLD0);
+
+  std::string s = C.description<string>();
   BOOST_CHECK("" == s);
 
-  C.text(back_inserter(text));
-  s = to_utf8(3, C.unicode(), &(text[0]), text.size());
+  C.textb(back_inserter(text));
+  vector<unsigned char> GOLD1 = vector<unsigned char>{
+    0xff, 0xfe, 0x52, 0x00, 0x69, 0x00, 0x70, 0x00,
+    0x70, 0x00, 0x65, 0x00, 0x64, 0x00, 0x20, 0x00,
+    0x62, 0x00, 0x79, 0x00, 0x20, 0x00, 0x57, 0x00,
+    0x69, 0x00, 0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00,
+    0x70, 0x00, 0x20, 0x00, 0x6f, 0x00, 0x6e, 0x00,
+    0x20, 0x00, 0x50, 0x00, 0x69, 0x00, 0x6d, 0x00,
+    0x70, 0x00, 0x65, 0x00, 0x72, 0x00, 0x6e, 0x00,
+    0x65, 0x00, 0x6c, 0x00
+  };
+  BOOST_CHECK(text == GOLD1);
+
+  s = C.text<string>();
   BOOST_CHECK("Ripped by Winamp on Pimpernel" == s);
 
   fs::ifstream ifs02(TEST_FILE_02, fs::ifstream::binary);
@@ -600,6 +700,10 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 }
 
 /**
+ * \brief Test against an interesting ID3v2.3 tag
+ *
+ *
+ * The test data:
  *
  \code
 
@@ -694,7 +798,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
    0000cd                                        00 00 00  000 (no language information)
    0000d0 4d 75 73 69 63 4d 61 74 63 68 5f 53 69 74 75 61  "MusicMatch_Situation"
    0000e0 74 69 6f 6e 00
-   0000e5                00 00 00 00 00 00 00 00 00 00 00  Padding
+   0000e5                00 00 00 00 00 00 00 00 00 00 00  Padding (374 bytes)
    0000f0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
    *
    000250 00 00 00 00 00 00 00 00 00 00 00
@@ -713,34 +817,45 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 BOOST_AUTO_TEST_CASE( test_funny_file )
 {
   using namespace std;
-  using scribbu::id3v2_3_tag;
+  using namespace scribbu;
 
   const fs::path TEST_FILE("/vagrant/test/data/nin-only-time.mp3");
 
   fs::ifstream ifs(TEST_FILE, fs::ifstream::binary);
   id3v2_3_tag tag(ifs);
 
+  BOOST_CHECK(!tag.experimental());
+  BOOST_CHECK(!tag.has_extended_header());
+  BOOST_CHECK(374 == tag.padding());
+
   BOOST_CHECK("" == tag.album());
   BOOST_CHECK("Nine Inch Nails" == tag.artist());
   BOOST_CHECK("(79)Hard Rock" == tag.content_type());
   BOOST_CHECK(0 == tag.has_encoded_by());
+  BOOST_CHECK(!tag.has_languages());
   BOOST_CHECK("Only Time, The" == tag.title());
+  BOOST_CHECK(tag.has_track());
+  BOOST_CHECK("" == tag.track());
+  BOOST_CHECK(tag.has_year());
+  BOOST_CHECK("" == tag.year());
+
+  vector<COMM> C;
 
   const vector<unsigned char> GOLD1({{'M', 'u', 's', 'i', 'c', 'M', 'a', 't', 'c', 'h', '_', 'M', 'o', 'o', 'd'}});
   const vector<unsigned char> GOLD2({{'M', 'u', 's', 'i', 'c', 'M', 'a', 't', 'c', 'h', '_', 'T', 'e', 'm', 'p', 'o'}});
   const vector<unsigned char> GOLD3({{'M', 'u', 's', 'i', 'c', 'M', 'a', 't', 'c', 'h', '_', 'S', 'i', 't', 'u', 'a', 't', 'i', 'o', 'n'}});
 
   unsigned char lang[3];
-  vector<scribbu::comments> C;
   vector<unsigned char> dsc, txt;
-  tag.get_all_comments(back_inserter(C));
+  tag.get_comments(back_inserter(C));
+
   BOOST_CHECK(4 == C.size());
   BOOST_CHECK(0 == C[0].unicode());
   C[0].lang(lang);
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
-  C[0].description(back_inserter(dsc));
+  C[0].descriptionb(back_inserter(dsc));
   BOOST_CHECK(0 == dsc.size());
-  C[0].text(back_inserter(txt));
+  C[0].textb(back_inserter(txt));
   BOOST_CHECK(0 == txt.size());
 
   dsc.resize(0);
@@ -749,9 +864,10 @@ BOOST_AUTO_TEST_CASE( test_funny_file )
   BOOST_CHECK(0 == C[1].unicode());
   C[1].lang(lang);
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
-  C[1].description(back_inserter(dsc));
+  C[1].descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == GOLD1);
-  C[1].text(back_inserter(txt));
+  BOOST_CHECK("MusicMatch_Mood" == C[1].description<string>());
+  C[1].textb(back_inserter(txt));
   BOOST_CHECK(0 == txt.size());
 
   dsc.resize(0);
@@ -760,9 +876,10 @@ BOOST_AUTO_TEST_CASE( test_funny_file )
   BOOST_CHECK(0 == C[2].unicode());
   C[2].lang(lang);
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
-  C[2].description(back_inserter(dsc));
+  C[2].descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == GOLD2);
-  C[2].text(back_inserter(txt));
+  BOOST_CHECK("MusicMatch_Tempo" == C[2].description<string>());
+  C[2].textb(back_inserter(txt));
   BOOST_CHECK(0 == txt.size());
 
   dsc.resize(0);
@@ -771,14 +888,11 @@ BOOST_AUTO_TEST_CASE( test_funny_file )
   BOOST_CHECK(0 == C[3].unicode());
   C[3].lang(lang);
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
-  C[3].description(back_inserter(dsc));
+  C[3].descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == GOLD3);
-  C[3].text(back_inserter(txt));
+  BOOST_CHECK("MusicMatch_Situation" == C[3].description<string>());
+  C[3].textb(back_inserter(txt));
   BOOST_CHECK(0 == txt.size());
-
-  vector<scribbu::play_count> P;
-  tag.get_all_play_counts(back_inserter(P));
-  BOOST_CHECK(0 == P.size());
 
 }
 
@@ -898,5 +1012,6 @@ BOOST_AUTO_TEST_CASE( test_rock_the_joint )
   BOOST_CHECK("" == tag.year());
   BOOST_CHECK(0x56e == tag.padding());
 
-
 }
+
+// TODO: Unsync: Bill LeFaive - Orlando.mp3

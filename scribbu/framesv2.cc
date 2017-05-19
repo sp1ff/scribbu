@@ -1,88 +1,7 @@
 #include "framesv2.hh"
 
+#include <iconv.h>
 #include <boost/functional/hash.hpp>
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                             class iconv_error                             //
-///////////////////////////////////////////////////////////////////////////////
-
-const char * scribbu::iconv_error::what() const noexcept
-{
-  if (! pwhat_) {
-    std::stringstream stm;
-    stm << "iconv failure: " << strerror(errno_);
-    pwhat_.reset(new std::string(stm.str()));
-  }
-  return pwhat_->c_str();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//                             utility functions                             //
-///////////////////////////////////////////////////////////////////////////////
-
-std::string scribbu::detail::to_utf8(iconv_t              cd,
-                                     const unsigned char *pbuf,
-                                     std::size_t          cbbuf)
-{
-  char *inbuf = const_cast<char*>(reinterpret_cast<const char*>(pbuf));
-  std::size_t inbytesleft = cbbuf;
-
-  // We can't know a priori how many octets the output buffer will require;
-  // cf. 
-  // http://stackoverflow.com/questions/13297458/simple-utf8-utf16-string-conversion-with-iconv
-  std::size_t cbout = cbbuf << 2;
-  std::unique_ptr<char []> poutbuf(new char[cbout]);
-
-  // "The iconv function converts one multibyte character at a time, and for
-  // each character conversion it increments *inbuf and decrements *inbytesleft
-  // by the number of converted input bytes, it increments *outbuf and
-  // decrements *outbytesleft by the number of converted output bytes, and it
-  // updates the conversion state contained in cd."
-  std::size_t outbytesleft = cbout;
-  char *outbuf = poutbuf.get();
-  std::size_t status = iconv(cd, &inbuf, &inbytesleft,
-                             &outbuf, &outbytesleft);
-  while (~0 == status && E2BIG == errno) {
-    // If the "output buffer has no more room for the next converted
-    // character. In this case it sets errno to E2BIG and returns
-    // (size_t)(−1)." Try again with a bigger buffer :P
-    cbout <<= 2;
-    poutbuf.reset(new char[cbout]);
-
-    inbuf = const_cast<char*>(reinterpret_cast<const char*>(pbuf));
-    inbytesleft = cbbuf;
-    outbytesleft = cbout;
-    char *outbuf = poutbuf.get();
-    status = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
-  }
-
-  if (~0 == status) {
-    throw iconv_error(errno);
-  }
-
-  // If there's a UTF-8 BOM at the start, don't copy that
-  outbuf = poutbuf.get();
-  cbout -= outbytesleft;
-
-  if (2 < cbout  &&
-      0xef == (unsigned char)outbuf[0] &&
-      0xbb == (unsigned char)outbuf[1] &&
-      0xbf == (unsigned char)outbuf[2]) {
-    outbuf += 3;
-    cbout -= 3;
-  }
-
-  // If there are trailing nulls, don't copy them, either.
-  if (0 < cbout) {
-    while (0 == outbuf[cbout - 1]) {
-      --cbout;
-    }
-  }
-
-  return std::string(outbuf, outbuf + cbout);
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,7 +31,7 @@ bool scribbu::operator==(const frame_id3 &lhs,
   return id_lhs[0] == id_rhs[0] && id_lhs[1] == id_rhs[1] && id_lhs[2] == id_rhs[2];
 }
 
-std::ostream& operator<<(std::ostream &os, const scribbu::frame_id3 &x) {
+std::ostream& scribbu::operator<<(std::ostream &os, const scribbu::frame_id3 &x) {
   return os << x.as_string();
 }
 
@@ -160,7 +79,7 @@ bool scribbu::operator==(const frame_id4 &lhs,
          id_lhs[2] == id_rhs[2] && id_lhs[3] == id_rhs[3];
 }
 
-std::ostream& operator<<(std::ostream &os, const scribbu::frame_id4 &x) {
+std::ostream& scribbu::operator<<(std::ostream &os, const scribbu::frame_id4 &x) {
   return os << x.as_string();
 }
 
@@ -180,3 +99,30 @@ std::size_t std::hash<scribbu::frame_id4>::operator()(const scribbu::frame_id4 &
 
 // TODO: Unit-test unique_file_id, once I find a test case.
 // TODO: Unit test encryption_method, once I find a test case.
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                             class play_count                              //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::play_count::count() const
+{
+  if (1 == counter_.size()) {
+    uint8_t x = counter_[0];
+  }
+  else if (2 == counter_.size()) {
+   uint16_t x = ( counter_[0] << 8 ) | counter_[1];
+  }
+  else if (3 == counter_.size()) {
+    uint32_t x = ( counter_[0] << 16 ) | ( counter_[1] << 8 ) | counter_[2];
+  }
+  else if (4 == counter_.size()) {
+    uint32_t x = ( counter_[0] << 24 ) | ( counter_[1] << 16 ) |
+      ( counter_[2] << 8 )  | counter_[3];
+  }
+  else if (4 < counter_.size()) {
+    // TODO: Custom error? Re-write to take sizeof(size_t) into account
+    throw std::domain_error("CNT overflow");
+  }
+}

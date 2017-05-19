@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+../src/scribbu rename --o . --template="%(artist) -- %(title)%E" ${srcdir}/data/lorca.mp3
+[ -f "Pogues, The -- Lorca's Novena.mp3" ] || exit 1
+
+exit 0
+

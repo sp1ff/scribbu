@@ -1,5 +1,4 @@
 #include "config.h"
-#include "command-utilities.hh"
 
 #include <iomanip>
 
@@ -7,10 +6,12 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/regex.hpp>
 
+#include "command-utilities.hh"
+
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/id3v2.hh>
-#include <scribbu/scribbu.hh>
+#include <scribbu/csv-pprinter.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -22,7 +23,9 @@ scribbu report [option...] file-or-directory [file-or-directory...]
 
 Generate a report on one or more files. The idea is to have scribbu generate
 the data & export it to some other format more convenient for querying &
-reporting.)");
+reporting.
+
+Only CSV output is currently supported.)");
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,19 +129,13 @@ csv_reporter::csv_reporter(const fs::path &output, std::size_t ncomm):
   ofs_(output), ncomm_(ncomm)
 {
   using namespace std;
+  using namespace scribbu;
 
-  ofs_ << "file"                      << COMMA <<
-          "directory"                 << COMMA <<
-          "size(bytes)"               << COMMA <<
-          "ID3v2 version"             << COMMA <<
+  ofs_ << "ID3v2 version"             << COMMA <<
           "ID3v2 revision"            << COMMA <<
           "ID3v2 size(bytes)"         << COMMA <<
           "ID3v2 flags"               << COMMA <<
           "ID3v2 unsync"              << COMMA <<
-          "MD5"                       << COMMA <<
-          "has ID3v1"                 << COMMA <<
-          "has ID3v1.1"               << COMMA <<
-          "has ID3v1 extended"        << COMMA <<
           "ID3v2 Artist"              << COMMA <<
           "ID3v2 Title"               << COMMA <<
           "ID3v2 Album"               << COMMA <<
@@ -151,14 +148,22 @@ csv_reporter::csv_reporter(const fs::path &output, std::size_t ncomm):
           "# ID3v2 comment frames";
 
   for (std::size_t i = 0; i < ncomm_; ++i) {
-    ofs_ << COMMA << "comment #" << i << " language" << COMMA <<
-      "comment #" << i << " description" << COMMA <<
-      "comment #" << i << " text";
+    ofs_ << COMMA << "comment #" << i << " text";
   }
 
-  ofs_ << COMMA << "#ID3v2 UFIDs" << COMMA << "#ID3v2 UDTs";
+  ofs_ <<                         COMMA <<
+          "size (bytes)"       << COMMA << 
+          "MD5"                << COMMA <<
+          "has ID3v1.1"        << COMMA <<
+          "has ID3v1 extended" << COMMA <<
+          "ID3v1 Artist"       << COMMA <<
+          "ID3v1 Title"        << COMMA <<
+          "ID3v1 Album"        << COMMA <<
+          "ID3v1 Year"         << COMMA <<
+          "ID3v1 Comment"      << COMMA <<
+          "ID3v1 Genrre"       << COMMA << endl;
 
-  ofs_ << endl;
+  ofs_ << print_as_csv(ncomm_, encoding::CP1252);
 }
 
 /*virtual*/
@@ -168,186 +173,27 @@ csv_reporter::make_entry(const scribbu::file_info                  &fi,
                          const scribbu::track_data                 &info,
                          const std::unique_ptr<scribbu::id3v1_tag> &pid3v1)
 {
-  using scribbu::to_utf8;
-
   using namespace std;
-
-  ofs_ << fi.filename() << COMMA <<
-          fi.parent()   << COMMA <<
-          fi.size()     << COMMA;
+  using namespace scribbu;
 
   if (pid3v2) {
-    ofs_ << (unsigned) pid3v2->version();
-  }
-  ofs_ << COMMA;
-  if (pid3v2) {
-    ofs_ << (unsigned) pid3v2->revision();
-  }
-  ofs_ << COMMA;
-  if (pid3v2) {
-    ofs_ << pid3v2->size();
-  }
-  ofs_ << COMMA;
-  if (pid3v2) {
-    ofs_ << (unsigned) pid3v2->flags();
-  }
-  ofs_ << COMMA;
-  if (pid3v2) {
-    ofs_ << pid3v2->unsynchronised();
-  }
-  ofs_ << COMMA;
-
-  std::array<unsigned char, 16> md5;
-  info.get_md5(md5.begin());
-
-  ofs_ << hex;
-  for (std::size_t i = 0; i < 16; ++i) {
-    ofs_ << setw(2) << setfill('0') << (unsigned int) md5[i];
-  }
-  ofs_ << dec << COMMA;
-
-  if (pid3v1) {
-    ofs_ << "1";
-  }
-  ofs_ << COMMA;
-  if (pid3v1) {
-    ofs_ << pid3v1->v1_1();
-  }
-  ofs_ << COMMA;
-  if (pid3v1) {
-    ofs_ << pid3v1->extended();
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_artist()) {
-    ofs_ << prep_for_csv( pid3v2->artist() );
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_title()) {
-    ofs_ << prep_for_csv( pid3v2->title() );
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_album()) {
-    ofs_ << prep_for_csv( pid3v2->album() );
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_content_type()) {
-    ofs_ << prep_for_csv( pid3v2->content_type() );
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_encoded_by()) {
-    ofs_ << prep_for_csv( pid3v2->encoded_by() );
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_year()) {
-    ofs_ << prep_for_csv( pid3v2->year() );
-  }
-  ofs_ << COMMA;
-
-  if (pid3v2 && 1 == pid3v2->has_languages()) {
-    ofs_ << prep_for_csv( pid3v2->languages() );
-  }
-  ofs_ << COMMA;
-
-  // Play Count
-  if (pid3v2) {
-
-    vector<scribbu::play_count> P;
-    size_t n = pid3v2->all_play_counts(P);
-    ofs_ << n << COMMA;
-
-    if (n) {
-      vector<unsigned char> p;
-      P.front().counter(back_inserter(p));
-      if (1 == p.size()) {
-        uint8_t x = p[0];
-        ofs_ << x;
-      }
-      else if (2 == p.size()) {
-        uint16_t x = ( p[0] << 8 ) | p[1];
-        ofs_ << x;
-      }
-      else if (3 == p.size()) {
-        uint32_t x = ( p[0] << 16 ) | ( p[1] << 8 ) | p[2];
-        ofs_ << x;
-      }
-      else if (4 == p.size()) {
-        uint32_t x = ( p[0] << 24 ) | ( p[1] << 16 ) |
-                     ( p[2] << 8 )  | p[3];
-        ofs_ << x;
-      }
-      else if (4 < p.size()) {
-        ofs_ << "[OVERFLOW]";
-      }
-
-    } // End if on # of play count frames.
-    ofs_ << COMMA;
-
-  } // End if on ID32.
-  else {
-    ofs_ << COMMA << COMMA;
-  }
-
-  // Comments
-  if (pid3v2) {
-
-    std::vector<scribbu::comments> C;
-    std::size_t n = pid3v2->all_comments(C);
-
-    ofs_ << n;
-
-    std::size_t N = std::min(n, ncomm_);
-
-    for (std::size_t i = 0; i < N; ++i) {
-
-      unsigned char lang[4];
-      lang[3] = 0;
-      vector<unsigned char> desc, text;
-
-      const scribbu::comments &comm = C[i];
-
-      comm.lang(lang);
-      comm.description(back_inserter(desc));
-      comm.text(back_inserter(text));
-
-      ofs_ << COMMA <<
-        lang << COMMA <<
-        prep_for_csv( to_utf8(pid3v2->version(), comm.unicode(), &(desc[0]), desc.size()) ) << COMMA <<
-        prep_for_csv( to_utf8(pid3v2->version(), comm.unicode(), &(text[0]), text.size()) );
-
-    }
-
-    for (std::size_t i = N; i < ncomm_; ++i) {
-      ofs_ << COMMA << COMMA << COMMA;
-    }
-
+    ofs_ << *pid3v2;
   }
   else {
-
-    for (std::size_t i = 0; i < ncomm_; ++i) {
-      ofs_ << COMMA << COMMA << COMMA;
-    }
+    ofs_ << ",,,,,,,,,,,,,,,";
+    ostream_iterator<char> oi(ofs_);
+    fill_n(oi, ncomm_, ',');
   }
 
-  ofs_ << COMMA;
+  ofs_ << info;
 
-  if (pid3v2) {
-    std::vector<scribbu::unique_file_id> I;
-    size_t n = pid3v2->all_ufids(I);
-    ofs_ << n;
+  if (pid3v1) {
+    ofs_ << *pid3v1;
   }
-  ofs_ << COMMA;
+  else {
+    ofs_ << ",,,,,,,,";
+  }
 
-  if (pid3v2) {
-    std::vector<scribbu::user_defined_text> U;
-    size_t n = pid3v2->all_udts(U);
-    ofs_ << n;
-  }
   ofs_ << endl;
 }
 
@@ -483,14 +329,15 @@ namespace {
 
     po::options_description opts("general options");
     opts.add_options()
-      // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
-       "files or directories to be examined; if a directory is given, it "
-       "will be searched recursively")
       ("output,o", po::value<fs::path>()->required(), ".csv file to which the "
        "results will be written");
 
     po::options_description xopts("hidden options");
+    xopts.add_options()
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
+       "files or directories to be examined; if a directory is given, it "
+       "will be searched recursively");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);

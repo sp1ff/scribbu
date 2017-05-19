@@ -1,22 +1,28 @@
 #include "config.h"
-#include "command-utilities.hh"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+
+#include "command-utilities.hh"
 #include <boost/regex.hpp>
 
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/id3v2.hh>
 #include <scribbu/scribbu.hh>
+#include <scribbu/csv-pprinter.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 namespace {
 
-  // TODO: Write a proper usage message for the dump sub-command
   const std::string USAGE(R"(scribbu dump -- dump ID3 tags from one or more files
+
+USAGE:
+
+    scribbu dump [OPTION] FILE-OR-DIRECTORY...
+
 )");
 
 }
@@ -25,7 +31,6 @@ namespace {
 //                      classes private to this module                       //
 ///////////////////////////////////////////////////////////////////////////////
 
-#if 0
 namespace {
 
   /// Dump ID3v2 tags, track data, and/or the ID3v1 tag to stdout
@@ -34,8 +39,6 @@ namespace {
   public:
     /// The format in which we shall dump information to stdout
     enum class format {
-      /// Single-line output format
-      compact,
       /// Comma-separated variable format
       csv,
       /// Multi-line output format
@@ -43,17 +46,8 @@ namespace {
     };
 
   public:
-    dumper(const boost::regex &file_regex, format fmt, unsigned char mask):
-      file_regex_(file_regex),
-      fmt_(fmt),
-      dump_id3v2_(0 != (0x04 & mask)),
-      dump_track_(0 != (0x02 & mask)),
-      dump_id3v1_(0 != (0x01 & mask))
-    {
-      if (!dump_id3v2_ && !dump_track_ && !dump_id3v1_) {
-        dump_id3v2_ = dump_track_ = dump_id3v1_ = true;
-      }
-    }
+    dumper(const boost::regex &file_regex, format fmt, 
+           bool dump_id3v2, bool dump_track, bool dump_id3v1);
     void operator()(const fs::path &pth);
 
   private:
@@ -64,6 +58,29 @@ namespace {
     bool dump_id3v1_;
   };
 
+  dumper::dumper(const boost::regex &file_regex, format fmt, 
+                 bool dump_id3v2, bool dump_track, bool dump_id3v1):
+    file_regex_(file_regex),
+    fmt_(fmt),
+    dump_id3v2_(dump_id3v2),
+    dump_track_(dump_track),
+    dump_id3v1_(dump_id3v1)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    if (!dump_id3v2_ && !dump_track_ && !dump_id3v1_) {
+      dump_id3v2_ = dump_track_ = dump_id3v1_ = true;
+    }
+
+    if (format::csv == fmt_) {
+      cout << print_as_csv(4, encoding::CP1252);
+    }
+    else {
+      cout << pretty_print();
+    }
+  }
+
   void
   dumper::operator()(const fs::path &pth)
   {
@@ -71,65 +88,34 @@ namespace {
     using namespace boost;
     using namespace scribbu;
 
-    using scribbu::compact_id3v1_formatter;
-    using scribbu::csv_id3v1_formatter;
-    using scribbu::standard_id3v1_formatter;
-
-    static const size_t DIGEST_SIZE = scribbu::track_data::DIGEST_SIZE;
-
     if (!file_regex_.empty() && !regex_match(pth.string(), file_regex_)) {
       return;
     }
 
     fs::ifstream ifs(pth, ios_base::binary);
-
+        
     vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
     scribbu::read_all_id3v2(ifs, back_inserter(id3v2));
     scribbu::track_data td((istream&)ifs);
     unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(ifs);
 
-    switch (fmt_) {
-    case format::compact:
-      cout << compact_id3v1_formatter(id3v1_encoding::automatic,
-                                      id3v1_genre_expansion::expand,
-                                      ',');
-      break;
-    case format::csv:
-      cout << csv_id3v1_formatter(id3v1_encoding::automatic,
-                                  id3v1_genre_expansion::expand);
-      break;
-    case format::standard:
-      cout << standard_id3v1_formatter(id3v1_encoding::automatic,
-                                       id3v1_genre_expansion::expand,
-                                       4);
-      break;
-    default:
-      throw std::logic_error("Unknown format");
+	cout << pth << ":" << endl;
+
+    if (dump_id3v2_) {
+	  for (ptrdiff_t i = 0, n = id3v2.size(); i < n; ++i) {
+		cout << *(id3v2[i]);
+	  }
     }
 
-    // TODO:
-    // if (dump_id3v2_) {
-    //   for (size_t i = 0, n = id3v2.size(); i < n; ++i) {
-    //     cout << *( id3v2[i] ) << endl;
-    //   }
-    // }
-
     if (dump_track_) {
-
-      unsigned char md5[DIGEST_SIZE];
-      td.get_md5(md5);
-      cout << "0x" << hex << td.size() << " bytes of track data (MD5: 0x" <<
-        hex << setfill('0');
-      for (size_t i = 0; i < DIGEST_SIZE; ++i) {
-        cout << hex << setfill('0') << (int)md5[i];
-      }
-      cout << ")" << endl;
-
+      cout << td;
     }
 
     if (dump_id3v1_ && pid3v1) {
-      cout << *pid3v1 << endl;
+      cout << *pid3v1;
     }
+
+    cout << endl;
 
   }
 
@@ -142,10 +128,8 @@ namespace {
 
     std::string s;
     is >> s;
-    if (boost::regex_match(s, COMPACT)) {
-      fmt = dumper::format::compact;
-    }
-    else if (boost::regex_match(s, CSV)) {
+
+    if (boost::regex_match(s, CSV)) {
       fmt = dumper::format::csv;
     }
     else if (boost::regex_match(s, STANDARD)) {
@@ -160,64 +144,82 @@ namespace {
 
   }
 
-} // End this xlation unit's un-named namespace.
-#endif // 0
+  std::ostream&
+  operator<<(std::ostream& os, const dumper::format &fmt)
+  {
+    switch (fmt) {
+    case dumper::format::csv:
+      os << "csv";
+      break;
+    case dumper::format::standard:
+      os << "standard";
+      break;
+    default:
+      // TODO: What exception to throw?
+      throw std::runtime_error("Unknown format");
+    }
+    return os;
+  }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 //                       sub-command handler                                 //
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace {
-
   int
-  handle_dump(const std::vector<std::string>  &tokens,
-              help_level                       help,
-	      const boost::optional<fs::path> &cfg)
+  handler(const std::vector<std::string>  &tokens,
+          help_level                       help,
+          const boost::optional<fs::path> &cfg)
   {
     using namespace std;
+    
+    typedef dumper::format format;
 
     int status = EXIT_SUCCESS;
 
-    /////////////////////////////////////////////////////////////////////////////
-    //                                                                         //
-    //                       C O M M A N D   O P T I O N S                     //
-    //                                                                         //
-    // Let's divide the options in two ways:                                   //
-    //                                                                         //
-    // - public versus developer-only options                                  //
-    // - options permissible only on the command line versus options           //
-    //   permissible on the command line, configuration file, and the          //
-    //   environment                                                           //
-    //                                                                         //
-    //                            public   private                             //
-    //                          +--------+---------+                           //
-    //                cli-only  | clopts | xclopts |                           //
-    //                          +--------+---------+                           //
-    //                cli, cfg, |  opts  |  xopts  |                           //
-    //                & env     +--------+---------+                           //
-    //                                                                         //
-    /////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    //                                                                        /
+    //                       C O M M A N D   O P T I O N S                    /
+    //                                                                        /
+    // Let's divide the options in two ways:                                  /
+    //                                                                        /
+    // - public versus developer-only options                                 /
+    // - options permissible only on the command line versus options          /
+    //   permissible on the command line, configuration file, and the         /
+    //   environment                                                          /
+    //                                                                        /
+    //                            public   private                            /
+    //                          +--------+---------+                          /
+    //                cli-only  | clopts | xclopts |                          /
+    //                          +--------+---------+                          /
+    //                cli, cfg, |  opts  |  xopts  |                          /
+    //                & env     +--------+---------+                          /
+    //                                                                        /
+    ///////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
+    // None at this time...
 
     po::options_description xclopts("command-line only developer options");
+    // None at this time...
 
     po::options_description opts("general options");
     opts.add_options()
       ("id3v1-tags,1", po::bool_switch(), "Display only ID3v1 tags")
-      ("id3v2-tags,2", po::bool_switch(), "Display only ID3v2 tags")
       ("track-data,D", po::bool_switch(), "Display only track data")
-      ("regex,r", po::value<string>(), "If specified, defines a regular "
+      ("id3v2-tags,2", po::bool_switch(), "Display only ID3v2 tags")
+      ("expression,e", po::value<string>(), "If specified, defines a regular "
        "expression filtering files (i.e. only filenames matching the regular "
        "expression will be considered)")
-      // ("format,f", po::value<dumper::format>(), "Output format")
+      ("format,f", po::value<format>()-> default_value(format::standard), 
+       "Output format");
+
+    po::options_description xopts("hidden options");
+    xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
       ("arguments", po::value<vector<string>>()->required(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
-
-    po::options_description xopts("hidden options");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
@@ -262,7 +264,6 @@ namespace {
 
         po::notify(vm);
 
-#       if 0
         // That's it-- the list of files and/or directories to be processed
         // should be waiting for us in 'arguments'...
         // Work around to https://svn.boost.org/trac/boost/ticket/8535
@@ -272,38 +273,18 @@ namespace {
         }
 
         boost::regex file_regex;
-        if (vm.count("regex")) {
-          file_regex = boost::regex(vm["regex"].as<string>());
+        if (vm.count("expression")) {
+          file_regex = boost::regex(vm["expression"].as<string>());
         }
 
-        dumper::format fmt = dumper::format::standard;
-        if (vm.count("format")) {
-          fmt = vm["format"].as<dumper::format>();
-        }
+        format fmt        = vm["format"    ].as<format>();
+        bool   dump_id3v2 = vm["id3v2-tags"].as<bool  >();
+        bool   dump_track = vm["track-data"].as<bool  >();
+        bool   dump_id3v1 = vm["id3v1-tags"].as<bool  >();
 
-        bool dump_id3v2 = vm["id3v2-tags"].as<bool>();
-        bool dump_track = vm["track-data"].as<bool>();
-        bool dump_id3v1 = vm["id3v1-tags"].as<bool>();
-
-        unsigned char mask = 0;
-        if (dump_id3v2) {
-          mask |= 4;
-        }
-        if (dump_track) {
-          mask |= 2;
-        }
-        if (dump_id3v1) {
-          mask |= 1;
-        }
-
-        if (!mask) {
-          mask = 7;
-        }
-
-        dumper D(file_regex, fmt, mask);
+        dumper D(file_regex, fmt, dump_id3v2, dump_track, dump_id3v1);
 
         for (auto x: arguments) {
-
           if (fs::is_directory(x)) {
             for_each(fs::recursive_directory_iterator(x),
                      fs::recursive_directory_iterator(),
@@ -314,7 +295,6 @@ namespace {
           }
         }
 
-#       endif // 0
       } // End if on help.
 
     } catch (const po::error &ex) {
@@ -328,8 +308,8 @@ namespace {
 
     return status;
 
-  } // End handle_dump.
+  } // End handler.
 
-  register_command r("dump", handle_dump);
+  register_command r("dump", handler);
 
 }

@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include <scribbu/scribbu.hh>
+
 /**
  * \page scribbu_id3v2_frames "ID3v2 Frames"
  *
@@ -20,30 +22,39 @@
  * The structure of several tags remain contant through all revisions of the
  * specification; that structure has been factored out here.
  *
+ * ID3v2 is an improvement on ID3v1 in that the character encoding is now
+ * carried along with textual information. However, given the looseness of the
+ * specification, as well as the spotty adherence to the spec found in the
+ * wild, I think it best to not rely on that information too heavily.
+ *
+ * All ID3v2 text frames provide two accessors for their data:
+ *
+ *   - one that treats the data as octets & simply copies them into a
+ *     caller-supplied buffer,
+ *
+ *   - and one that treats the data as text & attempts to convert it from the
+ *     tag's internal encoding to the caller-requested encoding
+ *
+ * What is the tag's internal encoding; ID3v2 text frames provide the following
+ * ways for the caller to specify:
+ *
+ *   - explicitly specify (i.e. pass a scribbu::encoding member)
+ *
+ *   - trust the tag's encoding field, and make a best effort attempt to
+ *     interpret it (e.g. if an ID3v2.2 textual frame specifies "Unicode" the
+ *     spec states UCS-2, but says nothing about endianess, and was written
+ *     before UTF-16)
+ *
+ *   - use the system locale's character encoding
+ *
  *
  */
 
 namespace scribbu {
 
-  class iconv_error: public virtual boost::exception,
-                     public virtual std::runtime_error
-  {
-  public:
-    iconv_error(int err):
-      std::runtime_error(""), errno_(err)
-    { }
-    int get_errno() const
-    { return errno_; }
-    virtual const char * what() const noexcept;
-
-  private:
-    int errno_;
-    mutable std::shared_ptr<std::string> pwhat_;
-
-  };
-
   namespace detail {
 
+    // TODO: Needed post-rewrite?
     template <typename forward_input_iterator>
     forward_input_iterator find_trailing_null(bool                   unicode,
                                               forward_input_iterator p0,
@@ -81,35 +92,6 @@ namespace scribbu {
 
       return p;
     }
-
-    /// guard class for iconv descriptors
-    class iconv_guard {
-    public:
-      iconv_guard(const char *tocode, const char *fromcode)
-      {
-        using std::stringstream;
-        cd_ = iconv_open(tocode, fromcode);
-        if ((iconv_t)-1 == cd_) {
-          throw iconv_error(errno);
-        }
-      }
-      ~iconv_guard() {
-        if (-1 == iconv_close(cd_)) {
-          throw iconv_error(errno);
-        }
-      }
-      operator iconv_t() const {
-        return cd_;
-      }
-    private:
-      iconv_t cd_;
-    }; // End class iconv_guard.
-
-    // TODO: Re-design this API, once I figure out the details in all versions
-    // of the ID3v2 spec
-    std::string to_utf8(iconv_t              cd,
-                        const unsigned char *pbuf,
-                        std::size_t          cbbuf);
 
   } // End namespace detail.
 
@@ -158,7 +140,8 @@ namespace scribbu {
   public:
     frame_id4()
     { id_[0] = id_[1] = id_[2] = id_[3] = 0; }
-    frame_id4(unsigned char id0, unsigned char id1, unsigned char id2, unsigned char id3);
+    frame_id4(unsigned char id0, unsigned char id1,
+              unsigned char id2, unsigned char id3);
     frame_id4(const unsigned char id[4]);
     frame_id4(const char id[4]);
 
@@ -189,10 +172,9 @@ namespace scribbu {
     return !(lhs == rhs);
   }
 
+  std::ostream& operator<<(std::ostream &os, const scribbu::frame_id3 &x);
+  std::ostream& operator<<(std::ostream &os, const scribbu::frame_id4 &x);
 }
-
-std::ostream& operator<<(std::ostream &os, const scribbu::frame_id3 &x);
-std::ostream& operator<<(std::ostream &os, const scribbu::frame_id4 &x);
 
 namespace std {
 
@@ -223,6 +205,7 @@ namespace scribbu {
    */
 
   class id3v2_frame {
+
   public:
     /// N.B. the size parameter is the size of this frame, in bytes, *not*
     /// including the header, and after any resynchronisation, decompression,
@@ -253,8 +236,18 @@ namespace scribbu {
    *
    * While the identifier and frame header format changes across versions of
    * the spec, the structure of the unique file identifier does not. This
-   * class models that, and is meant to be aggregated into version-specific
-   * id3v2_frame subclasses.
+   * suggests modelling this behavior once in a base class. I also handle
+   * version-specific differences through id3v2_frame subclasses for each
+   * version (id3v2_2_frame, id3v2_3_frame & id3v2_4_frame), meaning that
+   * there's no natural place in that inheritence hierarchy in which to locate
+   * this class.
+   *
+   * I'm tentatively choosing to model this using multiple inheritence; the
+   * ID3v2.2 UFI frame would inherit from both this class and id3v2_2_frame. My
+   * choice for this over composition is driven by use case; I already have
+   * clients that know they have an ID3v2 tag of some sort, and want all the
+   * UFI frames contained therein (IOW, I want to model an "is-a" rather than a
+   * "has a" relationship).
    *
    *
    */
@@ -283,12 +276,12 @@ namespace scribbu {
   public:
     /// Owner identifier for this scheme
     template <typename forward_output_iterator>
-    forward_output_iterator owner(forward_output_iterator p) const {
+    forward_output_iterator ownerb(forward_output_iterator p) const {
       return std::copy(owner_.begin(), owner_.end(), p);
     }
     /// Unique File Identifier
     template <typename forward_output_iterator>
-    forward_output_iterator id(forward_output_iterator pout) const {
+    forward_output_iterator idb(forward_output_iterator pout) const {
       return std::copy(id_.begin(), id_.end(), pout);
     }
 
@@ -325,15 +318,16 @@ namespace scribbu {
     }
 
   public:
+
     template <typename forward_output_iterator>
-    forward_output_iterator email(forward_output_iterator p) const {
+    forward_output_iterator emailb(forward_output_iterator p) const {
       return std::copy(email_.begin(), email_.end(), p);
     }
     unsigned char method_symbol() const {
       return method_symbol_;
     }
     template <typename forward_output_iterator>
-    forward_output_iterator data(forward_output_iterator p) const {
+    forward_output_iterator datab(forward_output_iterator p) const {
       return std::copy(data_.begin(), data_.end(), p);
     }
 
@@ -344,9 +338,32 @@ namespace scribbu {
 
   }; // End class encryption_method.
 
+  /**
+   * \brief User-defined text
+   *
+   *
+   * While the identifier and frame header format changes across versions of
+   * the spec, the structure of the user-defined text frame does not. This
+   * suggests modelling this behavior once in a base class. I also handle
+   * version-specific differences through id3v2_frame subclasses for each
+   * version (id3v2_2_frame, id3v2_3_frame & id3v2_4_frame), meaning that
+   * there's no natural place in that inheritence hierarchy in which to locate
+   * this class.
+   *
+   * I'm tentatively choosing to model this using multiple inheritence; the
+   * ID3v2.2 UDT frame would inherit from both this class and id3v2_2_frame. My
+   * choice for this over composition is driven by use case; I already have
+   * clients that know they have an ID3v2 tag of some sort, and want all the
+   * UDT frames contained therein (IOW, I want to model an "is-a" rather than a
+   * "has a" relationship).
+   *
+   *
+   */
+
   class user_defined_text {
 
   public:
+
     template <typename forward_input_iterator>
     user_defined_text(forward_input_iterator p0,
                       forward_input_iterator p1)
@@ -362,15 +379,18 @@ namespace scribbu {
     }
 
   public:
+
     unsigned char unicode() const {
       return unicode_;
     }
+
     template <typename forward_output_iterator>
-    forward_output_iterator description(forward_output_iterator p) const {
+    forward_output_iterator descriptionb(forward_output_iterator p) const {
       return std::copy(description_.begin(), description_.end(), p);
     }
+
     template <typename forward_output_iterator>
-    forward_output_iterator text(forward_output_iterator p) const {
+    forward_output_iterator textb(forward_output_iterator p) const {
       return std::copy(text_.begin(), text_.end(), p);
     }
 
@@ -380,6 +400,28 @@ namespace scribbu {
     std::vector<unsigned char> text_;
 
   }; // End class user_defined_text.
+
+  /**
+   * \brief Comment frames
+   *
+   *
+   * While the identifier and frame header format changes across versions of
+   * the spec, the structure of the comment frame does not. This suggests
+   * modelling this behavior once in a base class. I also handle
+   * version-specific differences through id3v2_frame subclasses for each
+   * version (id3v2_2_frame, id3v2_3_frame & id3v2_4_frame), meaning that
+   * there's no natural place in that inheritence hierarchy in which to locate
+   * this class.
+   *
+   * I'm tentatively choosing to model this using multiple inheritence; the
+   * ID3v2.2 COM frame would inherit from both this class and id3v2_2_frame. My
+   * choice for this over composition is driven by use case; I already have
+   * clients that know they have an ID3v2 tag of some sort, and want all the
+   * COM frames contained therein (IOW, I want to model an "is-a" rather than a
+   * "has a" relationship).
+   *
+   *
+   */
 
   class comments {
 
@@ -399,9 +441,11 @@ namespace scribbu {
     }
 
   public:
+
     unsigned char unicode() const {
       return unicode_;
     }
+
     template <typename forward_output_iterator>
     forward_output_iterator lang(forward_output_iterator p) const {
       *p++ = lang_[0];
@@ -409,12 +453,14 @@ namespace scribbu {
       *p++ = lang_[2];
       return p;
     }
+
     template <typename forward_output_iterator>
-    forward_output_iterator description(forward_output_iterator p) const {
+    forward_output_iterator descriptionb(forward_output_iterator p) const {
       return std::copy(description_.begin(), description_.end(), p);
     }
+
     template <typename forward_output_iterator>
-    forward_output_iterator text(forward_output_iterator p) const {
+    forward_output_iterator textb(forward_output_iterator p) const {
       return std::copy(text_.begin(), text_.end(), p);
     }
 
@@ -429,6 +475,7 @@ namespace scribbu {
   class play_count {
 
   public:
+
     template <typename forward_input_iterator>
     play_count(forward_input_iterator p0,
                forward_input_iterator p1):
@@ -436,10 +483,12 @@ namespace scribbu {
     { }
 
   public:
+
     template <typename forward_output_iterator>
-    forward_output_iterator counter(forward_output_iterator p) const {
+    forward_output_iterator counterb(forward_output_iterator p) const {
       std::copy(counter_.begin(), counter_.end(), p);
     }
+    std::size_t count() const;
 
   private:
     std::vector<unsigned char> counter_;
@@ -448,6 +497,7 @@ namespace scribbu {
 
   class popularimeter {
   public:
+
     template <typename forward_input_iterator>
     popularimeter(forward_input_iterator p0,
                   forward_input_iterator p1)
@@ -460,14 +510,17 @@ namespace scribbu {
     }
 
   public:
+
     template <typename forward_output_iterator>
-    forward_output_iterator counter(forward_output_iterator p) const {
+    forward_output_iterator counterb(forward_output_iterator p) const {
       std::copy(counter_.begin(), counter_.end(), p);
     }
+
     template <typename forward_output_iterator>
-    forward_output_iterator email(forward_output_iterator p) const {
+    forward_output_iterator emailb(forward_output_iterator p) const {
       std::copy(email_.begin(), email_.end(), p);
     }
+
     unsigned char rating() const {
       return rating_;
     }
