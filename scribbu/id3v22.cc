@@ -344,13 +344,13 @@ scribbu::id3v2_2_tag::parse_frame(const frame_id3     &id,
       // id3v2_2_text_frame...
       auto ptr = pfn0->second(id, p0, p1 - p0);
       // enter the address thereof into our text frame index...
-      if (text_map_.count(id)) {
-        throw duplicate_frame_error(id, p1 - p0);
-      }
-      text_map_[id] = ptr.get();
+      text_map_.insert(make_pair(id, ptr.get()));
       // and move our ptr-to-id3v2_2_text_frame into our frame collection
       // as a ptr-to-id3v2_2_frame.
       frames_.push_back(unique_ptr<id3v2_2_frame>(std::move(ptr)));
+
+      // NB The spec states that there may only be one text frame in a tag for
+      // each identifier; however, counter-examples do exist in the wild.
     }
     else {
 
@@ -381,5 +381,5 @@ scribbu::id3v2_2_tag::text_frame_as_str(
   on_no_encoding rsp /*= on_no_encoding::fail*/,
   const boost::optional<encoding> &src /*= boost::none*/) const
 {
-  return text_map_.at(id)->as_str<std::string>(dst, rsp, src);
+  return text_map_.find(id)->second->as_str<std::string>(dst, rsp, src);
 }

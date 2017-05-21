@@ -281,8 +281,8 @@ namespace scribbu {
       cbout -= 2;
     }
 
-    // If there are trailing nulls, don't copy them, either.
-    while (cbout && 0 == outbuf[cbout - 1]) {
+    // If there are trailing nulls and/or spaces, don't copy them, either.
+    while (cbout && (0 == outbuf[cbout - 1] || 32 == outbuf[cbout - 1])) {
       --cbout;
     }
 

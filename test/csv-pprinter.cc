@@ -60,20 +60,43 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v23 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v2.3.tag");
+  const fs::path TEST_FILE_1("/vagrant/test/data/id3v2.3.tag");
+  const string GOLDEN_1("3,0,452951,0x00,0,The Pogues,Lorca's Novena,Hell's Di"
+                        "tch [Expanded] (US Version),Pop,,1990,,0,,1,Amazon.co"
+                        "m Song ID: 203558254,,,,");
 
-  const string GOLDEN("3,0,452951,0x00,0,The Pogues,Lorca's Novena,Hell's Ditch [Expanded] (US Version),Pop,,1990,,0,,1,Amazon.com Song ID: 203558254,,,,");
+  const fs::path TEST_FILE_2("/vagrant/test/data/life.mp3");
+  const string GOLDEN_2("3,0,1397,0x00,0,Frank Sinatra,That's Life,The Very Go"
+                        "od Years,Vocal,,,,2,*,5,,Pretty slow,Evening,1966,,,");
 
-  fs::ifstream ifs_3(TEST_DATA, fs::ifstream::binary);
-  id3v2_3_tag tag(ifs_3);
+  fs::ifstream ifs_1(TEST_FILE_1, fs::ifstream::binary);
+  id3v2_3_tag tag_1(ifs_1);
 
-  stringstream stm;
-  stm << print_as_csv(4, encoding::ASCII, boost::none) << tag;
+  stringstream stm1;
+  stm1 << print_as_csv(4, encoding::ASCII, boost::none) << tag_1;
 
-  string text = stm.str();
-  BOOST_MESSAGE( text );
+  string text = stm1.str();
+  BOOST_MESSAGE(text);
+  BOOST_CHECK(GOLDEN_1 == text);
 
-  BOOST_CHECK(GOLDEN == text);
+  stringstream stm2;
+  stm2 << print_as_csv() << tag_1;
+
+  text = stm2.str();
+  BOOST_MESSAGE(text);
+  BOOST_CHECK(GOLDEN_1 == text);
+
+  fs::ifstream ifs_2(TEST_FILE_2, fs::ifstream::binary);
+  id3v2_3_tag tag_2(ifs_2);
+
+  stringstream stm3;
+  stm3 << print_as_csv(6, encoding::ASCII, encoding::UTF_8) << tag_2;
+
+  text = stm3.str();
+  BOOST_MESSAGE(text);
+  BOOST_CHECK(GOLDEN_2 == text);
+
+
 }
 
 BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v24 )

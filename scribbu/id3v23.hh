@@ -464,7 +464,7 @@ namespace scribbu {
     frame_lookup_type;
 
     typedef
-    std::unordered_map<frame_id4, const id3v2_3_text_frame*>
+    std::unordered_multimap<frame_id4, const id3v2_3_text_frame*>
     text_frame_lookup_type;
 
     typedef

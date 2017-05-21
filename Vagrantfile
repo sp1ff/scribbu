@@ -9,6 +9,8 @@ sudo apt-get update
 # Get the essentials
 sudo apt-get -y install 'g++-4.8'
 sudo ln -s /usr/bin/g++-4.8 /usr/bin/g++
+sudo apt-get -y install doxygen
+sudo apt-get -y install graphviz
 
 # GDB
 sudo apt-get -y install gdb
@@ -67,8 +69,8 @@ Vagrant.configure(2) do |config|
   # Create a forwarded port mapping which allows access to a specific
   # port within the machine from a port on the host machine. In the
   # example below, accessing "localhost:8080" will access port 80 on
-  # the guest machine.  config.vm.network "forwarded_port", guest: 80,
-  # host: 8080
+  # the guest machine.
+  config.vm.network "forwarded_port", guest: 8080, host: 18080
 
   # Create a private network, which allows host-only access to the
   # machine using a specific IP.

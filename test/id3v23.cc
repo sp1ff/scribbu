@@ -622,6 +622,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 
   const fs::path TEST_FILE_01("/vagrant/test/data/opium.mp3");
   const fs::path TEST_FILE_02("/vagrant/test/data/u2-promenade.mp3");
+  const fs::path TEST_FILE_03("/vagrant/test/data/forbidden.mp3");
 
   fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
   id3v2_3_tag tag01(ifs01);
@@ -697,6 +698,33 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   BOOST_CHECK("Alternative" == tag02.content_type());
   BOOST_CHECK("Winamp 5.5" == tag02.encoded_by());
   BOOST_CHECK("Promenade" == tag02.title());
+
+  fs::ifstream ifs03(TEST_FILE_03, fs::ifstream::binary);
+  id3v2_3_tag tag03(ifs03);
+
+  BOOST_CHECK(!tag03.experimental());
+  BOOST_CHECK(!tag03.has_extended_header());
+  BOOST_CHECK(860 == tag03.padding());
+
+  BOOST_CHECK("The Amazing"     == tag03.album());
+  BOOST_CHECK("Nina Simone"     == tag03.artist());
+  BOOST_CHECK("Forbidden Fruit" == tag03.title());
+  BOOST_CHECK("3"               == tag03.track());
+
+  BOOST_CHECK( tag03.has_album());
+  BOOST_CHECK( tag03.has_artist());
+  BOOST_CHECK( tag03.has_content_type());
+  BOOST_CHECK(!tag03.has_encoded_by());
+  BOOST_CHECK(!tag03.has_languages());
+  BOOST_CHECK( tag03.has_title());
+  BOOST_CHECK( tag03.has_track());
+  BOOST_CHECK( tag03.has_year());
+
+  // TODO: In progress...
+  BOOST_MESSAGE(tag03.content_type());
+  BOOST_CHECK("(8)" == tag03.content_type());
+  BOOST_MESSAGE(tag03.year());
+  BOOST_CHECK("" == tag03.year());
 }
 
 /**
@@ -814,30 +842,31 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   *
   */
 
-BOOST_AUTO_TEST_CASE( test_funny_file )
+BOOST_AUTO_TEST_CASE( test_funny_files )
 {
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_FILE("/vagrant/test/data/nin-only-time.mp3");
+  const fs::path TEST_FILE_01("/vagrant/test/data/nin-only-time.mp3");
+  const fs::path TEST_FILE_02("/vagrant/test/data/waterfall.mp3");
 
-  fs::ifstream ifs(TEST_FILE, fs::ifstream::binary);
-  id3v2_3_tag tag(ifs);
+  fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
+  id3v2_3_tag tag01(ifs01);
 
-  BOOST_CHECK(!tag.experimental());
-  BOOST_CHECK(!tag.has_extended_header());
-  BOOST_CHECK(374 == tag.padding());
+  BOOST_CHECK(!tag01.experimental());
+  BOOST_CHECK(!tag01.has_extended_header());
+  BOOST_CHECK(374 == tag01.padding());
 
-  BOOST_CHECK("" == tag.album());
-  BOOST_CHECK("Nine Inch Nails" == tag.artist());
-  BOOST_CHECK("(79)Hard Rock" == tag.content_type());
-  BOOST_CHECK(0 == tag.has_encoded_by());
-  BOOST_CHECK(!tag.has_languages());
-  BOOST_CHECK("Only Time, The" == tag.title());
-  BOOST_CHECK(tag.has_track());
-  BOOST_CHECK("" == tag.track());
-  BOOST_CHECK(tag.has_year());
-  BOOST_CHECK("" == tag.year());
+  BOOST_CHECK("" == tag01.album());
+  BOOST_CHECK("Nine Inch Nails" == tag01.artist());
+  BOOST_CHECK("(79)Hard Rock" == tag01.content_type());
+  BOOST_CHECK(0 == tag01.has_encoded_by());
+  BOOST_CHECK(!tag01.has_languages());
+  BOOST_CHECK("Only Time, The" == tag01.title());
+  BOOST_CHECK(tag01.has_track());
+  BOOST_CHECK("" == tag01.track());
+  BOOST_CHECK(tag01.has_year());
+  BOOST_CHECK("" == tag01.year());
 
   vector<COMM> C;
 
@@ -847,7 +876,7 @@ BOOST_AUTO_TEST_CASE( test_funny_file )
 
   unsigned char lang[3];
   vector<unsigned char> dsc, txt;
-  tag.get_comments(back_inserter(C));
+  tag01.get_comments(back_inserter(C));
 
   BOOST_CHECK(4 == C.size());
   BOOST_CHECK(0 == C[0].unicode());
@@ -894,6 +923,24 @@ BOOST_AUTO_TEST_CASE( test_funny_file )
   C[3].textb(back_inserter(txt));
   BOOST_CHECK(0 == txt.size());
 
+  fs::ifstream ifs02(TEST_FILE_02, fs::ifstream::binary);
+  id3v2_3_tag tag02(ifs02);
+
+  BOOST_CHECK(!tag02.experimental());
+  BOOST_CHECK(!tag02.has_extended_header());
+
+  BOOST_CHECK(""          == tag02.album());
+  BOOST_CHECK("Enya"      == tag02.artist());
+  BOOST_CHECK("New Age"   == tag02.content_type());
+  BOOST_CHECK(""          == tag02.encoded_by());
+  BOOST_CHECK("Waterfall" == tag02.title());
+  BOOST_CHECK(""          == tag02.track());
+  BOOST_CHECK("1998"      == tag02.year());
+
+  BOOST_CHECK(!tag02.has_languages());
+  BOOST_CHECK(2 == tag02.has_artist());
+  BOOST_CHECK(2 == tag02.has_content_type());
+  BOOST_CHECK(2 == tag02.has_title());
 }
 
 /**

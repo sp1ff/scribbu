@@ -19,6 +19,12 @@ AX_BOOST_UNIT_TEST_FRAMEWORK
 AX_CHECK_OPENSSL([],[AC_MSG_ERROR([Scribbu requires openssl.])])
 AX_CHECK_ZLIB([],[AC_MSG_ERROR([Scribbu requires zlib.])])
 
+DX_DOXYGEN_FEATURE(ON)
+DX_DOT_FEATURE(ON)
+DX_HTML_FEATURE(ON)
+DX_PDF_FEATURE(ON)
+DX_INIT_DOXYGEN([scribbu], [$(builddir)/Doxyfile], [$(builddir)/doxygen-doc])
+
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile scribbu/Makefile src/Makefile test/Makefile test/data/Makefile])
+AC_CONFIG_FILES([Makefile scribbu/Makefile src/Makefile test/Makefile test/data/Makefile doc/Makefile doc/Doxyfile])
 AC_OUTPUT

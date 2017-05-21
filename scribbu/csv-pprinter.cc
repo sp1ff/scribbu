@@ -39,13 +39,17 @@ scribbu::csv_pprinter::pprint_v2_2_tag(const id3v2_2_tag &tag,
     os << COMMA;
   }
 
-  // There *should* only be one...
+  // There *should* only be one (by spec), but that's not always the case in
+  // the wild; print the count...
   size_t n = tag.has_frame("CNT");
   os << n << COMMA;
-  // regardless, grab the first
-  if (n) {
+  if (1 == n) {
     os << tag.play_count();
   }
+  else if (1 < n) {
+    os << '*';
+  }
+
   os << COMMA;
 
   n = tag.has_frame("COM");
@@ -87,13 +91,17 @@ scribbu::csv_pprinter::pprint_v2_3_tag(const id3v2_3_tag &tag,
     os << COMMA;
   }
 
-  // There *should* only be one...
+  // There *should* only be one (by spec), but that's not always the case in
+  // the wild; print the count...
   size_t n = tag.has_frame("PCNT");
   os << n << COMMA;
-  // regardless, grab the first
-  if (n) {
+  if (1 == n) {
     os << tag.play_count();
   }
+  else if (1 < n) {
+    os << '*';
+  }
+
   os << COMMA;
 
   n = tag.has_frame("COMM");
@@ -137,13 +145,17 @@ scribbu::csv_pprinter::pprint_v2_4_tag(const id3v2_4_tag &tag,
     os << COMMA;
   }
 
-  // There *should* only be one...
+  // There *should* only be one (by spec), but that's not always the case in
+  // the wild; print the count...
   size_t n = tag.has_frame("PCNT");
   os << n << COMMA;
-  // regardless, grab the first
-  if (n) {
+  if (1 == n) {
     os << tag.play_count();
   }
+  else if (1 < n) {
+    os << '*';
+  }
+
   os << COMMA;
 
   n = tag.has_frame("COMM");
