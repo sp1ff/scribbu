@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-../src/scribbu dump ${srcdir}/data/{lorca,opium}.mp3 > dump.$$.log
+../src/scribbu dump ${srcdir}/data/{lorca,opium}.mp3 > dump1.$$.log
 # This is irritating, but we need to strip out the paths above
 # "data" since we do a dumb diff, below.
-sed -e 's_^".*/data_"data_' dump.$$.log > dump.log
-rm dump.$$.log
-diff dump.log ${srcdir}/data/golden-dump.log
-exit $?
+sed -e 's_^".*/data_"data_' dump1.$$.log > dump1.log
+rm dump1.$$.log
+diff dump1.log ${srcdir}/data/dump1-golden.log || exit 1
+../src/scribbu dump --v1-encoding=CP1252 ${srcdir}/data/nan-1.mp3 > dump2.$$.log
+sed -e 's_^".*/data_"data_' dump2.$$.log > dump2.log
+rm dump2.$$.log
+diff dump2.log ${srcdir}/data/dump2-golden.log || exit 1
+exit 0
 

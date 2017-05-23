@@ -233,7 +233,6 @@ scribbu::id3v2_3_tag::decrypt(const unsigned char * /*p*/,
                               std::size_t           /*cb*/,
                               unsigned char         /*method*/) const
 {
-  // TODO: Implement id3v2_3_tag::decrypt!
   throw std::logic_error("unimplemented");
 }
 
@@ -285,7 +284,6 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, bool extended)
 
     // Process the list of frames once, to grab all encryption methods; take
     // care to handle ENCR frames that are themselves encrypted!
-    // TODO: First daft-- re-factor!
     std::size_t cb_frame = 0;
     bool found_encrypted = false;
     do {

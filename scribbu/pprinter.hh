@@ -455,7 +455,6 @@ namespace scribbu {
   };
 
   struct pretty_print: public pprint_manipulator {
-    // TODO: Update the ctor, once that of `standard_pprinter' is known
     pretty_print(
       std::size_t indent = standard_pprinter::DEFAULT_INDENT,
       bool expand_genre = standard_pprinter::DEFAULT_EXPAND_GENRE,

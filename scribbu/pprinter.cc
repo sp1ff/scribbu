@@ -461,10 +461,11 @@ scribbu::standard_pprinter::pprint_v1_tag(const id3v1_tag &tag,
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_unk_id3v2_2_frame(const unknown_id3v2_2_frame &, std::ostream &os)
+scribbu::standard_pprinter::pprint_unk_id3v2_2_frame(
+  const unknown_id3v2_2_frame &frame,
+  std::ostream &os)
 {
-  // TODO: standard_pprinter::pprint_unk_id3v2_2_frame
-  return os;
+  return os << sin_ << frame.id() << ": UNKNOWN\n";
 }
 
 /*virtual*/ std::ostream&
@@ -485,17 +486,29 @@ scribbu::standard_pprinter::pprint_id3v2_2_text_frame(
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_UFI(const UFI&, std::ostream &os)
+scribbu::standard_pprinter::pprint_UFI(const UFI &frame, std::ostream &os)
 {
-  // TODO: standard_pprinter::pprint_UFI
-  return os;
+  using namespace std;
+  
+  os << sin_ << frame.id() << ": " << frame.owner<string>() << "\n";
+
+  vector<unsigned char> buf;
+  frame.idb(back_inserter(buf));
+
+  os << sin_ << "     " << hex << setfill('0');
+  for (auto x: buf) {
+    os << setw(2) << (unsigned)x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_TXX(const TXX&, std::ostream &os)
+scribbu::standard_pprinter::pprint_TXX(const TXX &frame, std::ostream &os)
 {
-  // TODO: Implement standard_pprinter::pprint_TXX
-  return os;
+  using namespace std;
+  return os << sin_ << frame.id() << ": " << frame.description<string>() <<
+    "\n" << sin_ << frame.text<string>() << "\n";
 }
 
 /*virtual*/ std::ostream&
@@ -522,17 +535,31 @@ scribbu::standard_pprinter::pprint_COM(const COM &frame, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_CNT(const CNT&, std::ostream &os)
+scribbu::standard_pprinter::pprint_CNT(const CNT &frame, std::ostream &os)
 {
-  // TODO: Implement standard_pprinter::pprint_CNT
-  return os;
+  using namespace std;
+  return os << sin_ << frame.id() << ": " << dec <<
+    (unsigned)frame.count() << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_POP(const POP&, std::ostream &os)
+scribbu::standard_pprinter::pprint_POP(const POP &frame, std::ostream &os)
 {
-  // TODO: standard_pprinter::pprint_POP
-  return os;
+  using namespace std;
+
+  vector<unsigned char> counter;
+  frame.counterb(back_inserter(counter));
+
+  os << sin_ << frame.id() << ": " << frame.email<string>() << "\n" <<
+    sin_ << "rating: " << dec << (unsigned)frame.rating() << "\n" <<
+    sin_ << "counter: ";
+
+  os << hex << setfill('0');
+  for (auto x: counter) {
+    os << setw(2) << (unsigned)x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
@@ -563,22 +590,47 @@ scribbu::standard_pprinter::pprint_id3v2_3_text_frame(
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_UFID(const UFID&, std::ostream &os)
+scribbu::standard_pprinter::pprint_UFID(const UFID &frame, std::ostream &os)
 {
-  // TODO: standard_pprinter::pprint_UFID
-  return os;
+  using namespace std;
+  
+  os << sin_ << frame.id() << ": " << frame.owner<string>() << "\n";
+
+  vector<unsigned char> buf;
+  frame.idb(back_inserter(buf));
+
+  os << sin_ << "      " << hex << setfill('0');
+  for (auto x: buf) {
+    os << setw(2) << (unsigned)x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_ENCR(const ENCR&, std::ostream &os)
+scribbu::standard_pprinter::pprint_ENCR(const ENCR &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+
+  os << sin_ << frame.id() << ": " << frame.email<string>() << "\n" <<
+    sin_ << "Method symbol: " << dec << frame.method_symbol() << "\n" <<
+    sin_ << "Encryption data: " << hex << setfill('0');
+
+  vector<unsigned char> data;
+  frame.datab(back_inserter(data));
+  for (auto x: data) {
+    os << setw(2) << x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_TXXX(const TXXX&, std::ostream &os)
+scribbu::standard_pprinter::pprint_TXXX(const TXXX &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+  return os << sin_ << frame.id() << ": " << frame.description<string>() <<
+    "\n" << sin_ << frame.text<string>() << "\n";
 }
 
 /*virtual*/ std::ostream&
@@ -605,15 +657,31 @@ scribbu::standard_pprinter::pprint_COMM(const COMM &frame, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_PCNT(const PCNT&, std::ostream &os)
+scribbu::standard_pprinter::pprint_PCNT(const PCNT &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+  return os << sin_ << frame.id() << ": " << dec <<
+    (unsigned)frame.count() << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_POPM(const POPM&, std::ostream &os)
+scribbu::standard_pprinter::pprint_POPM(const POPM &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+
+  vector<unsigned char> counter;
+  frame.counterb(back_inserter(counter));
+
+  os << sin_ << frame.id() << ": " << frame.email<string>() << "\n" <<
+    sin_ << "rating: " << dec << (unsigned)frame.rating() << "\n" <<
+    sin_ << "counter: ";
+
+  os << hex << setfill('0');
+  for (auto x: counter) {
+    os << setw(2) << (unsigned)x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
@@ -643,39 +711,98 @@ scribbu::standard_pprinter::pprint_id3v2_4_text_frame(
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_UFID_2_4(const UFID_2_4&, std::ostream &os)
+scribbu::standard_pprinter::pprint_UFID_2_4(const UFID_2_4 &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+  
+  os << sin_ << frame.id() << ": " << frame.owner<string>() << "\n";
+
+  vector<unsigned char> buf;
+  frame.idb(back_inserter(buf));
+
+  os << sin_ << "      " << hex << setfill('0');
+  for (auto x: buf) {
+    os << setw(2) << (unsigned)x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_ENCR_2_4(const ENCR_2_4&, std::ostream &os)
+scribbu::standard_pprinter::pprint_ENCR_2_4(const ENCR_2_4 &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+
+  os << sin_ << frame.id() << ": " << frame.email<string>() << "\n" <<
+    sin_ << "Method symbol: " << dec << frame.method_symbol() << "\n" <<
+    sin_ << "Encryption data: " << hex << setfill('0');
+
+  vector<unsigned char> data;
+  frame.datab(back_inserter(data));
+  for (auto x: data) {
+    os << setw(2) << x;
+  }
+
+  return os << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_TXXX_2_4(const TXXX_2_4&, std::ostream &os)
+scribbu::standard_pprinter::pprint_TXXX_2_4(const TXXX_2_4 &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+  return os << sin_ << frame.id() << ": " << frame.description<string>() <<
+    "\n" << sin_ << frame.text<string>() << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_COMM_2_4(const COMM_2_4&, std::ostream &os)
+scribbu::standard_pprinter::pprint_COMM_2_4(const COMM_2_4 &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+
+  ienc stream_enc = ienc::retrieve(os);
+  encoding dst = stream_enc.get_encoding();
+  on_no_encoding rsp = stream_enc.get_on_no_encoding();
+
+  string dsc = frame.description<string>(dst, rsp, v2enc_);
+  string text = frame.text<string>(dst, rsp, v2enc_);
+
+  if (dsc.empty()) {
+    dsc = "<no description>";
+  }
+
+  if (text.empty()) {
+    text = "<no text>";
+  }
+
+  return os << frame.id() << " (" << dsc << "):\n" << text << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_PCNT_2_4(const PCNT_2_4&, std::ostream &os)
+scribbu::standard_pprinter::pprint_PCNT_2_4(const PCNT_2_4 &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+  return os << sin_ << frame.id() << ": " << dec <<
+    (unsigned)frame.count() << "\n";
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_POPM_2_4(const POPM_2_4&, std::ostream &os)
+scribbu::standard_pprinter::pprint_POPM_2_4(const POPM_2_4 &frame, std::ostream &os)
 {
-  return os;
+  using namespace std;
+
+  vector<unsigned char> counter;
+  frame.counterb(back_inserter(counter));
+
+  os << sin_ << frame.id() << ": " << frame.email<string>() << "\n" <<
+    sin_ << "rating: " << dec << (unsigned)frame.rating() << "\n" <<
+    sin_ << "counter: ";
+
+  os << hex << setfill('0');
+  for (auto x: counter) {
+    os << setw(2) << (unsigned)x;
+  }
+
+  return os << "\n";
 }
 
 void

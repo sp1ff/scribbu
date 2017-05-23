@@ -45,9 +45,18 @@ namespace {
       standard
     };
 
+    enum class dump_id3v1 { yes, no };
+    enum class dump_track { yes, no };
+    enum class dump_id3v2 { yes, no };
+
   public:
-    dumper(const boost::regex &file_regex, format fmt, 
-           bool dump_id3v2, bool dump_track, bool dump_id3v1);
+    /// Print in standard format
+    dumper(const boost::regex &file_regex, dump_id3v2 d0, dump_track d1,
+           dump_id3v1 d2, std::size_t indent, bool expand_genre,
+           scribbu::encoding v1enc);
+    /// Print in CSV format
+    dumper(const boost::regex &file_regex, dump_id3v2 d0, dump_track d1,
+           dump_id3v1 d2, scribbu::encoding v1enc, std::size_t ncomm);
     void operator()(const fs::path &pth);
 
   private:
@@ -56,15 +65,56 @@ namespace {
     bool dump_id3v2_;
     bool dump_track_;
     bool dump_id3v1_;
+
+    // Standard settings
+    std::size_t indent_;
+    bool expand_genre_;
+
+    // Compact settings
+    std::size_t ncomm_;
+
+    // Shared settings
+    scribbu::encoding v1enc_;
   };
 
-  dumper::dumper(const boost::regex &file_regex, format fmt, 
-                 bool dump_id3v2, bool dump_track, bool dump_id3v1):
+  dumper::dumper(const boost::regex &file_regex,
+                 dump_id3v2 d0,
+                 dump_track d1,
+                 dump_id3v1 d2,
+                 std::size_t indent,
+                 bool expand_genre,
+                 scribbu::encoding v1enc):
     file_regex_(file_regex),
-    fmt_(fmt),
-    dump_id3v2_(dump_id3v2),
-    dump_track_(dump_track),
-    dump_id3v1_(dump_id3v1)
+    fmt_(format::standard),
+    dump_id3v2_(d0 == dump_id3v2::yes),
+    dump_track_(d1 == dump_track::yes),
+    dump_id3v1_(d2 == dump_id3v1::yes),
+    indent_(indent),
+    expand_genre_(expand_genre),
+    v1enc_(v1enc)
+  {
+    using namespace scribbu;
+
+    if (!dump_id3v2_ && !dump_track_ && !dump_id3v1_) {
+      dump_id3v2_ = dump_track_ = dump_id3v1_ = true;
+    }
+
+    std::cout << pretty_print(indent_, expand_genre_, v1enc_);
+  }
+
+  dumper::dumper(const boost::regex &file_regex,
+                 dump_id3v2 d0,
+                 dump_track d1,
+                 dump_id3v1 d2,
+                 scribbu::encoding v1enc,
+                 std::size_t ncomm):
+    file_regex_(file_regex),
+    fmt_(format::csv),
+    dump_id3v2_(d0 == dump_id3v2::yes),
+    dump_track_(d1 == dump_track::yes),
+    dump_id3v1_(d2 == dump_id3v1::yes),
+    v1enc_(v1enc),
+    ncomm_(ncomm)
   {
     using namespace std;
     using namespace scribbu;
@@ -73,12 +123,7 @@ namespace {
       dump_id3v2_ = dump_track_ = dump_id3v1_ = true;
     }
 
-    if (format::csv == fmt_) {
-      cout << print_as_csv(4, encoding::CP1252);
-    }
-    else {
-      cout << pretty_print();
-    }
+    cout << print_as_csv(ncomm_, v1enc_);
   }
 
   void
@@ -87,6 +132,10 @@ namespace {
     using namespace std;
     using namespace boost;
     using namespace scribbu;
+
+    if (!fs::is_regular_file(pth)) {
+      return;
+    }
 
     if (!file_regex_.empty() && !regex_match(pth.string(), file_regex_)) {
       return;
@@ -122,7 +171,6 @@ namespace {
   std::istream&
   operator>>(std::istream &is, dumper::format &fmt)
   {
-    static const boost::regex COMPACT("0|compact|cmp");
     static const boost::regex CSV("1|csv");
     static const boost::regex STANDARD("2|standard|std");
 
@@ -172,7 +220,9 @@ namespace {
           const boost::optional<fs::path> &cfg)
   {
     using namespace std;
-    
+
+    using scribbu::encoding;
+
     typedef dumper::format format;
 
     int status = EXIT_SUCCESS;
@@ -208,11 +258,17 @@ namespace {
       ("id3v1-tags,1", po::bool_switch(), "Display only ID3v1 tags")
       ("track-data,D", po::bool_switch(), "Display only track data")
       ("id3v2-tags,2", po::bool_switch(), "Display only ID3v2 tags")
+      ("indent,i", po::value<size_t>()->default_value(0), "number of "
+       "spaces to indent")
+      ("no-expand-genre,g", po::bool_switch(), "Don't attempt to epand the "
+       "genre")
       ("expression,e", po::value<string>(), "If specified, defines a regular "
        "expression filtering files (i.e. only filenames matching the regular "
        "expression will be considered)")
       ("format,f", po::value<format>()-> default_value(format::standard), 
-       "Output format");
+       "Output format")
+      ("v1-encoding,c", po::value<encoding>()->default_value(encoding::CP1252),
+       "Encoding uses to interpret text in ID3v1 tags.");
 
     po::options_description xopts("hidden options");
     xopts.add_options()
@@ -277,21 +333,41 @@ namespace {
           file_regex = boost::regex(vm["expression"].as<string>());
         }
 
-        format fmt        = vm["format"    ].as<format>();
-        bool   dump_id3v2 = vm["id3v2-tags"].as<bool  >();
-        bool   dump_track = vm["track-data"].as<bool  >();
-        bool   dump_id3v1 = vm["id3v1-tags"].as<bool  >();
+        typedef dumper::dump_id3v2 dump_id3v2;
+        typedef dumper::dump_track dump_track;
+        typedef dumper::dump_id3v1 dump_id3v1;
 
-        dumper D(file_regex, fmt, dump_id3v2, dump_track, dump_id3v1);
+        format fmt = vm["format"    ].as<format>();
+        dump_id3v2 f0 = vm["id3v2-tags"].as<bool>() ? dump_id3v2::yes :
+          dump_id3v2::no;
+        dump_track f1 = vm["track-data"].as<bool>() ? dump_track::yes :
+          dump_track::no;
+        dump_id3v1 f2 = vm["id3v1-tags"].as<bool>() ? dump_id3v1::yes :
+          dump_id3v1::no;
+
+        unique_ptr<dumper> p;
+        if (dumper::format::standard == fmt) {
+          size_t   indent =   vm["indent"         ].as<size_t  >();
+          bool     expand = ! vm["no-expand-genre"].as<bool    >();
+          encoding v1enc  =   vm["v1-encoding"    ].as<encoding>();
+          p.reset(new dumper(file_regex, f0, f1, f2,
+                             indent, expand, v1enc));
+        }
+        else {
+          encoding v1enc = vm["v1-encoding" ].as<encoding>();
+          size_t   ncomm = vm["num-comments"].as<size_t  >();
+          p.reset(new dumper(file_regex, f0, f1, f2,
+                             v1enc, ncomm));
+        }
 
         for (auto x: arguments) {
           if (fs::is_directory(x)) {
             for_each(fs::recursive_directory_iterator(x),
                      fs::recursive_directory_iterator(),
-                     ref(D));
+                     ref(*p));
           }
           else {
-            D(x);
+            (*p)(x);
           }
         }
 

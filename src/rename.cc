@@ -88,8 +88,6 @@ Replacements based on the track data:
     - MD5 checksum: 5, md5
     - size: S, size (bytes)
 
-TODO: Add options to express the track size in other units (KB, MB, &c)
-
 Both replacements take the following options:
 
     - base: base={decimal,hex}

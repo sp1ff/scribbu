@@ -720,10 +720,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   BOOST_CHECK( tag03.has_track());
   BOOST_CHECK( tag03.has_year());
 
-  // TODO: In progress...
-  BOOST_MESSAGE(tag03.content_type());
   BOOST_CHECK("(8)" == tag03.content_type());
-  BOOST_MESSAGE(tag03.year());
   BOOST_CHECK("" == tag03.year());
 }
 

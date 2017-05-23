@@ -10,7 +10,7 @@
  *
  * \section scribbu_id3v23_intro Introduction
  *
- * TODO: Write me!
+ * ID3 version 2.3.
  *
  *
  * \section scribbu_id3v23_discuss "Discussion"
@@ -82,9 +82,6 @@ namespace scribbu {
    * \class id3v2_3_tag
    *
    * \brief Represents an ID3v2.3 tag
-   *
-   *
-   * TODO: Write me!
    *
    *
    */

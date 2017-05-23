@@ -1,0 +1,60 @@
+"data/lorca.mp3":
+ID3v2.3(.0) Tag:
+452951 bytes, synchronised
+flags: 0x00
+The Pogues - Lorca's Novena
+Hell's Ditch [Expanded] (US Version) (track 5), 1990
+Content-type Pop
+TIT2: Lorca's Novena
+TPE1: The Pogues
+TALB: Hell's Ditch [Expanded] (US Version)
+TCON: Pop
+TCOM: 
+TPE3: 
+TRCK: 5
+TYER: 1990
+TPE2: The Pogues
+COMM (<no description>):
+Amazon.com Song ID: 203558254
+TCOP: 2004 Warner Music UK Ltd.
+TPOS: 1
+frame APIC (115554 bytes)
+frame PRIV (1122 bytes)
+335921 bytes of padding
+9425708 bytes of track data:
+MD5: 48ff9cadea7d842e9059db25159d2daa
+ID3v1.1: The Pogues - Lorca's Novena
+Hell's Ditch [Expanded] (US Ve (track 5), 1990
+Amazon.com Song ID: 20355825
+unknown genre 255
+
+"data/opium.mp3":
+ID3v2.3(.0) Tag:
+2038 bytes, synchronised
+flags: 0x00
+Stephan Luke - Opium Chant Intro
+Opium Gardens (track 1), 2003
+Content-type General Club Dance
+Encoded by Winamp 5.552
+TENC: Winamp 5.552
+TRCK: 1
+COMM (<no description>):
+Ripped by Winamp on Pimpernel
+TPUB: Opium Music
+TPOS: 1/1
+TYER: 2003
+TCON: General Club Dance
+TALB: Opium Gardens
+TPE2: Opium Garden
+TPE1: Stephan Luke
+UFID: http://www.cddb.com/id3/taginfo1.html
+      334344334e33395235383037313937335532343836364232394336314239364139333341424332363945364531454642444233445032
+TIT2: Opium Chant Intro
+1522 bytes of padding
+1191874 bytes of track data:
+MD5: 690194f49592c7d8ccfbfe8a157d4c1e
+ID3v1.1: Stephan Luke - Opium Chant Intro
+Opium Gardens (track 1), 2003
+Ripped by Winamp on Pimperne
+unknown genre 255
+

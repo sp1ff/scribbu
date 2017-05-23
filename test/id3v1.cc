@@ -345,3 +345,56 @@ BOOST_AUTO_TEST_CASE( test_elliot_goldenthal )
   text = ptag->artist<string>();
   BOOST_CHECK("Sinead O'Connor" == text);
 }
+
+/**
+ * \brief Test against a non-ASCII ID3v1 tag
+ *
+ *
+ * This is an ID3v1 tag containing non-ASCII text; not sure whether it's
+ * ISO-8859-1 or CP1252.
+ *
+ \code
+
+ 54b82a 54 41 47 41 6e 20 42 75 61 63 68 61 69 6c 6c ed  >TAGAn Buachaill.<
+ 54b83a 6e 20 4d fa 69 6e 74 65 00 00 00 00 00 00 00 00  >n M.inte........<
+ 54b84a 00 4e 61 6e 20 54 6f 6d 20 54 65 61 69 6d ed 6e  >.Nan Tom Teaim.n<
+ 54b85a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+ *
+ 54b89a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 58  >...............X<
+ 54b8aa
+ *
+ * \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_nan_tom_teaimin )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path DATA("/vagrant/test/data/nan-1.mp3");
+
+  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  id3v1_info info = ends_in_id3v1(ifs);
+  BOOST_CHECK( id3_v1_tag_type::v_1 == info.type_ );
+
+  ifs.seekg(info.start_, ifstream::beg);
+
+  unique_ptr<id3v1_tag> ptag = process_id3v1(ifs);
+  BOOST_CHECK( ptag );
+
+  vector<unsigned char> title;
+  ptag->title(back_inserter(title));
+
+  string text;
+  text = ptag->artist<string>(encoding::CP1252);
+  BOOST_CHECK("Nan Tom Teaimín" == text);
+
+  text = ptag->title<string>(encoding::CP1252);
+  BOOST_CHECK("An Buachaillín Múinte" == text);
+
+  BOOST_CHECK(88 == ptag->genre());
+  BOOST_CHECK("Celtic" == id3v1_tag::text_for_genre(ptag->genre()).get());
+}
+

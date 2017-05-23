@@ -29,77 +29,14 @@ Only CSV output is currently supported.)");
 
 
 ////////////////////////////////////////////////////////////////////////////////
-namespace
-{
-  bool nonprint(char c) {
-    return 0 == std::isprint(c);
-  }
-
-  std::string make_printable(const std::string &s)
-  {
-    using namespace std;
-
-    // Replace any non-printable character with a hex representation
-    auto p = find_if(s.begin(), s.end(), nonprint);
-    if (s.end() == p) {
-      return s;
-    }
-
-    std::string r;
-    auto p0 = s.begin();
-    do {
-      r.append(p0, p);
-      stringstream stm;
-      stm << "\\" << hex << setw(2) << setfill('0') << (unsigned) *p++;
-      r += stm.str();
-      p0 = p;
-      p = find_if(p0, s.end(), nonprint);
-    } while (s.end() != p);
-
-    r.append(p0, p);
-
-    return r;
-  }
-
-  std::string escape_for_csv(const std::string &s)
-  {
-    // If there are no commas, return 's'. If there *are* commas, return "s'",
-    // where s' is s with all occurrenecs of '"' doubled.
-
-    std::size_t comma = s.find(',');
-    if (std::string::npos == comma) {
-      return s;
-    }
-
-    std::string r("\"");
-    for (std::size_t i = 0, n = s.length(); i < n; ) {
-      std::size_t dquote = s.find('"', i);
-      r.append(s.substr(i, dquote - i));
-      if (std::string::npos == dquote) {
-        break;
-      }
-      r += "\"\"";
-      i = dquote + 1;
-    }
-
-    r += '"';
-
-    return r;
-  }
-
-  std::string prep_for_csv(const std::string &s)
-  {
-    return escape_for_csv(make_printable(s));
-  }
-
-}
-
 struct reporter {
 
-  virtual void make_entry(const scribbu::file_info &fi,
-                          const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
-                          const scribbu::track_data &info,
-                          const std::unique_ptr<scribbu::id3v1_tag> &pid3v1) = 0;
+  virtual
+  void
+  make_entry(const scribbu::file_info &fi,
+             const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
+             const scribbu::track_data &info,
+             const std::unique_ptr<scribbu::id3v1_tag> &pid3v1) = 0;
 
 };
 
@@ -107,7 +44,9 @@ class csv_reporter: public reporter {
 
 public:
 
-  csv_reporter(const fs::path &output, std::size_t ncomm);
+  csv_reporter(const fs::path &output,
+               std::size_t ncomm,
+               scribbu::encoding v1enc);
 
   virtual void make_entry(const scribbu::file_info &fi,
                           const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
@@ -120,13 +59,16 @@ private:
 
   fs::ofstream ofs_;
   std::size_t ncomm_;
+  scribbu::encoding v1enc_;
 
 };
 
 /*static*/ const std::string csv_reporter::COMMA(",");
 
-csv_reporter::csv_reporter(const fs::path &output, std::size_t ncomm):
-  ofs_(output), ncomm_(ncomm)
+csv_reporter::csv_reporter(const fs::path &output,
+                           std::size_t ncomm,
+                           scribbu::encoding v1enc):
+  ofs_(output), ncomm_(ncomm), v1enc_(v1enc)
 {
   using namespace std;
   using namespace scribbu;
@@ -163,7 +105,7 @@ csv_reporter::csv_reporter(const fs::path &output, std::size_t ncomm):
           "ID3v1 Comment"      << COMMA <<
           "ID3v1 Genrre"       << COMMA << endl;
 
-  ofs_ << print_as_csv(ncomm_, encoding::CP1252);
+  ofs_ << print_as_csv(ncomm_, v1enc_);
 }
 
 /*virtual*/
@@ -260,7 +202,6 @@ void sequential_strategy::process_file(const fs::path &pth) {
 
   // and use the open istream to read the...
   std::unique_ptr<scribbu::id3v2_tag> pid3v2 = scribbu::maybe_read_id3v2(is); // ID3v2 tags...
-  // TODO: Support multiple ID3v2 tags
   scribbu::track_data ti(is);                                                 // the track itself...
   std::unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(is);    // and the ID3v1 tag.
 
@@ -299,6 +240,8 @@ namespace {
   {
     using namespace std;
 
+    using scribbu::encoding;
+
     int status = EXIT_SUCCESS;
 
     /////////////////////////////////////////////////////////////////////////////
@@ -329,8 +272,13 @@ namespace {
 
     po::options_description opts("general options");
     opts.add_options()
+      ("num-comments,c", po::value<size_t>()->default_value(6),
+       "Number of comment tags to be printed (their # will always be reported")
       ("output,o", po::value<fs::path>()->required(), ".csv file to which the "
-       "results will be written");
+       "results will be written")
+      ("v1-encoding,1", po::value<encoding>()->
+       default_value(encoding::CP1252), "Encoding to be used for text "
+       "in ID3v1 tags.");
 
     po::options_description xopts("hidden options");
     xopts.add_options()
@@ -421,9 +369,11 @@ namespace {
 
         // TOOD: Implement the multi-threaded option
 
+        size_t ncomm = vm["num-comments"].as<size_t>();
         fs::path out = vm["output"].as<fs::path>();
+        encoding v1enc = vm["v1-encoding"].as<encoding>();
 
-        std::shared_ptr<reporter> pr(new csv_reporter(out, 6));
+        std::shared_ptr<reporter> pr(new csv_reporter(out, ncomm, v1enc));
 
         std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
 

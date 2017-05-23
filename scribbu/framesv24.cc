@@ -46,8 +46,7 @@ namespace scribbu {
         src = encoding::UTF_8;
       }
       else {
-        // TODO: Does this ever really happen?
-        throw std::domain_error("illegal encoding");
+        throw std::range_error("illegal encoding");
       }
 
     }

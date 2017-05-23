@@ -320,11 +320,6 @@ namespace scribbu {
    * \brief Core ID3v2 functionality
    *
    *
-   * TODO: I suspect I can re-factor the 'parse' routines in each of the three
-   * subclasses into one (using the Template Pattern), but I want to get a
-   * working unit test suite in place, first.
-   *
-   *
    */
 
   class id3v2_tag {

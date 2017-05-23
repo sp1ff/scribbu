@@ -183,6 +183,18 @@ namespace scribbu {
       unique_file_id(p0, p1)
     { }
 
+    template <typename string_type>
+    string_type
+    owner(encoding dst = encoding::UTF_8,
+          on_no_encoding rsp = on_no_encoding::fail,
+          const boost::optional<encoding> &src = encoding::ASCII) const
+    {
+      using namespace std;
+      vector<unsigned char> buf;
+      unique_file_id::ownerb(back_inserter(buf));
+      return convert_encoding<string>(&(buf[0]), buf.size(), src.get(), dst, rsp);
+    }
+
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
 
@@ -366,7 +378,6 @@ namespace scribbu {
                 on_no_encoding rsp = on_no_encoding::fail,
                 const boost::optional<encoding> &src = boost::none) const
     {
-      // TODO: Un-necessary copy-- can revisit if needed
       using namespace std;
       vector<unsigned char> buf;
       user_defined_text::descriptionb(back_inserter(buf));
@@ -380,7 +391,6 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail,
          const boost::optional<encoding> &src = boost::none) const
     {
-      // TODO: Un-necessary copy-- can revisit if needed
       using namespace std;
       vector<unsigned char> buf;
       user_defined_text::textb(back_inserter(buf));
@@ -410,7 +420,6 @@ namespace scribbu {
                 on_no_encoding rsp = on_no_encoding::fail,
                 const boost::optional<encoding> &src = boost::none) const
     {
-      // TODO: Un-necessary copy-- can revisit if needed
       using namespace std;
       vector<unsigned char> buf;
       comments::descriptionb(back_inserter(buf));
@@ -424,7 +433,6 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail,
          const boost::optional<encoding> &src = boost::none) const
     {
-      // TODO: Un-necessary copy-- can revisit if needed
       using namespace std;
       vector<unsigned char> buf;
       comments::textb(back_inserter(buf));
@@ -445,6 +453,10 @@ namespace scribbu {
       play_count(p0, p1)
     { }
 
+    std::size_t count() const {
+      return play_count::count();
+    }
+
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
 
@@ -460,6 +472,18 @@ namespace scribbu {
       id3v2_2_frame("POP", p1 - p0),
       popularimeter(p0, p1)
     { }
+
+    template <typename string_type>
+    string_type
+    email(encoding dst = encoding::UTF_8,
+          on_no_encoding rsp = on_no_encoding::fail,
+          const encoding &src = encoding::ASCII) const
+    {
+      using namespace std;
+      vector<unsigned char> buf;
+      popularimeter::emailb(back_inserter(buf));
+      return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
+    }
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);

@@ -135,10 +135,12 @@ namespace scribbu {
 
     using namespace std;
 
-    typedef detail::trivial_sentry<char, char_traits<char>> sentry_type;
+    typedef detail::trivial_sentry<char, std::char_traits<char>> sentry_type;
     typedef manip_helper<const ienc, ostream, sentry_type>  impl_type;
 
-    // TODO: Check encoding against code unit here
+    if (!scribbu::char_traits<char>::is_code_unit(x.get_encoding())) {
+      throw bad_code_unit(x.get_encoding(), sizeof(char));
+    }
 
     impl_type::do_manip(x, &ienc::insert, os);
     return os;
@@ -152,10 +154,9 @@ namespace scribbu {
 
     using namespace std;
 
-    typedef detail::trivial_sentry<char, char_traits<char>> sentry_type;
+    typedef detail::trivial_sentry<char, std::char_traits<char>> sentry_type;
     typedef manip_helper<const ienc, istream, sentry_type>  impl_type;
 
-    // impl_type::do_manip(x, &ienc::extract<char, char_traits<char>>, is);
     impl_type::do_manip(x, &ienc::insert, is);
     return is;
 
@@ -168,10 +169,12 @@ namespace scribbu {
 
     using namespace std;
 
-    typedef detail::trivial_sentry<wchar_t, char_traits<wchar_t>> sentry_type;
+    typedef detail::trivial_sentry<wchar_t, std::char_traits<wchar_t>> sentry_type;
     typedef manip_helper<const ienc, wostream, sentry_type>       impl_type;
 
-    // TODO: Check encoding against code unit here
+    if (!scribbu::char_traits<char>::is_code_unit(x.get_encoding())) {
+      throw bad_code_unit(x.get_encoding(), sizeof(char));
+    }
 
     impl_type::do_manip(x, &ienc::insert, os);
     return os;
@@ -185,7 +188,7 @@ namespace scribbu {
 
     using namespace std;
 
-    typedef detail::trivial_sentry<wchar_t, char_traits<wchar_t>> sentry_type;
+    typedef detail::trivial_sentry<wchar_t, std::char_traits<wchar_t>> sentry_type;
     typedef manip_helper<const ienc, wistream, sentry_type>       impl_type;
 
     impl_type::do_manip(x, &ienc::insert, is);

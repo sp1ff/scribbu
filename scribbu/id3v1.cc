@@ -125,9 +125,11 @@ namespace scribbu {
                             encoding dst,
                             on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(album_[0]), album_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -140,9 +142,11 @@ namespace scribbu {
                              encoding dst,
                              on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(artist_[0]), artist_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -155,9 +159,11 @@ namespace scribbu {
                               encoding dst,
                               on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(comment_[0]), comment_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -170,9 +176,11 @@ namespace scribbu {
                                 encoding dst,
                                 on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(ext_genre_[0]), ext_genre_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -185,9 +193,11 @@ namespace scribbu {
                                  encoding dst,
                                  on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(start_time_[0]), start_time_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -200,9 +210,11 @@ namespace scribbu {
                                encoding dst,
                                on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(end_time_[0]), end_time_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -215,9 +227,11 @@ namespace scribbu {
                             encoding dst,
                             on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(title_[0]), title_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),
@@ -230,9 +244,11 @@ namespace scribbu {
                            encoding dst,
                            on_no_encoding rsp) const
   {
-    // TODO: Check code unit
     using std::string;
     using namespace scribbu;
+    if (!scribbu::char_traits<char>::is_code_unit(dst)) {
+      throw bad_code_unit(dst, sizeof(char));
+    }
     return convert_encoding<string>(&(year_[0]), year_.size(),
                                     src ? src.get() :
                                     encoding_from_system_locale(),

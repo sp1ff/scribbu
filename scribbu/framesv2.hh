@@ -54,7 +54,6 @@ namespace scribbu {
 
   namespace detail {
 
-    // TODO: Needed post-rewrite?
     template <typename forward_input_iterator>
     forward_input_iterator find_trailing_null(bool                   unicode,
                                               forward_input_iterator p0,
@@ -279,6 +278,7 @@ namespace scribbu {
     forward_output_iterator ownerb(forward_output_iterator p) const {
       return std::copy(owner_.begin(), owner_.end(), p);
     }
+
     /// Unique File Identifier
     template <typename forward_output_iterator>
     forward_output_iterator idb(forward_output_iterator pout) const {

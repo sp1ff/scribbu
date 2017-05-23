@@ -37,6 +37,9 @@ flags: 0x00
 The Ocean Blue - Questions Of Travel (LP Version)
 Cerulean (US Release) (track 6/12), 2005
 Content-type Alternative Rock
+PCNT: rating@winamp.com
+rating: 255
+counter: 00000000
 frame PRIV (8207 bytes)
 TIT2: Questions Of Travel (LP Version)
 TPE1: The Ocean Blue

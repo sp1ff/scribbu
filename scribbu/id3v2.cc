@@ -135,8 +135,9 @@ scribbu::looking_at_id3v2(std::istream &is,
   try {
     is.read((char*)buf, HEADER_SIZE);
   } catch (const std::ios_base::failure &ex) {
-    is.seekg(here, std::ios_base::beg);
     is.exceptions(exc_mask);
+    is.clear();
+    is.seekg(here, std::ios_base::beg);
     return H;
   }
 
@@ -177,7 +178,7 @@ scribbu::looking_at_id3v2(std::istream &is,
 std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
 {
   ///////////////////////////////////////////////////////////////////////////
-  // TODO: Working this out...
+  // Example:
   //  0     1     2     3     4     5     6     7     8     9     10    11    12    13    14
   // [0x01, 0xff, 0x00, 0x02, 0x03, 0x04, 0xff, 0x00, 0x05, 0x06, 0xff, 0x00, 0x07, 0xff, 0x00]
   //  |         |       |                     |       |               |       |         |
@@ -228,7 +229,6 @@ std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
     ++i1;
 
     // Move every element in [i0+1,i1) back by num_sync elements.
-    // TODO: Unroll the loop for 'num_sync' > 1...
     for (std::ptrdiff_t i = i0 + 1; i < i1; ++i) {
       p[i - num_syncs] = p[i];
     }

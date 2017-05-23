@@ -7,6 +7,8 @@
 
 #include <iconv.h>
 
+#include <scribbu/errors.hh>
+
 namespace scribbu {
 
   class iconv_error: public virtual boost::exception,
@@ -68,6 +70,25 @@ namespace scribbu {
 	UTF_8, UCS_2, UCS_2BE, UCS_2LE, UCS_4, UCS_4BE, UCS_4LE,
 	UTF_16, UTF_16BE, UTF_16LE, UTF_32, UTF_32BE, UTF_32LE,
 	UTF_7, C99, JAVA,
+  };
+
+  std::istream& operator>>(std::istream &is, encoding &x);
+  std::ostream& operator<<(std::ostream &os, const encoding &x);
+
+  template <typename char_type>
+  struct char_traits
+  {
+    /// Returns true if char_type is a code unit for encoding \a x
+    static bool is_code_unit(encoding x);
+  };
+
+  class bad_code_unit: public error {
+  public:
+    bad_code_unit(encoding enc, std::size_t cb);
+
+  private:
+    encoding enc_;
+    std::size_t cb_;
   };
 
   /// Response when a byte sequence in the source encoding cannot

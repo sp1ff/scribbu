@@ -1,15 +1,5 @@
 #ifndef ID3V2_UTILS_HH_INCLUDED
 #define ID3V2_UTILS_HH_INCLUDED 1
-/**
- * \page scribbu_id3v2_utils
- *
- * \section scribbu_id3v2_utils_intro Introduction
- *
- * TODO: Write me!
- *
- *
- */
-
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>

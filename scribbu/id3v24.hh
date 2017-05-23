@@ -9,7 +9,7 @@
  *
  * \section scribbu_id3v24_intro Introduction
  *
- * TODO: Write me!
+ * ID3 v2.4.
  *
  *
  * \section scribbu_id3v24_discuss "Discussion"
@@ -102,14 +102,10 @@
 
 namespace scribbu {
 
-  // TODO: "appended tag"!?
   /**
    * \class id3v2_4_tag
    *
    * \brief Represents an ID3v2.4 tag
-   *
-   *
-   * TODO: Write me!
    *
    *
    */

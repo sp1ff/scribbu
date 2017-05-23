@@ -32,7 +32,6 @@ namespace scribbu {
     else if (unicode) {
 
       if (1 != unicode) {
-        // TODO: Does this ever actually happen?
         throw std::range_error("encoding should be zero or one");
       }
       

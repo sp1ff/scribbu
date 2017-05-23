@@ -55,7 +55,19 @@ BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
   BOOST_CHECK("Acapulco" == ptag->title());
 }
 
-// TODO: Test read_all_id3v2
+BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path DATA("/vagrant/test/data/searchresults.dat");
+
+  fs::ifstream ifs(DATA, fs::ifstream::binary);
+
+  vector<unique_ptr<id3v2_tag>> tags;
+  read_all_id3v2(ifs, back_inserter(tags));
+  BOOST_CHECK( tags.empty() );
+}
 
 BOOST_AUTO_TEST_CASE( test_template_text )
 {
