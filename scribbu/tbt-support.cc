@@ -175,8 +175,10 @@ scribbu::tbt_support::do_cap_xform(const std::string &text,
   using namespace boost;
 
   if (capitalization::capitalize == cap) {
-    // TODO: Implement capitalizatoin
-    return text;
+    string result;
+    result += toupper(text[0], locale(""));
+    result += text.substr(1);
+    return result;
   }
   else if (capitalization::all_upper == cap) {
     string buf(text);
@@ -198,16 +200,46 @@ scribbu::tbt_support::do_ws_xform(const std::string &text,
                                   bool               compress,
                                   const std::string &replace)
 {
-  // TODO: Implement ws xforms
-  return text;
+  using namespace std;
+  using namespace boost;
+
+  if (!compress && 0 == replace.length()) {
+    return text;
+  }
+
+  vector<string> splits;
+  split(splits, text, is_any_of(" \t"));
+  if (0 != replace.length()) {
+    return join(splits, replace);
+  }
+  else {
+    return join(splits, " ");
+  }
+  
 }
 
 std::string
 scribbu::tbt_support::encode(const std::string &text,
                              output_encoding    out)
 {
-  // TODO: Implement output encoding
-  return text;
+  using std::string;
+
+  // `text' is already in UTF-8; we just need to convert it to `out'. If `out'
+  // is already UTF-8, then we're done:
+  if (output_encoding::utf_8 == out) {
+    return text;
+  }
+
+  encoding dst = encoding::ASCII;
+  if (output_encoding::cp1252 == out) {
+    dst = encoding::CP1252;
+  }
+  else if (output_encoding::iso8859_1 == out) {
+    dst = encoding::ISO_8859_1;
+  }
+
+  return convert_encoding<string>((const unsigned char*)text.c_str(),
+                                  text.size(), encoding::UTF_8, dst);
 }
 
 
@@ -508,19 +540,14 @@ scribbu::tbt_support::encoded_by::evaluate(const file_info  & /*fi    */,
 {
   using namespace std;
 
-  vector<unsigned char> v1;
-
-  boost::optional<std::string> v2 = boost::none;
-  if (pid3v2 && pid3v2->has_encoded_by()) {
-    v2 = pid3v2->encoded_by();
+  if (!pid3v2 || !pid3v2->has_encoded_by()) {
+    throw missing_source_text(all_source_preference::id3v2_only);
   }
 
-  std::string encoded_by = source_text(v1.begin(), v1.end(), v2,
-                                       all_source_preference::id3v2_only,
-                                       v1_encoding::automatic);
-
-  // TODO: return xform_and_encode(encoded_by, out_);
-  return encoded_by;
+  string text = pid3v2->encoded_by();
+  text = do_the_xform(text, the_);
+  text = do_cap_xform(text, cap_);
+  return encode(text, out_);
 }
 
 /*virtual*/ std::string
@@ -545,8 +572,13 @@ scribbu::tbt_support::year::evaluate(const file_info  & /*fi    */,
                                  all_source_preference::prefer_id3v2,
                                  v1_encoding::automatic);
 
-  // TODO: return xform_and_encode(year);
-  return year;
+  if (year_format::two_digits == fmt_) {
+    return year.substr(2);
+  }
+  else {
+    return year;
+  }
+
 }
 
 

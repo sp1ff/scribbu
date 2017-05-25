@@ -501,15 +501,6 @@ v1_encoding: V1ENCODING EQUAL AUTO {
            | V1ENCODING EQUAL UTF8 {
                $$ = scribbu::tbt_support::v1_encoding::utf_8;
              }
-           | V1ENCODING EQUAL UTF16_BE {
-               $$ = scribbu::tbt_support::v1_encoding::utf_16_be;
-             }
-           | V1ENCODING EQUAL UTF16_LE {
-               $$ = scribbu::tbt_support::v1_encoding::utf_16_le;
-             }
-           | V1ENCODING EQUAL UTF32 {
-               $$ = scribbu::tbt_support::v1_encoding::utf_32;
-             }
            ;
 
 the_xform: THE {
@@ -579,15 +570,6 @@ replace_ws: WS EQUAL PARAM_TEXT {
 
 output_encoding: OUTPUT EQUAL UTF8 {
                    $$ = scribbu::tbt_support::output_encoding::utf_8;
-                 }
-               | OUTPUT EQUAL UTF16_BE {
-                   $$ = scribbu::tbt_support::output_encoding::utf_16_be;
-                 }
-               | OUTPUT EQUAL UTF16_LE {
-                   $$ = scribbu::tbt_support::output_encoding::utf_16_le;
-                 }
-               | OUTPUT EQUAL UTF32 {
-                   $$ = scribbu::tbt_support::output_encoding::utf_32;
                  }
                | OUTPUT EQUAL ASCII {
                    $$ = scribbu::tbt_support::output_encoding::ascii;

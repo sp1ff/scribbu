@@ -13,8 +13,58 @@ namespace {
   std::pair<bool, scribbu::encoding>
   encoding_from_locale_name(const std::string &name)
   {
-    // TOOD: Write me, once I have an internet connection!
-    return std::make_pair(false, scribbu::encoding::ASCII);
+    using namespace std;
+    using namespace scribbu;
+
+    static const unordered_map<string, encoding> TBL {
+      {"ASCII",      encoding::ASCII       },
+      {"US-ASCII",   encoding::ASCII       },
+      {"UTF-8",      encoding::UTF_8       },
+      {"utf8",       encoding::UTF_8       },
+      {"ISO8859-1",  encoding::ISO_8859_1  },
+      {"ISO8859-2",  encoding::ISO_8859_2  },
+      {"ISO8859-3",  encoding::ISO_8859_3  },
+      {"ISO8859-4",  encoding::ISO_8859_4  },
+      {"ISO8859-5",  encoding::ISO_8859_5  },
+      {"ISO8859-7",  encoding::ISO_8859_7  },
+      {"ISO8859-9",  encoding::ISO_8859_9  },
+      {"ISO8859-10", encoding::ISO_8859_10 },
+      {"ISO8859-13", encoding::ISO_8859_13 },
+      {"ISO8859-14", encoding::ISO_8859_14 },
+      {"ISO8859-15", encoding::ISO_8859_15 },
+      {"ISO8859-16", encoding::ISO_8859_16 },
+      {"CP1131",     encoding::CP1131      },
+      {"CP1133",     encoding::CP1133      },
+      {"CP1250,",    encoding::CP1250      },
+      {"CP1251",     encoding::CP1251      },
+      {"CP1252,",    encoding::CP1252      },
+      {"CP1253,",    encoding::CP1253      },
+      {"CP1254,",    encoding::CP1254      },
+      {"CP1255,",    encoding::CP1255      },
+      {"CP1256,",    encoding::CP1256      },
+      {"CP1257,",    encoding::CP1257      },
+      {"CP1258",     encoding::CP1258      },
+      {"CP850,",     encoding::CP850       },
+      {"CP862,",     encoding::CP862       },
+      {"CP866,",     encoding::CP866       },
+      {"CP874",      encoding::CP874       },
+      {"CP932",      encoding::CP932       },
+      {"CP936",      encoding::CP936       },
+      {"CP949",      encoding::CP949       },
+      {"CP950",      encoding::CP950       },
+    };
+
+    string::size_type i = name.rfind('.');
+    if (string::npos == i) {
+      return make_pair(true, encoding::UTF_8);
+    }
+
+    string key = name.substr(i);
+    if (0 == TBL.count(key)) {
+      return make_pair(false, encoding::UTF_8);
+    }
+
+    return make_pair(true, TBL.at(key));
   }
 
 }
@@ -528,16 +578,19 @@ namespace scribbu {
 	bool ok;
 	encoding enc;
 
+    // Try the global locale, first
+    locale global;
+    tie(ok, enc) = encoding_from_locale_name(global.name());
+    if (ok) {
+      return enc;
+    }
+
+    // Try the system locale
 	locale loc("");
 	tie(ok, enc) = encoding_from_locale_name(loc.name());
 	if (ok) {
 	  return enc;
 	}
-
-	// tie(ok, enc) = encoding_from_locale_name(/* TOOD: Get $LANG */);
-	// if (ok) {
-	//   return enc;
-	// }
 
 	throw range_error("No matching encoding");
   }

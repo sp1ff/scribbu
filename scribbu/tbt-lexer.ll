@@ -111,6 +111,7 @@ year_abbrev         Y
 <REPLACEMENT>{pref_v1}      { return PREF_V1;     }
 <REPLACEMENT>{pref_v2}      { return PREF_V2;     }
 <REPLACEMENT>{v1_encoding}  { return V1ENCODING;  }
+<REPLACEMENT>{ws}           { return WS;          }
 
 <PARAMETER>{two_digits}     { BEGIN(REPLACEMENT); return TWO_DIGITS;  }
 <PARAMETER>{four_digits}    { BEGIN(REPLACEMENT); return FOUR_DIGITS; }
@@ -134,7 +135,6 @@ year_abbrev         Y
 <PARAMETER>{utf32}          { BEGIN(REPLACEMENT); return UTF32;       }
 <PARAMETER>{v1_only}        { BEGIN(REPLACEMENT); return V1_ONLY;     }
 <PARAMETER>{v2_only}        { BEGIN(REPLACEMENT); return V2_ONLY;     }
-<PARAMETER>{ws}             { BEGIN(REPLACEMENT); return WS;          }
 
 <PARAMETER>{text} {
   BEGIN(REPLACEMENT);

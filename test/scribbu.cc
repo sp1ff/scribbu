@@ -77,3 +77,36 @@ unknown genre 255
   BOOST_CHECK( text == GOLD2 );
 
 }
+
+BOOST_AUTO_TEST_CASE( test_track_data2 )
+{
+  const fs::path TEST_DATA("/vagrant/test/data/searchresults.dat");
+
+  using namespace std;
+  using namespace scribbu;
+
+  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  ios_base::iostate state = ifs.rdstate();
+  unique_ptr<scribbu::id3v2_tag> pid3v2 = maybe_read_id3v2(ifs); // ID3v2 tags...
+  track_data td(ifs);                                            // the track itself...
+  unique_ptr<id3v1_tag> pid3v1 = process_id3v1(ifs);             // & the ID3v1 tag.
+
+  stringstream stm1;
+  if (pid3v2) {
+    stm1 << *pid3v2;
+  }
+  stm1 << td;
+  if (pid3v1) {
+    stm1 << *pid3v1;
+  }
+
+  string text = stm1.str();
+  BOOST_MESSAGE( text );
+
+  static const string GOLD1(R"(8 bytes of track data:
+MD5: 69c1753bd5f81501d95132d08af04464
+)");
+
+  BOOST_CHECK(text == GOLD1);
+
+}

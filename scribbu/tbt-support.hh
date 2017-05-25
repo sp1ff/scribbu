@@ -68,7 +68,7 @@ namespace scribbu
       nil, capitalize, all_upper, all_lower
     };
     enum class output_encoding {
-      utf_8, utf_16_be, utf_16_le, utf_32, ascii, cp1252, iso8859_1
+      utf_8, ascii, cp1252, iso8859_1
     };
     enum class base { decimal, hex };
     enum class hex_case { lower, upper };

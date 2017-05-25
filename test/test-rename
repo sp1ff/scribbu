@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-
-../src/scribbu rename --o . --template="%(artist) -- %(title)%E" ${srcdir}/data/lorca.mp3
+SCRIBBU=../src/scribbu
+$SCRIBBU rename -o . --template="%(artist) -- %(title)%E" ${srcdir}/data/lorca.mp3 || exit 1
 [ -f "Pogues, The -- Lorca's Novena.mp3" ] || exit 1
-
+rm -f "Pogues, The -- Lorca's Novena.mp3"
+$SCRIBBU rename -o . --template="%(artist:the=prefix&ws=_)--%(title:compress)%E" ${srcdir}/data/lorca.mp3 || exit 1
+[ -f "The_Pogues--Lorca's Novena.mp3" ] || exit 1
+rm -f "The_Pogues--Lorca's Novena.mp3"
 exit 0
-

@@ -1,14 +1,5 @@
 #ifndef COMMAND_UTILITIES_HH_INCLUDED
 #define COMMAND_UTILITIES_HH_INCLUDED 1
-/**
- * \brief Assorted sub-command-related utilities
- *
- *
- * TODO: Write me!
- *
- *
- */
-
 #include <iostream>
 
 #include <boost/filesystem.hpp>

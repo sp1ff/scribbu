@@ -22,7 +22,6 @@
 
 namespace scribbu {
 
-  // TODO: Needed?
   /// Library initialization
   void static_initialize();
 

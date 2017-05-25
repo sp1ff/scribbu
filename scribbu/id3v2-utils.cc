@@ -50,7 +50,6 @@ scribbu::template_processor::template_processor(const std::string &templat)
   int status = tbtparse(&pterms);
 
   if (0 != status) {
-    // TODO: Enable better error reporting in the paraser
     throw scribbu::tbt_support::invalid_template();
   }
 

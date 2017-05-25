@@ -533,24 +533,32 @@ scribbu::id3v1_info scribbu::ends_in_id3v1(std::istream &is)
   id3v1_info I;
   I.type_ = id3_v1_tag_type::none;
 
-  is.seekg(0, std::ios_base::end);
-  I.start_ = I.end_ = is.tellg();
-  if (355 <= I.start_) {
-    is.seekg(-355, std::ios_base::end);
-    is.read(buf, 4);
-    if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2] && '+' == buf[3]) {
-      I.start_ = is.tellg() - (std::streampos) 4;
-      I.type_ = id3_v1_tag_type::v_1_extended;
-    }
-  }
+  try {
 
-  if (id3_v1_tag_type::none == I.type_) {
-    is.seekg(-128, std::ios_base::end);
-    is.read(buf, 3);
-    if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2]) {
-      I.start_ = is.tellg() - (std::streampos) 3;
-      I.type_ = id3_v1_tag_type::v_1;
+    is.seekg(0, std::ios_base::end);
+    I.start_ = I.end_ = is.tellg();
+    if (355 <= I.start_) {
+      is.seekg(-355, std::ios_base::end);
+      is.read(buf, 4);
+      if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2] && '+' == buf[3]) {
+        I.start_ = is.tellg() - (std::streampos) 4;
+        I.type_ = id3_v1_tag_type::v_1_extended;
+      }
     }
+
+    if (id3_v1_tag_type::none == I.type_) {
+      is.seekg(-128, std::ios_base::end);
+      is.read(buf, 3);
+      if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2]) {
+        I.start_ = is.tellg() - (std::streampos) 3;
+        I.type_ = id3_v1_tag_type::v_1;
+      }
+    }
+
+  }
+  catch (const std::ios_base::failure &ex) {
+    is.exceptions(exc_mask);
+    is.clear();
   }
 
   // Restore the stream's state

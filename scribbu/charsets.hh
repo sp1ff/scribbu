@@ -153,10 +153,6 @@ namespace scribbu {
    * \brief Derive an encoding from the current system locale
    *
    *
-   * TODO: I'm writing this in a plane over the Pacific, with no network
-   * connection, so this is subject to revision!
-   *
-   *
    * This function attempts to guess the character encoding in use on the
    * system currently in the following way:
    *
