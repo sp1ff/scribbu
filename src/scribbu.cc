@@ -1,5 +1,8 @@
 #include "config.h"
 
+#include <signal.h>
+#include <sys/resource.h>
+
 #include <iostream>
 
 #include <boost/lexical_cast.hpp>
@@ -31,7 +34,45 @@ For sub-command help, run 'scribbu SUB-COMMAND --help'
 )");
   
   const fs::path DEFCFG("~/.scribbu");
+
+  /////////////////////////////////////////////////////////////////////////////
+  //                        scribbu signal handling                          //
+  /////////////////////////////////////////////////////////////////////////////
+
+  volatile sig_atomic_t fatal_error_in_progress = 0;
+
+  // Largely lifted from the example in the glibc manual, cf.
+  // https://www.gnu.org/software/libc/manual/html_mono/libc.html#Termination-in-Handler
+  void sig_handler(int signum)
+  {
+    // Since a handler can be established for more than one kind of signal, 
+    // it might still get invoked recursively by delivery of some other kind
+    // of signal. Use a static variable to keep track of that
+    if (fatal_error_in_progress) {
+      raise(signum);
+    }
+
+    fatal_error_in_progress = 1;
+
+    if (SIGSEGV == signum) {
+      write(2, "SEGV: if this did not produce a core file, type 'ulimit -c unl"
+            "imited' and re-run this command to generate one.\n", 111);
+    }
+    else {
+      write(2, "Unknown signal-- this is a bug that should be reported at http"
+            "s://github.com/sp1ff/scribbu\n", 91);
+    }
+
+    // Now reraise the signal.  We reactivate the signal’s default handling,
+    // which is to terminate the process.  We could just call exit or abort,
+    // but reraising the signal sets the return status from the process
+    // correctly.
+    signal(signum, SIG_DFL);
+    raise(signum);
+  }
+
 }
+
 
 int
 main(int argc, char * argv[])
@@ -40,6 +81,36 @@ main(int argc, char * argv[])
 
   using boost::lexical_cast;
   using boost::optional;
+
+  // Setup an alternate stack, so our signal handler will still work in the
+  // case of stack overflow (which will cause a SIGSEGV)
+  static char stack[SIGSTKSZ];
+  stack_t ss = { 0 };
+  ss.ss_size = SIGSTKSZ;
+  ss.ss_sp = stack;
+  sigaltstack(&ss, 0);
+
+# ifdef SCRIBBU_ALWAYS_DUMP_CORE
+  // In general, one needs to run ulimit (e.g. 'ulimit -c unlimited') 
+  // *before* running the program that's SEGV'ing (or whatever). However,
+  // during development, it can be handy to have the program dump core
+  // regardless.
+  struct rlimit lim;
+  lim.rlim_cur = lim.rlim_max = RLIM_INFINITY;
+  if (0 != setrlimit(RLIMIT_CORE, &lim)) {
+      cerr << "WARNING: setrlimit failed; cores may not be dumped in " <<
+        "the event of signals. errno reports " << errno << endl;
+  }
+# endif
+
+  // Finally, setup the signal handler.
+  struct sigaction sigact = { 0 }, oldact = { 0 };
+  sigact.sa_handler = sig_handler;
+  sigact.sa_flags = SA_ONSTACK;
+  if (0 != sigaction (SIGSEGV, &sigact, &oldact)) {
+    cerr << "Failed to set signal handler." << endl;
+    return 3;
+  }
 
   scribbu::static_initialize();
 

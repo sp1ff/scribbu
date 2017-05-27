@@ -120,6 +120,17 @@ frame PRIV (1122 bytes)
   BOOST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
+
+  const fs::path TEST_DATA2("/vagrant/test/data/cerulean.mp3");
+
+  fs::ifstream ifs2(TEST_DATA2, fs::fstream::binary);
+  id3v2_3_tag tag2(ifs2);
+
+  stringstream stm2;
+  stm2 << tag2;
+  text = stm2.str();
+  BOOST_MESSAGE(text);
+
 }
 
 BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_4 )

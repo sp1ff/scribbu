@@ -32,14 +32,17 @@ namespace scribbu {
   std::unique_ptr<id3v2_tag> maybe_read_id3v2(std::istream &is);
 
   // TODO: Document read_all_id3v2
-  // TODO: Find a file with multiple ID3v2 tags
   template <typename forward_output_iterator>
   forward_output_iterator read_all_id3v2(std::istream           &is,
                                          forward_output_iterator p) {
-    std::unique_ptr<id3v2_tag> ptag = maybe_read_id3v2(is);
-    while (ptag) {
-      *p = std::move(ptag); p++;
-      ptag = maybe_read_id3v2(is);
+    try {
+      std::unique_ptr<id3v2_tag> ptag = maybe_read_id3v2(is);
+      while (ptag) {
+        *p = std::move(ptag); p++;
+        ptag = maybe_read_id3v2(is);
+      }
+    }
+    catch (const std::exception&) {
     }
 
     return p;

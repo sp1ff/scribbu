@@ -648,10 +648,14 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   BOOST_CHECK( tag01.has_track());
   BOOST_CHECK( tag01.has_year());
 
-  // TPUB "Opium Music"
-  // TPOS "1/1"
-  // TCON "General Club Dance"
-  // UFID
+  BOOST_CHECK( 1 == tag01.has_frame("UFID"));
+  const id3v2_3_frame &rf = tag01.get_frame("UFID");
+  
+  const UFID *pf = dynamic_cast<const UFID*>(&rf);
+  BOOST_CHECK(nullptr != pf);
+
+  string s = pf->owner<string>();
+  BOOST_CHECK("http://www.cddb.com/id3/taginfo1.html" == s);
 
   vector<COMM> comments;
   tag01.get_comments(back_inserter(comments));
@@ -671,7 +675,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   C.descriptionb(back_inserter(desc));
   BOOST_CHECK(desc == GOLD0);
 
-  std::string s = C.description<string>();
+  s = C.description<string>();
   BOOST_CHECK("" == s);
 
   C.textb(back_inserter(text));
@@ -938,6 +942,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   BOOST_CHECK(2 == tag02.has_artist());
   BOOST_CHECK(2 == tag02.has_content_type());
   BOOST_CHECK(2 == tag02.has_title());
+
 }
 
 /**
@@ -1057,5 +1062,29 @@ BOOST_AUTO_TEST_CASE( test_rock_the_joint )
   BOOST_CHECK(0x56e == tag.padding());
 
 }
+
+// TODO: Complete this!
+// BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
+// {
+//   using namespace std;
+//   using namespace scribbu;
+
+//   const fs::path TEST_DATA("/vagrant/test/data/cerulean.mp3");
+
+//   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+//   id3v2_3_tag tag(ifs);
+
+//   vector<POPM> popms;
+//   tag.get_play_counts(back_inserter(popms));
+//   BOOST_CHECK(1 == popms.size());
+
+//   const POPM &p = popms.front();
+  
+//   string text = p.email<string>();
+//   BOOST_CHECK("rating@winamp.com" == text);
+//   BOOST_CHECK(255 == p.rating());
+  
+
+// }
 
 // TODO: Unsync: Bill LeFaive - Orlando.mp3

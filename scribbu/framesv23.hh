@@ -707,7 +707,7 @@ namespace scribbu {
          const boost::optional<unsigned char> &encmth,
          const boost::optional<unsigned char> &group_id,
          const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame("PCNT", p1 - p0, tap, fap, read_only,
+      id3v2_3_frame("POPM", p1 - p0, tap, fap, read_only,
                     encmth, group_id, decsz),
       popularimeter(p0, p1)
     { }

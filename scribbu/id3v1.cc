@@ -545,8 +545,16 @@ scribbu::id3v1_info scribbu::ends_in_id3v1(std::istream &is)
         I.type_ = id3_v1_tag_type::v_1_extended;
       }
     }
+  }
+  catch (const std::ios_base::failure &ex) {
+    is.exceptions(std::ios_base::goodbit);
+    is.clear();
+    is.exceptions(EXC_MASK);
+  }
 
-    if (id3_v1_tag_type::none == I.type_) {
+  if (id3_v1_tag_type::none == I.type_) {
+
+    try {
       is.seekg(-128, std::ios_base::end);
       is.read(buf, 3);
       if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2]) {
@@ -554,11 +562,11 @@ scribbu::id3v1_info scribbu::ends_in_id3v1(std::istream &is)
         I.type_ = id3_v1_tag_type::v_1;
       }
     }
+    catch (const std::ios_base::failure &ex) {
+      is.exceptions(std::ios_base::goodbit);
+      is.clear();
+    }
 
-  }
-  catch (const std::ios_base::failure &ex) {
-    is.exceptions(exc_mask);
-    is.clear();
   }
 
   // Restore the stream's state

@@ -77,11 +77,14 @@ scribbu::openssl_error::what() const noexcept
 
 scribbu::track_data::track_data(std::istream &is)
 {
+  const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
+    std::ios_base::failbit|std::ios_base::badbit;
+
   // Copy off the stream's exception mask, in case the caller is
   // counting on it...
   std::ios_base::iostate exc_mask = is.exceptions();
   // and set it to a value convenient for our use.
-  is.exceptions(std::ios_base::eofbit|std::ios_base::failbit|std::ios_base::badbit);
+  is.exceptions(EXC_MASK);
 
   const std::size_t BUFSIZE = 4 * 1024 * 1024; // Four megabytes
 
@@ -96,31 +99,53 @@ scribbu::track_data::track_data(std::istream &is)
   scribbu::id3_v1_tag_type tag_type = id3_v1_tag_type::none;
 
   std::streampos here = is.tellg(), tag;
+
   try {
     is.seekg(-355, std::ios_base::end);
     is.read(buf, 4);
     if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2] && '+' == buf[3]) {
+      // ID3v1 extended tag at `tag'; stream ptr at `tag' + 4.
       tag = is.tellg() - (std::streampos) 4;
       tag_type = id3_v1_tag_type::v_1_extended;
-    } else {
+    }
+  }
+  catch (const std::ios_base::failure &ex) {
+    // OK-- something went wrong. Clear the flag, set `tag' to EoS. 
+    // stream ptr at the same place.
+    is.exceptions(std::ios_base::goodbit);
+    is.clear();
+    is.seekg(0, std::ios_base::end);
+    tag = is.tellg();
+    is.exceptions(EXC_MASK);
+  }
+
+  if (id3_v1_tag_type::none == tag_type) {
+
+    try {
       is.seekg(-128, std::ios_base::end);
       is.read(buf, 3);
       if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2]) {
+        // ID3v1 tag at `tag'; stream ptr at `tag' + 3
         tag = is.tellg() - (std::streampos) 3;
         tag_type = id3_v1_tag_type::v_1;
       } else {
+        // No ID3v1 tag-- set `tag' to the EoS; stream ptr at same place.
         is.seekg(std::ios_base::end);
         tag = is.tellg();
       }
     }
+    catch (const std::ios_base::failure &ex) {
+      // OK-- something went wrong. Clear the flag, set `tag' to EoS. 
+      // stream ptr at the same place.
+      is.exceptions(std::ios_base::goodbit);
+      is.clear();
+      is.seekg(0, std::ios_base::end);
+      tag = is.tellg();
+    }
+
   }
-  catch (const std::ios_base::failure &ex) {
-    is.exceptions(exc_mask);
-    is.clear();
-    is.seekg(0, std::ios_base::end);
-    tag = is.tellg();
-    is.seekg(here, std::ios_base::beg);
-  }
+
+  is.exceptions(exc_mask);
 
   // Compute an MD5 checksum of the file contents from 'here' to 'tag'
   size_ = tag - here;

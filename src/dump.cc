@@ -142,7 +142,9 @@ namespace {
     }
 
     fs::ifstream ifs(pth, ios_base::binary);
-        
+    std::ios_base::iostate exc_mask = ifs.exceptions();
+    exc_mask;
+
     vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
     scribbu::read_all_id3v2(ifs, back_inserter(id3v2));
     scribbu::track_data td((istream&)ifs);

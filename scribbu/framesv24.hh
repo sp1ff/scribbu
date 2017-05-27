@@ -626,7 +626,7 @@ namespace scribbu {
              bool compressed,
              bool unsynchronised,
              const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("PCNT", p1 - p0, tap, fap, read_only, enc, gid,
+      id3v2_4_frame("POPM", p1 - p0, tap, fap, read_only, enc, gid,
                     compressed, unsynchronised, dli),
       popularimeter(p0, p1)
     { }

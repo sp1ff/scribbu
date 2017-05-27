@@ -300,7 +300,23 @@ void scribbu::id3v2_2_tag::parse(std::istream &is)
 
       // OK-- unpack the frame size...
       cb_frame = unsigned_from_non_sync_safe(p0[3], p0[4], p0[5]);
-      // & parse the frame (parse_frame will update all our internal
+
+      // `cb_tag' is the size of the tag on disk (i.e. after encryption,
+      // compression & unsynchronisation), exclusive of header & footer (if
+      // any). `cb_frame' is the size of the frame on disk (i.e. after...)
+      // exclusive of the frame header. IOW, a minimal tag, one with only the
+      // standard ID3v2 header, no padding, and this frame, would satisfy:
+
+      //     cb_tag = cb_frame + 6
+
+      // Therefore, we have cb_frame < cb_tag. If this relationship isn't
+      // satisfied, it's a good bet that this tag is either corrupt or
+      // was written incorrectly.
+      if (cb_frame >= cb_tag) {
+        throw invalid_tag();
+      }
+
+      // Finally, parse the frame (parse_frame will update all our internal
       // datastructures).
       parse_frame(id, p0 + 6, p0 + 6 + cb_frame);
 
@@ -311,6 +327,8 @@ void scribbu::id3v2_2_tag::parse(std::istream &is)
     is.exceptions(exc_mask);
     throw ex;
   }
+
+  is.exceptions(exc_mask);
 
 } // End method id3v2_2_tag::parse.
 

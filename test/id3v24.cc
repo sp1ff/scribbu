@@ -74,9 +74,9 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA_V2_4("/vagrant/test/data/id3v2.4.tag");
+  const fs::path DATA1("/vagrant/test/data/id3v2.4.tag");
 
-  fs::ifstream ifsv2_4(TEST_DATA_V2_4, fs::ifstream::binary);
+  fs::ifstream ifsv2_4(DATA1, fs::ifstream::binary);
 
   id3v2_4_tag tag(ifsv2_4);
   BOOST_CHECK(4 == tag.version());
@@ -106,3 +106,4 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
   BOOST_CHECK("Acapulco" == tag.title());
 
 } // End test_id3v2_4_tag.
+

@@ -24,7 +24,6 @@ BOOST_AUTO_TEST_CASE( test_unknown_id3v2_2_frame )
 
 } // End test_id3v2_2_frame.
 
-// TODO: test class UFI, once I get some test data
 // TODO: test class id3v2_2_text_frame, once I get some test data
 // TODO: test class TXX, once I get some test data
 
@@ -59,5 +58,4 @@ BOOST_AUTO_TEST_CASE( test_com )
 
 } // End test_com.
 
-// TODO: Unit test class CNT, once I get some data...
 // TODO: Unit test class POP, once I get some data...

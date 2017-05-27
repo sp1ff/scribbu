@@ -37,7 +37,7 @@ flags: 0x00
 The Ocean Blue - Questions Of Travel (LP Version)
 Cerulean (US Release) (track 6/12), 2005
 Content-type Alternative Rock
-PCNT: rating@winamp.com
+POPM: rating@winamp.com
 rating: 255
 counter: 00000000
 frame PRIV (8207 bytes)
@@ -88,7 +88,9 @@ BOOST_AUTO_TEST_CASE( test_track_data2 )
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
   ios_base::iostate state = ifs.rdstate();
   unique_ptr<scribbu::id3v2_tag> pid3v2 = maybe_read_id3v2(ifs); // ID3v2 tags...
+  state = ifs.rdstate();
   track_data td(ifs);                                            // the track itself...
+  state = ifs.rdstate();
   unique_ptr<id3v1_tag> pid3v1 = process_id3v1(ifs);             // & the ID3v1 tag.
 
   stringstream stm1;
