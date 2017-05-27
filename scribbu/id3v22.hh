@@ -187,6 +187,15 @@ namespace scribbu {
                        });
     }
 
+    template <typename forward_output_iterator>
+    forward_output_iterator get_popularimeters(forward_output_iterator p) const {
+      using namespace std;
+      return transform(pops_.begin(), pops_.end(), p,
+                       [](const pair<const POP*, size_t> &x) {
+                         return *(x.first);
+                       });
+    }
+
     class frame_iterator:
       public boost::iterator_facade<
         frame_iterator,
@@ -389,6 +398,10 @@ namespace scribbu {
     cnt_frame_lookup_type;
 
     typedef
+    std::vector<std::pair<const POP*, std::size_t>>
+    pop_frame_lookup_type;
+
+    typedef
     std::vector<std::unique_ptr<id3v2_2_frame>>
     frames_type;
 
@@ -406,6 +419,9 @@ namespace scribbu {
     /// vector of addresses of CNT frames together with their index
     /// in frames_
     cnt_frame_lookup_type cnts_;
+    /// vector of addresses of POP frames together with their index
+    /// in frames_
+    pop_frame_lookup_type pops_;
     /// polymorphic vector of frames
     frames_type frames_;
     /// index: frame id to location in frames_

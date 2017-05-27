@@ -339,7 +339,7 @@ scribbu::id3v2_2_tag::parse_frame(const frame_id3     &id,
 {
   using namespace std;
 
-  static const frame_id3 COMID("COM"), CNTID("CNT");
+  static const frame_id3 COMID("COM"), CNTID("CNT"), POPID("POP");
 
   // COM is handled specially-- the frame parser for "COM" may not
   // be replaced
@@ -352,6 +352,11 @@ scribbu::id3v2_2_tag::parse_frame(const frame_id3     &id,
     CNT *pcnt = new CNT(p0, p1);
     cnts_.push_back(make_pair(pcnt, frames_.size()));
     frames_.push_back(unique_ptr<id3v2_2_frame>(pcnt));
+  }
+  else if (POPID == id) {
+    POP *ppop = new POP(p0, p1);
+    pops_.push_back(make_pair(ppop, frames_.size()));
+    frames_.push_back(unique_ptr<id3v2_2_frame>(ppop));
   }
   else {
     // check to see if we have a text frame parser registered for `id'...

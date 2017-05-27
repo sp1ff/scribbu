@@ -252,6 +252,15 @@ namespace scribbu {
                        });
     }
 
+    template <typename forward_output_iterator>
+    forward_output_iterator get_popularimeters(forward_output_iterator p) const {
+      using namespace std;
+      return transform(popms_.begin(), popms_.end(), p,
+                       [](const pair<const POPM*, size_t> &x) {
+                         return *(x.first);
+                       });
+    }
+
     class frame_iterator:
       public boost::iterator_facade<
         frame_iterator,
@@ -473,6 +482,10 @@ namespace scribbu {
     pcnt_frame_lookup_type;
 
     typedef
+    std::vector<std::pair<const POPM*, std::size_t>>
+    popm_frame_lookup_type;
+
+    typedef
     std::vector<std::unique_ptr<id3v2_3_frame>> frames_type;
 
     bool experimental_;
@@ -482,6 +495,7 @@ namespace scribbu {
     std::size_t padding_;
     comm_frame_lookup_type comms_;
     pcnt_frame_lookup_type pcnts_;
+    popm_frame_lookup_type popms_;
     std::unordered_map<unsigned char, ENCR> encryption_methods_;
     frames_type frames_;
     frame_lookup_type frame_map_;

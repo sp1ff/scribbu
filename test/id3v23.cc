@@ -703,6 +703,17 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   BOOST_CHECK("Winamp 5.5" == tag02.encoded_by());
   BOOST_CHECK("Promenade" == tag02.title());
 
+  BOOST_CHECK(1 == tag02.has_frame("TXXX"));
+  const id3v2_3_frame &f = tag02.get_frame("TXXX");
+  const TXXX *p = dynamic_cast<const TXXX*>(&f);
+  BOOST_CHECK(nullptr != p);
+
+  s = p->description<string>();
+  BOOST_CHECK("GN/ExtData" == s);
+
+  s = p->text<string>();
+  BOOST_CHECK("GN/ExtData" == s);
+
   fs::ifstream ifs03(TEST_FILE_03, fs::ifstream::binary);
   id3v2_3_tag tag03(ifs03);
 
@@ -1063,28 +1074,27 @@ BOOST_AUTO_TEST_CASE( test_rock_the_joint )
 
 }
 
-// TODO: Complete this!
-// BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
-// {
-//   using namespace std;
-//   using namespace scribbu;
+BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
+{
+  using namespace std;
+  using namespace scribbu;
 
-//   const fs::path TEST_DATA("/vagrant/test/data/cerulean.mp3");
+  const fs::path TEST_DATA("/vagrant/test/data/cerulean.mp3");
 
-//   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
-//   id3v2_3_tag tag(ifs);
+  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  id3v2_3_tag tag(ifs);
 
-//   vector<POPM> popms;
-//   tag.get_play_counts(back_inserter(popms));
-//   BOOST_CHECK(1 == popms.size());
+  vector<POPM> popms;
+  tag.get_popularimeters(back_inserter(popms));
+  BOOST_CHECK(1 == popms.size());
 
-//   const POPM &p = popms.front();
+  const POPM &p = popms.front();
   
-//   string text = p.email<string>();
-//   BOOST_CHECK("rating@winamp.com" == text);
-//   BOOST_CHECK(255 == p.rating());
+  string text = p.email<string>();
+  BOOST_CHECK("rating@winamp.com" == text);
+  BOOST_CHECK(255 == p.rating());
   
 
-// }
+}
 
 // TODO: Unsync: Bill LeFaive - Orlando.mp3

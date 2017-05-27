@@ -536,7 +536,7 @@ scribbu::id3v2_3_tag::parse_frame(
 {
   using namespace std;
 
-  static const frame_id4 COMMID("COMM"), PCNTID("PCNT");
+  static const frame_id4 COMMID("COMM"), PCNTID("PCNT"), POPMID("POPM");
 
   // COMM is handled specially-- the frame parser for "COMM" may not
   // be replaced
@@ -551,6 +551,12 @@ scribbu::id3v2_3_tag::parse_frame(
                           group_id, dcsz);
     pcnts_.push_back(make_pair(pcnt, frames_.size()));
     frames_.push_back(unique_ptr<id3v2_3_frame>(pcnt));
+  }
+  else if (POPMID == id) {
+    POPM *popm = new POPM(p0, p1, tap, fap, read_only, encmth,
+                          group_id, dcsz);
+    popms_.push_back(make_pair(popm, frames_.size()));
+    frames_.push_back(unique_ptr<id3v2_3_frame>(popm));
   }
   else {
 

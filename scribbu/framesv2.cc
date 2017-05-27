@@ -97,9 +97,6 @@ std::size_t std::hash<scribbu::frame_id4>::operator()(const scribbu::frame_id4 &
   return seed;
 }
 
-// TODO: Unit-test unique_file_id, once I find a test case.
-// TODO: Unit test encryption_method, once I find a test case.
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             class play_count                              //

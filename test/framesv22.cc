@@ -24,9 +24,6 @@ BOOST_AUTO_TEST_CASE( test_unknown_id3v2_2_frame )
 
 } // End test_id3v2_2_frame.
 
-// TODO: test class id3v2_2_text_frame, once I get some test data
-// TODO: test class TXX, once I get some test data
-
 BOOST_AUTO_TEST_CASE( test_com )
 {
   using scribbu::comments;
@@ -57,5 +54,3 @@ BOOST_AUTO_TEST_CASE( test_com )
   BOOST_CHECK( 'b' == buf[0] && 'a' == buf[1] && 'r' == buf[2] );
 
 } // End test_com.
-
-// TODO: Unit test class POP, once I get some data...
