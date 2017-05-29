@@ -366,7 +366,7 @@ namespace scribbu {
     TXX(forward_input_iterator p0,
         forward_input_iterator p1):
       id3v2_2_frame("TXX", p1 - p0),
-      user_defined_text(p0, p1)
+      user_defined_text(2, p0, p1)
     { }
 
     static std::unique_ptr<id3v2_2_frame>
@@ -408,7 +408,7 @@ namespace scribbu {
     COM(forward_input_iterator p0,
         forward_input_iterator p1):
       id3v2_2_frame("COM", p1 - p0),
-      comments(p0, p1)
+      comments(2, p0, p1)
     { }
 
     static std::unique_ptr<id3v2_2_frame>

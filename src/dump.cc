@@ -1,10 +1,12 @@
 #include "config.h"
 
+#include <exception>
+
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/regex.hpp>
 
 #include "command-utilities.hh"
-#include <boost/regex.hpp>
 
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2-utils.hh>
@@ -18,11 +20,16 @@ namespace po = boost::program_options;
 namespace {
 
   const std::string USAGE(R"(scribbu dump -- dump ID3 tags from one or more files
+to stdout
 
 USAGE:
 
     scribbu dump [OPTION] FILE-OR-DIRECTORY...
 
+scribbu dump will walk each file and/or directory specified, reading each file
+found, looking for ID3 tags therein, and printing the results. The format is
+controlled by the --format flag, which may be either "standard" (the default),
+or "csv".
 )");
 
 }
@@ -141,32 +148,37 @@ namespace {
       return;
     }
 
-    fs::ifstream ifs(pth, ios_base::binary);
-    std::ios_base::iostate exc_mask = ifs.exceptions();
-    exc_mask;
+    try {
 
-    vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
-    scribbu::read_all_id3v2(ifs, back_inserter(id3v2));
-    scribbu::track_data td((istream&)ifs);
-    unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(ifs);
+      fs::ifstream ifs(pth, ios_base::binary);
 
-	cout << pth << ":" << endl;
+      vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
+      scribbu::read_all_id3v2(ifs, back_inserter(id3v2));
+      scribbu::track_data td((istream&)ifs);
+      unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(ifs);
 
-    if (dump_id3v2_) {
-	  for (ptrdiff_t i = 0, n = id3v2.size(); i < n; ++i) {
-		cout << *(id3v2[i]);
-	  }
+      cout << pth << ":" << endl;
+
+      if (dump_id3v2_) {
+        for (ptrdiff_t i = 0, n = id3v2.size(); i < n; ++i) {
+          cout << *(id3v2[i]);
+        }
+      }
+
+      if (dump_track_) {
+        cout << td;
+      }
+
+      if (dump_id3v1_ && pid3v1) {
+        cout << *pid3v1;
+      }
+
+      cout << endl;
+
     }
-
-    if (dump_track_) {
-      cout << td;
+    catch (const std::exception &ex) {
+      cerr << "Failed to read " << pth << ": " << ex.what() << endl;
     }
-
-    if (dump_id3v1_ && pid3v1) {
-      cout << *pid3v1;
-    }
-
-    cout << endl;
 
   }
 
@@ -186,8 +198,7 @@ namespace {
       fmt = dumper::format::standard;
     }
     else {
-      // TODO: What exception to throw?
-      throw std::runtime_error("Unknown format");
+      throw std::invalid_argument("Unknown format");
     }
 
     return is;
@@ -205,8 +216,7 @@ namespace {
       os << "standard";
       break;
     default:
-      // TODO: What exception to throw?
-      throw std::runtime_error("Unknown format");
+      throw std::logic_error("Unknown format");
     }
     return os;
   }

@@ -56,40 +56,44 @@ namespace scribbu {
 
     template <typename forward_input_iterator>
     forward_input_iterator find_trailing_null(bool                   unicode,
+                                              unsigned char          version,
                                               forward_input_iterator p0,
                                               forward_input_iterator p1) {
 
-      // Find the first $00 or $00 00, depending on the encoding.
-      forward_input_iterator p;
-      if (unicode) {
+      std::size_t code_unit;
 
-        bool saw_null = false;
-        forward_input_iterator p2 = p0;
-        for ( ; p0 < p1; ++p0) {
-          if (saw_null && !*p0) {
-            break;
-          }
-          else if (saw_null) {
-            saw_null = false;
-          }
-          else if (!*p0) {
-            saw_null = true;
-          }
-          p2 = p0;
-        }
-
-        if (p0 == p1) {
-          p = p1;
+      if (2 == version || 3 == version) {
+        if (0 == unicode) {
+          code_unit = 1;
         }
         else {
-          p = p2;
+          code_unit = 2;
         }
-
-      } else {
-        p = std::find(p0, p1, 0);
+      }
+      else {
+        if (0 == unicode || 3 == unicode) {
+          code_unit = 1;
+        }
+        else {
+          code_unit = 2;
+        }
       }
 
-      return p;
+      // Walk [p0, p1) seeking the first sequence of `code_unit' zero bytes.
+      std::size_t saw_nil = 0;
+      for ( ; p0 < p1; p0 += code_unit) {
+        if (1 == code_unit && 0 == *p0) {
+          break;
+        }
+        else {
+          unsigned char b0 = *p0, b1 = *(p0 + 1);
+          if (0 == b0 && 0 == b1) {
+            break;
+          }
+        }          
+      }
+
+      return p0;
     }
 
   } // End namespace detail.
@@ -365,16 +369,26 @@ namespace scribbu {
   public:
 
     template <typename forward_input_iterator>
-    user_defined_text(forward_input_iterator p0,
+    user_defined_text(unsigned char version,
+                      forward_input_iterator p0,
                       forward_input_iterator p1)
     {
       unicode_ = *p0++;
 
       // Find the first $00 or $00 00, depending on the encoding.
-      forward_input_iterator p = detail::find_trailing_null(unicode_, p0, p1);
+      forward_input_iterator p = detail::find_trailing_null(unicode_, version,
+                                                            p0, p1);
       // [p0, p) has description (including the terminating null), [p, p1)
       // contains the string.
       std::copy(p0, p, std::back_inserter(description_));
+      std::size_t off = 1;
+      if ((2 == version || 3 == version) && unicode_) {
+        off = 2;
+      }
+      else if ((4 == version || (1 == unicode_ || 2 == unicode_))) {
+        off = 2;
+      }
+      p += off;
       std::copy(p, p1, std::back_inserter(text_));
     }
 
@@ -428,15 +442,24 @@ namespace scribbu {
   public:
 
     template <typename forward_input_iterator>
-    comments(forward_input_iterator p0,
+    comments(unsigned char version,
+             forward_input_iterator p0,
              forward_input_iterator p1)
     {
       unicode_ = *p0++;
       std::copy(p0, p0 + 3, lang_);
       p0 += 3;
-      forward_input_iterator p = detail::find_trailing_null(unicode_, p0, p1);
+      forward_input_iterator p = detail::find_trailing_null(unicode_, version,
+                                                            p0, p1);
       std::copy(p0, p, std::back_inserter(description_));
-      p += unicode_ ? 2 : 1;
+      std::size_t off = 1;
+      if ((2 == version || 3 == version) && unicode_) {
+        off = 2;
+      }
+      else if ((4 == version || (1 == unicode_ || 2 == unicode_))) {
+        off = 2;
+      }
+      p += off;
       std::copy(p, p1, std::back_inserter(text_));
     }
 

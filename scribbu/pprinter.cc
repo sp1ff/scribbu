@@ -71,7 +71,6 @@ public:
   pprint_dispatcher();
 
   // Register tag pointers-to-virtual
-  // TODO: Use boost concept to ensure that `parameter' is an id3v2_tag subtype
   template <typename parameter,
             std::ostream& (pprinter::*pfn)(const parameter &,
                                                     std::ostream&)>
@@ -86,8 +85,7 @@ public:
     };
     tags_[std::type_index(typeid(parameter))] = &local::trampoline;
   }
-  // Register v2.2 frame pointers-to-virtual TODO: Use boost concept to ensure
-  // that `parameter' is an id3v2_2_frame subtype
+  // Register v2.2 frame pointers-to-virtual
   template <typename parameter,
             std::ostream& (pprinter::*pfn)(const parameter &,
                                            std::ostream&)>
@@ -103,8 +101,7 @@ public:
     v22_frames_[std::type_index(typeid(parameter))] = &local::trampoline;
   }
 
-  // Register v2.3 frame pointers-to-virtual TODO: Use boost concept to ensure
-  // that `parameter' is an id3v2_3_frame subtype
+  // Register v2.3 frame pointers-to-virtual
   template <typename parameter,
             std::ostream& (pprinter::*pfn)(const parameter &,
                                            std::ostream&)>
@@ -120,8 +117,7 @@ public:
     v23_frames_[std::type_index(typeid(parameter))] = &local::trampoline;
   }
 
-  // Register v2.4 frame pointers-to-virtual TODO: Use boost concept to ensure
-  // that `parameter' is an id3v2_4_frame subtype
+  // Register v2.4 frame pointers-to-virtual
   template <typename parameter,
             std::ostream& (pprinter::*pfn)(const parameter &,
                                            std::ostream&)>

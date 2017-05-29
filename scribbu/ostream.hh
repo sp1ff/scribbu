@@ -20,8 +20,6 @@ namespace scribbu {
    *
    * \return \a os after \a x has been inserted into it
    *
-   * TODO: Add a \throw specification here
-   *
    *
    * Correctly implementing operator<< can be complex enough that I've emulated
    * \ref ref_02 "Langer & Kreft" and wrapped it up in an operator template.

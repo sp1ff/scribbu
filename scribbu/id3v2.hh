@@ -366,6 +366,24 @@ namespace scribbu {
 
     };
 
+    class reserved_frame_error: public error
+    {
+    public:
+      reserved_frame_error(const frame_id3 &id): id3_(id)
+      { }
+      reserved_frame_error(const frame_id4 &id): id4_(id)
+      { }
+
+    public:
+      virtual const char * what() const noexcept(true);
+
+    private:
+      frame_id3 id3_;
+      frame_id4 id4_;
+      mutable std::shared_ptr<std::string> pwhat_;
+
+    };
+
     class invalid_tag: public error
     {
     public:

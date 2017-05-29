@@ -162,5 +162,3 @@ TALB: Ela E Carioca
 
   BOOST_CHECK(GOLDEN == text);
 }
-
-// TODO: Test track_data

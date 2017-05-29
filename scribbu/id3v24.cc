@@ -287,11 +287,9 @@ scribbu::id3v2_4_tag::play_count() const {
   case 1:
     return pcnts_.front().first->count();
   case 0:
-    // TODO: Throw custom exception?
-    throw std::runtime_error("no play counts");
+    throw std::logic_error("no play counts");
   default:
-    // TODO: Throw custom exception?
-    throw std::runtime_error("multiple play counts");
+    throw std::logic_error("multiple play counts");
   }
 }
 
@@ -549,7 +547,7 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, bool extended)
 
       if (boost::none != encryption_method) {
         if (! encryption_method_regd(encryption_method.get())) {
-          // TODO: Throw custom exception
+          throw std::invalid_argument("unregistered encryption method");
         }
         std::tie(pf, cb_read) = decrypt(pread, cb_read, encryption_method.get());
         pread = pf.get();
@@ -683,7 +681,6 @@ scribbu::id3v2_4_tag::parsing_is_reserved(const frame_id4 &id)
 void scribbu::id3v2_4_tag::register_encryption_method(const ENCR_2_4 &encr)
 {
   if (0 != encryption_methods_.count(encr.method_symbol())) {
-    // TODO: Throw a custom exception, here
     throw std::runtime_error("duplicate encryption method");
   }
 

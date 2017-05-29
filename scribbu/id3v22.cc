@@ -148,11 +148,9 @@ scribbu::id3v2_2_tag::play_count() const {
   case 1:
     return cnts_.front().first->count();
   case 0:
-    // TODO: Throw custom exception?
-    throw std::runtime_error("no play counts");
+    throw std::logic_error("no play counts");
   default:
-    // TODO: Throw custom exception?
-    throw std::runtime_error("multiple play counts");
+    throw std::logic_error("multiple play counts");
   }
 }
 
@@ -162,9 +160,7 @@ scribbu::id3v2_2_tag::register_default_generic_frame_parser(
   const generic_frame_parser &F)
 {
   if (parsing_is_reserved(id)) {
-    // TODO: Throw a custom exception in this case
-    throw std::invalid_argument("frame " + id.as_string() +
-                                " is reserved for parsing");
+    throw reserved_frame_error(id);
   }
   std::lock_guard<std::mutex> guard(mutex_);
   return default_generic_parsers_.insert(std::make_pair(id, F)).second;

@@ -473,7 +473,7 @@ namespace scribbu {
              const boost::optional<std::size_t> &dli):
       id3v2_4_frame("TXXX", p1 - p0, tap, fap, read_only, enc, gid,
                     compressed, unsynchronised, dli),
-      user_defined_text(p0, p1)
+      user_defined_text(4, p0, p1)
     { }
 
     static
@@ -534,7 +534,7 @@ namespace scribbu {
              const boost::optional<std::size_t> &dli):
       id3v2_4_frame("COMM", p1 - p0, tap, fap, read_only, enc, gid,
                     compressed, unsynchronised, dli),
-      comments(p0, p1)
+      comments(4, p0, p1)
     { }
 
     static std::unique_ptr<id3v2_4_frame>

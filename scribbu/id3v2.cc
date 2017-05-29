@@ -196,6 +196,10 @@ std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
   // move every element in [i0+1,i1) back by three elemnts.
   ///////////////////////////////////////////////////////////////////////////
 
+  if (0 == cb) {
+    return 0;
+  }
+
   // Find the first false sync; let i0 be the index of the second byte therein.
   std::ptrdiff_t i0;
   for (i0 = 0; i0 < cb - 1; ++i0) {
@@ -211,8 +215,8 @@ std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
     return cb;
   }
 
-  std::ptrdiff_t num_syncs;
-  for (num_syncs = 1; ; ++num_syncs) {
+  std::ptrdiff_t sync_no;
+  for (sync_no = 1; i0 < cb; ++sync_no) {
 
     // Let the second byte in the next false sync after i0 be i1.
     std::ptrdiff_t i1;
@@ -222,22 +226,25 @@ std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
       }
     }
 
-    if (i1 == cb) {
-      return cb - num_syncs;
+    if (i1 < cb) {
+      ++i1;
     }
-
-    ++i1;
 
     // Move every element in [i0+1,i1) back by num_sync elements.
     for (std::ptrdiff_t i = i0 + 1; i < i1; ++i) {
-      p[i - num_syncs] = p[i];
+      p[i - sync_no] = p[i];
+    }
+
+    if (i1 == cb) {
+      // That was the last one
+      break;
     }
 
     i0 = i1;
 
   }
 
-  return cb - num_syncs;
+  return cb - sync_no;
 
 } // End free function resynchronise.
 
@@ -291,6 +298,31 @@ scribbu::id3v2_tag::unknown_frame_error::what() const noexcept(true)
   }
   return pwhat_->c_str();
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                        class reserved_frame_error                         //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/ 
+const char * 
+scribbu::id3v2_tag::reserved_frame_error::what() const noexcept(true)
+{
+  if (!pwhat_) {
+    std::stringstream stm;
+    stm << "frame ";
+    if (id3_.null()) {
+      stm << id4_;
+    }
+    else {
+      stm << id3_;
+    }
+    stm << " is reserved; it's parser may not be replaced";
+    pwhat_.reset( new std::string(stm.str()) );
+  }
+  return pwhat_->c_str();
+}
+
 
 /*virtual*/
 const char *

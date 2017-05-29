@@ -46,8 +46,8 @@
  *
  * \subsection scribbu_pprinter_discuss_visitor Visitor
  *
- * My next attempt was to implement Visitor (TODO: needs reference), which is
- * of course tailor-made for this: I had a set of types which was unlikely to
+ * My next attempt was to implement Visitor (needs reference), which is of
+ * course tailor-made for this: I had a set of types which was unlikely to
  * change, and a set of operations that was much more fluid. Each style of
  * pretty-printing would be implemented as a distinct class, eliminating the
  * problem described above. The cost would be adding an "accept" virtual to
@@ -106,8 +106,6 @@
  *     implementation will have to satisfy (rather than simply writing them
  *     down in documentation & finding out at runtime that the author forgot
  *     one
- *
- * TODO: Dig into Alexandrescu's "trampoline" idiom, here.
  *
  * This preservese the attribute of satisfying the open/closed principal that
  * Visitor offered, while cutting in half the number of virtual function

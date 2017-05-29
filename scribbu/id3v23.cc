@@ -181,11 +181,9 @@ scribbu::id3v2_3_tag::play_count() const {
   case 1:
     return pcnts_.front().first->count();
   case 0:
-    // TODO: Throw custom exception?
-    throw std::runtime_error("no play counts");
+    throw std::logic_error("no play counts");
   default:
-    // TODO: Throw custom exception?
-    throw std::runtime_error("multiple play counts");
+    throw std::logic_error("multiple play counts");
   }
 }
 
@@ -196,9 +194,7 @@ scribbu::id3v2_3_tag::register_generic_frame_parser(
   const frame_id4 &id,
   const generic_frame_parser &F) {
   if (parsing_is_reserved(id)) {
-    // TODO: Throw a custom exception in this case
-    throw std::invalid_argument("frame " + id.as_string() +
-                                " is reserved for parsing");
+    throw reserved_frame_error(id);
   }
   generic_parsers_.insert(std::make_pair(id, F)).first;
 }
@@ -207,9 +203,7 @@ bool
 scribbu::id3v2_3_tag::register_text_frame_parser(const frame_id4 &id,
                                                  const text_frame_parser &F) {
   if (parsing_is_reserved(id)) {
-    // TODO: Throw a custom exception in this case
-    throw std::invalid_argument("frame " + id.as_string() +
-                                " is reserved for parsing");
+    throw reserved_frame_error(id);
   }
   text_parsers_.insert(std::make_pair(id, F)).first;
 }
@@ -619,8 +613,7 @@ scribbu::id3v2_3_tag::parsing_is_reserved(const frame_id4 &id)
 void scribbu::id3v2_3_tag::register_encryption_method(const ENCR &encr) {
 
   if (0 != encryption_methods_.count(encr.method_symbol())) {
-    // TODO: Throw a custom exception, here
-    throw std::runtime_error("duplicate encryption method");
+    throw std::invalid_argument("duplicate encryption method");
   }
 
   encryption_methods_.insert(std::make_pair(encr.method_symbol(), encr));

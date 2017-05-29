@@ -31,7 +31,24 @@ namespace scribbu {
 
   std::unique_ptr<id3v2_tag> maybe_read_id3v2(std::istream &is);
 
-  // TODO: Document read_all_id3v2
+  /**
+   * \brief Read all ID3v2 tags from an input stream
+   *
+   *
+   * \param is [in] An input stream from which ID3v2 tags shall be read
+   *
+   * \param p [in,out] A forward output iterator to which unique_ptr-s to
+   * id3v2_tag-s shall be copied
+   *
+   * \return p, after copy
+   *
+   *
+   * There may be multiple ID3v2 tags at the start of a file; use this
+   * method to read all possible & copy pointers to the resulting tags.
+   *
+   *
+   */
+
   template <typename forward_output_iterator>
   forward_output_iterator read_all_id3v2(std::istream           &is,
                                          forward_output_iterator p) {

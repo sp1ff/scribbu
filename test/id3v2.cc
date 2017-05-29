@@ -54,18 +54,63 @@ BOOST_AUTO_TEST_CASE( test_resync )
 {
   using scribbu::resynchronise;
 
-  unsigned char buf[] = {
-    0x01, 0xff, 0x00, 0x02, 0x03, 0x04, 0xff, 0x00, 0x05, 0x06, 0xff, 0x00,
-    0x07, 0xff, 0x00
-  };
+  // This is mostly testing corner cases; cf. test_unsync.
+  unsigned char BUF0[] = { };
+  BOOST_CHECK(0 == resynchronise(BUF0, sizeof(BUF0)));
+  
+  unsigned char BUF1[] = { 0x01 };
+  static const unsigned char GOLD1[] = { 0x01 };
+  BOOST_CHECK(1 == resynchronise(BUF1, sizeof(BUF1)));
+  BOOST_CHECK(0 == memcmp(GOLD1, BUF1, sizeof(GOLD1)));
 
-  BOOST_CHECK( 11 == resynchronise(buf, sizeof(buf)) );
+  unsigned char BUF2[] = { 0x01, 0x02 };
+  static const unsigned char GOLD2[] = { 0x01, 0x02 };
+  BOOST_CHECK(2 == resynchronise(BUF2, sizeof(BUF2)));
+  BOOST_CHECK(0 == memcmp(GOLD2, BUF2, sizeof(GOLD2)));
 
-  const unsigned char GOLD[] = {
-    0x01, 0xff, 0x02, 0x03, 0x04, 0xff, 0x05, 0x06, 0xff, 0x07, 0xff
-  };
+  unsigned char BUF3[] = { 0xff, 0x00 };
+  static const unsigned char GOLD3[] = { 0xff };
+  BOOST_CHECK(1 == resynchronise(BUF3, sizeof(BUF3)));
+  BOOST_CHECK(0 == memcmp(GOLD3, BUF3, sizeof(GOLD3)));
 
-  BOOST_CHECK( 0 == memcmp(buf, GOLD, sizeof(GOLD)) );
+  unsigned char BUF4[] = { 0x01, 0xff, 0x00 };
+  static const unsigned char GOLD4[] = { 0x01, 0xff };
+  BOOST_CHECK(2 == resynchronise(BUF4, sizeof(BUF4)));
+  BOOST_CHECK(0 == memcmp(GOLD4, BUF4, sizeof(GOLD4)));
+
+  unsigned char BUF5[] = { 0xff, 0x00, 0x01 };
+  static const unsigned char GOLD5[] = { 0xff, 0x01 };
+  BOOST_CHECK(2 == resynchronise(BUF5, sizeof(BUF5)));
+  BOOST_CHECK(0 == memcmp(GOLD5, BUF5, sizeof(GOLD5)));
+
+  unsigned char BUF6[] = { 0x01, 0xff, 0x00, 0x02 };
+  static const unsigned char GOLD6[] = { 0x01, 0xff, 0x02 };
+  BOOST_CHECK(3 == resynchronise(BUF6, sizeof(BUF6)));
+  BOOST_CHECK(0 == memcmp(GOLD6, BUF6, sizeof(GOLD6)));
+
+  unsigned char BUF7[] = { 0xff, 0x00, 0x01, 0xff, 0x00 };
+  static const unsigned char GOLD7[] = { 0xff, 0x01, 0xff };
+  BOOST_CHECK(3 == resynchronise(BUF7, sizeof(BUF7)));
+  BOOST_CHECK(0 == memcmp(GOLD7, BUF7, sizeof(GOLD7)));
+
+  unsigned char BUF8[] = { 0x01, 0xff, 0x00, 0x02, 0x03, 0xff, 0x00, 0x04 };
+  static const unsigned char GOLD8[] = { 0x01, 0xff, 0x02, 0x03, 0xff, 0x04 };
+  BOOST_CHECK(6 == resynchronise(BUF8, sizeof(BUF8)));
+  BOOST_CHECK(0 == memcmp(GOLD8, BUF8, sizeof(GOLD8)));
+
+  unsigned char BUF9[] = { 0xff, 0x00, 0x01, 0xff, 0x00, 0x02, 0x03, 
+                           0xff, 0x00, 0x04 };
+  static const unsigned char GOLD9[] = { 0xff, 0x01, 0xff, 0x02, 0x03, 
+                                         0xff, 0x04 };
+  BOOST_CHECK(7 == resynchronise(BUF9, sizeof(BUF9)));
+  BOOST_CHECK(0 == memcmp(GOLD9, BUF9, sizeof(GOLD9)));
+
+  unsigned char BUFA[] = { 0x01, 0xff, 0x00, 0x02, 0x03, 0xff, 0x00, 
+                           0x04, 0xff, 0x00 };
+  static const unsigned char GOLDA[] = { 0x01, 0xff, 0x02, 0x03, 0xff, 
+                                         0x04, 0xff };
+  BOOST_CHECK(7 == resynchronise(BUFA, sizeof(BUFA)));
+  BOOST_CHECK(0 == memcmp(GOLDA, BUFA, sizeof(GOLDA)));
 
 }
 

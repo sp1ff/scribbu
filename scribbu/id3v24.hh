@@ -456,9 +456,7 @@ namespace scribbu {
     register_generic_frame_parser(const frame_id4 &id,
                                   const generic_frame_parser &F) {
       if (parsing_is_reserved(id)) {
-        // TODO: Throw a custom exception in this case
-        throw std::invalid_argument("frame " + id.as_string() +
-                                    " is reserved for parsing");
+         throw reserved_frame_error(id);
       }
       generic_parsers_.insert(std::make_pair(id, F));
     }
@@ -475,9 +473,7 @@ namespace scribbu {
     register_text_frame_parser(const frame_id4 &id,
                                   const text_frame_parser &F) {
       if (parsing_is_reserved(id)) {
-        // TODO: Throw a custom exception in this case
-        throw std::invalid_argument("frame " + id.as_string() +
-                                    " is reserved for parsing");
+        throw reserved_frame_error(id);
       }
       text_parsers_.insert(std::make_pair(id, F));
     }

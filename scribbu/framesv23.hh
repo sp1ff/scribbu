@@ -561,7 +561,7 @@ namespace scribbu {
          const boost::optional<std::size_t> &decsz):
       id3v2_3_frame("TXXX", p1 - p0, tap, fap, read_only,
                     encmth, group_id, decsz),
-      user_defined_text(p0, p1)
+      user_defined_text(3, p0, p1)
     { }
 
   public:
@@ -620,7 +620,7 @@ namespace scribbu {
          const boost::optional<std::size_t> &decsz):
       id3v2_3_frame("COMM", p1 - p0, tap, fap, read_only,
                     encmth, group_id, decsz),
-      comments(p0, p1)
+      comments(3, p0, p1)
     { }
 
     static

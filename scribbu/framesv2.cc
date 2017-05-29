@@ -119,7 +119,6 @@ scribbu::play_count::count() const
       ( counter_[2] << 8 )  | counter_[3];
   }
   else if (4 < counter_.size()) {
-    // TODO: Custom error? Re-write to take sizeof(size_t) into account
     throw std::domain_error("CNT overflow");
   }
 }

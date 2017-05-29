@@ -1097,4 +1097,207 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
 
 }
 
-// TODO: Unsync: Bill LeFaive - Orlando.mp3
+/**
+ * \brief Test unsynchronised data
+ *
+ * 
+ \code
+
+ 000000 49 44 33 03 00 80 00 00 01 30 54 49 54 32 00 00  >ID3......0TIT2..<
+ 000010 00 35 00 00 01 fe ff 00 00 4d 00 79 00 20 00 62  >.5.......M.y. .b<
+ 000020 00 61 00 62 00 65 00 20 00 6a 00 75 00 73 00 74  >.a.b.e. .j.u.s.t<
+ 000030 00 20 00 63 00 61 00 72 00 65 00 73 00 20 00 66  >. .c.a.r.e.s. .f<
+ 000040 00 6f 00 72 00 20 00 6d 00 65 54 50 45 31 00 00  >.o.r. .m.eTPE1..<
+ 000050 00 19 00 00 01 fe ff 00 00 4e 00 69 00 6e 00 61  >.........N.i.n.a<
+ 000060 00 20 00 53 00 69 00 6d 00 6f 00 6e 00 65 54 41  >. .S.i.m.o.n.eTA<
+ 000070 4c 42 00 00 00 15 00 00 01 fe ff 00 00 31 00 30  >LB...........1.0<
+ 000080 00 30 00 25 00 20 00 4a 00 61 00 7a 00 7a 54 52  >.0.%. .J.a.z.zTR<
+ 000090 43 4b 00 00 00 07 00 00 01 fe ff 00 00 30 00 33  >CK...........0.3<
+ 0000a0 54 4c 45 4e 00 00 00 0f 40 00 01 fe ff 00 00 32  >TLEN....@......2<
+ 0000b0 00 31 00 36 00 30 00 30 00 30 ff fb 90 0c 00 0f  >.1.6.0.0.0......<
+ 0000c0 f0 c6 02 48 00 00 00 00 1c 00 49 10 00 00 00 03  >...H......I.....<
+ 0000d0 00 09 2c 00 00 00 00 5e 01 25 c0 00 00 00 ff ff  >..,....^.%......<
+ 0000e0 ff ff ff ff ff ff ff ff ff ff ff e5 ff ac fc a0  >................<
+ 0000f0 0c 1f 3e 7d 47 cb bf ff ff ff ff ff ff ff ff ff  >..>}G...........<
+ 000100 ff ff ff ff f2 e3 86 02 07 35 02 00 30 7d e5 c1  >.........5..0}..<
+ 000110 f7 4b bf ff ff ff ff ff ff ff ff ff ff ff ff ff  >.K..............<
+ 000120 ba 9b f9 52 22 4a d8 5c 06 c4 bb ff ff ff ff ff  >...R"J.\........<
+ 000130 ff ff ff ff ff ff ff ff d3 43 1d e5 9c 82 67 90  >.........C....g.<
+ 000140
+
+ \endcode
+ *
+ * broken out:
+ *
+ \code
+
+ 000000 49 44 33                                         This is an ID3 tag
+ 000003          03 00                                   ID3v2.3
+ 000005                80                                unsynchronised
+ 000006                   00 00 01 30                    0xb0 = 176 bytes [1]
+ 00000a                               54 49 54 32        TIT2 frame
+ 00000e                                           00 00  0x35 = 53 bytes
+ 000010 00 35
+ 000012       00 00                                      no flags
+ 000014             01                                   UCS-2
+ 000015                fe ff 00                          Big Endian (w/sync)
+ 000018                         00 4d 00 79 00 20 00 62  My babe just cares
+ 000020 00 61 00 62 00 65 00 20 00 6a 00 75 00 73 00 74  for me
+ 000030 00 20 00 63 00 61 00 72 00 65 00 73 00 20 00 66
+ 000040 00 6f 00 72 00 20 00 6d 00 65 
+ 00004a                               54 50 45 31        TPE1 (artist)
+ 00004e                                           00 00  0x19 = 25 bytes
+ 000050 00 19 
+ 000052       00 00                                      no flags
+ 000054             01                                   UCS-2
+ 000055                fe ff 00                          Big Endian (w/sync)
+ 000058                         00 4e 00 69 00 6e 00 61  Nina Simone
+ 000060 00 20 00 53 00 69 00 6d 00 6f 00 6e 00 65
+ 00006e                                           54 41  TALB
+ 000070 4c 42
+ 000072       00 00 00 15                                0x15 = 21 bytes
+ 000076                   00 00                          no flags
+ 000078                         01                       UCS-2
+ 000079                            fe ff 00              Big Endian (w/sync)
+ 00007c                                     00 31 00 30  100% Jazz
+ 000080 00 30 00 25 00 20 00 4a 00 61 00 7a 00 7a
+ 00008e                                           54 52  TRCK
+ 000090 43 4b
+ 000092       00 00 00 07                                0x07 = 7 bytes
+ 000096                   00 00                          no flags
+ 000098                         01                       UCS-2
+ 000099                            fe ff 00              Big Endian (w/sync)
+ 00009c                                     00 30 00 33  "03"
+ 0000a0 54 4c 45 4e                                      TLEN
+ 0000a4             00 00 00 0f                          0x0f = 15 bytes
+ 0000a8                         40 00                    file alter preservation
+ 0000aa                               01                 UCS-2
+ 0000ab                                  fe ff 00        Big Endian (w/sync)
+ 0000ae                                           00 32  216000
+ 0000b0 00 31 00 36 00 30 00 30 00 30
+ 0000ba                               ff fb 90 0c 00 0f  track data...
+
+ 1. 0x0130 = b0000 0001 0011 0000 -> b 000 0001 011 0000 =
+ b 00 0000 1011 0000 = 0xb0 = 176
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_unsync )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Lifted from the taglib test suite
+  static const fs::path DATA1("/vagrant/test/data/unsynch.id3");
+  // Bill LeFaive - Orlando.mp3
+  static const fs::path DATA2("/vagrant/test/data/orlando.mp3");
+
+  fs::ifstream ifs1(DATA1, fs::ifstream::binary);
+  id3v2_3_tag tag1(ifs1);
+
+  string text = tag1.title();
+  BOOST_CHECK("My babe just cares for me" == text);
+  text = tag1.artist();
+  BOOST_CHECK("Nina Simone" == text);
+  text = tag1.album();
+  BOOST_CHECK("100% Jazz" == text);
+  text = tag1.track();
+  BOOST_CHECK("03" == text);
+
+  fs::ifstream ifs2(DATA2, fs::ifstream::binary);
+  id3v2_3_tag tag2(ifs2);
+
+  text = tag2.album();
+  BOOST_CHECK("http://music.download.com" == text);
+  text = tag2.title();
+  BOOST_CHECK("Orlando" == text);
+  text = tag2.artist();
+  BOOST_CHECK("Bill LeFaive" == text);
+
+}
+
+/**
+ *
+ *
+ \code
+
+ 000000 49 44 33 03 00 00 00 00 2c 34 41 50 49 43 00 00  >ID3.....,4APIC..<
+ 000010 10 5d 00 80 00 00 00 9b 78 9c ed 9d fb 5b 13 57  >.]......x....[.W<
+ 000020 1a c7 ed 7f b1 7f c2 fe b6 3f 6d bb dd c7 ee b3  >.........?m.....<
+ 000030 b5 d6 d6 f5 5e bb 5a ef ca 03 ab 16 15 05 5b 2a  >....^.Z.......[*<
+ 000040 a2 20 d8 2a 88 d8 05 5d 84 c8 45 41 6e 22 f7 20  >. .*...]..EAn". <
+ 000050 97 a0 5c 44 2e 51 90 7b 80 2a 01 14 14 94 5b 0a  >..\D.Q.{.*....[.<
+
+ \endcode
+ *
+ \code
+
+ 000000 49 44 33                                         ID3: ID3v2 header
+ 000003          03 00                                   ID3v2.3(.0)
+ 000005                00                                no flags
+ 000006                   00 00 2c 34                    0x1634 = 5684 bytes [1]
+ 00000a                               41 50 49 43        APIC frame
+ 00000e                                           00 00  0x105d = 4189 bytes
+ 000010 10 5d
+ 000012       00 80                                      COMPRESSED
+ 000014             00 00 00 9b                          DECOMPRESSED SIZE [2]
+ 000018                         78 9c ed 9d fb 5b 13 57  >.]......x....[.W<
+ 000020 1a c7 ed 7f b1 7f c2 fe b6 3f 6d bb dd c7 ee b3  >.........?m.....<
+ *
+ 001071    57 4f 41 52                                   WOAR
+ 001075                00 00 00 00                       0 bytes
+ 001079                            00 00                 no flags
+ 00107b                                  50 4f 50 4d     POPM
+ 00107f                                              00  6 bytes
+ 001080 00 00 06 
+ 001083          00 00                                   no flags
+ 001085                00                                nil e-mail
+ 001086                   00                             unknown rating
+ 001087                      00 00 00 00                 zero counter
+ 00108b                                  54 52 43 4b     TRCK
+ 00108f                                              00  >...........TRCK.<
+ 001090 00 00 01 00 00 00 54 43 4f 4e 00 00 00 0d 00 00  >......TCON......<
+ 0010a0 00 54 65 63 68 6e 6f 2d 44 61 6e 63 65 43 4f 4d  >.Techno-DanceCOM<
+ 0010b0 4d 00 00 00 05 00 00 00 65 6e 67 00 54 59 45 52  >M.......eng.TYER<
+ 0010c0 00 00 00 01 00 00 00 54 41 4c 42 00 00 00 0c 00  >.......TALB.....<
+ 0010d0 00 00 3c 55 6e 64 65 66 69 6e 65 64 3e 54 50 45  >..<Undefined>TPE<
+ 0010e0 31 00 00 00 05 00 00 00 4d 6f 62 79 54 49 54 32  >1.......MobyTIT2<
+ 0010f0 00 00 00 1f 00 00 00 42 72 61 76 65 68 65 61 72  >.......Bravehear<
+ 001100 74 20 54 68 65 6d 65 20 28 54 65 63 68 6e 6f 20  >t Theme (Techno <
+ 001110 72 65 6d 69 78 00 00 00 00 00 00 00 00 00 00 00  >remix...........<
+ 001120 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+ *
+ 001380 00 00 00 00 00 00 00 00                          >........<
+ 001388
+
+ 1. 0x2c34 = b0010 1100 0011 0100 -> b 010 1100  011 0100
+    -> b 01 0110 0011 0100 = 0x1634 = 5684
+
+ This is incorrect-- the tag is actually 0x1388 bytes in size; subtracting
+ 10 for the frame header gives 0x1373. Making this sync-safe:
+
+ 0x1373 = b0001 0011 0111 0011 -> b 010 0110 111 0011
+ -> b 0010 0110 0111 0011 = 0x2673
+
+ 2. This is also incorrect; the actual uncompressed size is 86427 = 0x1519B
+
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_compressed )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Lifted from the taglib test suite
+  static const fs::path DATA1("/vagrant/test/data/compressed.mp3");
+
+  fs::ifstream ifs1(DATA1, fs::ifstream::binary);
+  id3v2_3_tag tag1(ifs1);
+  BOOST_CHECK(1 == tag1.has_title());
+  BOOST_CHECK("Braveheart Theme (Techno remix" == tag1.title());
+}
