@@ -5,7 +5,7 @@
 #include <scribbu/framesv24.hh>
 
 /**
- * \page scribbu_id3v24
+ * \page scribbu_id3v24 ID3v2.4 tags
  *
  * \section scribbu_id3v24_intro Introduction
  *

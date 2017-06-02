@@ -1,7 +1,7 @@
 #ifndef ID3V1_HH_INCLUDED
 #define ID3V1_HH_INCLUDED 1
 /**
- * \page scribbu_id3v1
+ * \page scribbu_id3v1 ID3v1 Tags
  *
  * \section scribbu_id3v1_discuss Discussion
  *

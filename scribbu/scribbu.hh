@@ -3,8 +3,25 @@
 /**
  * \mainpage scribbu
  *
+ * \section scribbu_intro Introduction
  *
- * \section references References
+ * scribbu is a C++ library & associated command-line tool for working with ID3
+ * tags. It was born when I retired my last Windows machine & could no longer
+ * use Winamp to manage my library of digital music. It is very crude
+ * presently; it can only read tags and do things with that information like
+ * report on them or rename files based on them.
+ *
+ * \section scribbu_discuss Discussion
+ *
+ * Scribbu is currently a hobby project for working with ID3 tags. A few years
+ * ago, I excised Windows from my life, and was therefore left without Winamp
+ * for managing my mp3 library. There are packages out there, <a
+ * href="http://taglib.org/">TagLib</a> e.g., but nothing that did everything I
+ * wanted. Necessity being the mother of invention, I started on my own
+ * solution.
+ * 
+ *
+ * \section scribbu_references References
  *
  *  1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design. Addison-Wesley, 323pp.
  *

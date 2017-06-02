@@ -13,7 +13,7 @@
 #include <scribbu/scribbu.hh>
 
 /**
- * \page scribbu_id3v2_frames "ID3v2 Frames"
+ * \page scribbu_id3v2_frames ID3v2 Frames
  *
  * Things common to all ID3v2 frames, including class id3v2_frame. The design
  * philosophy here is to just parse the data, and leave interpretation to

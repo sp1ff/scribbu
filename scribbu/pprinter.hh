@@ -1,7 +1,7 @@
 #ifndef PPRINTER_HH_INCLUDED
 #define PPRINTER_HH_INCLUDED 1
 /**
- * \page scribbu_pprinter
+ * \page scribbu_pprinter Pretty Printing
  *
  * Pretty-printing ID3v2 tags & frames
  *

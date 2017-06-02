@@ -6,7 +6,7 @@
 #include <scribbu/framesv23.hh>
 
 /**
- * \page scribbu_id3v23
+ * \page scribbu_id3v23 ID3v2.3 Tags
  *
  * \section scribbu_id3v23_intro Introduction
  *

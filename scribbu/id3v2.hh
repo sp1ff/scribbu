@@ -16,7 +16,7 @@
 #include <scribbu/framesv2.hh>
 
 /**
- * \page scribbu_id3v2
+ * \page scribbu_id3v2 ID3v2 Tags
  *
  * \section scribbu_id3v2_intro Introduction
  *
