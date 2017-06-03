@@ -1,4 +1,4 @@
-This directory contains the 0.1 release of scribbu.
+This directory contains the 0.2 release of scribbu.
 
 See the file NEWS for the user-visible changes from previous releases.
 
@@ -35,6 +35,7 @@ information like report on them or rename files based on them.
 I got the project name from the cool project name generator at
 http://mrsharpoblunto.github.io/foswig.js/.
 
+You can generate doxygen docs by cd'ing to doc & typing 'make doxygen-doc'
 
 Development
 -----------
