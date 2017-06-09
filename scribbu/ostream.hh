@@ -335,9 +335,6 @@ namespace scribbu {
     ienc(encoding enc, on_no_encoding rsp): enc_(enc), rsp_(rsp)
     { }
 
-    // template <typename char_type,
-    //           typename traits_type = std::char_traits<char_type>>
-    // static ienc retrieve(std::basic_ios<char_type, traits_type>&);
     static ienc retrieve(std::ios_base&);
 
     encoding get_encoding() const {
@@ -348,14 +345,12 @@ namespace scribbu {
     }
 
   private:
-    template <typename char_type,
-              typename traits_type>
+    template <typename char_type, typename traits_type>
     friend
     std::basic_ostream<char_type, traits_type>&
     operator<<(std::basic_ostream<char_type, traits_type> &os, const ienc &x);
 
-    template <typename char_type,
-              typename traits_type>
+    template <typename char_type, typename traits_type>
     friend
     std::basic_istream<char_type, traits_type>&
     operator>>(std::basic_istream<char_type, traits_type> &is, const ienc &x);
@@ -367,6 +362,14 @@ namespace scribbu {
     encoding enc_;
     on_no_encoding rsp_;
   };
+
+  template <typename char_type, typename traits_type>
+  std::basic_ostream<char_type, traits_type>&
+  operator<<(std::basic_ostream<char_type, traits_type> &os, const ienc &x);
+  
+  template <typename char_type, typename traits_type>
+  std::basic_istream<char_type, traits_type>&
+  operator>>(std::basic_istream<char_type, traits_type> &is, const ienc &x);
 
 } // End namespace scribbu.
 

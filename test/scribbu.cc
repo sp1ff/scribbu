@@ -64,7 +64,7 @@ unknown genre 255
 )");
 
   string text = stm1.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
   BOOST_CHECK( GOLD1 == text );
 
   static const string GOLD2("3,0,295607,0x00,0,The Ocean Blue,Questions Of Travel (LP Version),Cerulean (US Release),Alternative Rock,,2005,,0,,1,\"tags=90s,sub-genres=shoegazer\",,,,7760096,32e73c84659bcf729333d7dd2efca044,");
@@ -73,7 +73,7 @@ unknown genre 255
   stm2 << print_as_csv(4, encoding::ASCII, boost::none) << *pid3v2 << td;
 
   text = stm2.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
   BOOST_CHECK( text == GOLD2 );
 
 }
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE( test_track_data2 )
   }
 
   string text = stm1.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   static const string GOLD1(R"(8 bytes of track data:
 MD5: 69c1753bd5f81501d95132d08af04464

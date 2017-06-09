@@ -503,7 +503,7 @@ frame PRIV (41 bytes)
   stringstream stm1;
   stm1 << *(tags[1]);
   text = stm1.str();
-  BOOST_MESSAGE(text);
+  BOOST_TEST_MESSAGE(text);
 
   const string GOLDEN1(R"(ID3v2.4(.0) Tag:
 4096 bytes, synchronised

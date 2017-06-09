@@ -289,6 +289,9 @@ namespace scribbu {
 
   }; // End class pprint_manipulator.
 
+  std::ostream&
+  operator<<(std::ostream &os, const pprint_manipulator &c);
+
   /**
    * \brief Stock pretty printer
    *

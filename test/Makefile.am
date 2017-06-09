@@ -7,7 +7,7 @@ unit_SOURCES = unit.cc charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
 	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc scribbu.cc
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS)
-AM_CXXFLAGS = -std=c++11
+AM_CXXFLAGS = -std=c++17
 AM_LDFLAGS  = -all-static -static $(BOOST_LDFLAGS)
 unit_LDADD = ../scribbu/libscribbu.la    \
 	$(BOOST_FILESYSTEM_LIB)          \

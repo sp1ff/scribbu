@@ -6,13 +6,11 @@ echo "Provisioning..."
 date > /etc/vagrant.provision_begin
 
 sudo apt-get update
-# Get the essentials
-sudo apt-get -y install 'g++-4.8'
-sudo ln -s /usr/bin/g++-4.8 /usr/bin/g++
+
+sudo apt-get -y install 'g++-6'
+sudo ln -s /usr/bin/g++-6 /usr/bin/g++
 sudo apt-get -y install doxygen
 sudo apt-get -y install graphviz
-
-# GDB
 sudo apt-get -y install gdb
 
 # from source...
@@ -26,13 +24,20 @@ sudo apt-get -y install gdb
 
 sudo apt-get -y install libbz2-dev
 sudo apt-get -y install python-dev
+sudo apt-get -y install guile-2.0-dev
+# sudo apt-get -y install libboost1.61-dev
+# sudo apt-get -y install libboost-system1.61-dev
+# sudo apt-get -y install libboost-filesystem1.61-dev
+# sudo apt-get -y install libboost-program-options1.61-dev
+# sudo apt-get -y install libboost-regex1.61-dev
+sudo apt-get install -y libboost1.61-all-dev
 
-# Install an updated Boost library
-wget http://sourceforge.net/projects/boost/files/boost/1.57.0/boost_1_57_0.tar.gz
-tar xvf boost_1_57_0.tar.gz
-cd boost_1_57_0
-./bootstrap.sh
-sudo ./b2 --build-type=complete --layout=versioned install
+# From source...
+# wget http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
+# tar xvf boost_1_61_0.tar.gz
+# cd boost_1_61_0
+# ./bootstrap.sh
+# sudo ./b2 --build-type=complete --layout=versioned install
 
 sudo apt-get -y install autoconf
 sudo apt-get -y install automake
@@ -59,7 +64,7 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can
   # search for boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "bento/ubuntu-16.10"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs `vagrant
@@ -104,7 +109,8 @@ Vagrant.configure(2) do |config|
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     # http://stackoverflow.com/questions/19490652/how-to-sync-time-on-host-wake-up-within-virtualbox
     vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000]
-
+    # https://github.com/chef/bento/issues/682
+    vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
   end
 
   # View the documentation for the provider you are using for more

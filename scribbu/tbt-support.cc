@@ -1,5 +1,6 @@
 #include <scribbu/tbt-support.hh>
 
+#include <numeric>
 #include <boost/algorithm/string.hpp>
 
 

@@ -33,7 +33,7 @@ unknown genre 255
   stm << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 
@@ -74,7 +74,7 @@ COM (iTunSMPB):
   stm << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 }
@@ -117,7 +117,7 @@ frame PRIV (1122 bytes)
   stm << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 
@@ -129,7 +129,7 @@ frame PRIV (1122 bytes)
   stringstream stm2;
   stm2 << tag2;
   text = stm2.str();
-  BOOST_MESSAGE(text);
+  BOOST_TEST_MESSAGE(text);
 
 }
 
@@ -158,7 +158,7 @@ TALB: Ela E Carioca
   stm << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 }

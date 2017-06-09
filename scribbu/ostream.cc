@@ -148,6 +148,25 @@ namespace scribbu {
   }
 
   template <>
+  std::basic_ostream<wchar_t, std::char_traits<wchar_t>>&
+  operator<<(std::basic_ostream<wchar_t, std::char_traits<wchar_t>> &os,
+             const ienc &x) {
+
+    using namespace std;
+
+    typedef detail::trivial_sentry<wchar_t, std::char_traits<wchar_t>> sentry_type;
+    typedef manip_helper<const ienc, wostream, sentry_type>  impl_type;
+
+    if (!scribbu::char_traits<wchar_t>::is_code_unit(x.get_encoding())) {
+      throw bad_code_unit(x.get_encoding(), sizeof(wchar_t));
+    }
+
+    impl_type::do_manip(x, &ienc::insert, os);
+    return os;
+
+  }
+
+  template <>
   std::basic_istream<char, std::char_traits<char>>&
   operator>>(std::basic_istream<char, std::char_traits<char>> &is,
              const ienc &x) {
@@ -159,25 +178,6 @@ namespace scribbu {
 
     impl_type::do_manip(x, &ienc::insert, is);
     return is;
-
-  }
-
-  template<>
-  std::basic_ostream<wchar_t, std::char_traits<wchar_t>>&
-  operator<<(std::basic_ostream<wchar_t, std::char_traits<wchar_t>> &os,
-             const ienc &x) {
-
-    using namespace std;
-
-    typedef detail::trivial_sentry<wchar_t, std::char_traits<wchar_t>> sentry_type;
-    typedef manip_helper<const ienc, wostream, sentry_type>       impl_type;
-
-    if (!scribbu::char_traits<char>::is_code_unit(x.get_encoding())) {
-      throw bad_code_unit(x.get_encoding(), sizeof(char));
-    }
-
-    impl_type::do_manip(x, &ienc::insert, os);
-    return os;
 
   }
 

@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v1 )
   stm << print_as_csv(4, encoding::ASCII) << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v22 )
   stm << print_as_csv(4, encoding::ASCII, encoding::UTF_8) << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 }
@@ -76,14 +76,14 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v23 )
   stm1 << print_as_csv(4, encoding::ASCII, boost::none) << tag_1;
 
   string text = stm1.str();
-  BOOST_MESSAGE(text);
+  BOOST_TEST_MESSAGE(text);
   BOOST_CHECK(GOLDEN_1 == text);
 
   stringstream stm2;
   stm2 << print_as_csv() << tag_1;
 
   text = stm2.str();
-  BOOST_MESSAGE(text);
+  BOOST_TEST_MESSAGE(text);
   BOOST_CHECK(GOLDEN_1 == text);
 
   fs::ifstream ifs_2(TEST_FILE_2, fs::ifstream::binary);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v23 )
   stm3 << print_as_csv(6, encoding::ASCII, encoding::UTF_8) << tag_2;
 
   text = stm3.str();
-  BOOST_MESSAGE(text);
+  BOOST_TEST_MESSAGE(text);
   BOOST_CHECK(GOLDEN_2 == text);
 
 
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_id3v24 )
   stm << print_as_csv(4, encoding::ASCII, boost::none) << tag;
 
   string text = stm.str();
-  BOOST_MESSAGE( text );
+  BOOST_TEST_MESSAGE( text );
 
   BOOST_CHECK(GOLDEN == text);
 }
