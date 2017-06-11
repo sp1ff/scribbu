@@ -23,14 +23,11 @@ sudo apt-get -y install gdb
 # sudo make install
 
 sudo apt-get -y install libbz2-dev
+sudo apt-get -y install libunistring-dev
+sudo apt-get -y install libffi-dev
 sudo apt-get -y install python-dev
 sudo apt-get -y install guile-2.0-dev
-# sudo apt-get -y install libboost1.61-dev
-# sudo apt-get -y install libboost-system1.61-dev
-# sudo apt-get -y install libboost-filesystem1.61-dev
-# sudo apt-get -y install libboost-program-options1.61-dev
-# sudo apt-get -y install libboost-regex1.61-dev
-sudo apt-get install -y libboost1.61-all-dev
+sudo apt-get -y install libboost1.61-all-dev
 
 # From source...
 # wget http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz

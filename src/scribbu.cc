@@ -7,6 +7,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <libguile.h>
+
 #include "command-utilities.hh"
 
 #include <scribbu/scribbu.hh>
@@ -16,6 +18,27 @@ namespace po = boost::program_options;
 
 namespace {
 
+  void*
+  register_functions (void* data)
+  {
+    return NULL;
+  }
+
+  void* evaluate_expression(void *p) {
+    using namespace std;
+    string s = *reinterpret_cast<string*>(p);
+    cout << "evaluate_expression: " << s << endl;
+    return (void*)11;
+  }
+
+  void* evaluate_file(void *p) {
+    using namespace std;
+    fs::path pth = *reinterpret_cast<fs::path*>(p);
+    cout << "evaluate_file: " << pth << endl;
+    return (void*)12;
+  }
+
+  // TODO: Update scribbu.cc USAGE messagevvvvvvvvvvvv
   const std::string USAGE(R"(scribbu -- tag your music
 
 scribbu is tool for managing your MP3 collection.
@@ -73,7 +96,6 @@ For sub-command help, run 'scribbu SUB-COMMAND --help'
 
 }
 
-
 int
 main(int argc, char * argv[])
 {
@@ -123,6 +145,8 @@ main(int argc, char * argv[])
   gopts.add_options()
     ("config,c", po::value<fs::path>()->default_value(DEFCFG),
      "path (absolute or relative) to the config file")
+    ("expression,e", po::value<string>(), "Expression to evaluate")
+    ("file,f", po::value<string>(), "Scheme file to evaluate")
     ("help,h", "print the " PACKAGE " usage message & exit with status zero")
     ("version,v", "print the " PACKAGE " version & exit with status zero");
 
@@ -178,9 +202,9 @@ main(int argc, char * argv[])
 
     if (vm.count("version")) {
       if (opts.size()) {
-	throw po::error("unrecognized argument: --version");
+        throw po::error("unrecognized argument: --version");
       } else {
-	cout << PACKAGE_STRING << std::endl;
+        cout << PACKAGE_STRING << endl;
       }
     } else if (!vm["config"].defaulted() && !opts.size()) {
       throw po::error("configuration specified, but nothing asked");
@@ -199,13 +223,16 @@ main(int argc, char * argv[])
       optional<fs::path> cfg;
       fs::path pth = vm["config"].as<fs::path>();
       if (fs::exists(pth)) {
-	cfg = pth;
+        cfg = pth;
       } else if (!vm["config"].defaulted()) {
-	// If it was explicitly given, and it doesn't exist, that's an error.
-	throw po::error(pth.native() + " does not exist");
+        // If it was explicitly given, and it doesn't exist, that's an error.
+        throw po::error(pth.native() + " does not exist");
       } 
 
       if (opts.size()) {
+
+        // TODO: if there's an unknoown option or command given, like scribbu -x,
+        // or scribbu foo, we'll end up here. Need to handle this.
 
         // 'opts' is non-empty, so there's at least one element--
         // attempt to resolve the first element to a command...
@@ -217,12 +244,32 @@ main(int argc, char * argv[])
 
       } else {
 
-	// No sub-command has been given, so we're just printing help.
         if (help_level::verbose == help) {
-          print_usage(cout, global, USAGE);
-        } else {
           print_usage(cout, gopts, USAGE);
-	}
+        }
+        else if (help_level::regular == help) {
+          print_usage(cout, global, USAGE);
+        }
+        else {
+
+          // No sub-command has been given, so we're going to be evaluating
+          // some Scheme.
+          if (vm.count("expression")) {
+            string exp = vm["expression"].as<string>();
+            void *p = scm_with_guile(evaluate_expression, &exp);
+            status = p != 0;
+          } 
+          else if (vm.count("file")) {
+            fs::path pth(vm["file"].as<string>());
+            void *p = scm_with_guile(evaluate_file, &pth);
+            status = p != 0;
+          }
+          else {
+            scm_with_guile (&register_functions, NULL);
+            scm_shell(argc, argv);
+          }
+
+        }
 
       } // End if on 'opts' size.
     } // End if on '--version' &c.

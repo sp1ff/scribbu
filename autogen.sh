@@ -10,6 +10,10 @@ set -e
 echo "symlinking README"
 test -L README || ln -s README.md README
 
+# No idea why...
+test -d build-aux || mkdir build-aux
+test -f build-aux/config.rpath || touch build-aux/config.rpath
+
 # Runs autoconf, autoheader, aclocal, automake, autopoint, libtoolize
 echo "Regenerating autotools files"
 autoreconf -vfi
