@@ -9,6 +9,7 @@
 #include <openssl/evp.h>
 
 #include <scribbu/id3v1.hh>
+#include <scribbu/scheme.hh>
 
 namespace fs  = boost::filesystem;
 namespace src = boost::log::sources;

@@ -317,7 +317,7 @@ namespace scribbu {
    *
    * Class id3v1_tag doesn't attempt any interpretation of "artist", "comment",
    * and so forth. Instances are immutable copies of what's in the tag, broken
-   * out by field. So, for instance, "artst" is not represented as a string,
+   * out by field. So, for instance, "artist" is not represented as a string,
    * but as a block of 30 or 90 bytes. It is up to the caller to interpret it.
    *
    *

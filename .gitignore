@@ -4,9 +4,12 @@
 *.la
 *.a
 *.csv
+#*
+.#*
 autom4te.cache
 Makefile.in
 aclocal.m4
 config.h.in
 README
 build-aux/
+sp1ff

@@ -6,4 +6,4 @@ id3v2.3.tag id3v2.4.tag track.dat joao.mp3 track.v1-ext.dat \
 on-green-dolphin-street.mp3 u2-promenade.mp3 sleepwalking.mp3 \
 红颜旧.mp3 nin-only-time.mp3 forbidden.mp3 life.mp3 waterfall.mp3 \
 nan-1.mp3 lunch4bfast.mp3 lunch4bfast2.mp3 orlando.mp3 compressed.mp3 \
-duplicate_id3v2.mp3
+duplicate_id3v2.mp3 with-track-in-golden.log

@@ -5,6 +5,12 @@ $provision = <<SCRIPT
 echo "Provisioning..."
 date > /etc/vagrant.provision_begin
 
+head -n2 /etc/resolv.conf > /tmp/resolv.conf
+echo nameserver 8.8.8.8 >> /tmp/resolv.conf
+echo nameserver 8.8.4.4 >> /tmp/resolv.conf
+tail -n -2 /etc/resolv.conf >> /tmp/resolv.conf
+sudo mv -v /tmp/resolv.conf /etc/resolv.conf
+
 sudo apt-get update
 
 sudo apt-get -y install 'g++-6'
@@ -36,6 +42,14 @@ sudo apt-get -y install libboost1.61-all-dev
 # ./bootstrap.sh
 # sudo ./b2 --build-type=complete --layout=versioned install
 
+wget ftp://ftp.gnu.org/gnu/guile/guile-2.2.0.tar.gz
+tar -zxvf guile-2.2.0.tar.gz
+cd guile-2.2.0/
+./configure
+make
+sudo make install
+sudo ldconfig
+
 sudo apt-get -y install autoconf
 sudo apt-get -y install automake
 sudo apt-get -y install libtool
@@ -43,6 +57,11 @@ sudo apt-get -y install libssl-dev
 sudo apt-get -y install flex
 sudo apt-get -y install bison
 sudo apt-get -y install global
+
+echo source /vagrant/.vmbashrc >> /home/vagrant/.bashrc
+
+ln -s /vagrant/.guile ~/.guile
+ln -s /vagrant/.gdbinit ~/.gdbinit
 
 echo "Provisioning...done."
 date > /etc/vagrant.provision_end

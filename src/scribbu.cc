@@ -12,30 +12,73 @@
 #include "command-utilities.hh"
 
 #include <scribbu/scribbu.hh>
+#include <scribbu/scheme.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 namespace {
 
-  void*
-  register_functions (void* data)
-  {
-    return NULL;
-  }
+  /**
+   * \brief Evaluate a Scheme expression
+   *
+   * 
+   * \param p [in] Address of a std::string containing the Scheme expression
+   * to be evaluated
+   *
+   * \return This method always returns nil (on which more below)
+   *
+   *
+   * This function will unpack the std::string & invoke scm_c_eval_string. That
+   * method will return a SCM containing the result of the expression, which this
+   * function ignores.
+   *
+   * It also accepts the default Guile error handling; cf. `scm_c_catch' to change
+   * that (https://www.gnu.org/software/guile/manual/html_node/Catching-Exceptions.html#Catching-Exceptions)
+   *
+   *
+   */
 
   void* evaluate_expression(void *p) {
-    using namespace std;
-    string s = *reinterpret_cast<string*>(p);
-    cout << "evaluate_expression: " << s << endl;
-    return (void*)11;
+    initialize_guile(0);
+    std::string s = *reinterpret_cast<std::string*>(p);
+    scm_c_eval_string(s.c_str());
+    return 0;
   }
 
+  /**
+   * \brief Evaluate a Scheme file
+   *
+   * 
+   * \param p [in] Address of an fs::path containing the Scheme file to be
+   * evaluated
+   *
+   * \return This method always returns nil (on which more below)
+   *
+   *
+   * This function will unpack the fs::path, read the file & invoke
+   * scm_c_eval_string. That method will return a SCM containing the result of
+   * the expression, which this function ignores.
+   *
+   * It also accepts the default Guile error handling; cf. `scm_c_catch' to change
+   * that (https://www.gnu.org/software/guile/manual/html_node/Catching-Exceptions.html#Catching-Exceptions)
+   *
+   *
+   */
+
   void* evaluate_file(void *p) {
-    using namespace std;
+    initialize_guile(0);
     fs::path pth = *reinterpret_cast<fs::path*>(p);
-    cout << "evaluate_file: " << pth << endl;
-    return (void*)12;
+
+    boost::uintmax_t cb = fs::file_size(pth);
+    std::unique_ptr<char[]> pb(new char[cb + 1]);
+
+    fs::ifstream ifs(pth);
+    ifs.read(pb.get(), cb);
+    pb[cb] = 0;
+
+    scm_c_eval_string(pb.get());
+    return 0;
   }
 
   // TODO: Update scribbu.cc USAGE messagevvvvvvvvvvvv
@@ -253,19 +296,21 @@ main(int argc, char * argv[])
         else {
 
           // No sub-command has been given, so we're going to be evaluating
-          // some Scheme.
+          // some Scheme. Will it be an expression...
           if (vm.count("expression")) {
+            // it is:
             string exp = vm["expression"].as<string>();
-            void *p = scm_with_guile(evaluate_expression, &exp);
-            status = p != 0;
+            status = (intptr_t) scm_with_guile(evaluate_expression, &exp);
           } 
-          else if (vm.count("file")) {
+          else if (vm.count("file")) { // Will it be a file?
+            // It is:
             fs::path pth(vm["file"].as<string>());
             void *p = scm_with_guile(evaluate_file, &pth);
             status = p != 0;
           }
           else {
-            scm_with_guile (&register_functions, NULL);
+            // Otherwise, startup the interprester.
+            scm_with_guile(&initialize_guile, NULL);
             scm_shell(argc, argv);
           }
 

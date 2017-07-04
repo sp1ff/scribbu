@@ -9,7 +9,7 @@ AC_PROG_LIBTOOL
 AC_PROG_YACC
 AM_PROG_LEX
 
-AX_BOOST_BASE([1.61], [], [AC_MSG_ERROR([Scribbu requires boost_base 1.61 or later.])])
+AX_BOOST_BASE([1.58], [], [AC_MSG_ERROR([Scribbu requires boost_base 1.58 or later.])])
 AX_BOOST_FILESYSTEM
 AX_BOOST_LOG
 AX_BOOST_PROGRAM_OPTIONS
@@ -24,12 +24,13 @@ if test x$HAVE_LIBUNISTRING != xyes; then
  AC_MSG_ERROR([GNU libunistring is required])
 fi
 
-#  https://llvm.org/svn/llvm-project/llvm/tags/cremebrulee/cremebrulee-53/autoconf/configure.ac
+# https://llvm.org/svn/llvm-project/llvm/tags/cremebrulee/cremebrulee-53/autoconf/configure.ac
 AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
                  [Define if libffi is available on this platform.]),
                  AC_MSG_ERROR([libffi not found]))
 
-PKG_CHECK_MODULES([GUILE], [guile-2.0])
+PKG_CHECK_MODULES([GUILE], [guile-2.2])
+GUILE_SITE_DIR
 
 DX_DOXYGEN_FEATURE(ON)
 DX_DOT_FEATURE(ON)
