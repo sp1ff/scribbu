@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#include <boost/filesystem/fstream.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <libguile.h>

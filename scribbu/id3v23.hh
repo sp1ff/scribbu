@@ -129,22 +129,18 @@ namespace scribbu {
 
   public:
 
-    ///////////////////////////////////////////////////////////////////////////
-    //                           public accessors                            //
-    ///////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    //                          ID3v2 Serialization                            //
+    /////////////////////////////////////////////////////////////////////////////
 
-    bool experimental() const {
-      return experimental_;
-    }
-    bool has_extended_header() const {
-      return (bool) pext_header_;
-    }
-    ext_header extended_header() const {
-      return *pext_header_;
-    }
-    std::size_t padding() const {
-      return padding_;
-    }
+    virtual unsigned char flags() const;
+    virtual std::size_t size() const;
+    virtual bool needs_unsynchronisation() const;
+    virtual std::size_t write(std::istream &) const;
+
+    /////////////////////////////////////////////////////////////////////////////
+    //                    Frames Common to all ID3v2 Tags                      //
+    /////////////////////////////////////////////////////////////////////////////
 
     virtual std::string
     album(encoding dst = encoding::UTF_8,
@@ -223,6 +219,23 @@ namespace scribbu {
     }
     virtual std::size_t has_year() const {
       return frame_map_.count("TYER");
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                           public accessors                            //
+    ///////////////////////////////////////////////////////////////////////////
+
+    bool        experimental() const {
+      return experimental_;
+    }
+    bool        has_extended_header() const {
+      return (bool) pext_header_;
+    }
+    ext_header  extended_header() const {
+      return *pext_header_;
+    }
+    std::size_t padding() const {
+      return padding_;
     }
 
     std::size_t has_frame(const frame_id4 &id) const {
@@ -489,6 +502,7 @@ namespace scribbu {
     std::vector<std::unique_ptr<id3v2_3_frame>> frames_type;
 
     bool experimental_;
+    std::size_t size_;
     generic_parser_map_type generic_parsers_;
     text_parser_map_type text_parsers_;
     std::shared_ptr<ext_header> pext_header_;

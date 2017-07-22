@@ -257,28 +257,76 @@ scribbu::id3v2_4_tag::ext_header::get_restrictions() const
 }
 
 scribbu::id3v2_4_tag::id3v2_4_tag(std::istream &is):
-  id3v2_tag(is),
-  experimental_(flags() & 0x20),
-  footer_(flags() & 0x10)
+  id3v2_tag(is)
 {
   get_default_generic_frame_parsers(std::inserter(generic_parsers_,
                                                   generic_parsers_.begin()));
   get_default_text_frame_parsers(std::inserter(text_parsers_,
                                                text_parsers_.begin()));
-  parse(is, flags() & 0x40);
+
+  unsigned char flags;
+  std::tie(flags, size_) = parse_flags_and_size(is);
+
+  unsynchronised(0 != (flags & 0x80));
+  experimental_ = flags & 0x20;
+  footer_ = flags & 0x10;
+
+  parse(is, flags & 0x40);
 }
 
 scribbu::id3v2_4_tag::id3v2_4_tag(std::istream     &is,
                                   const id3v2_info &H):
   id3v2_tag(H),
-  experimental_(flags() & 0x20),
-  footer_(flags() & 0x10)
+  experimental_(H.flags_ & 0x20),
+  footer_(H.flags_ & 0x10)
 {
   get_default_generic_frame_parsers(std::inserter(generic_parsers_,
                                                   generic_parsers_.begin()));
   get_default_text_frame_parsers(std::inserter(text_parsers_,
                                                   text_parsers_.begin()));
+  size_ = H.size_;
+
   parse(is, flags() & 0x40);
+}
+
+/*virtual*/ unsigned char
+scribbu::id3v2_4_tag::flags() const
+{
+  unsigned char flags = 0;
+  if (unsynchronised()) {
+    flags |= 0x80;
+  }
+  if (pext_header_) {
+    flags |= 0x40;
+  }
+  if (experimental_) {
+    flags |= 0x20;
+  }
+  if (footer_) {
+    flags |= 0x10;
+  }
+  return flags;
+}
+
+/*virtual*/ std::size_t
+scribbu::id3v2_4_tag::size() const
+{
+  // TODO(sp1ff): Implement me correctly!
+  return size_;
+}
+
+/*virtual*/ bool
+scribbu::id3v2_4_tag::needs_unsynchronisation() const
+{
+  // TODO(sp1ff): Implement me correctly!
+  return unsynchronised();
+}
+
+/*virtual*/ std::size_t
+scribbu::id3v2_4_tag::write(std::istream &) const
+{
+  // TODO(sp1ff): Implement me correctly!
+  return 0;
 }
 
 /*virtual*/ std::size_t

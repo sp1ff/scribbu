@@ -112,11 +112,9 @@ scribbu::detail::unsigned_from_sync_safe(unsigned char b0,
 
 scribbu::id3v2_info
 scribbu::looking_at_id3v2(std::istream &is,
-                          bool          restore_get_if_found/*=true*/)
+                          bool restore_get_if_found/*=true*/)
 {
   using scribbu::detail::unsigned_from_sync_safe;
-
-  const std::size_t HEADER_SIZE = 10;
 
   // Copy off the stream's exception mask, in case the caller is
   // counting on it...
@@ -128,12 +126,12 @@ scribbu::looking_at_id3v2(std::istream &is,
   // state.
   std::istream::streampos here = is.tellg();
 
-  unsigned char buf[HEADER_SIZE];
+  unsigned char buf[ID3V2_HEADER_SIZE];
 
   id3v2_info H;
   H.present_ = false;
   try {
-    is.read((char*)buf, HEADER_SIZE);
+    is.read((char*)buf, ID3V2_HEADER_SIZE);
   } catch (const std::ios_base::failure &ex) {
     is.exceptions(exc_mask);
     is.clear();
@@ -363,30 +361,106 @@ scribbu::id3v2_tag::unknown_version::what() const noexcept
 //                             class id3v2_tag                               //
 ///////////////////////////////////////////////////////////////////////////////
 
-/// Initialize from the first ten bytes of \a is
+/// Initialize from the first five bytes of \a is
 scribbu::id3v2_tag::id3v2_tag(std::istream &is)
 {
-  id3v2_info H = looking_at_id3v2(is, false);
-  if (!H.present_) {
-    throw no_tag();
+  static const unsigned int HALF_ID3V2_HEADER_SIZE = 5;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
+  std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(std::ios_base::eofbit|std::ios_base::failbit|std::ios_base::badbit);
+
+  // Also, save this so we can restore the stream to its original
+  // state.
+  std::istream::streampos here = is.tellg();
+
+  unsigned char buf[HALF_ID3V2_HEADER_SIZE];
+
+  bool present = false;
+  try {
+    is.read((char*)buf, HALF_ID3V2_HEADER_SIZE);
+  } catch (const std::ios_base::failure &ex) {
+    is.exceptions(exc_mask);
+    is.clear();
+    is.seekg(here, std::ios_base::beg);
+    throw;
   }
 
-  version_  = H.version_;
-  revision_ = H.revision_;
-  flags_    = H.flags_;
-  size_     = H.size_;
-  unsync_   = H.flags_ & 0x80;
+  if ('I' == buf[0] && 'D' == buf[1] && '3' == buf[2]) {
+
+    version_  = buf[3];
+    revision_ = buf[4];
+
+    // Cf. Sec. 3.1 of any ID3v2 spec.
+    present = 0xff != version_ && 0xff != revision_;
+  }
+
+  if (!present) {
+    is.seekg(here, std::ios_base::beg);
+  } // End if on "ID3" magic number.
+
+  // Restore the exception mask
+  is.exceptions(exc_mask);
 }
 
 /// Initialize from and id3v2_info
 scribbu::id3v2_tag::id3v2_tag(const id3v2_info &H):
   version_ (H.version_     ),
   revision_(H.revision_    ),
-  flags_   (H.flags_       ),
-  size_    (H.size_        ),
   unsync_  (H.flags_ & 0x80)
 {
   if (!H.present_) {
     throw no_tag();
   }
+}
+
+std::pair<unsigned char, std::size_t>
+scribbu::id3v2_tag::parse_flags_and_size(std::istream &is)
+{
+  using scribbu::detail::unsigned_from_sync_safe;
+
+  static const unsigned int HALF_ID3V2_HEADER_SIZE = 5;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
+  std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(std::ios_base::eofbit|std::ios_base::failbit|std::ios_base::badbit);
+
+  // Also, save this so we can restore the stream to its original
+  // state.
+  std::istream::streampos here = is.tellg();
+
+  unsigned char buf[HALF_ID3V2_HEADER_SIZE];
+
+  try {
+    is.read((char*)buf, HALF_ID3V2_HEADER_SIZE);
+  } catch (const std::ios_base::failure &ex) {
+    is.exceptions(exc_mask);
+    is.clear();
+    is.seekg(here, std::ios_base::beg);
+    throw;
+  }
+
+  unsigned char flags = buf[0];
+
+  std::size_t cb = 0;
+  if (0x80 > buf[1] && 0x80 > buf[2] &&
+      0x80 > buf[3] && 0x80 > buf[4]) {
+
+    cb = unsigned_from_sync_safe(buf[1], buf[2], buf[3], buf[4]);
+
+  } // End if on bytes 6-9 being a sync-safe int.
+
+  if (0 == cb) {
+    is.seekg(here, std::ios_base::beg);
+  }
+
+  // Restore the exception mask
+  is.exceptions(exc_mask);
+
+  return std::make_pair(flags, cb);
+
 }

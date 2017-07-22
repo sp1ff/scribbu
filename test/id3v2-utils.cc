@@ -1,5 +1,7 @@
 #include <scribbu/id3v2-utils.hh>
 
+#include "unit.hh"
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -12,9 +14,9 @@ BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
 {
   using scribbu::id3v2_tag;
 
-  const fs::path TEST_FILE_V2_2("/vagrant/test/data/id3v2.2.tag");
-  const fs::path TEST_FILE_V2_3("/vagrant/test/data/lorca.mp3");
-  const fs::path TEST_FILE_V2_4("/vagrant/test/data/id3v2.4.tag");
+  const fs::path TEST_FILE_V2_2(get_data_directory() / "id3v2.2.tag");
+  const fs::path TEST_FILE_V2_3(get_data_directory() / "lorca.mp3");
+  const fs::path TEST_FILE_V2_4(get_data_directory() / "id3v2.4.tag");
 
   fs::ifstream ifs(TEST_FILE_V2_2);
   std::unique_ptr<id3v2_tag> ptag = scribbu::maybe_read_id3v2(ifs);
@@ -61,7 +63,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path DATA1("/vagrant/test/data/searchresults.dat");
+  const fs::path DATA1(get_data_directory() / "searchresults.dat");
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
 
@@ -448,10 +450,10 @@ BOOST_AUTO_TEST_CASE( test_multi_id3v2 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path DATA1("/vagrant/test/data/lunch4bfast.mp3");
-  const fs::path DATA2("/vagrant/test/data/lunch4bfast2.mp3");
-  const fs::path DATA3("/vagrant/test/data/rock-the-joint.id3v2.3.tag");
-  const fs::path DATA4("/vagrant/test/data/duplicate_id3v2.mp3");
+  const fs::path DATA1(get_data_directory() / "lunch4bfast.mp3");
+  const fs::path DATA2(get_data_directory() / "lunch4bfast2.mp3");
+  const fs::path DATA3(get_data_directory() / "rock-the-joint.id3v2.3.tag");
+  const fs::path DATA4(get_data_directory() / "duplicate_id3v2.mp3");
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
 
@@ -552,7 +554,7 @@ official
 
 BOOST_AUTO_TEST_CASE( test_template_text )
 {
-  const fs::path TEST_FILE("/vagrant/test/data/lorca.mp3");
+  const fs::path TEST_FILE(get_data_directory() / "lorca.mp3");
 
   using scribbu::template_processor;
 

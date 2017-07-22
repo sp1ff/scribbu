@@ -31,6 +31,8 @@ namespace scribbu {
 
   std::unique_ptr<id3v2_tag> maybe_read_id3v2(std::istream &is);
 
+  std::unique_ptr<id3v2_tag> read_id3v2(std::istream &is, std::size_t idx);
+  
   /**
    * \brief Read all ID3v2 tags from an input stream
    *

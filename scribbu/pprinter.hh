@@ -18,7 +18,7 @@
  * subclasses, each of which contains a polymorphic collection of frames. So
  * far, this could be solved through a virtual function on id3v2_tag & on each
  * frame base class (id3v2_2_frame, id3v2_3 fram & id3v2_4 frame). However, I
- * would also like to be able to support differnt styles of pretty-printing
+ * would also like to be able to support different styles of pretty-printing
  * (compact, standard, detailed, &c).
  *
  * My first approach was to go the virtual function route, and simply
@@ -77,9 +77,9 @@
  *       figured out the Visitor type in step 2.
  *
  * Of course, Visitor also introduced the usual dependency problems; moving to
- * Acyclic Visitor (TOOD: need reference) would remove that, in the process
- * substituting the virtual function invocation in 2 for a dynamic cast. It did
- * nothing for the superfluous virtual invocation for each frame.
+ * Acyclic Visitor (TODO(sp1ff): need reference) would remove that, in the
+ * process substituting the virtual function invocation in 2 for a dynamic
+ * cast. It did nothing for the superfluous virtual invocation for each frame.
  *
  * \subsection scribbu_pprinter_discuss_ddispatch Dual Dispatch
  *

@@ -211,6 +211,8 @@ namespace scribbu {
     zlib_error(int status);
   };
 
+  const std::size_t ID3V2_HEADER_SIZE = 10;
+
   /// Structure tying together all the information returned from
   /// looking_at_id3v2
   struct id3v2_info {
@@ -320,6 +322,14 @@ namespace scribbu {
    * \brief Core ID3v2 functionality
    *
    *
+   * Class id3v2_tag handles some functionality common to all ID3v2 tags, such
+   * as version/revision information & the unsynch attribute, but it mostly
+   * defines an interface to which all concrete ID3v2 tags can conform,
+   * enabling client code to work in a version-independent way (e.g. a client
+   * should be able to ask for the "artist" without having to worry about
+   * whether the tag is ID3v2.2, 2.3 or 2.4).
+   *
+   *
    */
 
   class id3v2_tag {
@@ -424,30 +434,45 @@ namespace scribbu {
       mutable std::shared_ptr<std::string> pwhat_;
     };
 
+    typedef scribbu::encoding encoding;
+
   public:
-    /// Initialize from the first ten bytes of \a is
+    /// Initialize from the first five bytes of \a is
     id3v2_tag(std::istream &is);
-    /// Initialize from and id3v2_info
+    /// Initialize from an id3v2_info
     id3v2_tag(const id3v2_info &H);
 
   public:
+
+    /////////////////////////////////////////////////////////////////////////////
+    //                      Common ID3v2 Attributes                            //
+    /////////////////////////////////////////////////////////////////////////////
+
     unsigned char version() const {
       return version_;
     }
     unsigned char revision() const {
       return revision_;
     }
-    unsigned char flags() const {
-      return flags_;
-    }
-    std::size_t size() const {
-      return size_;
-    }
     bool unsynchronised() const {
       return unsync_;
     }
+    void unsynchronised(bool f) {
+      unsync_ = f;
+    }
 
-    typedef scribbu::encoding encoding;
+    /////////////////////////////////////////////////////////////////////////////
+    //                          ID3v2 Serialization                            //
+    /////////////////////////////////////////////////////////////////////////////
+
+    virtual unsigned char flags() const = 0;
+    virtual std::size_t size() const = 0;
+    virtual bool needs_unsynchronisation() const = 0;
+    virtual std::size_t write(std::istream &) const = 0;
+
+    /////////////////////////////////////////////////////////////////////////////
+    //                    Frames Common to all ID3v2 Tags                      //
+    /////////////////////////////////////////////////////////////////////////////
 
     virtual
     std::string
@@ -455,10 +480,11 @@ namespace scribbu {
           on_no_encoding rsp = on_no_encoding::fail,
           const boost::optional<encoding> &src = boost::none) const = 0;
     virtual
-    std::string artist(encoding dst = encoding::UTF_8,
-                       on_no_encoding rsp = on_no_encoding::fail,
-                       const boost::optional<encoding> &src =
-                         boost::none) const = 0;
+    std::string
+    artist(encoding dst = encoding::UTF_8,
+           on_no_encoding rsp = on_no_encoding::fail,
+           const boost::optional<encoding> &src =
+           boost::none) const = 0;
     virtual
     std::string
     content_type(encoding dst = encoding::UTF_8,
@@ -503,12 +529,13 @@ namespace scribbu {
     virtual std::size_t has_track() const = 0;
     virtual std::size_t has_year() const = 0;
 
+  protected:
+    std::pair<unsigned char, std::size_t>
+    parse_flags_and_size(std::istream &is);
+
   private:
-    // All derived from the standard ten-byte header
     unsigned char version_;
     unsigned char revision_;
-    unsigned char flags_;
-    std::size_t size_;
     bool unsync_;
 
   }; // End class id3v2_tag.

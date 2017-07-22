@@ -124,6 +124,9 @@ namespace scribbu {
     bool null() const {
       return 0 == id_[0] && 0 == id_[1] && 0 == id_[2];
     }
+    bool text_frame() const {
+      return 'T' == id_[0];
+    }
 
   private:
     bool experimental_;
@@ -229,6 +232,7 @@ namespace scribbu {
     std::size_t size() const {
       return size_;
     }
+
   private:
     std::size_t size_;
     bool experimental_;

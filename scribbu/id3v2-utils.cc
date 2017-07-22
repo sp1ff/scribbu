@@ -7,6 +7,8 @@
 
 #include <numeric>
 
+namespace fs = boost::filesystem;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                 free functions exported from this module                  //
@@ -28,6 +30,35 @@ scribbu::maybe_read_id3v2(std::istream &is)
     return std::unique_ptr<scribbu::id3v2_tag>(new id3v2_4_tag(is, H));
   } else {
     throw id3v2_tag::unknown_version(H.version_);
+  }
+
+}
+
+std::unique_ptr<scribbu::id3v2_tag>
+scribbu::read_id3v2(std::istream &ifs, std::size_t idx)
+{
+  // advance to the idx-th ID3v2 tag
+  for (std::size_t i = 0; i < idx; ++i) {
+    id3v2_info I = looking_at_id3v2(ifs, true);
+    if (!I.present_) {
+      throw std::invalid_argument("bad index");
+    }
+    ifs.seekg(I.size_ + scribbu::ID3V2_HEADER_SIZE, fs::ifstream::cur);
+  }
+
+  id3v2_info I = looking_at_id3v2(ifs, true);
+  if (!I.present_) {
+    throw std::invalid_argument("bad index");
+  }
+
+  if (2 == I.version_) {
+    return std::unique_ptr<scribbu::id3v2_tag>(new id3v2_2_tag(ifs, I));
+  } else if (3 == I.version_) {
+    return std::unique_ptr<scribbu::id3v2_tag>(new id3v2_3_tag(ifs, I));
+  } else if (4 == I.version_) {
+    return std::unique_ptr<scribbu::id3v2_tag>(new id3v2_4_tag(ifs, I));
+  } else {
+    throw id3v2_tag::unknown_version(I.version_);
   }
 
 }

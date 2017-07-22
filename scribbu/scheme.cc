@@ -4,14 +4,20 @@
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
 #include <scribbu/id3v2-utils.hh>
+#include <scribbu/id3v2-edit.hh>
 
 #include <string>
 
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/functional/hash.hpp>
 
 namespace fs = boost::filesystem;
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                              utility code                                 //
+///////////////////////////////////////////////////////////////////////////////
 
 namespace std {
 
@@ -34,6 +40,48 @@ std::size_t std::hash<char*>::operator()(char *p) const
   }
 
   return seed;
+}
+
+scribbu::encoding
+encoding_for_string(const char *p)
+{
+  std::hash<const char*> H;
+  std::size_t H001 = H("ASCII");
+  std::size_t H002 = H("ISO_8859_1");
+  std::size_t H003 = H("ISO_8859_2");
+  std::size_t H004 = H("ISO_8859_3");
+  std::size_t H005 = H("ISO_8859_4");
+  std::size_t H006 = H("ISO_8859_5");
+  std::size_t H007 = H("ISO_8859_7");
+  std::size_t H008 = H("ISO_8859_9");
+  std::size_t H009 = H("ISO_8859_10");
+  std::size_t H000 = H("ISO_8859_13");
+  std::size_t H011 = H("ISO_8859_14");
+  std::size_t H012 = H("ISO_8859_15");
+  std::size_t H013 = H("ISO_8859_16");
+  std::size_t H014 = H("KOI8_R");
+  std::size_t H015 = H("KOI8_U");
+  std::size_t H016 = H("KOI8_RU");
+  std::size_t H017 = H("CP1250");
+  std::size_t H018 = H("CP1251");
+  std::size_t H019 = H("CP1252");
+  std::size_t H020 = H("CP1253");
+  std::size_t H021 = H("CP1254");
+  std::size_t H022 = H("CP1257");
+  std::size_t H023 = H("CP850");
+  std::size_t H024 = H("CP866");
+  std::size_t H025 = H("CP1131");
+  std::size_t H026 = H("MacRoman");
+  std::size_t H027 = H("MacCentralEurope");
+  std::size_t H028 = H("MacIceland");
+  std::size_t H029 = H("MacCroatian");
+  std::size_t H030 = H("MacRomania");
+  std::size_t H031 = H("MacCyrillic");
+  std::size_t H032 = H("MacUkraine");
+  std::size_t H033 = H("MacGreek");
+  std::size_t H034 = H("MacTurkish");
+  std::size_t H035 = H("Macintosh");
+  return scribbu::encoding::ASCII;
 }
 
 
@@ -136,7 +184,6 @@ namespace {
 
 }
 
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //                              Scheme Support                               //
@@ -155,8 +202,9 @@ namespace {
   const char * const GET_PATH         = "scribbu/get-path";
   const char * const HAS_ID3V1_TAG    = "scribbu/has-id3v1-tag";
   const char * const GET_ID3V1_STRING = "scribbu/get-id3v1-string";
-  const char * const NUM_ID3V2_TAGS   = "scribbu/num-id3v2-tags";
+  const char * const NUM_ID3V2_TAGS   = "scribbu/get-id3v2-tag-count";
   const char * const HAS_ID3V2_ATTR   = "scribbu/has-id3v2-attribute";
+  const char * const SET_TEXT_FRAME   = "scribbu/set-text-frame";
   
   SCM kw_src_encoding;
   SCM kw_dst_encoding;
@@ -321,13 +369,81 @@ extern "C" {
 
     std::string s(data, data + len);
     for (fs::recursive_directory_iterator p0(s), p1; p0 != p1; ++p0) {
-      scm_call_1(fcn, track_for_path(*p0));
+      if (!fs::is_directory(*p0)) {
+        scm_call_1(fcn, track_for_path(*p0));
+      }
     }
 
     free(data);
 
     return SCM_EOF_VAL;
   }
+
+  /// Add an ID3v2 text frame to an extant ID3v2 tag
+  SCM
+  set_text_frame(SCM track,
+                 SCM index,
+                 SCM outer_frame_id,
+                 SCM outer_encoding,
+                 SCM text,
+                 SCM outer_replace)
+  {
+    // TODO(sp1ff): Hoist this higher
+    static const bool DEF_REPLACE = false;
+
+    using namespace std;
+    using namespace scribbu;
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                       unpack our parameters                           //
+    ///////////////////////////////////////////////////////////////////////////
+
+    bool replace = DEF_REPLACE;
+    // `replace' is optional-- if the caller didn't specify, it will come in as
+    // `SCM_UNDEFINED'.
+    if (scm_is_bool(outer_replace)) {
+      replace = scm_is_true(outer_replace);
+    }
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+
+    unsigned int idx = scm_to_uint(index);
+
+    // We're about to start unpacking strings-- open a dynamic wind context
+    scm_dynwind_begin((scm_t_dynwind_flags)0);
+
+    char *pframe_id;
+    if (scm_is_symbol(outer_frame_id)) {
+      pframe_id = scm_to_locale_string(scm_symbol_to_string(outer_frame_id));
+    }
+    else {
+      pframe_id = scm_to_locale_string(outer_frame_id);
+    }
+    scm_dynwind_free(pframe_id);
+
+    char *pencoding = scm_to_locale_string(scm_symbol_to_string(outer_encoding));
+    scm_dynwind_free(pencoding);
+
+    char *ptext = scm_to_locale_string(text);
+    scm_dynwind_free(ptext);
+
+    ///////////////////////////////////////////////////////////////////////////
+    //               coerce those parameters to internal types               //
+    ///////////////////////////////////////////////////////////////////////////
+    
+    scribbu::encoding enc = encoding_for_string(pencoding);
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                                 do it                                 //
+    ///////////////////////////////////////////////////////////////////////////
+
+    add_text_frame(ptrack->path(), idx, pframe_id, enc, ptext, replace);
+
+    scm_dynwind_end();
+
+    return SCM_UNDEFINED;
+  }
+  
 
   /// Register all scribbu-defined symbols
   static
@@ -358,6 +474,7 @@ extern "C" {
     scm_c_define_gsubr(GET_ID3V1_STRING, 2, 0, 1, (void*)&get_id3v1_string);
     scm_c_define_gsubr(NUM_ID3V2_TAGS,   1, 0, 0, (void*)&num_id3v2_tags);
     scm_c_define_gsubr(HAS_ID3V2_ATTR,   3, 0, 0, (void*)&has_id3v2_attribute);
+    scm_c_define_gsubr(SET_TEXT_FRAME,   5, 1, 0, (void*)&set_text_frame);
   }
 
   /// Actual initialization routine-- meant to be called from within scm_c_define_module
@@ -377,6 +494,7 @@ extern "C" {
     scm_c_export(GET_ID3V1_STRING, 0);
     scm_c_export(NUM_ID3V2_TAGS,   0);
     scm_c_export(HAS_ID3V2_ATTR,   0);
+    scm_c_export(SET_TEXT_FRAME,   0);
   }
 
   void* 

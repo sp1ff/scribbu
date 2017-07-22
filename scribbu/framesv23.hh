@@ -451,6 +451,54 @@ namespace scribbu {
                          decsz)
     { }
 
+    /**
+     * \brief Construct an arbitrary ID3v2.2 text frame
+     *
+     *
+     * \param id [in] frame identfier; must begin with "T" and not be "TXX"
+     *
+     * \param text [in] an std basic_string containing the text to be encoded
+     * into the text frame
+     *
+     * \param srcenc [in] the character encoding used to represent \a text
+     *
+     * \param ucs2 [in] the caller shall set this to true to encode the text as
+     * UCS2, false to ecnoded it as ISO-8859-1
+     *
+     *
+     */
+
+    template <typename string_type>
+    id3v2_3_text_frame(const frame_id4 &id,
+                       const string_type &text,
+                       encoding srcenc,
+                       bool ucs2,
+                       tag_alter_preservation tap,
+                       file_alter_preservation fap,
+                       read_only ro,
+                       const boost::optional<unsigned char> &encmth,
+                       const boost::optional<unsigned char> &grid,
+                       const boost::optional<std::size_t> &decsz):
+      id3v2_3_text_frame(id, ucs2, convert_encoding(text, srcenc, ucs2 ? encoding::UCS_2LE : 
+                                                    encoding::ISO_8859_1, true),
+                         tap, fap, ro, encmth, grid, decsz)
+    { }
+
+  private:
+    id3v2_3_text_frame(const frame_id4 &id,
+                       bool unicode,
+                       const std::vector<unsigned char> &text,
+                       tag_alter_preservation tap,
+                       file_alter_preservation fap,
+                       read_only ro,
+                       const boost::optional<unsigned char> &encmth,
+                       const boost::optional<unsigned char> &grid,
+                       const boost::optional<std::size_t> &decsz):
+      id3v2_3_frame(id, text.size(), tap, fap, ro, encmth, grid, decsz),
+      unicode_(unicode),
+      text_(text)
+    { }
+
   public:
 
     template <typename forward_output_iterator>

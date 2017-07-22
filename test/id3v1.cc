@@ -1,5 +1,7 @@
 #include <scribbu/id3v1.hh>
 
+#include "unit.hh"
+
 #include <iostream>
 #include <memory>
 
@@ -22,7 +24,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_a )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v1.2.3.tag");
+  const fs::path TEST_DATA(get_data_directory() / "id3v1.2.3.tag");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 
@@ -112,7 +114,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_b )
 
   using std::back_inserter;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v1.2.4.tag");
+  const fs::path TEST_DATA(get_data_directory() / "id3v1.2.4.tag");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 
@@ -182,7 +184,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_c )
 
   using std::back_inserter;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v1-ext.tag");
+  const fs::path TEST_DATA(get_data_directory() / "id3v1-ext.tag");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 
@@ -280,7 +282,7 @@ BOOST_AUTO_TEST_CASE( test_jing_jing_1 )
 {
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/红颜旧.mp3");
+  const fs::path TEST_DATA(get_data_directory() / "红颜旧.mp3");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 
@@ -315,7 +317,7 @@ BOOST_AUTO_TEST_CASE( test_elliot_goldenthal )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/elliot-goldenthal.id3v1.tag");
+  const fs::path TEST_DATA(get_data_directory() / "elliot-goldenthal.id3v1.tag");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
   id3v1_info info = ends_in_id3v1(ifs);
@@ -373,7 +375,7 @@ BOOST_AUTO_TEST_CASE( test_nan_tom_teaimin )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path DATA("/vagrant/test/data/nan-1.mp3");
+  const fs::path DATA(get_data_directory() / "nan-1.mp3");
 
   fs::ifstream ifs(DATA, fs::ifstream::binary);
   id3v1_info info = ends_in_id3v1(ifs);

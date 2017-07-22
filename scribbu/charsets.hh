@@ -2,6 +2,7 @@
 #define CHARSETS_HH_INCLUDED
 #include <locale>
 #include <string>
+#include <vector>
 
 #include <boost/exception/all.hpp>
 
@@ -188,6 +189,28 @@ namespace scribbu {
                                encoding srcenc,
                                encoding dstenc,
                                on_no_encoding rsp = on_no_encoding::fail);
+
+  /**
+   * \brief Convert encodings from std strings to buffers of char
+   *
+   *
+   * \param text [in] source text in the form of an std basic_string
+   *
+   * \param srcenc [in] character encoding in use in \a text
+   *
+   * \param dstenc [in] target encoding
+   *
+   * \return a vector of unsigned char containing \a text encoded as \a dstenc
+   *
+   *
+   */
+
+  template <typename string_type>
+  std::vector<unsigned char> convert_encoding(const string_type &text,
+                                              encoding srcenc,
+                                              encoding dstenc,
+                                              bool add_bom = false,
+                                              on_no_encoding rsp = on_no_encoding::fail);
 
 } // End namespace scribbu.
 

@@ -1,5 +1,7 @@
 #include <scribbu/id3v23.hh>
 
+#include "unit.hh"
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -375,7 +377,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA_V2_3("/vagrant/test/data/id3v2.3.tag");
+  const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
 
   fs::ifstream ifsv2_3(TEST_DATA_V2_3, fs::ifstream::binary);
   id3v2_3_tag tag(ifsv2_3);
@@ -620,9 +622,9 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_FILE_01("/vagrant/test/data/opium.mp3");
-  const fs::path TEST_FILE_02("/vagrant/test/data/u2-promenade.mp3");
-  const fs::path TEST_FILE_03("/vagrant/test/data/forbidden.mp3");
+  const fs::path TEST_FILE_01(get_data_directory() / "opium.mp3");
+  const fs::path TEST_FILE_02(get_data_directory() / "u2-promenade.mp3");
+  const fs::path TEST_FILE_03(get_data_directory() / "forbidden.mp3");
 
   fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
   id3v2_3_tag tag01(ifs01);
@@ -859,8 +861,8 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_FILE_01("/vagrant/test/data/nin-only-time.mp3");
-  const fs::path TEST_FILE_02("/vagrant/test/data/waterfall.mp3");
+  const fs::path TEST_FILE_01(get_data_directory() / "nin-only-time.mp3");
+  const fs::path TEST_FILE_02(get_data_directory() / "waterfall.mp3");
 
   fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
   id3v2_3_tag tag01(ifs01);
@@ -1060,7 +1062,7 @@ BOOST_AUTO_TEST_CASE( test_rock_the_joint )
 {
   using scribbu::id3v2_3_tag;
 
-  const fs::path TEST_FILE("/vagrant/test/data/rock-the-joint.id3v2.3.tag");
+  const fs::path TEST_FILE(get_data_directory() / "rock-the-joint.id3v2.3.tag");
 
   fs::ifstream ifs(TEST_FILE, fs::ifstream::binary);
   id3v2_3_tag tag(ifs);
@@ -1079,7 +1081,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/cerulean.mp3");
+  const fs::path TEST_DATA(get_data_directory() / "cerulean.mp3");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
   id3v2_3_tag tag(ifs);
@@ -1190,9 +1192,9 @@ BOOST_AUTO_TEST_CASE( test_unsync )
   using namespace scribbu;
 
   // Lifted from the taglib test suite
-  static const fs::path DATA1("/vagrant/test/data/unsynch.id3");
+  static const fs::path DATA1(get_data_directory() / "unsynch.id3");
   // Bill LeFaive - Orlando.mp3
-  static const fs::path DATA2("/vagrant/test/data/orlando.mp3");
+  static const fs::path DATA2(get_data_directory() / "orlando.mp3");
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
   id3v2_3_tag tag1(ifs1);
@@ -1294,7 +1296,7 @@ BOOST_AUTO_TEST_CASE( test_compressed )
   using namespace scribbu;
 
   // Lifted from the taglib test suite
-  static const fs::path DATA1("/vagrant/test/data/compressed.mp3");
+  static const fs::path DATA1(get_data_directory() / "compressed.mp3");
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
   id3v2_3_tag tag1(ifs1);

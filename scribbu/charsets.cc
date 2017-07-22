@@ -688,4 +688,101 @@ namespace scribbu {
 
   } // End convert_encoding<string>.
 
+  /// Convert encodings from std strings to buffers of char
+  template <>
+  std::vector<unsigned char> convert_encoding(const std::string &text,
+                                              encoding srcenc,
+                                              encoding dstenc,
+                                              bool add_bom /*= false*/,
+                                              on_no_encoding rsp /*= on_no_encoding::fail*/)
+  {
+    const unsigned char UTF16LE[] = { 0xff, 0xfe };
+    const unsigned char UTF16BE[] = { 0xfe, 0xff };
+    const unsigned char UTF8[]    = { 0xef, 0xbb, 0xbf };
+    const unsigned char UTF32LE[] = { 0xff, 0xfe, 0x00, 0x00 };
+    const unsigned char UTF32BE[] = { 0x00, 0x00, 0xff, 0xfe };
+
+    using namespace std;
+
+    if (!scribbu::char_traits<char>::is_code_unit(srcenc)) {
+      throw bad_code_unit(dstenc, sizeof(char));
+    }
+
+    size_t cbbom = 0;
+    const unsigned char *pbom = nullptr;
+    if (add_bom) {
+      switch (dstenc) {
+      case encoding::UCS_2BE:
+      case encoding::UTF_16BE:
+        cbbom = 2;
+        pbom = UTF16BE;
+        break;
+      case encoding::UCS_2LE: 
+      case encoding::UTF_16LE:
+        cbbom = 2;
+        pbom = UTF16LE;
+        break;
+      case encoding::UTF_8: 
+        cbbom = 3;
+        pbom = UTF8;
+        break;
+      case encoding::UCS_4BE:
+      case encoding::UTF_32BE:
+        cbbom = 4;
+        pbom = UTF32BE;
+        break;
+      case encoding::UCS_4LE:
+      case encoding::UTF_32LE:
+        cbbom = 4;
+        pbom = UTF32LE;
+        break;
+      }
+    }
+
+    detail::iconv_specific::descriptor dsc(srcenc, dstenc, rsp);
+
+    char *inbuf = const_cast<char*>(text.c_str());
+    size_t inbytesleft = text.size();
+    // We can't know a priori how many octets the output buffer will require;
+    // cf.
+    // http://stackoverflow.com/questions/13297458/simple-utf8-utf16-string-conversion-with-iconv
+    std::size_t cbout = cbbom + (text.size() << 2);
+    vector<unsigned char> out(cbout);
+    std::size_t outbytesleft = cbout;
+    char *outbuf = reinterpret_cast<char*>(&(out[cbbom]));
+    size_t status = iconv(dsc, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+    while (~0 == status && E2BIG == errno) {
+      // If the "output buffer has no more room for the next converted
+      // character. In this case it sets errno to E2BIG and returns
+      // (size_t)(−1)." Try again with a bigger buffer :P
+      cbout <<= 2;
+      out.resize(cbout);
+      
+      inbuf = const_cast<char*>(text.c_str());
+      inbytesleft = text.size();
+      outbytesleft = cbout;
+      char *outbuf = reinterpret_cast<char*>(&(out[cbbom]));
+      std::size_t outbytesleft = cbout;
+      status = iconv(dsc, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+    }
+
+    if (~0 == status) {
+      throw iconv_error(errno);
+    }
+
+    // The GNU iconv docs don't say anything about Unicode BOMs. Empirically,
+    // if there's a BOM present in the input text, `iconv' will produce a BOM
+    // in the output text. That won't generally be the case, here. Add the BOM,
+    // if requested & appropriate.
+    if (add_bom && cbbom) {
+      copy(pbom, pbom + cbbom, out.begin());
+    }
+
+    // Finally, trim the buffer to size before returning.
+    cbout -= outbytesleft;
+    out.resize(cbout);
+
+    return out;
+  }
+
 }

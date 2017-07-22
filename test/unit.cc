@@ -1,6 +1,9 @@
 #include <scribbu/scribbu.hh>
 
+#include "unit.hh"
+
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/id3v1.hh>
@@ -8,13 +11,95 @@
 #include <scribbu/id3v2-utils.hh>
 
 namespace fs   = boost::filesystem;
+namespace po   = boost::program_options;
 namespace test = boost::unit_test;
+
+namespace {
+
+  static fs::path source_directory_;
+
+  /**
+   * \brief Initialize the source directory
+   *
+   *
+   * \param pth [in, opt] scribbu test source directory (i.e. .../scribbu/test"
+   *
+   *
+   * This method will initialize the source directory using the following
+   * order:
+   *
+   * 1. \a pth
+   *
+   * 2. the $srcdir environment variable
+   *
+   * 3. if $HOSTNAME == vagrant, set it to /vagrant/test
+   *
+   * 4. the present working directory
+   *
+   *
+   *
+   */
+  
+  void
+  initialize_source_directory(const fs::path &pth)
+  {
+    if (!pth.empty()) {
+      source_directory_ = pth;
+      return;
+    }
+
+    char *p = getenv("srcdir");
+    if (p) {
+      source_directory_ = fs::path(p);
+      return;
+    }
+
+    p = getenv("HOSTNAME");
+    if (p && 0 == strcmp(p, "vagrant")) {
+      source_directory_ = fs::path("/vagrant");
+      return;
+    }
+
+    source_directory_ = fs::current_path();
+    
+  }
+  
+}
+
+fs::path
+get_source_directory()
+{
+  return source_directory_;
+}
+
+fs::path
+get_data_directory()
+{
+  return get_source_directory() / "data";
+}
 
 test::test_suite*
 init_unit_test_suite(int   argc,
                      char *argv[])
 {
   scribbu::static_initialize();
+
+  po::options_description opts("Extra options");
+  opts.add_options()
+    ("srcdir,s", po::value<fs::path>(), "scribbu test source directory");
+
+  po::parsed_options parsed = po::command_line_parser(argc, argv).options(opts).run();
+
+  po::variables_map vm;
+  po::store(parsed, vm);
+
+  fs::path srcdir;
+  if (vm.count("srcdir")) {
+    srcdir = vm["srcdir"].as<fs::path>();
+  }
+
+  initialize_source_directory(srcdir);
+
   return 0;
 }
 
@@ -64,7 +149,7 @@ BOOST_AUTO_TEST_CASE( test_file_processing )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_FILE("/vagrant/test/data/lorca.mp3");
+  const fs::path TEST_FILE(get_data_directory() / "lorca.mp3");
 
   const size_t DIGEST_SIZE = track_data::DIGEST_SIZE;
 

@@ -1,5 +1,7 @@
 #include <scribbu/id3v2-utils.hh>
 
+#include "unit.hh"
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -12,10 +14,10 @@ BOOST_AUTO_TEST_CASE( test_looking_at )
 {
   using namespace scribbu;
 
-  const fs::path TEST_DATA_V1("/vagrant/test/data/id3v1.tag");
-  const fs::path TEST_DATA_V2_2("/vagrant/test/data/id3v2.2.tag");
-  const fs::path TEST_DATA_V2_3("/vagrant/test/data/id3v2.3.tag");
-  const fs::path TEST_DATA_V2_4("/vagrant/test/data/id3v2.4.tag");
+  const fs::path TEST_DATA_V1(get_data_directory() / "id3v1.tag");
+  const fs::path TEST_DATA_V2_2(get_data_directory() / "id3v2.2.tag");
+  const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
+  const fs::path TEST_DATA_V2_4(get_data_directory() / "id3v2.4.tag");
 
   fs::ifstream ifsv1(TEST_DATA_V1, fs::ifstream::binary);
   id3v2_info I = looking_at_id3v2(ifsv1);
@@ -166,7 +168,7 @@ BOOST_AUTO_TEST_CASE( test_jing_jing_2 )
 {
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/红颜旧.mp3");
+  const fs::path TEST_DATA(get_data_directory() / "红颜旧.mp3");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
   id3v2_info I2 = looking_at_id3v2(ifs);

@@ -1,5 +1,7 @@
 #include <scribbu/id3v24.hh>
 
+#include "unit.hh"
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 #include <scribbu/scribbu.hh>
@@ -74,7 +76,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path DATA1("/vagrant/test/data/id3v2.4.tag");
+  const fs::path DATA1(get_data_directory() / "id3v2.4.tag");
 
   fs::ifstream ifsv2_4(DATA1, fs::ifstream::binary);
 

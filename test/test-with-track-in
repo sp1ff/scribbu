@@ -19,7 +19,7 @@ EOF
 ../src/scribbu -f $SCRIPT_FILE > $OUTPUT_FILE
 # This is irritating, but we need to strip out the paths above
 # "data" since we do a dumb diff, below.
-sed -e 's_^".*/data_"data_' $OUTPUT_FILE > with-track-in.log
+sed -e 's_^".*/data_"data_' $OUTPUT_FILE | sort > with-track-in.log
 diff with-track-in.log ${srcdir}/data/with-track-in-golden.log || exit 1
 exit 0
 

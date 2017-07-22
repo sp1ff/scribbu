@@ -1,5 +1,7 @@
 #include <scribbu/scribbu.hh>
 
+#include "unit.hh"
+
 #include <sstream>
 
 #include <boost/filesystem/fstream.hpp>
@@ -15,7 +17,7 @@ namespace fs = boost::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_track_data )
 {
-  const fs::path TEST_DATA("/vagrant/test/data/cerulean.mp3");
+  const fs::path TEST_DATA(get_data_directory() / "cerulean.mp3");
 
   using namespace std;
   using namespace scribbu;
@@ -80,7 +82,7 @@ unknown genre 255
 
 BOOST_AUTO_TEST_CASE( test_track_data2 )
 {
-  const fs::path TEST_DATA("/vagrant/test/data/searchresults.dat");
+  const fs::path TEST_DATA(get_data_directory() / "searchresults.dat");
 
   using namespace std;
   using namespace scribbu;

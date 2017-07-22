@@ -61,17 +61,18 @@ namespace scribbu {
 
   public:
 
-    ///////////////////////////////////////////////////////////////////////////
-    //                           public accessors                            //
-    ///////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    //                          ID3v2 Serialization                            //
+    /////////////////////////////////////////////////////////////////////////////
 
-    bool compression() const {
-      return compression_;
-    }
+    virtual unsigned char flags() const;
+    virtual std::size_t size() const;
+    virtual bool needs_unsynchronisation() const;
+    virtual std::size_t write(std::istream &) const;
 
-    std::size_t padding() const {
-      return padding_;
-    }
+    /////////////////////////////////////////////////////////////////////////////
+    //                    Frames Common to all ID3v2 Tags                      //
+    /////////////////////////////////////////////////////////////////////////////
 
     virtual std::string
     album(encoding dst = encoding::UTF_8,
@@ -160,6 +161,10 @@ namespace scribbu {
       return frame_map_.count("TYE");
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           public accessors                            //
+    ///////////////////////////////////////////////////////////////////////////
+
     std::size_t has_frame(const frame_id3 &id) const {
       return frame_map_.count(id);
     }
@@ -196,47 +201,378 @@ namespace scribbu {
                        });
     }
 
-    class frame_iterator:
-      public boost::iterator_facade<
-        frame_iterator,
-        id3v2_2_frame const,
-        boost::random_access_traversal_tag> {
+    std::size_t num_frames() const {
+      return frames_.size();
+    }
 
+    bool compression() const {
+      return compression_;
+    }
+
+    std::size_t padding() const {
+      return padding_;
+    }
+
+  public:
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                           tag as container                            //
+    ///////////////////////////////////////////////////////////////////////////
+
+    /* TOOD(sp1ff): Clean all this documentation up, one I've gotten this
+     * working & transitioned from the old iterator (above).
+     *
+     *
+     * This is a first step toward moving my ID3v2 tag abstractions away
+     * from being immutable copies of what we read off disk.
+     *
+     *
+     */
+
+    // TODO(sp1ff): Re-factor this
+    typedef
+    std::vector<std::unique_ptr<id3v2_2_frame>>
+    frames_type;
+
+    friend class mutable_frame_proxy;
+
+    /**
+     * \class mutable_frame_proxy
+     *
+     * \brief Proxy for an id3v2_2_frame returned when a mutable frame iterator
+     * is dereferenced
+     *
+     *
+     * TODO(sp1ff): See if this some logic common to this & the const variant
+     * can be factored out.
+     *
+     * TODO(sp1ff): Implement the following:
+     *
+     * - assignment from another mutable_frame_proxy
+     * 
+     * - operator==
+     *
+     * - operator<
+     *
+     * - move semantics?
+     *
+     *
+     */
+    
+    class mutable_frame_proxy
+    {
     public:
 
-      typedef
-      std::vector<std::unique_ptr<id3v2_2_frame>>::const_iterator impl_type;
-
-      explicit frame_iterator(impl_type p): p_(p)
+      mutable_frame_proxy(id3v2_2_tag *p, std::size_t idx): p_(p), idx_(idx)
       { }
 
-    private:
-      friend class boost::iterator_core_access;
+      // mutable_frame_proxy(const mutable_frame_proxy &) = delete;
+      mutable_frame_proxy(const mutable_frame_proxy &&that):
+        p_(that.p_),
+        idx_(that.idx_)
+      { }
+      // mutable_frame_proxy& operator=(const mutable_frame_proxy &) = delete;
+      mutable_frame_proxy& operator=(mutable_frame_proxy &&that);
 
-      void increment() { ++p_; }
+      mutable_frame_proxy& operator=(const id3v2_2_frame &frame);
+      mutable_frame_proxy& operator=(const id3v2_2_text_frame &frame);
+      mutable_frame_proxy& operator=(const CNT &frame);
+      mutable_frame_proxy& operator=(const COM &frame);
+      mutable_frame_proxy& operator=(const POP &frame);
 
-      bool equal(const frame_iterator &other) const {
-        return p_ == other.p_;
+      id3v2_2_frame* operator->() const {
+        return p_->frames_[idx_].get();
+      }
+      
+      operator id3v2_2_frame&() const {
+        return *(p_->frames_[idx_]);
       }
 
-      const id3v2_2_frame& dereference() const {
-        return *(p_->get());
+    private:
+      // TODO(sp1ff): Make this a weak ptr?
+      id3v2_2_tag *p_;
+      std::size_t idx_;
+    };
+
+    friend class frame_iterator_base;
+
+    // TOOD(sp1ff): Document frame_iterator_base
+    // - factored out as much logic as I could
+    // - implemented in terms of a non-const iterator; the const subclass takes
+    // - care of enforcing RO semantics
+    class frame_iterator_base {
+
+    protected:
+
+      typedef id3v2_2_tag::frames_type::iterator impl_type;
+
+    public:
+      /// std iterator category-- all frame iterators are random-access
+      typedef std::random_access_iterator_tag iterator_category;
+      /// result of subtracting two frame iterators
+      typedef std::ptrdiff_t difference_type;
+      /// constructs a "one-past-the-end" iterator
+      frame_iterator_base()
+      { }
+      frame_iterator_base(const impl_type &p0, const impl_type &p): p0_(p0), p_(p)
+      { }
+
+      /// retrieve this iterator's idnex
+      std::size_t index() const
+      { return p_ - p0_; }
+
+      friend difference_type operator-(const frame_iterator_base &lhs,
+                                       const frame_iterator_base &rhs)
+      { return lhs.p_ - rhs.p_; }
+
+      friend bool operator==(const frame_iterator_base &lhs,
+                             const frame_iterator_base &rhs)
+      { return lhs.p_ == rhs.p_; }
+
+      friend bool operator!=(const frame_iterator_base &lhs,
+                             const frame_iterator_base &rhs)
+      { return ! (lhs == rhs); }
+
+      friend bool operator<(const frame_iterator_base &lhs,
+                            const frame_iterator_base &rhs)
+      { return lhs.p_ < rhs.p_; }
+
+    protected:
+      /// increment this iterator by n; return a referene to this iterator
+      frame_iterator_base& incr(std::ptrdiff_t n = 1)
+      { p_ += n; return *this; }
+      /// decrement this iterator by n; return a referene to this iterator
+      frame_iterator_base& decr(std::ptrdiff_t n = 1)
+      { p_ -= n; return *this; }
+
+    protected:
+      impl_type p0_, p_;
+    };
+
+    class mutable_frame_iterator:
+      public frame_iterator_base {
+
+    public:
+      /// The type "pointed to" by this iterator
+      typedef id3v2_2_frame value_type;
+      typedef id3v2_2_frame *pointer;
+      typedef id3v2_2_frame &reference;
+
+      mutable_frame_iterator()
+      { }
+      
+      explicit mutable_frame_iterator(id3v2_2_tag *pown,
+                                      const impl_type &p):
+        frame_iterator_base(pown->frames_.begin(), p), pown_(pown)
+      { }
+
+      mutable_frame_iterator& operator++()
+      { incr(); return *this; }
+
+      mutable_frame_iterator operator++(int)
+      {
+        mutable_frame_iterator tmp(*this);
+        incr();
+        return tmp;
       }
 
+      mutable_frame_iterator& operator--()
+      { decr(); return *this; }
+
+      mutable_frame_iterator operator--(int)
+      {
+        mutable_frame_iterator tmp(*this);
+        decr();
+        return tmp;
+      }
+
+      mutable_frame_iterator& operator+=(difference_type i)
+      { incr(i); return *this; }
+
+      mutable_frame_iterator& operator-=(difference_type i)
+      { decr(i); return *this; }
+
+      mutable_frame_iterator operator+(difference_type i)
+      {
+        mutable_frame_iterator tmp(*this);
+        tmp += i;
+        return tmp;
+      }
+
+      mutable_frame_iterator operator-(difference_type i)
+      {
+        mutable_frame_iterator tmp(*this);
+        tmp -= i;
+        return tmp;
+      }
+
+      mutable_frame_proxy operator*() const
+      { return mutable_frame_proxy(pown_, index()); }
+
+      mutable_frame_proxy operator->() const
+      { return mutable_frame_proxy(pown_, index()); }
+
+      mutable_frame_proxy operator[](difference_type i)
+      { return *(*this + i); }
+
     private:
+      id3v2_2_tag *pown_;
 
-      impl_type p_;
+    };
 
+    class const_frame_iterator:
+      public frame_iterator_base {
+      
+    public:
+      /// The type "pointed to" by this iterator
+      typedef id3v2_2_frame value_type;
+      typedef const id3v2_2_frame *pointer;
+      typedef const id3v2_2_frame &reference;
 
-    }; // End class frame_iterator.
+      const_frame_iterator()
+      { }
+      
+      explicit const_frame_iterator(const impl_type &p0,
+                                    const impl_type &p):
+        frame_iterator_base(p0, p)
+      { }
 
-    frame_iterator begin() const {
-      return frame_iterator(frames_.begin());
+      const_frame_iterator(const mutable_frame_iterator &p): frame_iterator_base(p)
+      { }
+
+      const_frame_iterator& operator++()
+      { incr(); return *this; }
+
+      const_frame_iterator operator++(int)
+      {
+        const_frame_iterator tmp(*this);
+        incr();
+        return tmp;
+      }
+
+      const_frame_iterator& operator--()
+      { decr(); return *this; }
+
+      const_frame_iterator operator--(int)
+      {
+        const_frame_iterator tmp(*this);
+        decr();
+        return tmp;
+      }
+
+      const_frame_iterator& operator+=(difference_type i)
+      { incr(i); return *this; }
+
+      const_frame_iterator& operator-=(difference_type i)
+      { decr(i); return *this; }
+
+      const_frame_iterator operator+(difference_type i)
+      {
+        const_frame_iterator tmp(*this);
+        tmp += i;
+        return tmp;
+      }
+
+      const_frame_iterator operator-(difference_type i)
+      {
+        const_frame_iterator tmp(*this);
+        tmp -= i;
+        return tmp;
+      }
+      reference operator*() const
+      { return *(p_->get()); }
+
+      pointer operator->() const
+      { return p_->get(); }
+
+    };
+
+    mutable_frame_iterator begin() {
+      return mutable_frame_iterator(this, frames_.begin());
+    }
+    mutable_frame_iterator end() {
+      return mutable_frame_iterator(this, frames_.end());
     }
 
-    frame_iterator end() const {
-      return frame_iterator(frames_.end());
+    const_frame_iterator begin() const {
+      return begin_;
     }
+
+    const_frame_iterator end() const {
+      return end_;
+    }
+
+    const_frame_iterator cbegin() const {
+      return begin_;
+    }
+    const_frame_iterator cend() const {
+      return end_;
+    }
+
+    /**
+     * \brief Insert the given value into this tag's list of frames before the
+     * specficied iterator
+     *
+     *
+     * \param p [in] A valid constant frame iterator; \a frame shall be
+     * inserted before the position to which \a p refers
+     *
+     * \param frame [in] A const reference to the new frame; a deep copy will
+     * be performed
+     *
+     * \return An iterator that points to the newly inserted frame
+     *
+     *
+     */
+
+    mutable_frame_iterator
+    insert(const_frame_iterator p, const id3v2_2_frame &frame);
+
+    // TODO(sp1ff): Implement overloads for
+    //   - id3v2_2_frame&&
+    //   - initializer_list<id3v2_2_frame>
+    //   - range (i.e. two iterators)
+
+    mutable_frame_iterator
+    insert(const_frame_iterator p, const id3v2_2_text_frame &frame);
+    mutable_frame_iterator
+    insert(const_frame_iterator p, const CNT &frame);
+    mutable_frame_iterator
+    insert(const_frame_iterator p, const COM &frame);
+    mutable_frame_iterator
+    insert(const_frame_iterator p, const POP &frame);
+
+    void
+    push_back(const id3v2_2_frame &frame);
+    void
+    push_back(const id3v2_2_text_frame &frame);
+    void
+    push_back(const CNT &frame);
+    void
+    push_back(const COM &frame);
+    void
+    push_back(const POP &frame);
+
+    /// Remove the frame at the given position; return a mutable frame iterator
+    /// pointing to the next element (or end())
+    mutable_frame_iterator
+    erase(const_frame_iterator p);
+
+    /// Remove the frames in the range [p0, p1); return a mutable frame
+    /// iterator pointing to the next element (or end())
+    mutable_frame_iterator
+    erase(const_frame_iterator p0, const_frame_iterator p1);
+
+  private:
+
+    /// Remove an arbitrary frame from our ancillary datastructures; on return,
+    /// it will remain in the frame vector
+    void remove_frame_from_lookups(const frame_id3 &id, std::size_t idx);
+    void add_frame_to_lookups(const id3v2_2_frame &frame, std::size_t idx);
+    void add_frame_to_lookups(const id3v2_2_text_frame &frame, std::size_t idx);
+    void add_frame_to_lookups(const CNT &frame, std::size_t idx);
+    void add_frame_to_lookups(const COM &frame, std::size_t idx);
+    void add_frame_to_lookups(const POP &frame, std::size_t idx);
 
   public:
 
@@ -397,10 +733,7 @@ namespace scribbu {
     std::vector<std::pair<const POP*, std::size_t>>
     pop_frame_lookup_type;
 
-    typedef
-    std::vector<std::unique_ptr<id3v2_2_frame>>
-    frames_type;
-
+    std::size_t size_;
     /// lookup table mapping frame identifier to text frame parser
     text_parser_map_type text_parsers_;
     /// lookup table mapping frame identifier to generic frame parser
@@ -425,6 +758,7 @@ namespace scribbu {
     /// index: frame id to text frame (spec guarantees only one per id)
     text_frame_lookup_type text_map_;
 
+    mutable_frame_iterator begin_, end_;
   };
 
   static id3v2_2_tag::static_initializer id3v2_2_tag_static_initializer_;

@@ -339,6 +339,15 @@ namespace scribbu {
 
   public:
 
+    // ID3v2.4 text frames can be encoded in one of four ways (see above); on
+    // read, I represent the encoding as a single byte, but on write I
+    // would like to restrict the callers's choices a bit more
+    enum class frame_encoding {
+      ISO_8859_1, UTF_16_BOM, UTF_16_BE, UTF_8
+    };
+
+  public:
+    // frame_id4
     template <typename forward_input_iterator>
     id3v2_4_text_frame(const frame_id4 &id,
                        forward_input_iterator p0,
@@ -357,6 +366,7 @@ namespace scribbu {
       unicode_ = *p0++;
       std::copy(p0, p1, std::back_inserter(text_));
     }
+    // char[4]
     template <typename forward_input_iterator>
     id3v2_4_text_frame(const char id[4],
                        forward_input_iterator p0,
@@ -372,6 +382,7 @@ namespace scribbu {
       id3v2_4_text_frame(frame_id4(id), p0, p1, tap, fap, read_only,
                          enc, gid, compressed, unsynchronised, dli)
     { }
+    // four cahrs
     template <typename forward_input_iterator>
     id3v2_4_text_frame(unsigned char id0,
                        unsigned char id1,
@@ -392,6 +403,43 @@ namespace scribbu {
                          compressed, unsynchronised, dli)
     { }
 
+    template <typename string_type>
+    id3v2_4_text_frame(const frame_id4 &id,
+                       const string_type &text,
+                       encoding srcenc,
+                       frame_encoding dstenc,
+                       tag_alter_preservation tap,
+                       file_alter_preservation fap,
+                       read_only ro,
+                       const boost::optional<unsigned char> &enc,
+                       const boost::optional<unsigned char> &gid,
+                       bool cmp,
+                       bool unsync,
+                       const boost::optional<std::size_t> &dli):
+      id3v2_4_text_frame(id, dstenc,
+                         convert_encoding(text, srcenc, encshim(dstenc), true),
+                         tap, fap, ro, enc, gid, cmp, unsync, dli)
+    { }
+
+  private:
+    static encoding encshim(frame_encoding x);
+    static unsigned char encshim2(frame_encoding x);
+    id3v2_4_text_frame(const frame_id4 &id,
+                       frame_encoding dstenc,
+                       const std::vector<unsigned char> &text,
+                       tag_alter_preservation tap,
+                       file_alter_preservation fap,
+                       read_only ro,
+                       const boost::optional<unsigned char> &enc,
+                       const boost::optional<unsigned char> &gid,
+                       bool cmp,
+                       bool unsync,
+                       const boost::optional<std::size_t> &dli):
+      id3v2_4_frame(id, text.size(), tap, fap, ro, enc, gid, cmp, unsync, dli),
+      unicode_(encshim2(dstenc)),
+      text_(text)
+    { }
+
   public:
 
     unsigned char unicode() const {
@@ -403,7 +451,6 @@ namespace scribbu {
       return std::copy(text_.begin(), text_.end(), p);
     }
 
-    typedef scribbu::encoding encoding;
     typedef scribbu::on_no_encoding on_no_encoding;
 
     /**

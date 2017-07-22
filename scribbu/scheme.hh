@@ -2,7 +2,10 @@
 #define SCHEME_HH
 #include <libguile.h>
 
-// TODO(sp1ff): This is all experimental...
+// TODO(sp1ff): This is my first attempt at integrating Guile into scribbu. I'm
+// writing provisionally; I may delete this & re-write. I may factor out Guile
+// support into a separate library.
+
 extern "C" {
 
   /**

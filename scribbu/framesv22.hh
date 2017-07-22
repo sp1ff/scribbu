@@ -71,6 +71,9 @@ namespace scribbu {
       return id_;
     }
 
+    /// Perform a deep copy
+    virtual id3v2_2_frame* clone() const = 0;
+
     /**
      * \brief Convert ID3v2.2 encoded text to an arbitrary encoding
      *
@@ -162,6 +165,10 @@ namespace scribbu {
 
   public:
 
+    virtual id3v2_2_frame* clone() const
+    { return new unknown_id3v2_2_frame(*this); }
+
+
     /// Retrieve this frames payload, exclusive of identifier & size
     template <typename forward_output_iterator>
     forward_output_iterator data(forward_output_iterator p) const {
@@ -197,6 +204,9 @@ namespace scribbu {
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+    virtual id3v2_2_frame* clone() const
+    { return new UFI(*this); }
 
   }; // End class UFI.
 
@@ -270,7 +280,45 @@ namespace scribbu {
       id3v2_2_text_frame(frame_id3(id), p0, p1)
     { }
 
+    /**
+     * \brief Construct an arbitrary ID3v2.2 text frame
+     *
+     *
+     * \param id [in] frame identfier; must begin with "T" and not be "TXX"
+     *
+     * \param text [in] an std basic_string containing the text to be encoded
+     * into the text frame
+     *
+     * \param srcenc [in] the character encoding used to represent \a text
+     *
+     * \param ucs2 [in] the caller shall set this to true to encode the text as
+     * UCS2, false to ecnoded it as ISO-8859-1
+     *
+     *
+     */
+
+    template <typename string_type>
+    id3v2_2_text_frame(const frame_id3 &id,
+                       const string_type &text,
+                       encoding srcenc,
+                       bool ucs2) :
+      id3v2_2_text_frame(id, ucs2, convert_encoding(text, srcenc, ucs2 ? encoding::UCS_2LE : 
+                                                    encoding::ISO_8859_1, true))
+    { }
+
+  private:
+    id3v2_2_text_frame(const frame_id3 &id,
+                       bool unicode,
+                       const std::vector<unsigned char> &text):
+      id3v2_2_frame(id, text.size()),
+      unicode_(unicode),
+      text_(text)
+    { }
+
   public:
+
+    virtual id3v2_2_frame* clone() const
+    { return new id3v2_2_text_frame(*this); }
 
     /// Retrieve the raw textual data
     template <typename forward_output_iterator>
@@ -398,6 +446,9 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+    virtual id3v2_2_frame* clone() const
+    { return new TXX(*this); }
+
   }; // End class TXX.
 
   /// Comments
@@ -440,6 +491,9 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+    virtual id3v2_2_frame* clone() const
+    { return new COM(*this); }
+
   };
 
   /// play count
@@ -459,6 +513,9 @@ namespace scribbu {
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+    virtual id3v2_2_frame* clone() const
+    { return new CNT(*this); }
 
   };
 
@@ -487,6 +544,9 @@ namespace scribbu {
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+    virtual id3v2_2_frame* clone() const
+    { return new POP(*this); }
 
   }; // End class POP.
 

@@ -1,4 +1,4 @@
 alias dp='dirs -v'
 alias h=history
 alias pd=pushd
-# alias remake="cd ~/build && make distclean && cd /vagrant && autoreconf -vfi && cd ~/build && /vagrant/configure CXXFLAGS='-g -O0' && make check"
+alias rebuild="cd ~/build && make distclean && cd /vagrant && ./autogen.sh && cd ~/build && /vagrant/configure CXXFLAGS='-g -O0' && make check"

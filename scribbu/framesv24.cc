@@ -57,6 +57,42 @@ namespace scribbu {
 }
 
 /*static*/
+scribbu::encoding
+scribbu::id3v2_4_text_frame::encshim(frame_encoding x)
+{
+  if (frame_encoding::ISO_8859_1 == x) {
+    return scribbu::encoding::ISO_8859_8;
+  }
+  else if (frame_encoding::UTF_16_BOM == x) {
+    return scribbu::encoding::UTF_16;
+  }
+  else if (frame_encoding::UTF_16_BE == x) {
+    return scribbu::encoding::UTF_16BE;
+  }
+  else {
+    return scribbu::encoding::UTF_8;
+  }
+}
+
+/*static*/
+unsigned char
+scribbu::id3v2_4_text_frame::encshim2(frame_encoding x)
+{
+  if (frame_encoding::ISO_8859_1 == x) {
+    return 0;
+  }
+  else if (frame_encoding::UTF_16_BOM == x) {
+    return 1;
+  }
+  else if (frame_encoding::UTF_16_BE == x) {
+    return 2;
+  }
+  else {
+    return 3;
+  }
+}
+
+/*static*/
 std::unique_ptr<scribbu::id3v2_4_text_frame>
 scribbu::id3v2_4_text_frame::create(const frame_id4 &id,
                                     const unsigned char *p,

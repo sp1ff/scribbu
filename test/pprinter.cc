@@ -1,5 +1,7 @@
 #include <scribbu/pprinter.hh>
 
+#include "unit.hh"
+
 #include <sstream>
 
 #include <boost/filesystem/fstream.hpp>
@@ -18,7 +20,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v1 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA_V1("/vagrant/test/data/id3v1.tag");
+  const fs::path TEST_DATA_V1(get_data_directory() / "id3v1.tag");
 
   const string GOLDEN(R"(ID3v1.1: The Pogues - Lorca's Novena
 Hell's Ditch [Expanded] (US Ve (track 5), 1990
@@ -44,7 +46,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_2 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v2.2.tag");
+  const fs::path TEST_DATA(get_data_directory() / "id3v2.2.tag");
 
   const string GOLDEN(R"(ID3v2.2(.0) Tag:
 2192 bytes, synchronised
@@ -84,7 +86,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_3 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v2.3.tag");
+  const fs::path TEST_DATA(get_data_directory() / "id3v2.3.tag");
 
   const string GOLDEN(R"(ID3v2.3(.0) Tag:
 452951 bytes, synchronised
@@ -121,7 +123,7 @@ frame PRIV (1122 bytes)
 
   BOOST_CHECK(GOLDEN == text);
 
-  const fs::path TEST_DATA2("/vagrant/test/data/cerulean.mp3");
+  const fs::path TEST_DATA2(get_data_directory() / "cerulean.mp3");
 
   fs::ifstream ifs2(TEST_DATA2, fs::fstream::binary);
   id3v2_3_tag tag2(ifs2);
@@ -138,7 +140,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_4 )
   using namespace std;
   using namespace scribbu;
 
-  const fs::path TEST_DATA("/vagrant/test/data/id3v2.4.tag");
+  const fs::path TEST_DATA(get_data_directory() / "id3v2.4.tag");
 
   const string GOLDEN(R"(ID3v2.4(.0) Tag:
 1091 bytes, synchronised
