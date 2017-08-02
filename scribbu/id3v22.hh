@@ -66,9 +66,9 @@ namespace scribbu {
     /////////////////////////////////////////////////////////////////////////////
 
     virtual unsigned char flags() const;
-    virtual std::size_t size() const;
+    virtual std::size_t size(bool unsync = true) const; 
     virtual bool needs_unsynchronisation() const;
-    virtual std::size_t write(std::istream &) const;
+    virtual std::size_t write(std::ostream &os, bool unsync = true) const;
 
     /////////////////////////////////////////////////////////////////////////////
     //                    Frames Common to all ID3v2 Tags                      //
@@ -161,6 +161,55 @@ namespace scribbu {
       return frame_map_.count("TYE");
     }
 
+    virtual void
+    album(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TAL", text, src, add_bom, rsp); }
+    virtual void
+    artist(const std::string &text,
+           encoding src = encoding::UTF_8,
+          bool add_bom = false,
+           on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TP1", text, src, add_bom, rsp); }
+    virtual void
+    content_type(const std::string &text,
+                 encoding src = encoding::UTF_8,
+                 bool add_bom = false,
+                 on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TCO", text, src, add_bom, rsp); }
+    virtual void
+    encoded_by(const std::string &text,
+               encoding src = encoding::UTF_8,
+               bool add_bom = false,
+               on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TEN", text, src, add_bom, rsp); }
+    virtual void
+    languages(const std::string &text,
+              encoding src = encoding::UTF_8,
+              bool add_bom = false,
+              on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TLA", text, src, add_bom, rsp); }
+    virtual void
+    title(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TT2", text, src, add_bom, rsp); }
+    virtual void
+    track(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TRK", text, src, add_bom, rsp); }
+    virtual void
+    year(const std::string &text,
+         encoding src = encoding::UTF_8,
+         bool add_bom = false,
+         on_no_encoding rsp = on_no_encoding::fail)
+    { set_text_frame("TYE", text, src, add_bom, rsp); }
+
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////
@@ -213,28 +262,43 @@ namespace scribbu {
       return padding_;
     }
 
-  public:
+    void padding(std::size_t padding) {
+      padding_ = padding;
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     //                           tag as container                            //
     ///////////////////////////////////////////////////////////////////////////
 
-    /* TOOD(sp1ff): Clean all this documentation up, one I've gotten this
-     * working & transitioned from the old iterator (above).
-     *
-     *
-     * This is a first step toward moving my ID3v2 tag abstractions away
-     * from being immutable copies of what we read off disk.
-     *
-     *
-     */
+  private:
 
-    // TODO(sp1ff): Re-factor this
     typedef
     std::vector<std::unique_ptr<id3v2_2_frame>>
     frames_type;
 
     friend class mutable_frame_proxy;
+
+  public:
+
+    /***
+     * TOOD(sp1ff): Clean all this documentation up.
+     *
+     * 
+     * I originally conceived of & implemented these tags & frames as immutable
+     * copies of whatever was read off disk on construction. As the project
+     * developed, it became clear that this was not going to be sufficient and
+     * that the library would need to provide some way of editing frames, as
+     * well.
+     *
+     * This is a first step toward moving my ID3v2 tag abstractions away from
+     * being immutable copies of what we read off disk & providing mutability.
+     * I've tried to make this tag behave like a standard-compliant container
+     * for frames... except that the frames are polymorphic. There are also a
+     * lot of ancillary datastructures that need to be updated when the
+     * collection of frames changes.
+     *
+     *
+     */
 
     /**
      * \class mutable_frame_proxy
@@ -242,9 +306,6 @@ namespace scribbu {
      * \brief Proxy for an id3v2_2_frame returned when a mutable frame iterator
      * is dereferenced
      *
-     *
-     * TODO(sp1ff): See if this some logic common to this & the const variant
-     * can be factored out.
      *
      * TODO(sp1ff): Implement the following:
      *
@@ -256,40 +317,47 @@ namespace scribbu {
      *
      * - move semantics?
      *
+     * TODO(sp1ff): Re-implement the id3v2_2_frame methods, so I can write
+     * expressions like iterator[i].id()...
+     *
      *
      */
     
     class mutable_frame_proxy
     {
     public:
-
+      /// Construct with the owning tag & index
       mutable_frame_proxy(id3v2_2_tag *p, std::size_t idx): p_(p), idx_(idx)
       { }
-
-      // mutable_frame_proxy(const mutable_frame_proxy &) = delete;
+      // Deleted until neded
+      mutable_frame_proxy(const mutable_frame_proxy &) = delete;
+      /// Used when we dereference mutable_frame_iterators (i.e. operator*, ->, [])
       mutable_frame_proxy(const mutable_frame_proxy &&that):
-        p_(that.p_),
-        idx_(that.idx_)
+        p_(that.p_), idx_(that.idx_)
       { }
-      // mutable_frame_proxy& operator=(const mutable_frame_proxy &) = delete;
+      // Deleted until needed
+      mutable_frame_proxy& operator=(const mutable_frame_proxy &) = delete;
+      // Used when algorithms move assign one iterator to another (remove, remove_if)
       mutable_frame_proxy& operator=(mutable_frame_proxy &&that);
 
+      // We overload assignment to keep the tag's ancillary datastructures up-to-date
       mutable_frame_proxy& operator=(const id3v2_2_frame &frame);
       mutable_frame_proxy& operator=(const id3v2_2_text_frame &frame);
       mutable_frame_proxy& operator=(const CNT &frame);
       mutable_frame_proxy& operator=(const COM &frame);
       mutable_frame_proxy& operator=(const POP &frame);
 
+      // This is needed to enable expressions like p->something when p is a
+      // mutable_iterator
       id3v2_2_frame* operator->() const {
         return p_->frames_[idx_].get();
       }
-      
+      // Needed to enable expressions like (*p).something...
       operator id3v2_2_frame&() const {
         return *(p_->frames_[idx_]);
       }
 
     private:
-      // TODO(sp1ff): Make this a weak ptr?
       id3v2_2_tag *p_;
       std::size_t idx_;
     };
@@ -315,6 +383,8 @@ namespace scribbu {
       frame_iterator_base()
       { }
       frame_iterator_base(const impl_type &p0, const impl_type &p): p0_(p0), p_(p)
+      { }
+      virtual ~frame_iterator_base()
       { }
 
       /// retrieve this iterator's idnex
@@ -420,7 +490,7 @@ namespace scribbu {
 
     };
 
-    class const_frame_iterator:
+    class const_iterator:
       public frame_iterator_base {
       
     public:
@@ -429,53 +499,53 @@ namespace scribbu {
       typedef const id3v2_2_frame *pointer;
       typedef const id3v2_2_frame &reference;
 
-      const_frame_iterator()
+      const_iterator()
       { }
       
-      explicit const_frame_iterator(const impl_type &p0,
+      explicit const_iterator(const impl_type &p0,
                                     const impl_type &p):
         frame_iterator_base(p0, p)
       { }
 
-      const_frame_iterator(const mutable_frame_iterator &p): frame_iterator_base(p)
+      const_iterator(const mutable_frame_iterator &p): frame_iterator_base(p)
       { }
 
-      const_frame_iterator& operator++()
+      const_iterator& operator++()
       { incr(); return *this; }
 
-      const_frame_iterator operator++(int)
+      const_iterator operator++(int)
       {
-        const_frame_iterator tmp(*this);
+        const_iterator tmp(*this);
         incr();
         return tmp;
       }
 
-      const_frame_iterator& operator--()
+      const_iterator& operator--()
       { decr(); return *this; }
 
-      const_frame_iterator operator--(int)
+      const_iterator operator--(int)
       {
-        const_frame_iterator tmp(*this);
+        const_iterator tmp(*this);
         decr();
         return tmp;
       }
 
-      const_frame_iterator& operator+=(difference_type i)
+      const_iterator& operator+=(difference_type i)
       { incr(i); return *this; }
 
-      const_frame_iterator& operator-=(difference_type i)
+      const_iterator& operator-=(difference_type i)
       { decr(i); return *this; }
 
-      const_frame_iterator operator+(difference_type i)
+      const_iterator operator+(difference_type i)
       {
-        const_frame_iterator tmp(*this);
+        const_iterator tmp(*this);
         tmp += i;
         return tmp;
       }
 
-      const_frame_iterator operator-(difference_type i)
+      const_iterator operator-(difference_type i)
       {
-        const_frame_iterator tmp(*this);
+        const_iterator tmp(*this);
         tmp -= i;
         return tmp;
       }
@@ -494,19 +564,23 @@ namespace scribbu {
       return mutable_frame_iterator(this, frames_.end());
     }
 
-    const_frame_iterator begin() const {
-      return begin_;
+    const_iterator begin() const {
+      id3v2_2_tag &me = const_cast<id3v2_2_tag&>(*this);
+      return mutable_frame_iterator(&me, me.frames_.begin());
     }
 
-    const_frame_iterator end() const {
-      return end_;
+    const_iterator end() const {
+      id3v2_2_tag &me = const_cast<id3v2_2_tag&>(*this);
+      return mutable_frame_iterator(&me, me.frames_.end());
     }
 
-    const_frame_iterator cbegin() const {
-      return begin_;
+    const_iterator cbegin() const {
+      id3v2_2_tag &me = const_cast<id3v2_2_tag&>(*this);
+      return mutable_frame_iterator(&me, me.frames_.begin());
     }
-    const_frame_iterator cend() const {
-      return end_;
+    const_iterator cend() const {
+      id3v2_2_tag &me = const_cast<id3v2_2_tag&>(*this);
+      return mutable_frame_iterator(&me, me.frames_.end());
     }
 
     /**
@@ -526,7 +600,7 @@ namespace scribbu {
      */
 
     mutable_frame_iterator
-    insert(const_frame_iterator p, const id3v2_2_frame &frame);
+    insert(const_iterator p, const id3v2_2_frame &frame);
 
     // TODO(sp1ff): Implement overloads for
     //   - id3v2_2_frame&&
@@ -534,13 +608,13 @@ namespace scribbu {
     //   - range (i.e. two iterators)
 
     mutable_frame_iterator
-    insert(const_frame_iterator p, const id3v2_2_text_frame &frame);
+    insert(const_iterator p, const id3v2_2_text_frame &frame);
     mutable_frame_iterator
-    insert(const_frame_iterator p, const CNT &frame);
+    insert(const_iterator p, const CNT &frame);
     mutable_frame_iterator
-    insert(const_frame_iterator p, const COM &frame);
+    insert(const_iterator p, const COM &frame);
     mutable_frame_iterator
-    insert(const_frame_iterator p, const POP &frame);
+    insert(const_iterator p, const POP &frame);
 
     void
     push_back(const id3v2_2_frame &frame);
@@ -556,12 +630,15 @@ namespace scribbu {
     /// Remove the frame at the given position; return a mutable frame iterator
     /// pointing to the next element (or end())
     mutable_frame_iterator
-    erase(const_frame_iterator p);
+    erase(const_iterator p);
 
     /// Remove the frames in the range [p0, p1); return a mutable frame
     /// iterator pointing to the next element (or end())
     mutable_frame_iterator
-    erase(const_frame_iterator p0, const_frame_iterator p1);
+    erase(const_iterator p0, const_iterator p1);
+
+    /// Write an ID3v2.2 header
+    std::ostream& write_header(std::ostream &os, unsigned char flags, std::size_t cb) const;
 
   private:
 
@@ -569,10 +646,10 @@ namespace scribbu {
     /// it will remain in the frame vector
     void remove_frame_from_lookups(const frame_id3 &id, std::size_t idx);
     void add_frame_to_lookups(const id3v2_2_frame &frame, std::size_t idx);
-    void add_frame_to_lookups(const id3v2_2_text_frame &frame, std::size_t idx);
-    void add_frame_to_lookups(const CNT &frame, std::size_t idx);
-    void add_frame_to_lookups(const COM &frame, std::size_t idx);
-    void add_frame_to_lookups(const POP &frame, std::size_t idx);
+    void add_frame_to_lookups(id3v2_2_text_frame &frame, std::size_t idx);
+    void add_frame_to_lookups(CNT &frame, std::size_t idx);
+    void add_frame_to_lookups(COM &frame, std::size_t idx);
+    void add_frame_to_lookups(POP &frame, std::size_t idx);
 
   public:
 
@@ -686,7 +763,7 @@ namespace scribbu {
 
     /// Parse an ID3v2.2 tag after the standard ten-byte header from an input
     /// stream
-    void parse(std::istream &is);
+    void parse(std::istream &is, std::size_t size);
 
     /// Parse the frame with identifier {id0,id1,id2} from [p0,p1)
     void
@@ -702,6 +779,13 @@ namespace scribbu {
       encoding dst = encoding::UTF_8,
       on_no_encoding rsp = on_no_encoding::fail,
       const boost::optional<encoding> &src = boost::none) const;
+    /// Replace a text frame if it exists, append it otherwise
+    void set_text_frame(
+      const frame_id3 &id,
+      const std::string &text,
+      encoding src = encoding::UTF_8,
+      bool add_bom = false,
+      on_no_encoding rsp = on_no_encoding::fail);
 
   private:
 
@@ -718,22 +802,22 @@ namespace scribbu {
     frame_lookup_type;
 
     typedef
-    std::unordered_multimap<frame_id3, const id3v2_2_text_frame*>
+    // std::unordered_multimap<frame_id3, const id3v2_2_text_frame*>
+    std::unordered_multimap<frame_id3, id3v2_2_text_frame*>
     text_frame_lookup_type;
 
     typedef
-    std::vector<std::pair<const COM*, std::size_t>>
+    std::vector<std::pair<COM*, std::size_t>>
     com_frame_lookup_type;
 
     typedef
-    std::vector<std::pair<const CNT*, std::size_t>>
+    std::vector<std::pair<CNT*, std::size_t>>
     cnt_frame_lookup_type;
 
     typedef
-    std::vector<std::pair<const POP*, std::size_t>>
+    std::vector<std::pair<POP*, std::size_t>>
     pop_frame_lookup_type;
 
-    std::size_t size_;
     /// lookup table mapping frame identifier to text frame parser
     text_parser_map_type text_parsers_;
     /// lookup table mapping frame identifier to generic frame parser
@@ -758,7 +842,6 @@ namespace scribbu {
     /// index: frame id to text frame (spec guarantees only one per id)
     text_frame_lookup_type text_map_;
 
-    mutable_frame_iterator begin_, end_;
   };
 
   static id3v2_2_tag::static_initializer id3v2_2_tag_static_initializer_;

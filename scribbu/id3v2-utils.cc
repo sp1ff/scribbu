@@ -7,6 +7,8 @@
 
 #include <numeric>
 
+#include <boost/filesystem/fstream.hpp>
+
 namespace fs = boost::filesystem;
 
 

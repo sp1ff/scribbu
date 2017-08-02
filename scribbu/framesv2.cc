@@ -3,6 +3,11 @@
 #include <iconv.h>
 #include <boost/functional/hash.hpp>
 
+
+bool scribbu::detail::is_false_sync(unsigned char x, unsigned char y) {
+  return 255 == x && 233 < y;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                              class frame_id3                              //
@@ -99,6 +104,243 @@ std::size_t std::hash<scribbu::frame_id4>::operator()(const scribbu::frame_id4 &
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//                           class unique_file_id                            //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::unique_file_id::serialized_size(bool unsync) const
+{
+  std::size_t cb = owner_.size() + 1 + id_.size(); // Need to add the trailing NULL
+  if (unsync) {
+    cb += count_ffs();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::unique_file_id::needs_unsynchronisation() const
+{
+  using namespace std;
+  using namespace scribbu::detail;
+  size_t count = count_false_syncs(owner_.begin(), owner_.end());
+  if (!owner_.empty() && !id_.empty() && is_false_sync(owner_.back(), id_.front())) {
+    ++count;
+  }
+  count += count_false_syncs(id_.begin(), id_.end());
+  return count;
+}
+
+std::size_t
+scribbu::unique_file_id::write(std::ostream &os, bool unsync) const
+{
+  const char zed = 0;
+
+  std::size_t cb_ffs = count_ffs();
+  if (unsync && cb_ffs) {
+    std::size_t cb = 0 ;
+    cb += detail::unsynchronise(os, owner_.begin(), owner_.end());
+    os.write(&zed, 1); cb += 1;
+    cb += detail::unsynchronise(os, id_.begin(), id_.end());
+    return cb;
+  }
+  else {
+    os.write((const char*)&(owner_[0]), owner_.size());
+    os.write(&zed, 1);
+    os.write((const char*)&(id_[0]), id_.size());
+    return owner_.size() + 1 + id_.size();
+  }
+}
+
+std::size_t
+scribbu::unique_file_id::count_ffs() const
+{
+  return detail::count_ffs(owner_.begin(), owner_.end()) + 
+    detail::count_ffs(id_.begin(), id_.end());
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                          class user_defined_text                          //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::user_defined_text::serialized_size(bool unsync) const
+{
+  std::size_t cb = 1 + description_.size() + cbnil_ + text_.size();
+  if (unsync) {
+    cb += count_ffs();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::user_defined_text::needs_unsynchronisation() const
+{
+  using namespace std;
+  using namespace scribbu::detail;
+
+  size_t count = 0;
+  if (description_.size() && is_false_sync(unicode_, description_.front())) {
+    ++count;
+  }
+  count += count_false_syncs(description_.begin(), description_.end());
+  if (description_.size() &&
+      text_.size() &&
+      is_false_sync(description_.back(), text_.front())) {
+    ++count;
+  }
+  count += count_false_syncs(text_.begin(), text_.end());
+  
+}
+
+std::size_t
+scribbu::user_defined_text::write(std::ostream &os, bool unsync) const
+{
+  const char zed = 0;
+  const char uzed[2] = { 0, 0 };
+
+  std::size_t cb = 0;
+  std::size_t cb_ffs = count_ffs();
+  if (unsync && cb_ffs) {
+    if (255 == unicode_) {
+      unsigned char buf[2] = { unicode_, 0 };
+      os.write((char*)buf, 2);
+      cb += 2;
+    }
+    else {
+      os.write((const char*)&unicode_, 1);
+      cb += 1;
+      cb += detail::unsynchronise(os, description_.begin(), description_.end());
+    }
+    if (2 == cbnil_) {
+      os.write(uzed, 2);
+      cb += 2;
+    }
+    else {
+      os.write(&zed, 1);
+      cb += 1;
+    }
+    cb += detail::unsynchronise(os, text_.begin(), text_.end());
+  }
+  else {
+    os.write((const char*)&unicode_, 1);
+    cb += 1;
+    os.write((const char*)&(description_[0]), description_.size());
+    cb += description_.size();
+    if (2 == cbnil_) {
+      os.write(uzed, 2);
+      cb += 2;
+    }
+    else {
+      os.write(&zed, 1);
+      cb += 1;
+    }
+    os.write((const char*)&(text_[0]), text_.size());
+    cb += text_.size();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::user_defined_text::count_ffs() const
+{
+  std::size_t cb = 0;
+  if (255 == unicode_) {
+    ++cb;
+  }
+  cb += detail::count_ffs(description_.begin(), description_.end());
+  cb += detail::count_ffs(text_.begin(), text_.end());
+  return cb;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class comments                               //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::comments::serialized_size(bool unsync) const
+{
+  std::size_t cb = 4 + description_.size() + cbnil_ + text_.size();
+  if (unsync) {
+    cb += count_ffs();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::comments::needs_unsynchronisation() const
+{
+  using namespace std;
+  using namespace scribbu::detail;
+  size_t count = is_false_sync(unicode_, lang_[0]) ? 1 : 0;
+  count += count_false_syncs(lang_, lang_ + 3);
+  if (description_.size() && is_false_sync(lang_[2], description_.front())) {
+    ++count;
+  }
+  count += count_false_syncs(description_.begin(), description_.end());
+  if (description_.size() &&
+      text_.size() &&
+      is_false_sync(description_.back(), text_.front())) {
+    ++count;
+  }
+  count += count_false_syncs(text_.begin(), text_.end());
+  return count; 
+}
+
+std::size_t
+scribbu::comments::write(std::ostream &os, bool unsync) const
+{
+  const char zed[2] = { 0, 0 };
+
+  std::size_t cb = 0;
+  std::size_t cb_ffs = count_ffs();
+  if (unsync && cb_ffs) {
+    if (255 == unicode_) {
+      unsigned char buf[2] = { unicode_, 0 };
+      os.write((const char*)buf, 2);
+      cb += 2;
+    }
+    else {
+      os.write((const char*)&unicode_, 1);
+      cb += 1;
+    }
+    cb += detail::unsynchronise(os, lang_, lang_ + 3);
+    cb += detail::unsynchronise(os, description_.begin(), description_.end());
+    os.write(zed, cbnil_);
+    cb += cbnil_;
+    cb += detail::unsynchronise(os, text_.begin(), text_.end());
+  }
+  else {
+    os.write((const char*)&unicode_, 1);
+    cb += 1;
+    os.write((const char*)lang_, 3);
+    cb += 3;
+    os.write((const char*)&(description_[0]), description_.size());
+    cb += description_.size();
+    os.write(zed, cbnil_);
+    cb += cbnil_;
+    os.write((const char*)&(text_[0]), text_.size());
+    cb += text_.size();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::comments::count_ffs() const
+{
+  std::size_t cb = 0;
+  if (255 == unicode_) {
+    ++cb;
+  }
+  cb += detail::count_ffs(lang_, lang_ + 3);
+  cb += detail::count_ffs(description_.begin(), description_.end());
+  cb += detail::count_ffs(text_.begin(), text_.end());
+  return cb;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 //                             class play_count                              //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -121,4 +363,110 @@ scribbu::play_count::count() const
   else if (4 < counter_.size()) {
     throw std::domain_error("CNT overflow");
   }
+}
+
+std::size_t
+scribbu::play_count::serialized_size(bool unsync) const
+{
+  std::size_t cb = counter_.size();
+  if (unsync) {
+    cb += count_ffs();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::play_count::needs_unsynchronisation() const
+{
+  return scribbu::detail::count_false_syncs(counter_.begin(), counter_.end());
+}
+
+std::size_t
+scribbu::play_count::write(std::ostream &os, bool unsync) const
+{
+  std::size_t cb_ffs = count_ffs();
+  if (unsync && cb_ffs) {
+    return detail::unsynchronise(os, counter_.begin(), counter_.end());
+  }
+  else {
+    os.write((const char*)&(counter_[0]), counter_.size());
+    return counter_.size();
+  }
+}
+
+std::size_t
+scribbu::play_count::count_ffs() const
+{
+  return detail::count_ffs(counter_.begin(), counter_.end());
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                            class popularimeter                            //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::popularimeter::serialized_size(bool unsync) const
+{
+  std::size_t cb = email_.size() + 2 + counter_.size(); // Need to add the trailing NULL
+  if (unsync) {
+    cb += count_ffs();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::popularimeter::needs_unsynchronisation() const
+{
+  using namespace std;
+  using namespace scribbu::detail;
+
+  std::size_t count = 0;
+  count = count_false_syncs(email_.begin(), email_.end());
+  count += count_false_syncs(counter_.begin(), counter_.end());
+
+  if (email_.size() && is_false_sync(email_.back(), rating_)) ++count;
+  if (counter_.size() && is_false_sync(rating_, counter_.back())) ++count;
+
+  return count;
+}
+
+std::size_t
+scribbu::popularimeter::write(std::ostream &os, bool unsync) const
+{
+  static const char zed = 0;
+
+  std::size_t cb_ffs = count_ffs();
+  if (unsync && cb_ffs) {
+    std::size_t cb = detail::unsynchronise(os, email_.begin(), email_.end());
+    os.write(&zed, 1);
+    if (255 == rating_) {
+      unsigned char buf[2] = { rating_, 0 };
+      os.write((const char*)buf, 2);
+      cb += 2;
+    }
+    else {
+      os.write((const char*)&rating_, 1);
+      cb += 1;
+    }
+    cb += detail::unsynchronise(os, counter_.begin(), counter_.end());
+    return cb;
+  }
+  else {
+    os.write((const char*)&(email_[0]), email_.size());
+    os.write(&zed, 1);
+    os.write((const char*)&rating_, 1);
+    os.write((const char*)&(counter_[0]), counter_.size());
+    return email_.size() + 2 + counter_.size();
+  }
+}
+
+std::size_t
+scribbu::popularimeter::count_ffs() const
+{
+  std::size_t cb = 0;
+  cb += detail::count_ffs(email_.begin(), email_.end());
+  if (255 == rating_) ++cb;
+  cb += detail::count_ffs(counter_.begin(), counter_.end());
+  return cb;
 }

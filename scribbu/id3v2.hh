@@ -202,6 +202,7 @@ namespace scribbu {
                                         unsigned char b2,
                                         unsigned char b3,
                                         unsigned char b4);
+    void sync_safe_from_unsigned(std::size_t x, unsigned char b[]);
   }
 
   class zlib_error: public virtual boost::exception,
@@ -466,9 +467,9 @@ namespace scribbu {
     /////////////////////////////////////////////////////////////////////////////
 
     virtual unsigned char flags() const = 0;
-    virtual std::size_t size() const = 0;
+    virtual std::size_t size(bool unsync = true) const = 0;
     virtual bool needs_unsynchronisation() const = 0;
-    virtual std::size_t write(std::istream &) const = 0;
+    virtual std::size_t write(std::ostream &os, bool unsync = true) const = 0;
 
     /////////////////////////////////////////////////////////////////////////////
     //                    Frames Common to all ID3v2 Tags                      //
@@ -528,6 +529,47 @@ namespace scribbu {
     virtual std::size_t has_title() const = 0;
     virtual std::size_t has_track() const = 0;
     virtual std::size_t has_year() const = 0;
+
+    virtual void
+    album(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    artist(const std::string &text,
+           encoding src = encoding::UTF_8,
+           bool add_bom = false,
+           on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    content_type(const std::string &text,
+                 encoding src = encoding::UTF_8,
+                 bool add_bom = false,
+                 on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    encoded_by(const std::string &text,
+               encoding src = encoding::UTF_8,
+               bool add_bom = false,
+               on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    languages(const std::string &text,
+              encoding src = encoding::UTF_8,
+              bool add_bom = false,
+              on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    title(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    track(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail) = 0;
+    virtual void
+    year(const std::string &text,
+         encoding src = encoding::UTF_8,
+         bool add_bom = false,
+         on_no_encoding rsp = on_no_encoding::fail) = 0;
 
   protected:
     std::pair<unsigned char, std::size_t>

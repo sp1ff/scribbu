@@ -198,9 +198,9 @@ namespace scribbu {
     /////////////////////////////////////////////////////////////////////////////
 
     virtual unsigned char flags() const;
-    virtual std::size_t size() const;
+    virtual std::size_t size(bool unsync = true) const;
     virtual bool needs_unsynchronisation() const;
-    virtual std::size_t write(std::istream &) const;
+    virtual std::size_t write(std::ostream &os, bool unsync = true) const;
 
     /////////////////////////////////////////////////////////////////////////////
     //                    Frames Common to all ID3v2 Tags                      //
@@ -283,6 +283,71 @@ namespace scribbu {
     }
     virtual std::size_t has_year() const {
       return frame_map_.count("TYER");
+    }
+
+    virtual void
+    album(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    artist(const std::string &text,
+           encoding src = encoding::UTF_8,
+           bool add_bom = false,
+           on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    content_type(const std::string &text,
+                 encoding src = encoding::UTF_8,
+                 bool add_bom = false,
+                 on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    encoded_by(const std::string &text,
+               encoding src = encoding::UTF_8,
+               bool add_bom = false,
+               on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    languages(const std::string &text,
+              encoding src = encoding::UTF_8,
+              bool add_bom = false,
+              on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    title(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    track(const std::string &text,
+          encoding src = encoding::UTF_8,
+          bool add_bom = false,
+          on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
+    }
+    virtual void
+    year(const std::string &text,
+         encoding src = encoding::UTF_8,
+         bool add_bom = false,
+         on_no_encoding rsp = on_no_encoding::fail) {
+      // TODO(sp1ff): Implement me!
+      throw std::logic_error("not implemented");
     }
 
     ///////////////////////////////////////////////////////////////////////////

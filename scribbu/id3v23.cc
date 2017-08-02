@@ -200,7 +200,7 @@ scribbu::id3v2_3_tag::flags() const
 }
 
 /*virtual*/ std::size_t
-scribbu::id3v2_3_tag::size() const
+scribbu::id3v2_3_tag::size(bool unsync) const
 {
   // TODO(sp1ff): Implement me correctly!
   return size_;
@@ -214,7 +214,7 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
 }
 
 /*virtual*/ std::size_t
-scribbu::id3v2_3_tag::write(std::istream &) const
+scribbu::id3v2_3_tag::write(std::ostream &os, bool unsync) const
 {
   // TODO(sp1ff): Implement me correctly!
   return 0;
@@ -294,7 +294,7 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, bool extended)
 
     // Size, in bytes, of the tag *after* the common header, *before*
     // resynchronisation
-    std::size_t cb_tag = size();
+    std::size_t cb_tag = size(false);// TODO(sp1ff): Update this
 
     // std::array's size is fixed at compile time, which we can't do, and
     // std::vector is permitted to allocate additional memory to accomodate

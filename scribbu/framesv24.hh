@@ -109,6 +109,13 @@ namespace scribbu {
                          tap, fap, read_only, enc, gid)
     { }
 
+    virtual std::size_t serialized_size() const
+    { return 0; }
+    virtual std::size_t needs_unsynchronisation() const
+    { return false; }
+    virtual std::size_t write(std::istream&, bool unsync) const
+    { return 0; }
+
     template <typename string_type>
     static
     string_type as_str(const unsigned char *pbuf,

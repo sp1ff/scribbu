@@ -131,6 +131,19 @@ namespace scribbu {
       return id_;
     }
 
+    virtual std::size_t serialized_size(bool unsync) const {
+      // TODO(sp1ff): Write me!
+      return size();
+    }
+    virtual std::size_t needs_unsynchronisation() const {
+      // TODO(sp1ff): Write me!
+      return false;
+    }
+    virtual std::size_t write(std::ostream &os, bool unsync) const {
+      // TODO(sp1ff): Write me!
+      return 0;
+    }
+
   private:
     frame_id4                      id_;
     tag_alter_preservation         tap_;
@@ -184,6 +197,13 @@ namespace scribbu {
       id3v2_3_frame(frame_id4(id0, id1, id2, id3), size, tap, fap,
                     read_only, encmth, group_id, decsz)
     { }
+
+    virtual std::size_t serialized_size() const
+    { return 0; }
+    virtual std::size_t needs_unsynchronisation() const
+    { return false; }
+    virtual std::size_t write(std::istream&, bool unsync) const
+    { return 0; }
 
     /// Convert ID3v2.3 encoded text to an arbitrary encoding
     template <typename string_type>

@@ -67,7 +67,7 @@ namespace scribbu {
   public:
 
     /// Return the three character ID for this frame
-    frame_id3  id() const {
+    frame_id3 id() const {
       return id_;
     }
 
@@ -130,6 +130,9 @@ namespace scribbu {
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
 
+    /// Write an ID3v2.2 header
+    std::size_t write_header(std::ostream &os, bool unsync) const;
+
   private:
     frame_id3 id_;
 
@@ -168,6 +171,9 @@ namespace scribbu {
     virtual id3v2_2_frame* clone() const
     { return new unknown_id3v2_2_frame(*this); }
 
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
     /// Retrieve this frames payload, exclusive of identifier & size
     template <typename forward_output_iterator>
@@ -180,6 +186,7 @@ namespace scribbu {
 
   }; // End class unknown_id3v2_2_frame.
 
+  
   /// Unique File Identifier (cf. 4.1 of the ID3v2.2 spec)
   class UFI: public id3v2_2_frame, public unique_file_id {
 
@@ -207,6 +214,10 @@ namespace scribbu {
 
     virtual id3v2_2_frame* clone() const
     { return new UFI(*this); }
+
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
   }; // End class UFI.
 
@@ -300,10 +311,12 @@ namespace scribbu {
     template <typename string_type>
     id3v2_2_text_frame(const frame_id3 &id,
                        const string_type &text,
-                       encoding srcenc,
-                       bool ucs2) :
-      id3v2_2_text_frame(id, ucs2, convert_encoding(text, srcenc, ucs2 ? encoding::UCS_2LE : 
-                                                    encoding::ISO_8859_1, true))
+                       encoding src,
+                       bool add_bom = false,
+                       on_no_encoding rsp = on_no_encoding::fail,
+                       bool ucs2 = false) :
+      id3v2_2_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE : 
+                                                    encoding::ISO_8859_1, add_bom, rsp))
     { }
 
   private:
@@ -316,6 +329,10 @@ namespace scribbu {
     { }
 
   public:
+
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
     virtual id3v2_2_frame* clone() const
     { return new id3v2_2_text_frame(*this); }
@@ -363,6 +380,11 @@ namespace scribbu {
     unsigned char unicode() const {
       return unicode_;
     }
+
+    void set(const std::string &text,
+             encoding src = encoding::UTF_8,
+             bool add_bom = false,
+             on_no_encoding rsp = on_no_encoding::fail);
 
     static std::unique_ptr<id3v2_2_text_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
@@ -446,6 +468,10 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
     virtual id3v2_2_frame* clone() const
     { return new TXX(*this); }
 
@@ -491,6 +517,10 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
     virtual id3v2_2_frame* clone() const
     { return new COM(*this); }
 
@@ -513,6 +543,10 @@ namespace scribbu {
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
     virtual id3v2_2_frame* clone() const
     { return new CNT(*this); }
@@ -544,6 +578,10 @@ namespace scribbu {
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
     virtual id3v2_2_frame* clone() const
     { return new POP(*this); }

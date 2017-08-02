@@ -6,6 +6,11 @@
 #include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <openssl/evp.h>
+
+#include <boost/filesystem/fstream.hpp>
+
+#include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
 #include <scribbu/id3v2-utils.hh>
@@ -103,6 +108,47 @@ init_unit_test_suite(int   argc,
   return 0;
 }
 
+void
+compute_md5(const boost::filesystem::path &pth, unsigned char md5[])
+{
+  using scribbu::openssl_error;
+
+  const std::size_t BUFSIZE = 4 * 1024 * 1024; // Four megabytes
+
+  static unsigned char BUF[BUFSIZE];
+
+  EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
+  if (! mdctx) {
+    throw new openssl_error();
+  }
+
+  if (! EVP_DigestInit_ex(mdctx, EVP_md5(), 0)) {
+    EVP_MD_CTX_destroy(mdctx);
+    throw new openssl_error();
+  }
+
+  fs::ifstream ifs(pth, fs::ifstream::binary);
+
+  for (std::streamsize nleft = fs::file_size(pth); nleft > 0; ) {
+
+    std::streamsize nbytes = BUFSIZE > nleft ? nleft : BUFSIZE;
+
+    ifs.read((char*)BUF, nbytes);
+    if (! EVP_DigestUpdate(mdctx, BUF, nbytes)) {
+      EVP_MD_CTX_destroy(mdctx);
+      throw new openssl_error();
+    }
+    
+    nleft -= nbytes;
+
+  }
+
+  unsigned int md_len;
+  EVP_DigestFinal_ex(mdctx, md5, &md_len);
+  
+  EVP_MD_CTX_destroy(mdctx);
+}
+
 /**
  * \brief Exercise basic file processing
  *
@@ -163,7 +209,8 @@ BOOST_AUTO_TEST_CASE( test_file_processing )
   file_info            fi;
   tie(pis, fi) = open_file(TEST_FILE);
   BOOST_CHECK(pis && *pis);
-  BOOST_CHECK(fs::path("/vagrant/test/data") == fi.parent());
+  string s = fi.parent().string();
+  BOOST_CHECK("/data" == s.substr(s.length() - 5));
   BOOST_CHECK(fs::path("lorca.mp3") == fi.filename());
   BOOST_CHECK(9878797UL == fi.size());
 

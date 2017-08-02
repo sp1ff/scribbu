@@ -143,6 +143,25 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 
   BOOST_CHECK(2 == tag.version());
   BOOST_CHECK(0 == tag.revision());
+
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  id3v2_2_tag::mutable_frame_iterator p = tag.begin();
+  BOOST_CHECK("TT2" == p->id());
+  BOOST_CHECK(21  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(28  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(19  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(32  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(12  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(11  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(21  == p->serialized_size(true)); ++p;
+  BOOST_CHECK(110 == p->serialized_size(true)); ++p; // COM
+  BOOST_CHECK(136 == p->serialized_size(true)); ++p; // COM
+  BOOST_CHECK(p == tag.end());
+
+  /////////////////////////////////////////////////////////////////////////////
+
   BOOST_CHECK(2192 == tag.size());
   BOOST_CHECK(0 == tag.flags());
   BOOST_CHECK(!tag.unsynchronised());

@@ -1,5 +1,29 @@
 #include <id3v22.hh>
 
+#include <algorithm>
+#include <numeric>
+
+const char PAD[] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const size_t CBPAD = sizeof(PAD);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         id3v2_2_tag nifty counter                         //
@@ -119,27 +143,22 @@ scribbu::id3v2_2_tag::static_initializer::~static_initializer()
 //                             class id3v2_2_tag                             //
 ///////////////////////////////////////////////////////////////////////////////
 
-scribbu::id3v2_2_tag::id3v2_2_tag(std::istream &is):
-  id3v2_tag(is)
+scribbu::id3v2_2_tag::id3v2_2_tag(std::istream &is): id3v2_tag(is)
 {
-  get_default_generic_frame_parsers(std::inserter(generic_parsers_,
-                                                  generic_parsers_.begin()));
-  get_default_text_frame_parsers(std::inserter(text_parsers_,
-                                               text_parsers_.begin()));
+  get_default_generic_frame_parsers(
+    std::inserter(generic_parsers_, generic_parsers_.begin()));
+  get_default_text_frame_parsers(
+    std::inserter(text_parsers_, text_parsers_.begin()));
 
+  // id3v2_tag has consumed the first five bytes of the header-- this call will
+  // consume the next five...
+  std::size_t size;
   unsigned char flags;
-  std::tie(flags, size_) = parse_flags_and_size(is);
+  std::tie(flags, size) = parse_flags_and_size(is);
 
   unsynchronised(0 != (flags & 0x80));
   compression_ = flags & 0x40;
-  parse(is);
-
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
-
+  parse(is, size);
 
 }
 
@@ -148,22 +167,13 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
   id3v2_tag(H),
   compression_(H.flags_ & 0x40)
 {
-  get_default_generic_frame_parsers(std::inserter(generic_parsers_,
-                                                  generic_parsers_.begin()));
-  get_default_text_frame_parsers(std::inserter(text_parsers_,
-                                               text_parsers_.begin()));
+  get_default_generic_frame_parsers(
+    std::inserter(generic_parsers_, generic_parsers_.begin()));
+  get_default_text_frame_parsers(
+    std::inserter(text_parsers_, text_parsers_.begin()));
 
-  size_ = H.size_;
+  parse(is, H.size_);
 
-  parse(is);
-
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
-
-  
 }
 
 /*virtual*/ unsigned char
@@ -179,24 +189,44 @@ scribbu::id3v2_2_tag::flags() const {
 }
 
 /*virtual*/ std::size_t
-scribbu::id3v2_2_tag::size() const
+scribbu::id3v2_2_tag::size(bool unsync) const
 {
-  // TODO(sp1ff): Implement me correctly!
-  return size_;
+  using namespace std;
+  size_t cb = padding();
+  cb += accumulate(begin(), end(), 0,
+                   [unsync](size_t n, const id3v2_2_frame &f)
+                   { return n + f.serialized_size(unsync); });
+  return cb;
 }
 
 /*virtual*/ bool
 scribbu::id3v2_2_tag::needs_unsynchronisation() const
 {
-  // TODO(sp1ff): Implement me correctly!
-  return unsynchronised();
+  using namespace std;
+  return any_of(begin(), end(), [](const id3v2_2_frame &f) { return f.needs_unsynchronisation(); });
 }
 
 /*virtual*/ std::size_t
-scribbu::id3v2_2_tag::write(std::istream &) const
+scribbu::id3v2_2_tag::write(std::ostream &os, bool unsync) const
 {
-  // TODO(sp1ff): Implement me correctly!
-  return 0;
+  using namespace std;
+
+  // Write the header...
+  write_header(os, flags(), size(unsync));
+  // the frames (note we start the accumulation at 10)...
+  size_t cb = accumulate(begin(), end(), 10,
+                         [&os, unsync](size_t n, const id3v2_2_frame &f)
+                         { return n + f.write(os, unsync); });
+  // & the padding.
+  size_t cbpad = padding();
+  while (cbpad) {
+    size_t towrite = min(cbpad, CBPAD);
+    os.write(PAD, towrite);
+    cb += towrite;
+    cbpad -= towrite;
+  }
+  
+  return cb;
 }
 
 /*virtual*/ std::size_t
@@ -223,9 +253,8 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(mutable_frame_proxy &&that)
 
   static const frame_id3 COMID("COM"), CNTID("CNT"), POPID("POP");
 
-  // TODO(sp1ff): This is awful...
-  p_->remove_frame_from_lookups((p_->frames_.begin() + idx_)->get()->id(), idx_);
-  p_->frames_[idx_].swap(*(that.p_->frames_.begin() + that.idx_));
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  p_->frames_[idx_].swap(that.p_->frames_[that.idx_]);
   idx_ = that.idx_;
 
   id3v2_2_tag::frames_type::iterator pnew = p_->frames_.begin() + idx_;
@@ -259,8 +288,7 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const id3v2_2_frame &frame)
 {
   std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
 
-  // TODO(sp1ff): This is awful...
-  p_->remove_frame_from_lookups((p_->frames_.begin() + idx_)->get()->id(), idx_);
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
   p_->frames_[idx_].swap(pnew);
   p_->add_frame_to_lookups(*(p_->frames_[idx_]), idx_);
 
@@ -270,12 +298,20 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const id3v2_2_frame &frame)
 scribbu::id3v2_2_tag::mutable_frame_proxy&
 scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const id3v2_2_text_frame &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
-  p_->remove_frame_from_lookups((p_->frames_.begin() + idx_)->get()->id(), idx_);
-  p_->frames_[idx_].swap(pnew);
-  p_->add_frame_to_lookups(dynamic_cast<id3v2_2_text_frame&>(*(p_->frames_[idx_])), idx_);
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<id3v2_2_text_frame> pnew(new id3v2_2_text_frame(frame));
+  // and saving a reference to that copy.
+  id3v2_2_text_frame &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
 
   return *this;
 }
@@ -283,12 +319,20 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const id3v2_2_text_frame &f
 scribbu::id3v2_2_tag::mutable_frame_proxy&
 scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const CNT &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
-  p_->remove_frame_from_lookups((p_->frames_.begin() + idx_)->get()->id(), idx_);
-  p_->frames_[idx_].swap(pnew);
-  p_->add_frame_to_lookups(dynamic_cast<CNT&>(*(p_->frames_[idx_])), idx_);
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<CNT> pnew(new CNT(frame));
+  // and saving a reference to that copy.
+  CNT &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
 
   return *this;
 }
@@ -296,12 +340,20 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const CNT &frame)
 scribbu::id3v2_2_tag::mutable_frame_proxy&
 scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const COM &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
-  p_->remove_frame_from_lookups((p_->frames_.begin() + idx_)->get()->id(), idx_);
-  p_->frames_[idx_].swap(pnew);
-  p_->add_frame_to_lookups(dynamic_cast<COM&>(*(p_->frames_[idx_])), idx_);
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<COM> pnew(new COM(frame));
+  // and saving a reference to that copy.
+  COM &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
 
   return *this;
 }
@@ -309,93 +361,93 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const COM &frame)
 scribbu::id3v2_2_tag::mutable_frame_proxy&
 scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const POP &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
-  p_->remove_frame_from_lookups((p_->frames_.begin() + idx_)->get()->id(), idx_);
-  p_->frames_[idx_].swap(pnew);
-  p_->add_frame_to_lookups(dynamic_cast<POP&>(*(p_->frames_[idx_])), idx_);
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<POP> pnew(new POP(frame));
+  // and saving a reference to that copy.
+  POP &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
 
   return *this;
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::insert(const_frame_iterator p, const id3v2_2_frame &frame)
+scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_frame &frame)
 {
   std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
 
   auto p1 = frames_.emplace(frames_.cbegin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(*frames_[d], d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::insert(const_frame_iterator p, const id3v2_2_text_frame &frame)
+scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_text_frame &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
+  std::unique_ptr<id3v2_2_text_frame> pnew = std::make_unique<id3v2_2_text_frame>(frame);
+  const id3v2_2_text_frame &F = *pnew;
+
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
-  add_frame_to_lookups(dynamic_cast<id3v2_2_text_frame&>(*frames_[d]), d);
+  add_frame_to_lookups(F, d);
 
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::insert(const_frame_iterator p, const CNT &frame)
+scribbu::id3v2_2_tag::insert(const_iterator p, const CNT &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
+  std::unique_ptr<CNT> pnew = std::make_unique<CNT>(frame);
+  CNT &F = *pnew;
+
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
-  add_frame_to_lookups(dynamic_cast<CNT&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  add_frame_to_lookups(F, d);
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::insert(const_frame_iterator p, const COM &frame)
+scribbu::id3v2_2_tag::insert(const_iterator p, const COM &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
+  std::unique_ptr<COM> pnew = std::make_unique<COM>(frame);
+  COM &F = *pnew;
+
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
-  add_frame_to_lookups(dynamic_cast<COM&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  add_frame_to_lookups(F, d);
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::insert(const_frame_iterator p, const POP &frame)
+scribbu::id3v2_2_tag::insert(const_iterator p, const POP &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
 
-  // TODO(sp1ff): This is awful...
+  std::unique_ptr<POP> pnew = std::make_unique<POP>(frame);
+  POP &F = *pnew;
+
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
-  add_frame_to_lookups(dynamic_cast<POP&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  add_frame_to_lookups(F, d);
 }
 
 void
@@ -403,106 +455,81 @@ scribbu::id3v2_2_tag::push_back(const id3v2_2_frame &frame)
 {
   std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
 
-  // TODO(sp1ff): This is awful...
   frames_.emplace_back(std::move(pnew));
   std::size_t d = frames_.size() - 1;
   add_frame_to_lookups(*frames_[d], d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
 }
 
 void
 scribbu::id3v2_2_tag::push_back(const id3v2_2_text_frame &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
-
-  // TODO(sp1ff): This is awful...
+  using namespace std;
+  auto pnew = make_unique<id3v2_2_text_frame>(frame);
+  id3v2_2_text_frame &F = *pnew;
   frames_.emplace_back(std::move(pnew));
-  std::size_t d = frames_.size() - 1;
-  add_frame_to_lookups(dynamic_cast<id3v2_2_text_frame&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  add_frame_to_lookups(F, frames_.size() - 1);
 }
   
 void
 scribbu::id3v2_2_tag::push_back(const CNT &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
-
+  using namespace std;
+  auto pnew = make_unique<CNT>(frame);
+  CNT &F = *pnew;
   frames_.emplace_back(std::move(pnew));
-  std::size_t d = frames_.size() - 1;
-  add_frame_to_lookups(dynamic_cast<CNT&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  add_frame_to_lookups(F, frames_.size() - 1);
 }
   
 void
 scribbu::id3v2_2_tag::push_back(const COM &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
-
-  frames_.emplace_back(std::move(pnew));
-  std::size_t d = frames_.size() - 1;
-  add_frame_to_lookups(dynamic_cast<COM&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  using namespace std;
+  auto pnew = make_unique<COM>(frame);
+  COM &F = *pnew;
+  frames_.emplace_back(move(pnew));
+  add_frame_to_lookups(F, frames_.size() - 1);
 }
 
 void
 scribbu::id3v2_2_tag::push_back(const POP &frame)
 {
-  std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
-
-  frames_.emplace_back(std::move(pnew));
-  std::size_t d = frames_.size() - 1;
-  add_frame_to_lookups(dynamic_cast<POP&>(*frames_[d]), d);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+  using namespace std;
+  auto pnew = make_unique<POP>(frame);
+  POP &F = *pnew;
+  frames_.emplace_back(move(pnew));
+  add_frame_to_lookups(F, frames_.size() - 1);
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::erase(const_frame_iterator p)
+scribbu::id3v2_2_tag::erase(const_iterator p)
 {
   std::size_t idx = p - begin();
   remove_frame_from_lookups(p->id(), idx);
   frames_.erase(frames_.begin() + idx);
-
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
 }
 
 scribbu::id3v2_2_tag::mutable_frame_iterator
-scribbu::id3v2_2_tag::erase(const_frame_iterator p0, const_frame_iterator p1)
+scribbu::id3v2_2_tag::erase(const_iterator p0, const_iterator p1)
 {
-  const_frame_iterator p2 = p0;
+  const_iterator p2 = p0;
   for (size_t i = p2 - begin(); p2 != p1; ++p2, ++i) {
     remove_frame_from_lookups(p2->id(), i);
   }
 
   frames_.erase(frames_.begin() + p0.index(),
                 frames_.begin() + p1.index());
+}
 
-  // TODO(sp1ff): Update this-- needs to be setup again every time we alter the
-  // vector
-  begin_ = mutable_frame_iterator(this, frames_.begin());
-  end_ = mutable_frame_iterator(this, frames_.end());
+std::ostream&
+scribbu::id3v2_2_tag::write_header(std::ostream &os,
+                                   unsigned char flags,
+                                   std::size_t cb) const
+{
+  unsigned char buf[] = { 'I', 'D', '3', 2, 0, flags };
+  os.write((const char*)buf, sizeof(buf));
+  detail::sync_safe_from_unsigned(cb, buf);
+  os.write((const char*)buf, 4);
+  return os;  
 }
 
 void
@@ -515,7 +542,6 @@ scribbu::id3v2_2_tag::remove_frame_from_lookups(const frame_id3 &id, std::size_t
       std::find_if(coms_.begin(), coms_.end(),
                    [idx](const com_frame_lookup_type::value_type &x)
                    { return x.second == idx; });
-    // TODO(sp1ff): assert(coms_.end() != p);
     coms_.erase(p);
   }
   else if (CNT == id) {
@@ -523,7 +549,6 @@ scribbu::id3v2_2_tag::remove_frame_from_lookups(const frame_id3 &id, std::size_t
       std::find_if(cnts_.begin(), cnts_.end(),
                    [idx](const cnt_frame_lookup_type::value_type &x)
                    { return x.second == idx; });
-    // TODO(sp1ff): assert(cnts_.end() != p);
     cnts_.erase(p);
   }
   else if (POP == id) {
@@ -531,7 +556,6 @@ scribbu::id3v2_2_tag::remove_frame_from_lookups(const frame_id3 &id, std::size_t
       std::find_if(pops_.begin(), pops_.end(),
                    [idx](const pop_frame_lookup_type::value_type &x)
                    { return x.second == idx; });
-    // TODO(sp1ff): assert(pops_.end() != p);
     pops_.erase(p);
   }
   else if (id.text_frame()) {
@@ -542,7 +566,6 @@ scribbu::id3v2_2_tag::remove_frame_from_lookups(const frame_id3 &id, std::size_t
       std::find_if(text_map_.begin(), text_map_.end(),
                    [pf, id](const text_frame_lookup_type::value_type &x)
                    { return x.first == id && x.second == pf; });
-    // TODO(sp1ff): assert(text_map_.end() != p);
     text_map_.erase(p);
   }
 
@@ -550,7 +573,6 @@ scribbu::id3v2_2_tag::remove_frame_from_lookups(const frame_id3 &id, std::size_t
     std::find_if(frame_map_.begin(), frame_map_.end(),
                  [idx, id](const frame_lookup_type::value_type &x)
                  { return x.first == id && x.second == idx; });
-  // TODO(sp1ff): assert(frame_map_.end() != pflu);
   frame_map_.erase(pflu);
 }
 
@@ -562,7 +584,7 @@ scribbu::id3v2_2_tag::add_frame_to_lookups(const id3v2_2_frame &frame, std::size
 }
 
 void
-scribbu::id3v2_2_tag::add_frame_to_lookups(const id3v2_2_text_frame &frame, std::size_t idx)
+scribbu::id3v2_2_tag::add_frame_to_lookups(id3v2_2_text_frame &frame, std::size_t idx)
 {
   using namespace std;
   text_map_.insert(make_pair(frame.id(), &frame));
@@ -570,7 +592,7 @@ scribbu::id3v2_2_tag::add_frame_to_lookups(const id3v2_2_text_frame &frame, std:
 }
 
 void
-scribbu::id3v2_2_tag::add_frame_to_lookups(const CNT &frame, std::size_t idx)
+scribbu::id3v2_2_tag::add_frame_to_lookups(CNT &frame, std::size_t idx)
 {
   using namespace std;
   cnts_.push_back(make_pair(&frame, idx));
@@ -578,7 +600,7 @@ scribbu::id3v2_2_tag::add_frame_to_lookups(const CNT &frame, std::size_t idx)
 }
 
 void
-scribbu::id3v2_2_tag::add_frame_to_lookups(const COM &frame, std::size_t idx)
+scribbu::id3v2_2_tag::add_frame_to_lookups(COM &frame, std::size_t idx)
 {
   using namespace std;
   coms_.push_back(make_pair(&frame, idx));
@@ -586,7 +608,7 @@ scribbu::id3v2_2_tag::add_frame_to_lookups(const COM &frame, std::size_t idx)
 }
 
 void
-scribbu::id3v2_2_tag::add_frame_to_lookups(const POP &frame, std::size_t idx)
+scribbu::id3v2_2_tag::add_frame_to_lookups(POP &frame, std::size_t idx)
 {
   using namespace std;
   pops_.push_back(make_pair(&frame, idx));
@@ -662,7 +684,7 @@ scribbu::id3v2_2_tag::parsing_is_reserved(const frame_id3 &id)
  *
  */
 
-void scribbu::id3v2_2_tag::parse(std::istream &is)
+void scribbu::id3v2_2_tag::parse(std::istream &is, std::size_t size)
 {
   using scribbu::detail::unsigned_from_non_sync_safe;
 
@@ -683,7 +705,7 @@ void scribbu::id3v2_2_tag::parse(std::istream &is)
 
     // Size, in bytes, of the tag *after* the header, *before*
     // resynchronisation
-    std::size_t cb_tag = size();
+    std::size_t cb_tag = size;
 
     // std::array's size is fixed at compile time, which we can't do, and
     // std::vector is permitted to allocate additional memory to accomodate
@@ -843,4 +865,24 @@ scribbu::id3v2_2_tag::text_frame_as_str(
   const boost::optional<encoding> &src /*= boost::none*/) const
 {
   return text_map_.find(id)->second->as_str<std::string>(dst, rsp, src);
+}
+
+void
+scribbu::id3v2_2_tag::set_text_frame(const frame_id3 &id,
+                                     const std::string &text,
+                                     encoding src /*= encoding::UTF_8*/,
+                                     bool add_bom /*= false*/,
+                                     on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  using namespace std;
+  auto p = text_map_.find(id);
+  if (p != text_map_.end()) {
+    p->second->set(text, src, add_bom, rsp);
+  }
+  else {
+    auto p = make_unique<id3v2_2_text_frame>(id, text, src, add_bom, rsp, false);
+    id3v2_2_text_frame &F = *p;
+    frames_.push_back(unique_ptr<id3v2_2_text_frame>(move(p)));
+    add_frame_to_lookups(F, frames_.size() - 1);
+  }
 }

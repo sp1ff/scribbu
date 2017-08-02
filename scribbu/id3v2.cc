@@ -105,6 +105,15 @@ scribbu::detail::unsigned_from_sync_safe(unsigned char b0,
   return uint32_from_sync_safe(b0, b1, b2, b3, b4);
 }
 
+void
+scribbu::detail::sync_safe_from_unsigned(std::size_t x, unsigned char b[])
+{
+  b[3] =   x         & 127;
+  b[2] = ( x >>  7 ) & 127;
+  b[1] = ( x >> 14 ) & 127;
+  b[0] = ( x >> 21 ) & 127;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                free functions exported from this function                 //
