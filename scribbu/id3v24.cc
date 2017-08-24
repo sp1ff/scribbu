@@ -341,6 +341,45 @@ scribbu::id3v2_4_tag::play_count() const {
   }
 }
 
+void
+scribbu::id3v2_4_tag::add_frame_to_lookups(const id3v2_4_frame &frame, std::size_t idx)
+{
+  using namespace std;
+  frame_map_.insert(make_pair(frame.id(), idx));
+}
+
+void
+scribbu::id3v2_4_tag::add_frame_to_lookups(id3v2_4_text_frame &frame, std::size_t idx)
+{
+  using namespace std;
+  text_map_.insert(make_pair(frame.id(), &frame));
+  add_frame_to_lookups((const id3v2_4_frame&)frame, idx);
+}
+
+void
+scribbu::id3v2_4_tag::add_frame_to_lookups(PCNT_2_4 &frame, std::size_t idx)
+{
+  using namespace std;
+  pcnts_.push_back(make_pair(&frame, idx));
+  add_frame_to_lookups((const id3v2_4_frame&)frame, idx);
+}
+
+void
+scribbu::id3v2_4_tag::add_frame_to_lookups(COMM_2_4 &frame, std::size_t idx)
+{
+  using namespace std;
+  comms_.push_back(make_pair(&frame, idx));
+  add_frame_to_lookups((const id3v2_4_frame&)frame, idx);
+}
+
+void
+scribbu::id3v2_4_tag::add_frame_to_lookups(POPM_2_4 &frame, std::size_t idx)
+{
+  using namespace std;
+  popms_.push_back(make_pair(&frame, idx));
+  add_frame_to_lookups((const id3v2_4_frame&)frame, idx);
+}
+
 std::tuple<boost::shared_array<unsigned char>, std::size_t>
 scribbu::id3v2_4_tag::decompress(const unsigned char *p,
                                  std::size_t          cb,
@@ -746,4 +785,25 @@ scribbu::id3v2_4_tag::text_frame_as_str(
   const boost::optional<encoding> &src /*= boost::none*/) const
 {
   return text_map_.find(id)->second->as_str<std::string>(dst, rsp, src);
+}
+
+/// Replace a text frame if it exists, append it otherwise
+void scribbu::id3v2_4_tag::set_text_frame(const frame_id4 &id,
+                                          const std::string &text,
+                                          encoding src /*= encoding::UTF_8*/,
+                                          id3v2_4_text_frame::frame_encoding dst /*=id3v2_4_text_frame::frame_encoding::UTF_8*/,
+                                          bool add_bom /*= false*/,
+                                          on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  using namespace std;
+  auto p = text_map_.find(id);
+  if (p != text_map_.end()) {
+    p->second->set(text, src, dst, add_bom, rsp);
+  }
+  else {
+    auto p = make_unique<id3v2_4_text_frame>(id, text, src, dst, add_bom, rsp);
+    id3v2_4_text_frame &F = *p;
+    frames_.push_back(unique_ptr<id3v2_4_text_frame>(move(p)));
+    add_frame_to_lookups(F, frames_.size() - 1);
+  }
 }

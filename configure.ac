@@ -39,5 +39,7 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN([scribbu], [$(builddir)/Doxyfile], [$(builddir)/doxygen-doc])
 
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile scribbu/Makefile src/Makefile test/Makefile test/data/Makefile doc/Makefile doc/Doxyfile])
+AC_CONFIG_FILES([Makefile scribbu/Makefile src/Makefile scheme/Makefile])
+AC_CONFIG_FILES([test/Makefile test/data/Makefile doc/Makefile doc/Doxyfile])
+AC_CONFIG_FILES([env], [chmod +x env])
 AC_OUTPUT

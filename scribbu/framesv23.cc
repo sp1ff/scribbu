@@ -50,6 +50,36 @@ namespace scribbu {
 
 }
 
+void
+scribbu::id3v2_3_text_frame::set(const std::string &text,
+                                 encoding src /*= encoding::UTF_8*/,
+                                 bool add_bom /*=false*/,
+                                 on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  // Attempt to convert to ISO-8859-1 first
+  bool ok;
+  std::vector<unsigned char> test;
+  // TODO(sp1ff): Implement a version that doesn't throw
+  try {
+    test = scribbu::convert_encoding(text, src, encoding::ISO_8859_1, add_bom, rsp);
+    ok = true;
+  }
+  catch (const std::exception&) {
+    ok = false;
+  }
+
+  if (ok) {
+    unicode_ = 0;
+    text_.swap(test);
+    return;
+  }
+
+  test = convert_encoding(text, src, encoding::UCS_2, add_bom, rsp);
+  unicode_ = 1;
+  text_.swap(test);
+}
+
+
 /*static*/ std::unique_ptr<scribbu::id3v2_3_text_frame>
 scribbu::id3v2_3_text_frame::create(const frame_id4 &id,
                                     const unsigned char *p,

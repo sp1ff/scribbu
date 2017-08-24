@@ -92,6 +92,20 @@ scribbu::id3v2_4_text_frame::encshim2(frame_encoding x)
   }
 }
 
+void
+scribbu::id3v2_4_text_frame::set(const std::string &text,
+                                 encoding src /*= encoding::UTF_8*/,
+                                 frame_encoding dst /*= encoding::UTF_8*/,
+                                 bool add_bom /*=false*/,
+                                 on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::vector<unsigned char> data =
+    scribbu::convert_encoding(text, src, encshim(dst), add_bom, rsp);
+
+  unicode_ = encshim2(dst);
+  text_.swap(data);
+}
+
 /*static*/
 std::unique_ptr<scribbu::id3v2_4_text_frame>
 scribbu::id3v2_4_text_frame::create(const frame_id4 &id,

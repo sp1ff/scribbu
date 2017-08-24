@@ -285,69 +285,64 @@ namespace scribbu {
       return frame_map_.count("TYER");
     }
 
+    const id3v2_4_text_frame::frame_encoding DST = 
+      id3v2_4_text_frame::frame_encoding::UTF_8;
+
     virtual void
     album(const std::string &text,
           encoding src = encoding::UTF_8,
           bool add_bom = false,
           on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TALB", text, src, DST, add_bom, rsp);
     }
     virtual void
     artist(const std::string &text,
            encoding src = encoding::UTF_8,
            bool add_bom = false,
            on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TPE1", text, src, DST, add_bom, rsp);
     }
     virtual void
     content_type(const std::string &text,
                  encoding src = encoding::UTF_8,
                  bool add_bom = false,
                  on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TCON", text, src, DST, add_bom, rsp);
     }
     virtual void
     encoded_by(const std::string &text,
                encoding src = encoding::UTF_8,
                bool add_bom = false,
                on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TENC", text, src, DST, add_bom, rsp);
     }
     virtual void
     languages(const std::string &text,
               encoding src = encoding::UTF_8,
               bool add_bom = false,
               on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TLAN", text, src, DST, add_bom, rsp);
     }
     virtual void
     title(const std::string &text,
           encoding src = encoding::UTF_8,
           bool add_bom = false,
           on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TIT2", text, src, DST, add_bom, rsp);
     }
     virtual void
     track(const std::string &text,
           encoding src = encoding::UTF_8,
           bool add_bom = false,
           on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TRCK", text, src, DST, add_bom, rsp);
     }
     virtual void
     year(const std::string &text,
          encoding src = encoding::UTF_8,
          bool add_bom = false,
          on_no_encoding rsp = on_no_encoding::fail) {
-      // TODO(sp1ff): Implement me!
-      throw std::logic_error("not implemented");
+      set_text_frame("TYER", text, src, DST, add_bom, rsp);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -445,7 +440,19 @@ namespace scribbu {
       return frame_iterator(frames_.end());
     }
 
+  private:
+
+    /// Remove an arbitrary frame from our ancillary datastructures; on return,
+    /// it will remain in the frame vector
+    void remove_frame_from_lookups(const frame_id4 &id, std::size_t idx);
+    void add_frame_to_lookups(const id3v2_4_frame &frame, std::size_t idx);
+    void add_frame_to_lookups(id3v2_4_text_frame &frame, std::size_t idx);
+    void add_frame_to_lookups(PCNT_2_4 &frame, std::size_t idx);
+    void add_frame_to_lookups(COMM_2_4 &frame, std::size_t idx);
+    void add_frame_to_lookups(POPM_2_4 &frame, std::size_t idx);
+
   public:
+
     ///////////////////////////////////////////////////////////////////////////
     //                             frame parsing                             //
     ///////////////////////////////////////////////////////////////////////////
@@ -608,6 +615,14 @@ namespace scribbu {
       encoding dst = encoding::UTF_8,
       on_no_encoding rsp = on_no_encoding::fail,
       const boost::optional<encoding> &src = boost::none) const;
+    /// Replace a text frame if it exists, append it otherwise
+    void set_text_frame(
+      const frame_id4 &id,
+      const std::string &text,
+      encoding src = encoding::UTF_8,
+      id3v2_4_text_frame::frame_encoding dst =id3v2_4_text_frame::frame_encoding::UTF_8,
+      bool add_bom = false,
+      on_no_encoding rsp = on_no_encoding::fail);
 
   private:
 
@@ -631,19 +646,19 @@ namespace scribbu {
     frame_lookup_type;
 
     typedef
-    std::unordered_multimap<frame_id4, const id3v2_4_text_frame*>
+    std::unordered_multimap<frame_id4, id3v2_4_text_frame*>
     text_frame_lookup_type;
 
     typedef
-    std::vector<std::pair<const COMM_2_4*, std::size_t>>
+    std::vector<std::pair<COMM_2_4*, std::size_t>>
     comm_frame_lookup_type;
 
     typedef
-    std::vector<std::pair<const PCNT_2_4*, std::size_t>>
+    std::vector<std::pair<PCNT_2_4*, std::size_t>>
     pcnt_frame_lookup_type;
 
     typedef
-    std::vector<std::pair<const POPM_2_4*, std::size_t>>
+    std::vector<std::pair<POPM_2_4*, std::size_t>>
     popm_frame_lookup_type;
 
     typedef

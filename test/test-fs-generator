@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+testdir=/tmp/scribbu-test/scheme
+mkdir -p $testdir/a/b
+touch $testdir/foo $testdir/a/bar $testdir/a/b/splat
+guile -L ${srcdir}/../scheme -s ${srcdir}/test-fs-generator.scm

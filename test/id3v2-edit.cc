@@ -1,4 +1,4 @@
-#include <scribbu/id3v2-edit.hh>
+// #include <scribbu/id3v2-edit.hh>
 
 #include "unit.hh"
 
@@ -28,19 +28,10 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
 
   // Let's gin up some new text frames....
   id3v2_2_text_frame F22("TEN",  WINAMP, encoding::ASCII, false);
-  id3v2_3_text_frame F23("TENC", WINAMP, encoding::ASCII, false,
-                         id3v2_3_text_frame::tag_alter_preservation::preserve,
-                         id3v2_3_text_frame::file_alter_preservation::preserve,
-                         id3v2_3_text_frame::read_only::clear,
-                         boost::none, boost::none, boost::none);
+  id3v2_3_text_frame F23("TENC", WINAMP, encoding::ASCII, false);
   id3v2_4_text_frame F24("TENC", WINAMP, encoding::ASCII,
                          id3v2_4_text_frame::frame_encoding::UTF_8,
-                         id3v2_4_text_frame::tag_alter_preservation::preserve,
-                         id3v2_4_text_frame::file_alter_preservation::preserve,
-                         id3v2_4_text_frame::read_only::clear,
-                         boost::none, boost::none,
-                         false, false,
-                         boost::none);
+                         false);
 
   fs::ifstream ifs(get_data_directory() / "id3v2.2.tag", fs::ifstream::binary);
   BOOST_REQUIRE(ifs.is_open());

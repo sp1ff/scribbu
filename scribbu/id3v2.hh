@@ -442,6 +442,10 @@ namespace scribbu {
     id3v2_tag(std::istream &is);
     /// Initialize from an id3v2_info
     id3v2_tag(const id3v2_info &H);
+    /// Initialize "from scratch"
+    id3v2_tag(unsigned char ver, unsigned char rev):
+      version_(ver), revision_(rev), unsync_(false)
+    { }
 
   public:
 

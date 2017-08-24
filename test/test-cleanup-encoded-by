@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
+eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-cleanup-encoded-by.scm ${srcdir} \
+        2> >(t_err=$(cat); typeset -p t_err) \
+         > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+echo "stdout: $t_std"
+if [ ! -z "$t_err" ]; then
+	echo "stderr: $t_err"
+	exit 1
+fi
+exit $t_stat

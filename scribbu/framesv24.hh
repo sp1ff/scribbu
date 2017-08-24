@@ -413,18 +413,20 @@ namespace scribbu {
     template <typename string_type>
     id3v2_4_text_frame(const frame_id4 &id,
                        const string_type &text,
-                       encoding srcenc,
-                       frame_encoding dstenc,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only ro,
-                       const boost::optional<unsigned char> &enc,
-                       const boost::optional<unsigned char> &gid,
-                       bool cmp,
-                       bool unsync,
-                       const boost::optional<std::size_t> &dli):
-      id3v2_4_text_frame(id, dstenc,
-                         convert_encoding(text, srcenc, encshim(dstenc), true),
+                       encoding src,
+                       frame_encoding dst,
+                       bool add_bom = false,
+                       on_no_encoding rsp = on_no_encoding::fail,
+                       tag_alter_preservation tap = tag_alter_preservation::preserve,
+                       file_alter_preservation fap = file_alter_preservation::preserve,
+                       read_only ro = read_only::clear,
+                       const boost::optional<unsigned char> &enc = boost::none,
+                       const boost::optional<unsigned char> &gid = boost::none,
+                       bool cmp = false,
+                       bool unsync = false,
+                       const boost::optional<std::size_t> &dli = boost::none):
+      id3v2_4_text_frame(id, dst,
+                         convert_encoding(text, src, encshim(dst), add_bom, rsp),
                          tap, fap, ro, enc, gid, cmp, unsync, dli)
     { }
 
@@ -448,6 +450,12 @@ namespace scribbu {
     { }
 
   public:
+
+    void set(const std::string &text,
+             encoding src = encoding::UTF_8,
+             frame_encoding dst = frame_encoding::UTF_8,
+             bool add_bom = false,
+             on_no_encoding rsp = on_no_encoding::fail);
 
     unsigned char unicode() const {
       return unicode_;

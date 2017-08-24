@@ -183,6 +183,27 @@ scribbu::id3v2_3_tag::id3v2_3_tag(std::istream     &is,
   parse(is, H.flags_ & 0x40);
 }
 
+scribbu::id3v2_3_tag::id3v2_3_tag(std::size_t cbpad /*= 0*/,
+                                  bool fexp /*= false*/,
+                                  want_extended_header ext /*= want_extended_header::none*/):
+  id3v2_tag(3, 0),
+  experimental_(fexp),
+  padding_(cbpad)
+{
+  using namespace std;
+  // pext_header_
+  if (want_extended_header::with_crc == ext) {
+    pext_header_ = make_shared<ext_header>(cbpad, true);
+    size_ = cbpad + 14;
+  } else if (want_extended_header::present == ext) {
+    pext_header_ = make_shared<ext_header>(cbpad, false);
+    size_ = cbpad + 10;
+  }
+  else {
+    size_ = cbpad;
+  }
+}
+
 /*virtual*/ unsigned char
 scribbu::id3v2_3_tag::flags() const
 {
@@ -230,6 +251,90 @@ scribbu::id3v2_3_tag::play_count() const {
   default:
     throw std::logic_error("multiple play counts");
   }
+}
+
+// TODO(sp1ff): To be implemented!
+// void
+// scribbu::id3v2_3_tag::remove_frame_from_lookups(const frame_id4 &id, std::size_t idx)
+// {
+//   static const frame_id4 COMM("COM"), CNT("CNT"), POP("POP");
+
+//   if (COM == id) {
+//     com_frame_lookup_type::iterator p =
+//       std::find_if(coms_.begin(), coms_.end(),
+//                    [idx](const com_frame_lookup_type::value_type &x)
+//                    { return x.second == idx; });
+//     coms_.erase(p);
+//   }
+//   else if (CNT == id) {
+//     cnt_frame_lookup_type::iterator p =
+//       std::find_if(cnts_.begin(), cnts_.end(),
+//                    [idx](const cnt_frame_lookup_type::value_type &x)
+//                    { return x.second == idx; });
+//     cnts_.erase(p);
+//   }
+//   else if (POP == id) {
+//     pop_frame_lookup_type::iterator p =
+//       std::find_if(pops_.begin(), pops_.end(),
+//                    [idx](const pop_frame_lookup_type::value_type &x)
+//                    { return x.second == idx; });
+//     pops_.erase(p);
+//   }
+//   else if (id.text_frame()) {
+//     // TODO(sp1ff): This is awful-- better to store the index in text_map_, but
+//     // I want to get this working, first.
+//     const id3v2_2_frame *pf = frames_[idx].get();
+//     text_frame_lookup_type::iterator p =
+//       std::find_if(text_map_.begin(), text_map_.end(),
+//                    [pf, id](const text_frame_lookup_type::value_type &x)
+//                    { return x.first == id && x.second == pf; });
+//     text_map_.erase(p);
+//   }
+
+//   frame_lookup_type::iterator pflu =
+//     std::find_if(frame_map_.begin(), frame_map_.end(),
+//                  [idx, id](const frame_lookup_type::value_type &x)
+//                  { return x.first == id && x.second == idx; });
+//   frame_map_.erase(pflu);
+// }
+
+void
+scribbu::id3v2_3_tag::add_frame_to_lookups(const id3v2_3_frame &frame, std::size_t idx)
+{
+  using namespace std;
+  frame_map_.insert(make_pair(frame.id(), idx));
+}
+
+void
+scribbu::id3v2_3_tag::add_frame_to_lookups(id3v2_3_text_frame &frame, std::size_t idx)
+{
+  using namespace std;
+  text_map_.insert(make_pair(frame.id(), &frame));
+  add_frame_to_lookups((const id3v2_3_frame&)frame, idx);
+}
+
+void
+scribbu::id3v2_3_tag::add_frame_to_lookups(PCNT &frame, std::size_t idx)
+{
+  using namespace std;
+  pcnts_.push_back(make_pair(&frame, idx));
+  add_frame_to_lookups((const id3v2_3_frame&)frame, idx);
+}
+
+void
+scribbu::id3v2_3_tag::add_frame_to_lookups(COMM &frame, std::size_t idx)
+{
+  using namespace std;
+  comms_.push_back(make_pair(&frame, idx));
+  add_frame_to_lookups((const id3v2_3_frame&)frame, idx);
+}
+
+void
+scribbu::id3v2_3_tag::add_frame_to_lookups(POPM &frame, std::size_t idx)
+{
+  using namespace std;
+  popms_.push_back(make_pair(&frame, idx));
+  add_frame_to_lookups((const id3v2_3_frame&)frame, idx);
 }
 
 /// Not thread-safe
@@ -674,4 +779,24 @@ scribbu::id3v2_3_tag::text_frame_as_str(
   const boost::optional<encoding> &src /*= boost::none*/) const
 {
   return text_map_.find(id)->second->as_str<std::string>(dst, rsp, src);
+}
+
+/// Replace a text frame if it exists, append it otherwise
+void scribbu::id3v2_3_tag::set_text_frame(const frame_id4 &id,
+                                          const std::string &text,
+                                          encoding src /*= encoding::UTF_8*/,
+                                          bool add_bom /*= false*/,
+                                          on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  using namespace std;
+  auto p = text_map_.find(id);
+  if (p != text_map_.end()) {
+    p->second->set(text, src, add_bom, rsp);
+  }
+  else {
+    auto p = make_unique<id3v2_3_text_frame>(id, text, src, add_bom, rsp, false);
+    id3v2_3_text_frame &F = *p;
+    frames_.push_back(unique_ptr<id3v2_3_text_frame>(move(p)));
+    add_frame_to_lookups(F, frames_.size() - 1);
+  }
 }

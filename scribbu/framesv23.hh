@@ -491,16 +491,18 @@ namespace scribbu {
     template <typename string_type>
     id3v2_3_text_frame(const frame_id4 &id,
                        const string_type &text,
-                       encoding srcenc,
-                       bool ucs2,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only ro,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &grid,
-                       const boost::optional<std::size_t> &decsz):
-      id3v2_3_text_frame(id, ucs2, convert_encoding(text, srcenc, ucs2 ? encoding::UCS_2LE : 
-                                                    encoding::ISO_8859_1, true),
+                       encoding src,
+                       bool add_bom = false,
+                       on_no_encoding rsp = on_no_encoding::fail,
+                       bool ucs2 = false,
+                       tag_alter_preservation tap = tag_alter_preservation::preserve,
+                       file_alter_preservation fap = file_alter_preservation::preserve,
+                       read_only ro = read_only::clear,
+                       const boost::optional<unsigned char> &encmth = boost::none,
+                       const boost::optional<unsigned char> &grid = boost::none,
+                       const boost::optional<std::size_t> &decsz = boost::none):
+      id3v2_3_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE : 
+                                                    encoding::ISO_8859_1, add_bom, rsp),
                          tap, fap, ro, encmth, grid, decsz)
     { }
 
@@ -563,6 +565,11 @@ namespace scribbu {
     unsigned char unicode() const {
       return unicode_;
     }
+
+    void set(const std::string &text,
+             encoding src = encoding::UTF_8,
+             bool add_bom = false,
+             on_no_encoding rsp = on_no_encoding::fail);
 
     static std::unique_ptr<id3v2_3_text_frame>
     create(const frame_id4                      &id,

@@ -20,6 +20,8 @@ std::function<int(const std::vector<std::string> 		 &opts,
 		  const boost::optional<boost::filesystem::path> &cfg)> 
 handler_type;
 
+bool has_sub_command(const std::string &s);
+
 handler_type get_sub_command(const std::string &s);
 
 struct register_command 

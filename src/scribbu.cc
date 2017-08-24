@@ -273,10 +273,7 @@ main(int argc, char * argv[])
         throw po::error(pth.native() + " does not exist");
       } 
 
-      if (opts.size()) {
-
-        // TODO: if there's an unknoown option or command given, like scribbu -x,
-        // or scribbu foo, we'll end up here. Need to handle this.
+      if (opts.size() && has_sub_command(opts.front())) {
 
         // 'opts' is non-empty, so there's at least one element--
         // attempt to resolve the first element to a command...

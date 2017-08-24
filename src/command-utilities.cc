@@ -16,6 +16,12 @@ namespace {
   
 }
 
+bool
+has_sub_command(const std::string &s)
+{
+  return 0 != get_handler_map().count(s);
+}
+
 handler_type get_sub_command(const std::string &s)
 {
   return get_handler_map().at(s);
