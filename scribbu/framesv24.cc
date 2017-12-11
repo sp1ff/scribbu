@@ -1,10 +1,11 @@
 #include <scribbu/framesv24.hh>
 
 #include <scribbu/charsets.hh>
+#include <scribbu/id3v2.hh>
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//                         class id3v2_4_text_frame                          //
+//                            class id3v2_4_frame                            //
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace scribbu {
@@ -54,6 +55,206 @@ namespace scribbu {
     return convert_encoding<string>(pbuf, cbbuf, src, dstenc, rsp);
   }
 
+}
+
+/// Serialize this tag's header to an output stream, including any special
+/// fields such as decompressed size, group id, &c
+/*virtual*/
+std::size_t
+scribbu::id3v2_4_frame::write_header(std::ostream &os,
+                                     std::size_t cb_payload,
+                                     std::size_t dlind) const
+{
+  std::size_t cb = 10, sz = cb_payload;
+
+  char flags[2] = { 0, 0 };
+  if (tap()) {
+    flags[0] |= 32;
+  }
+  if (fap()) {
+    flags[0] |= 16;
+  }
+  if (ro()) {
+    flags[0] |= 8;
+  }
+  //  %0h00kmnp
+  if (grouped()) {
+    flags[1] |= 32;
+    sz += 1;
+    cb += 1;
+  }
+  if (compressed_) {
+    flags[1] |= 8;
+  }
+  if (encrypted()) {
+    flags[1] |= 4;
+    sz += 1;
+    cb += 1;
+  }
+  if (unsynchronised_) {
+    flags[1] |= 2;
+  }
+  if (data_len_indicator_) {
+    flags[1] |= 1;
+    sz += 4;
+    cb += 4;
+  }
+
+  char idbuf[4]; id().copy(idbuf);
+  os.write(idbuf, 4);
+
+  // ID3v2.3 frame sizes *are* sync-safe:
+  unsigned char szbuf[4];
+  detail::sync_safe_from_unsigned(size(), szbuf);
+  os.write((char*)szbuf, 4);
+
+  os.write(flags, 2);
+
+  if (encrypted()) {
+    unsigned char x = encmeth();
+    os.write((char*)&x, 1);
+  }
+
+  if (grouped()) {
+    unsigned char x = gid();
+    os.write((char*)&x, 1);
+  }
+
+  if (data_len_indicator_) {
+    os.write((char*)&dlind, 4);
+  } 
+ 
+  return cb;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                        class unknown_id3v2_3_frame                        //
+///////////////////////////////////////////////////////////////////////////////
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::unknown_id3v2_4_frame::size() const
+{
+  return data_.size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::unknown_id3v2_4_frame::serialize(std::ostream &os) const
+{
+  os.write((char*)&(data_[0]), data_.size());
+  return data_.size();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class UFID_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
+
+/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::UFID_2_4::create(const frame_id4 &id,
+                          const unsigned char *p,
+                          std::size_t cb,
+                          tag_alter_preservation tap,
+                          file_alter_preservation fap,
+                          read_only read_only,
+                          const boost::optional<unsigned char> &enc,
+                          const boost::optional<unsigned char> &gid,
+                          bool compressed,
+                          bool unsynchronised,
+                          const boost::optional<std::size_t> &dli)
+{
+  return std::unique_ptr<id3v2_4_frame>(new UFID_2_4(p, p + cb,
+                                                     tap,
+                                                     fap,
+                                                     read_only, enc,
+                                                     gid, compressed,
+                                                     unsynchronised, dli));
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::UFID_2_4::size() const
+{
+  return unique_file_id::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::UFID_2_4::serialize(std::ostream &os) const
+{
+  return unique_file_id::write(os, false);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class ENCR_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
+
+/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::ENCR_2_4::create(const frame_id4 &id,
+                          const unsigned char *p,
+                          std::size_t cb,
+                          tag_alter_preservation tap,
+                          file_alter_preservation fap,
+                          read_only read_only,
+                          const boost::optional<unsigned char> &enc,
+                          const boost::optional<unsigned char> &gid,
+                          bool compressed,
+                          bool unsynchronised,
+                          const boost::optional<std::size_t> &dli)
+{
+  return std::unique_ptr<id3v2_4_frame>(new ENCR_2_4(p, p + cb,
+                                                     tap,
+                                                     fap,
+                                                     read_only, enc,
+                                                     gid, compressed,
+                                                     unsynchronised, dli));
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::ENCR_2_4::size() const
+{
+  return encryption_method::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::ENCR_2_4::serialize(std::ostream &os) const
+{
+  return encryption_method::write(os, false);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                         class id3v2_4_text_frame                          //
+///////////////////////////////////////////////////////////////////////////////
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::id3v2_4_text_frame::size() const
+{
+  return 1 + text_.size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::id3v2_4_text_frame::serialize(std::ostream &os) const
+{
+  os.write((char*)&unicode_, 1);
+  os.write((char*)&(text_[0]), text_.size());
+  return 1 + text_.size();
 }
 
 /*static*/
@@ -127,52 +328,9 @@ scribbu::id3v2_4_text_frame::create(const frame_id4 &id,
                                                                dli));
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
-//                     miscellaneous creation functions                      //
+//                              class TXXX_2_4                               //
 ///////////////////////////////////////////////////////////////////////////////
-
-/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
-scribbu::UFID_2_4::create(const frame_id4 &id,
-                          const unsigned char *p,
-                          std::size_t cb,
-                          tag_alter_preservation tap,
-                          file_alter_preservation fap,
-                          read_only read_only,
-                          const boost::optional<unsigned char> &enc,
-                          const boost::optional<unsigned char> &gid,
-                          bool compressed,
-                          bool unsynchronised,
-                          const boost::optional<std::size_t> &dli)
-{
-  return std::unique_ptr<id3v2_4_frame>(new UFID_2_4(p, p + cb,
-                                                     tap,
-                                                     fap,
-                                                     read_only, enc,
-                                                     gid, compressed,
-                                                     unsynchronised, dli));
-}
-
-/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
-scribbu::ENCR_2_4::create(const frame_id4 &id,
-                          const unsigned char *p,
-                          std::size_t cb,
-                          tag_alter_preservation tap,
-                          file_alter_preservation fap,
-                          read_only read_only,
-                          const boost::optional<unsigned char> &enc,
-                          const boost::optional<unsigned char> &gid,
-                          bool compressed,
-                          bool unsynchronised,
-                          const boost::optional<std::size_t> &dli)
-{
-  return std::unique_ptr<id3v2_4_frame>(new ENCR_2_4(p, p + cb,
-                                                     tap,
-                                                     fap,
-                                                     read_only, enc,
-                                                     gid, compressed,
-                                                     unsynchronised, dli));
-}
 
 /*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
 scribbu::TXXX_2_4::create(const frame_id4 &id,
@@ -193,6 +351,27 @@ scribbu::TXXX_2_4::create(const frame_id4 &id,
                                                      unsynchronised, dli));
 }
 
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::TXXX_2_4::size() const
+{
+  return user_defined_text::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::TXXX_2_4::serialize(std::ostream &os) const
+{
+  return user_defined_text::write(os, false);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class COMM_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
+
 /*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
 scribbu::COMM_2_4::create(const frame_id4 &id,
                           const unsigned char *p,
@@ -211,6 +390,27 @@ scribbu::COMM_2_4::create(const frame_id4 &id,
                                                      gid, compressed,
                                                      unsynchronised, dli));
 }
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::COMM_2_4::size() const
+{
+  return comments::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::COMM_2_4::serialize(std::ostream &os) const
+{
+  return comments::write(os, false);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class PCNT_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
 
 /*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
 scribbu::PCNT_2_4::create(const frame_id4 &id,
@@ -231,6 +431,27 @@ scribbu::PCNT_2_4::create(const frame_id4 &id,
                                                      unsynchronised, dli));
 }
 
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::PCNT_2_4::size() const
+{
+  return play_count::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::PCNT_2_4::serialize(std::ostream &os) const
+{
+  return play_count::write(os, false);
+}
+ 
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class POPM_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
+
 /*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
 scribbu::POPM_2_4::create(const frame_id4 &id,
                           const unsigned char *p,
@@ -248,4 +469,20 @@ scribbu::POPM_2_4::create(const frame_id4 &id,
                                                      read_only, enc,
                                                      gid, compressed,
                                                      unsynchronised, dli));
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::POPM_2_4::size() const
+{
+  return popularimeter::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::POPM_2_4::serialize(std::ostream &os) const
+{
+  return popularimeter::write(os, false);
 }

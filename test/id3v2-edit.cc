@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
   // 1802 bytes of padding
   /////////////////////////////////////////////////////////////////////////////
 
-  id3v2_2_tag::mutable_frame_iterator p0, p1;
+  id3v2_2_tag::iterator p0, p1;
   p0 = tag22.begin();
 
   /////////////////////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
   BOOST_CHECK(frame_id3("TEN") != R1.id());
 
   // What about algorithms?
-  id3v2_2_tag::mutable_frame_iterator ppp =
+  id3v2_2_tag::iterator ppp =
     find_if(tag22.begin(), tag22.end(),
             [](const id3v2_2_frame &x) { return x.id() == "TEN"; });
   BOOST_CHECK(ppp != tag22.end());
@@ -126,6 +126,17 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
   BOOST_TEST_MESSAGE("After read:\n" << check);
 
   BOOST_CHECK(2192 == check.size());
+
+
+
+  // id3v2_2_tag tag22a;
+  // tag22a.push_back(F22);
+  // id3v2_2_tag::iterator q2 = tag22a.begin();
+  // BOOST_CHECK("TEN" == q2[0].id());
+
+
+
+
 
   /////////////////////////////////////////////////////////////////////////////
   // Repeat with a const iterator

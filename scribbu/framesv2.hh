@@ -1,17 +1,5 @@
 #ifndef FRAMESV2_HH_INCLUDED
 #define FRAMESV2_HH_INCLUDED 1
-
-#include <algorithm>
-#include <boost/exception/all.hpp>
-#include <errno.h>
-#include <iconv.h>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <scribbu/scribbu.hh>
-
 /**
  * \page scribbu_id3v2_frames ID3v2 Frames
  *
@@ -49,6 +37,18 @@
  *
  *
  */
+
+#include <algorithm>
+#include <errno.h>
+#include <iconv.h>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include <boost/exception/all.hpp>
+
+#include <scribbu/scribbu.hh>
 
 namespace scribbu {
 
@@ -108,10 +108,26 @@ namespace scribbu {
       return count;
     }
 
+    std::size_t count_false_syncs(std::size_t n);
+
+    std::size_t count_false_syncs(std::ostream &os);
+
     template <typename forward_iterator>
     std::size_t count_ffs(forward_iterator p0, forward_iterator p1) {
       return std::count_if(p0, p1, [](unsigned char x) { return 255 == x; });
     }
+
+    inline std::size_t count_ffs(std::uint32_t x)
+    {
+      std::size_t n = 0;
+      if (0xff ==  (x & 0x000000ff))        ++n;
+      if (0xff == ((x & 0x0000ff00) >>  8)) ++n;
+      if (0xff == ((x & 0x00ff0000) >> 16)) ++n;
+      if (0xff == ((x & 0xff000000) >> 24)) ++n;
+      return n;
+    }
+
+    std::size_t unsynchronise(std::ostream &os, std::uint64_t);
 
     template <typename random_access_iterator>
     std::size_t unsynchronise(std::ostream &os,
@@ -131,6 +147,33 @@ namespace scribbu {
         if (q != p1) {
           os.write(&zed, 1);
           cb += 1;
+          ++q;
+        }
+        p = q;
+      }
+      return cb;
+    }
+
+    template <typename random_access_iterator,
+              typename forward_output_iterator>
+    std::size_t unsynchronise(forward_output_iterator pout,
+                              random_access_iterator p0,
+                              random_access_iterator p1)
+    {
+      using namespace std;
+
+      const char zed = 0;
+      const auto F = [](unsigned char x) { return 255 == x; };
+
+      ptrdiff_t cb = 0;
+      for (auto p = p0; p != p1; ) {
+        auto q = find_if(p, p1, F);
+        pout = copy_n(p, q - p, pout);
+        cb += q - p;
+        if (q != p1) {
+          *pout++ = zed;
+          cb += 1;
+          ++q;
         }
         p = q;
       }
@@ -211,6 +254,9 @@ namespace scribbu {
     bool null() const {
       return 0 == id_[0] && 0 == id_[1] && 0 == id_[2] && 0 == id_[3];
     }
+    bool text_frame() const {
+      return 'T' == id_[0];
+    }
     std::size_t write(std::ostream &os) const {
       os.write(id_, 4);
       return 4;
@@ -250,6 +296,8 @@ namespace std {
 namespace scribbu {
 
   /**
+   * \class id3v2_frame
+   *
    * \brief Base class for all ID3v2 frames
    *
    *
@@ -263,35 +311,36 @@ namespace scribbu {
   class id3v2_frame {
 
   public:
-    /// N.B. the size parameter is the size of this frame, in bytes, *not*
-    /// including the header, and after any resynchronisation, decompression,
-    /// and/or decryption
-    id3v2_frame(std::size_t size, bool experimental):
-      size_(size), experimental_(experimental)
+
+    id3v2_frame(bool experimental): experimental_(experimental)
     { }
     virtual ~id3v2_frame()
     { }
+
     /// Returns true if this is an experimental frame in that the ID begins
     /// with 'X', 'Y', or 'Z'
-    bool experimental() const {
-      return experimental_;
-    }
-    /// Return the size, in bytes, of the frame, prior to desynchronisation,
-    /// compression, and/or encryption
-    std::size_t size() const {
-      return size_;
-    }
+    bool experimental() const
+    { return experimental_; }
 
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const = 0;
     /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
+    /// disk, including the header
     virtual std::size_t serialized_size(bool unsync) const = 0;
+    /// Return zero if this tag would not contain false syncs if serialized in
+    /// its present state; else return the number of false sync it would
+    /// contain
     virtual std::size_t needs_unsynchronisation() const = 0;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
     virtual std::size_t write(std::ostream &os, bool unsync) const = 0;
 
   private:
-    std::size_t size_;
     bool experimental_;
-  };
+
+  }; // End class id3v2_frame.
 
   /**
    * \brief Unique File Identifier
@@ -348,6 +397,7 @@ namespace scribbu {
       return std::copy(id_.begin(), id_.end(), pout);
     }
 
+    std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
     std::size_t write(std::ostream &os, bool unsync) const;
@@ -402,6 +452,16 @@ namespace scribbu {
     forward_output_iterator datab(forward_output_iterator p) const {
       return std::copy(data_.begin(), data_.end(), p);
     }
+
+    std::size_t size() const;
+    std::size_t serialized_size(bool unsync) const;
+    std::size_t needs_unsynchronisation() const;
+    std::size_t write(std::ostream &os, bool unsync) const;
+
+  private:
+    /// Return the number of bytes with 255 as their value when serialized
+    /// without unsynchronisation
+    std::size_t count_ffs() const;
 
   private:
     std::vector<unsigned char> email_;
@@ -476,6 +536,7 @@ namespace scribbu {
       return std::copy(text_.begin(), text_.end(), p);
     }
 
+    std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
     std::size_t write(std::ostream &os, bool unsync) const;
@@ -565,6 +626,7 @@ namespace scribbu {
       return std::copy(text_.begin(), text_.end(), p);
     }
 
+    std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
     std::size_t write(std::ostream &os, bool unsync) const;
@@ -601,6 +663,7 @@ namespace scribbu {
     }
     std::size_t count() const;
 
+    std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
     std::size_t write(std::ostream &os, bool unsync) const;
@@ -645,6 +708,7 @@ namespace scribbu {
       return rating_;
     }
 
+    std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
     std::size_t write(std::ostream &os, bool unsync) const;

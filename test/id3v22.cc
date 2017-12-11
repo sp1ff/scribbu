@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 
   /////////////////////////////////////////////////////////////////////////////
 
-  id3v2_2_tag::mutable_frame_iterator p = tag.begin();
+  id3v2_2_tag::iterator p = tag.begin();
   BOOST_CHECK("TT2" == p->id());
   BOOST_CHECK(21  == p->serialized_size(true)); ++p;
   BOOST_CHECK(28  == p->serialized_size(true)); ++p;
@@ -164,7 +164,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 
   BOOST_CHECK(2192 == tag.size());
   BOOST_CHECK(0 == tag.flags());
-  BOOST_CHECK(!tag.unsynchronised());
+  boost::optional<bool> unsync = tag.unsynchronised();
+  BOOST_CHECK(unsync && ! *unsync);
   BOOST_CHECK(!tag.compression());
 
   BOOST_TEST_MESSAGE( "Album: '"        << tag.album()        << "'." );

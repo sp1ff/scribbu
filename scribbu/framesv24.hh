@@ -1,13 +1,12 @@
 #ifndef FRAMESV24_HH_INCLUDED
 #define FRAMESV24_HH_INCLUDED 1
-
-#include <scribbu/framesv2.hh>
-#include <scribbu/framesv23.hh>
-
 #include <algorithm>
 #include <memory>
 
 #include <boost/optional.hpp>
+
+#include <scribbu/framesv2.hh>
+#include <scribbu/framesv23.hh>
 
 namespace scribbu {
 
@@ -62,35 +61,35 @@ namespace scribbu {
       set
     };
 
+    typedef boost::optional<size_t> dli_type;
+
   public:
-    id3v2_4_frame(const frame_id4 &id,
-                  std::size_t size,
-                  tag_alter_preservation tap,
+    id3v2_4_frame(const frame_id4        &id,
+                  std::size_t             size,
+                  tag_alter_preservation  tap,
                   file_alter_preservation fap,
-                  read_only read_only,
-                  const boost::optional<unsigned char> &enc,
-                  const boost::optional<unsigned char> &gid,
-                  bool compressed,
-                  bool unsynchronised,
-                  const boost::optional<std::size_t> &dli):
-      id3v2_3_plus_frame(id, size, tap, fap, read_only,
-                         enc, gid),
-      compressed_(compressed),
-      unsynchronised_(unsynchronised),
+                  read_only               ro,
+                  bool                    cmp,
+                  const id_type          &enc,
+                  const id_type          &gid,
+                  bool                    unsynch,
+                  const dli_type         &dli):
+      id3v2_3_plus_frame(id, size, tap, fap, ro, cmp, enc, gid),
+      compressed_(cmp),
+      unsynchronised_(unsynch),
       data_len_indicator_(dli)
     { }
-    id3v2_4_frame(const char id[4],
-                  std::size_t size,
-                  tag_alter_preservation tap,
+    id3v2_4_frame(const char              id[4],
+                  std::size_t             size,
+                  tag_alter_preservation  tap,
                   file_alter_preservation fap,
-                  read_only read_only,
-                  const boost::optional<unsigned char> &enc,
-                  const boost::optional<unsigned char> &gid,
-                  bool compressed,
-                  bool unsynchronised,
-                  const boost::optional<std::size_t> &dli):
-      id3v2_4_frame(frame_id4(id), size, tap, fap, read_only, enc,
-                    gid, compressed, unsynchronised, dli)
+                  read_only               ro,
+                  const id_type          &enc,
+                  const id_type          &gid,
+                  bool                    cmp,
+                  bool                    unsynch,
+                  const dli_type         &dli):
+      id3v2_4_frame(frame_id4(id), size, tap, fap, ro, cmp, enc, gid, unsynch, dli)
     { }
     id3v2_4_frame(unsigned char id0,
                   unsigned char id1,
@@ -99,22 +98,16 @@ namespace scribbu {
                   std::size_t size,
                   tag_alter_preservation tap,
                   file_alter_preservation fap,
-                  read_only read_only,
+                  read_only ro,
                   const boost::optional<unsigned char> &enc,
                   const boost::optional<unsigned char> &gid,
-                  bool compressed,
-                  bool unsynchronised,
+                  bool cmprsd,
+                  bool unsynch,
                   const boost::optional<std::size_t> &dli):
       id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), size,
-                         tap, fap, read_only, enc, gid)
+                         tap, fap, ro, cmprsd, enc, gid)
     { }
-
-    virtual std::size_t serialized_size() const
-    { return 0; }
-    virtual std::size_t needs_unsynchronisation() const
-    { return false; }
-    virtual std::size_t write(std::istream&, bool unsync) const
-    { return 0; }
+    virtual id3v2_4_frame* clone() const = 0;
 
     template <typename string_type>
     static
@@ -126,6 +119,12 @@ namespace scribbu {
                          scribbu::on_no_encoding::fail,
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
+
+  protected:
+    /// Serialize this tag's header to an output stream, including any special
+    /// fields such as decompressed size, group id, &c
+    virtual std::size_t write_header(std::ostream &os, std::size_t cb_payload,
+                                     std::size_t dlind) const;
 
   private:
     bool compressed_;
@@ -142,16 +141,16 @@ namespace scribbu {
     unknown_id3v2_4_frame(const frame_id4 &id,
                           tag_alter_preservation tap,
                           file_alter_preservation fap,
-                          read_only read_only,
+                          read_only ro,
                           const boost::optional<unsigned char> &enc,
                           const boost::optional<unsigned char> &gid,
-                          bool compressed,
-                          bool unsynchronised,
+                          bool cmprsd,
+                          bool unsynch,
                           const boost::optional<std::size_t> &dli,
                           forward_input_iterator p0,
                           forward_input_iterator p1):
-      id3v2_4_frame(id, p1 - p0, tap, fap, read_only, enc, gid, compressed,
-                    unsynchronised, dli),
+      id3v2_4_frame(id, p1 - p0, tap, fap, ro, cmprsd, enc, gid, 
+                    unsynch, dli),
       data_(p0, p1)
     { }
 
@@ -162,39 +161,52 @@ namespace scribbu {
                           unsigned char id3,
                           tag_alter_preservation tap,
                           file_alter_preservation fap,
-                          read_only read_only,
+                          read_only ro,
                           const boost::optional<unsigned char> &enc,
                           const boost::optional<unsigned char> &gid,
-                          bool compressed,
-                          bool unsynchronised,
+                          bool cmprsd,
+                          bool unsynch,
                           const boost::optional<std::size_t> &dli,
                           forward_input_iterator p0,
                           forward_input_iterator p1):
-      unknown_id3v2_4_frame(frame_id4(id0, id1, id2), tap,
-                            fap, read_only, enc, gid, compressed,
-                            unsynchronised, dli, p0, p1)
+      unknown_id3v2_4_frame(frame_id4(id0, id1, id2), tap, fap, ro, enc,
+                            gid, cmprsd, unsynch, dli, p0, p1)
     { }
 
     template <typename forward_input_iterator>
     unknown_id3v2_4_frame(const char id[4],
                           tag_alter_preservation tap,
                           file_alter_preservation fap,
-                          read_only read_only,
+                          read_only ro,
                           const boost::optional<unsigned char> &enc,
                           const boost::optional<unsigned char> &gid,
-                          bool compressed,
-                          bool unsynchronised,
+                          bool cmprsd,
+                          bool unsynch,
                           const boost::optional<std::size_t> &dli,
                           forward_input_iterator p0,
                           forward_input_iterator p1):
-      unknown_id3v2_4_frame(frame_id4(id), tap, fap, read_only, enc,
-                            gid, compressed, unsynchronised, dli, p0, p1)
+      unknown_id3v2_4_frame(frame_id4(id), tap, fap, ro, enc,
+                            gid, cmprsd, unsynch, dli, p0, p1)
     { }
 
+    virtual id3v2_4_frame* clone() const
+    { return new unknown_id3v2_4_frame(*this); }
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
     template <typename forward_output_iterator>
-    forward_output_iterator data(forward_output_iterator p) const {
-      return std::copy(data_.begin(), data_.end(), p);
-    }
+    forward_output_iterator data(forward_output_iterator p) const
+    { return std::copy(data_.begin(), data_.end(), p); }
+
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   private:
     std::vector<unsigned char> data_;
@@ -208,16 +220,39 @@ namespace scribbu {
              forward_input_iterator p1,
              tag_alter_preservation tap,
              file_alter_preservation fap,
-             read_only read_only,
+             read_only ro,
              const boost::optional<unsigned char> &enc,
              const boost::optional<unsigned char> &gid,
-             bool compressed,
-             bool unsynchronised,
+             bool cmprsd,
+             bool unsynch,
              const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("UFID", p1 - p0, tap, fap, read_only, enc, gid,
-                    compressed, unsynchronised, dli),
+      id3v2_4_frame("UFID", p1 - p0, tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
       unique_file_id(p0, p1)
     { }
+
+    virtual id3v2_4_frame* clone() const
+    { return new UFID_2_4(*this); }
+
+    static
+    std::unique_ptr<id3v2_4_frame>
+    create(const frame_id4 &id,
+           const unsigned char *p,
+           std::size_t cb,
+           tag_alter_preservation tap,
+           file_alter_preservation fap,
+           read_only ro,
+           const boost::optional<unsigned char> &enc,
+           const boost::optional<unsigned char> &gid,
+           bool cmprsd,
+           bool unsynch,
+           const boost::optional<std::size_t> &dli);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -231,19 +266,12 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static
-    std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &enc,
-           const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
 
   }; // End class UFID_2_4.
 
@@ -251,20 +279,42 @@ namespace scribbu {
 
   public:
     template <typename forward_input_iterator>
-    ENCR_2_4(forward_input_iterator p0,
-             forward_input_iterator p1,
-             tag_alter_preservation tap,
-             file_alter_preservation fap,
-             read_only read_only,
+    ENCR_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
              const boost::optional<unsigned char> &enc,
              const boost::optional<unsigned char> &gid,
-             bool compressed,
-             bool unsynchronised,
-             const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("ENCR", p1 - p0, tap, fap, read_only, enc, gid,
-                    compressed, unsynchronised, dli),
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("ENCR", p1 - p0, tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
       encryption_method(p0, p1)
     { }
+
+    virtual id3v2_4_frame* clone() const
+    { return new ENCR_2_4(*this); }
+
+    static std::unique_ptr<id3v2_4_frame>
+    create(const frame_id4 &id,
+           const unsigned char *p,
+           std::size_t cb,
+           tag_alter_preservation tap,
+           file_alter_preservation fap,
+           read_only ro,
+           const boost::optional<unsigned char> &enc,
+           const boost::optional<unsigned char> &gid,
+           bool cmprsd,
+           bool unsynch,
+           const boost::optional<std::size_t> &dli);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -278,19 +328,11 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static
-    std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &enc,
-           const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class ENCR_2_4.
 
@@ -356,38 +398,37 @@ namespace scribbu {
   public:
     // frame_id4
     template <typename forward_input_iterator>
-    id3v2_4_text_frame(const frame_id4 &id,
-                       forward_input_iterator p0,
-                       forward_input_iterator p1,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only read_only,
+    id3v2_4_text_frame(const frame_id4                      &id,
+                       forward_input_iterator                p0,
+                       forward_input_iterator                p1,
+                       tag_alter_preservation                tap,
+                       file_alter_preservation               fap,
+                       read_only                             ro,
                        const boost::optional<unsigned char> &enc,
                        const boost::optional<unsigned char> &gid,
-                       bool compressed,
-                       bool unsynchronised,
-                       const boost::optional<std::size_t> &dli):
-      id3v2_4_frame(id, p1 - p0, tap, fap, read_only,
-                    enc, gid, compressed, unsynchronised, dli)
+                       bool                                  cmprsd,
+                       bool                                  unsynch,
+                       const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame(id, p1 - p0, tap, fap, ro, cmprsd, enc, gid, unsynch, dli)
     {
       unicode_ = *p0++;
       std::copy(p0, p1, std::back_inserter(text_));
     }
     // char[4]
     template <typename forward_input_iterator>
-    id3v2_4_text_frame(const char id[4],
-                       forward_input_iterator p0,
-                       forward_input_iterator p1,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only read_only,
+    id3v2_4_text_frame(const char                            id[4],
+                       forward_input_iterator                p0,
+                       forward_input_iterator                p1,
+                       tag_alter_preservation                tap,
+                       file_alter_preservation               fap,
+                       read_only                             ro,
                        const boost::optional<unsigned char> &enc,
                        const boost::optional<unsigned char> &gid,
-                       bool compressed,
-                       bool unsynchronised,
-                       const boost::optional<std::size_t> &dli):
-      id3v2_4_text_frame(frame_id4(id), p0, p1, tap, fap, read_only,
-                         enc, gid, compressed, unsynchronised, dli)
+                       bool                                  cmprsd,
+                       bool                                  unsynch,
+                       const boost::optional<std::size_t>   &dli):
+      id3v2_4_text_frame(frame_id4(id), p0, p1, tap, fap, ro,
+                         enc, gid, cmprsd, unsynch, dli)
     { }
     // four cahrs
     template <typename forward_input_iterator>
@@ -399,15 +440,14 @@ namespace scribbu {
                        forward_input_iterator p1,
                        tag_alter_preservation tap,
                        file_alter_preservation fap,
-                       read_only read_only,
+                       read_only ro,
                        const boost::optional<unsigned char> &enc,
                        const boost::optional<unsigned char> &gid,
-                       bool compressed,
-                       bool unsynchronised,
+                       bool cmprsd,
+                       bool unsynch,
                        const boost::optional<std::size_t> &dli):
       id3v2_4_text_frame(frame_id4(id0, id1, id2, id3), p0, p1,
-                         tap, fap, read_only, enc, gid,
-                         compressed, unsynchronised, dli)
+                         tap, fap, ro, enc, gid, cmprsd, unsynch, dli)
     { }
 
     template <typename string_type>
@@ -430,6 +470,22 @@ namespace scribbu {
                          tap, fap, ro, enc, gid, cmp, unsync, dli)
     { }
 
+    virtual id3v2_4_frame* clone() const
+    { return new id3v2_4_text_frame(*this); }
+
+    static std::unique_ptr<id3v2_4_text_frame>
+    create(const frame_id4 &id,
+           const unsigned char *p,
+           std::size_t cb,
+           tag_alter_preservation tap,
+           file_alter_preservation fap,
+           read_only ro,
+           const boost::optional<unsigned char> &enc,
+           const boost::optional<unsigned char> &gid,
+           bool compressed,
+           bool unsynch,
+           const boost::optional<std::size_t> &dli);
+
   private:
     static encoding encshim(frame_encoding x);
     static unsigned char encshim2(frame_encoding x);
@@ -444,12 +500,16 @@ namespace scribbu {
                        bool cmp,
                        bool unsync,
                        const boost::optional<std::size_t> &dli):
-      id3v2_4_frame(id, text.size(), tap, fap, ro, enc, gid, cmp, unsync, dli),
+      id3v2_4_frame(id, text.size() + 1, tap, fap, ro, cmp, enc, gid, unsync, dli),
       unicode_(encshim2(dstenc)),
       text_(text)
     { }
 
   public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     void set(const std::string &text,
              encoding src = encoding::UTF_8,
@@ -457,14 +517,12 @@ namespace scribbu {
              bool add_bom = false,
              on_no_encoding rsp = on_no_encoding::fail);
 
-    unsigned char unicode() const {
-      return unicode_;
-    }
+    unsigned char unicode() const
+    { return unicode_; }
 
     template <typename forward_output_iterator>
-    forward_output_iterator text(forward_output_iterator p) const {
-      return std::copy(text_.begin(), text_.end(), p);
-    }
+    forward_output_iterator text(forward_output_iterator p) const
+    { return std::copy(text_.begin(), text_.end(), p); }
 
     typedef scribbu::on_no_encoding on_no_encoding;
 
@@ -499,58 +557,58 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
-    static std::unique_ptr<id3v2_4_text_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &enc,
-           const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   private:
     unsigned char unicode_;
     std::vector<unsigned char> text_;
 
-  };
+  }; // End class id3v2_4_text_frame.
 
 
   /// User-defined text information
   class TXXX_2_4: public id3v2_4_frame, public user_defined_text {
   public:
     template <typename forward_input_iterator>
-    TXXX_2_4(forward_input_iterator p0,
-             forward_input_iterator p1,
-             tag_alter_preservation tap,
-             file_alter_preservation fap,
-             read_only read_only,
+    TXXX_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
              const boost::optional<unsigned char> &enc,
              const boost::optional<unsigned char> &gid,
-             bool compressed,
-             bool unsynchronised,
-             const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("TXXX", p1 - p0, tap, fap, read_only, enc, gid,
-                    compressed, unsynchronised, dli),
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("TXXX", p1 - p0, tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
       user_defined_text(4, p0, p1)
     { }
 
+    virtual id3v2_4_frame* clone() const
+    { return new TXXX_2_4(*this); }
+
     static
     std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tap,
+           file_alter_preservation               fap,
+           read_only                             ro,
            const boost::optional<unsigned char> &enc,
            const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+           bool                                  cmprsd,
+           bool                                  unsynch,
+           const boost::optional<std::size_t>   &dli);
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -578,39 +636,54 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
   }; // End class TXXX_2_4.
 
   // Comments
   class COMM_2_4: public id3v2_4_frame, public comments {
   public:
     template <typename forward_input_iterator>
-    COMM_2_4(forward_input_iterator p0,
-             forward_input_iterator p1,
-             tag_alter_preservation tap,
-             file_alter_preservation fap,
-             read_only read_only,
+    COMM_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
              const boost::optional<unsigned char> &enc,
              const boost::optional<unsigned char> &gid,
-             bool compressed,
-             bool unsynchronised,
-             const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("COMM", p1 - p0, tap, fap, read_only, enc, gid,
-                    compressed, unsynchronised, dli),
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("COMM", p1 - p0, tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
       comments(4, p0, p1)
     { }
 
+    virtual id3v2_4_frame* clone() const
+    { return new COMM_2_4(*this); }
+
     static std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tap,
+           file_alter_preservation               fap,
+           read_only                             ro,
            const boost::optional<unsigned char> &enc,
            const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+           bool                                  cmprsd,
+           bool                                  unsynch,
+           const boost::optional<std::size_t>   &dli);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -638,60 +711,106 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
-  };
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class COMM_2_4.
 
   // play count
   class PCNT_2_4: public id3v2_4_frame, public play_count {
   public:
     template <typename forward_input_iterator>
-    PCNT_2_4(forward_input_iterator p0,
-             forward_input_iterator p1,
-             tag_alter_preservation tap,
-             file_alter_preservation fap,
-             read_only read_only,
+    PCNT_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
              const boost::optional<unsigned char> &enc,
              const boost::optional<unsigned char> &gid,
-             bool compressed,
-             bool unsynchronised,
-             const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("PCNT", p1 - p0, tap, fap, read_only, enc, gid,
-                    compressed, unsynchronised, dli),
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("PCNT", p1 - p0, tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
       play_count(p0, p1)
     { }
 
+    virtual id3v2_4_frame* clone() const
+    { return new PCNT_2_4(*this); }
+
     static std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tap,
+           file_alter_preservation               fap,
+           read_only                             ro,
            const boost::optional<unsigned char> &enc,
            const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+           bool                                  cmprsd,
+           bool                                  unsynch,
+           const boost::optional<std::size_t>   &dli);
 
-  };
+  public:
+    
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+    std::size_t count() const
+    { return play_count::count(); }
+
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class PCNT_2_4.
 
   // Popularimeter
   class POPM_2_4: public id3v2_4_frame, public popularimeter {
   public:
     template <typename forward_input_iterator>
-    POPM_2_4(forward_input_iterator p0,
-             forward_input_iterator p1,
-             tag_alter_preservation tap,
-             file_alter_preservation fap,
-             read_only read_only,
+    POPM_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
              const boost::optional<unsigned char> &enc,
              const boost::optional<unsigned char> &gid,
-             bool compressed,
-             bool unsynchronised,
-             const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("POPM", p1 - p0, tap, fap, read_only, enc, gid,
-                    compressed, unsynchronised, dli),
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("POPM", p1 - p0, tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
       popularimeter(p0, p1)
     { }
+
+    virtual id3v2_4_frame* clone() const
+    { return new POPM_2_4(*this); }
+
+    static std::unique_ptr<id3v2_4_frame>
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tap,
+           file_alter_preservation               fap,
+           read_only                             ro,
+           const boost::optional<unsigned char> &enc,
+           const boost::optional<unsigned char> &gid,
+           bool                                  cmprsd,
+           bool                                  unsynch,
+           const boost::optional<std::size_t>   &dli);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -705,18 +824,11 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &enc,
-           const boost::optional<unsigned char> &gid,
-           bool compressed,
-           bool unsynchronised,
-           const boost::optional<std::size_t> &dli);
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class POPM_2_4.
 

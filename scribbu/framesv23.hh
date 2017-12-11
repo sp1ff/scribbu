@@ -1,25 +1,25 @@
 #ifndef FRAMESV23_HH_INCLUDED
 #define FRAMESV23_HH_INCLUDED 1
-
-#include <scribbu/framesv2.hh>
-
 #include <algorithm>
 #include <memory>
 
 #include <boost/optional.hpp>
 
 #include <scribbu/charsets.hh>
+#include <scribbu/framesv2.hh>
 
 namespace scribbu {
 
   /**
-   * \brief Represents an ID3v2.3 or ID3v2.4 frame
+   * \brief Represents an ID3v2.3 \em or ID3v2.4 frame
    *
    *
-   * \subsubsection scribbu_id3v2_discuss_frames_23 "ID3v2.3 Frames"
+   * ID3v2.3 & .4 frames share enough structure that some functionality can be
+   * hoisted up into a common sub-class.
    *
-   * After the header, and possibly after the extended header, ID3v2.3 tags
-   * consist of one more frames, each satisfying the following layout:
+   * In the case of ID3v2.3 frames, after the header, and possibly after the
+   * extended header, ID3v2.3 tags consist of one more frames, each satisfying
+   * the following layout:
    *
    \code
 
@@ -47,6 +47,47 @@ namespace scribbu {
        - k: Grouping identity
 
    \endcode
+   *
+   * ID3v2.4 frames have the following structure:
+   *
+   \code
+
+     +--------+---------------------+
+     |Frame ID|   $xx xx xx xx      |
+     +--------+---------------------+
+     | Size   | 4 * %0xxxxxxx       |
+     +--------+---------------------+
+     | Flags  | %0abc0000 %0h00kmnp |
+     +--------+---------------------+
+
+     Frame ID: [A-Z0-9]{4}-- Identifiers beginning with "X", "Y" and "Z"
+     are for experimental use
+
+     Size: A sync-safe integer giving the size of the frame, in
+     bytes, not including the header (i.e. total frame size - 10)
+
+     Flags:
+
+       - a: Tag alter preservation
+       - b: File alter preservation
+       - c: Read only
+       - h: Grouping identity
+       - k: Compression
+       - m: Encryption
+       - n: Unsynchronisation
+       - p: Data length indicator
+
+   \endcode
+   *
+   * So while frames of either version detect these attributes differently,
+   * they share:
+   *
+   *     - Tag alter preservation
+   *     - File alter preservation
+   *     - Read only
+   *     - Compression
+   *     - Encryption
+   *     - Grouping identity
    *
    *
    */
@@ -83,74 +124,179 @@ namespace scribbu {
       set
     };
 
-  public:
+    /// Convenience typedef-- values such as encryption method & group ID are
+    /// represented by a single byte, when they're present.
+    typedef boost::optional<unsigned char> id_type;
 
-    id3v2_3_plus_frame(const frame_id4 &id,
-                       std::size_t size,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only read_only,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &group_id):
-      id3v2_frame(size, id.experimental()),
-      id_(id),
-      tap_(tap),
-      fap_(fap),
-      read_only_(read_only),
-      encmth_(encmth),
-      group_id_(group_id)
-    { }
+    /// Convenience typedef-- both ID3v2.3 & .4 frames optionally provide size
+    /// information
+    typedef boost::optional<std::size_t> opt_sz_type;
 
-    id3v2_3_plus_frame(const char id[4],
-                       std::size_t size,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only read_only,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &group_id):
-      id3v2_3_plus_frame(frame_id4(id), size, tap, fap, read_only,
-                         encmth, group_id)
-    { }
-    id3v2_3_plus_frame(unsigned char id0,
-                       unsigned char id1,
-                       unsigned char id2,
-                       unsigned char id3,
-                       std::size_t size,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only read_only,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &group_id):
-      id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), size, tap,
-                         fap, read_only, encmth, group_id)
-    { }
+  protected:
+
+    /// Index of the cached copy of this frame in serialized form with
+    /// compression and/or ecnryption applied
+    static const unsigned char SERIALIZED_WITH_CE = 0;
+    /// Index of the cached copy of this frame in serialized form with
+    /// compression, ecnryption and/or unsynchronisation applied
+    static const unsigned char SERIALIZED_WITH_CEU = 1;
 
   public:
 
-    frame_id4 id() const {
-      return id_;
-    }
+    ///////////////////////////////////////////////////////////////////////////
+    //                             Construction                              //
+    ///////////////////////////////////////////////////////////////////////////
 
-    virtual std::size_t serialized_size(bool unsync) const {
-      // TODO(sp1ff): Write me!
-      return size();
-    }
-    virtual std::size_t needs_unsynchronisation() const {
-      // TODO(sp1ff): Write me!
-      return false;
-    }
-    virtual std::size_t write(std::ostream &os, bool unsync) const {
-      // TODO(sp1ff): Write me!
-      return 0;
-    }
+    /// Construct with a frame ID et al.
+    id3v2_3_plus_frame(const frame_id4        &id,
+                       std::size_t             size,
+                       tag_alter_preservation  tap,
+                       file_alter_preservation fap,
+                       read_only               ro,
+                       bool                    cmp,     
+                       const id_type          &enc,
+                       const id_type          &gid):
+      id3v2_frame(id.experimental()),
+      id_        (id  ),
+      tap_       (tap ),
+      fap_       (fap ),
+      read_only_ (ro  ),
+      compressed_(cmp ),
+      enc_method_(enc ),
+      group_id_  (gid ),
+      dirty_     (true)
+    { }
 
+    /// Construct with an array of four chars et al.
+    id3v2_3_plus_frame(const char              id[4],
+                       std::size_t             size,
+                       tag_alter_preservation  tap,
+                       file_alter_preservation fap,
+                       read_only               ro,
+                       bool                    cmp,
+                       const id_type          &enc,
+                       const id_type          &gid):
+      id3v2_3_plus_frame(frame_id4(id), size, tap, fap, ro, cmp, enc, gid)
+    { }
+
+    /// Construct with four chars et al.
+    id3v2_3_plus_frame(unsigned char           id0,
+                       unsigned char           id1,
+                       unsigned char           id2,      
+                       unsigned char           id3,
+                       std::size_t             size,
+                       tag_alter_preservation  tap,
+                       file_alter_preservation fap,
+                       read_only               ro,
+                       bool                    cmp,
+                       const id_type          &encmth,
+                       const id_type          &gid):
+      id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), size, tap, fap, ro, cmp, encmth, gid)
+    { }
+
+    /// Copy construct
+    id3v2_3_plus_frame(const id3v2_3_plus_frame &that):
+      id3v2_frame(that.id().experimental()),
+      id_        (that.id()),
+      tap_       (that.tag_alter_preserve()),
+      fap_       (that.file_alter_preserve()),
+      read_only_ (that.readonly()),
+      compressed_(that.compressed()),
+      enc_method_(that.encrypted()),
+      group_id_  (that.grouped()),
+      dirty_     (true)
+    { }
+      
+
+  public:
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                           Public Interface                            //
+    ///////////////////////////////////////////////////////////////////////////
+
+    frame_id4 id() const
+    { return id_; }
+    tag_alter_preservation tag_alter_preserve() const
+    { return tap_; }
+    file_alter_preservation file_alter_preserve() const
+    { return fap_; }
+    read_only readonly() const
+    { return read_only_; }
+    bool compressed() const
+    { return compressed_; }
+    bool encrypted() const
+    { return bool(enc_method_); }
+    bool grouped() const
+    { return bool(group_id_); }
+
+    /// Update a CRC-32 checksum using this frames serialized form
+    std::uint32_t crc(std::uint32_t crc) const; 
+    
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the header
+    virtual std::size_t serialized_size(bool unsync) const;
+    /// Return zero if this tag would not contain false syncs if serialized in
+    /// its present state; else return the number of false sync it would
+    /// contain
+    virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                       Interface for Subclasses                        //
+    ///////////////////////////////////////////////////////////////////////////
+
+    bool tap() const
+    { return tap_ == tag_alter_preservation::discard; }
+    bool fap() const
+    { return fap_ == file_alter_preservation::discard; }
+    bool ro() const
+    { return read_only_ == read_only::set; }
+    bool dirty() const
+    { return dirty_; }
+    void dirty(bool f) const
+    { dirty_ = f; }
+    unsigned char encmeth() const
+    { return enc_method_.get(); }
+    unsigned char gid() const
+    { return group_id_.get(); }
+
+    /// If the dirty flag is set, re-serialize & re-apply compression,
+    /// encryption & unsynchronisation
+    void ensure_cached_data_is_fresh() const;
+    // TODO(sp1ff): Consider re-factoring into framesv2.hh
+    /// Write a four-tuple while removing false syncs
+    std::size_t unsynchronise_quadruplet(std::ostream &os, char buf[4]) const;
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const = 0;
+    /// Serialize this tag's header to an output stream, including any special
+    /// fields such as decompressed size, group id, &c
+    virtual std::size_t write_header(std::ostream &os, std::size_t cb_payload,
+                                     std::size_t dlind) const = 0;
+    
   private:
-    frame_id4                      id_;
-    tag_alter_preservation         tap_;
-    file_alter_preservation        fap_;
-    read_only                      read_only_;
-    boost::optional<unsigned char> encmth_;
-    boost::optional<unsigned char> group_id_;
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                            Frame State                                //
+    ///////////////////////////////////////////////////////////////////////////
+
+    frame_id4               id_;
+    tag_alter_preservation  tap_;
+    file_alter_preservation fap_;
+    read_only               read_only_;
+    bool                    compressed_;
+    id_type                 enc_method_;
+    id_type                 group_id_;
+
+    // TODO(sp1ff): Implment copy & move ctors and assignment operators
+    mutable bool dirty_;
+    mutable std::size_t num_false_syncs_;
+    mutable std::vector<unsigned char> cache_[2];
 
   }; // End class id3v2_3_plus_frame.
 
@@ -159,51 +305,48 @@ namespace scribbu {
 
   public:
 
-    id3v2_3_frame(const frame_id4 &id,
-                  std::size_t size,
-                  tag_alter_preservation tap,
+    ///////////////////////////////////////////////////////////////////////////
+    //                             Construction                              //
+    ///////////////////////////////////////////////////////////////////////////
+
+    /// Construct with a frame ID
+    id3v2_3_frame(const frame_id4        &id,
+                  std::size_t             size,
+                  tag_alter_preservation  tap,
                   file_alter_preservation fap,
-                  read_only read_only,
-                  const boost::optional<unsigned char> &encmth,
-                  const boost::optional<unsigned char> &group_id,
-                  const boost::optional<std::size_t> &decsz):
-      id3v2_3_plus_frame(id, size, tap, fap, read_only, encmth, group_id),
+                  read_only               ro,
+                  const id_type          &encmth,
+                  const id_type          &gid,
+                  const opt_sz_type      &decsz):
+      id3v2_3_plus_frame(id, size, tap, fap, ro, (bool)decsz, encmth, gid),
       decsz_(decsz)
     { }
 
-    id3v2_3_frame(const char id[4],
-                  std::size_t size,
-                  tag_alter_preservation tap,
+    id3v2_3_frame(const char              id[4],
+                  std::size_t             size,
+                  tag_alter_preservation  tap,
                   file_alter_preservation fap,
-                  read_only read_only,
-                  const boost::optional<unsigned char> &encmth,
-                  const boost::optional<unsigned char> &group_id,
-                  const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame(frame_id4(id), size, tap, fap, read_only,
-                    encmth, group_id, decsz)
+                  read_only               ro,
+                  const id_type          &encmth,
+                  const id_type          &gid,
+                  const opt_sz_type      &decsz):
+      id3v2_3_frame(frame_id4(id), size, tap, fap, ro, encmth, gid, decsz)
     { }
 
-    id3v2_3_frame(unsigned char id0,
-                  unsigned char id1,
-                  unsigned char id2,
-                  unsigned char id3,
-                  std::size_t size,
-                  tag_alter_preservation tap,
+    id3v2_3_frame(unsigned char           id0,
+                  unsigned char           id1,
+                  unsigned char           id2,
+                  unsigned char           id3,
+                  std::size_t             size,
+                  tag_alter_preservation  tap,
                   file_alter_preservation fap,
-                  read_only read_only,
-                  const boost::optional<unsigned char> &encmth,
-                  const boost::optional<unsigned char> &group_id,
-                  const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame(frame_id4(id0, id1, id2, id3), size, tap, fap,
-                    read_only, encmth, group_id, decsz)
+                  read_only               ro,
+                  const id_type          &encmth,
+                  const id_type          &gid,
+                  const opt_sz_type      &decsz):
+      id3v2_3_frame(frame_id4(id0, id1, id2, id3), size, tap, fap, ro, encmth, gid, decsz)
     { }
-
-    virtual std::size_t serialized_size() const
-    { return 0; }
-    virtual std::size_t needs_unsynchronisation() const
-    { return false; }
-    virtual std::size_t write(std::istream&, bool unsync) const
-    { return 0; }
+    virtual id3v2_3_frame* clone() const = 0;
 
     /// Convert ID3v2.3 encoded text to an arbitrary encoding
     template <typename string_type>
@@ -217,8 +360,17 @@ namespace scribbu {
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
 
+  protected:
+    bool compressed() const
+    { return (bool)decsz_; }
+
+    /// Serialize this tag's header to an output stream, including any special
+    /// fields such as decompressed size, group id, &c
+    virtual std::size_t write_header(std::ostream &os, std::size_t cb_payload,
+                                     std::size_t dlind) const;
+
   private:
-    boost::optional<std::size_t> decsz_;
+    opt_sz_type decsz_;
 
   }; // End class id3v2_3_frame.
 
@@ -227,57 +379,66 @@ namespace scribbu {
   public:
 
     template <typename forward_input_iterator>
-    unknown_id3v2_3_frame(const frame_id4 &id,
-                          tag_alter_preservation tap,
+    unknown_id3v2_3_frame(const frame_id4        &id,
+                          tag_alter_preservation  tap,
                           file_alter_preservation fap,
-                          read_only read_only,
-                          const boost::optional<unsigned char> &encmth,
-                          const boost::optional<unsigned char> &group_id,
-                          const boost::optional<std::size_t> &decsz,
-                          forward_input_iterator p0,
-                          forward_input_iterator p1):
-      id3v2_3_frame(id, p1 - p0, tap, fap, read_only, encmth, group_id, decsz),
+                          read_only               ro,
+                          const id_type          &encmth,
+                          const id_type          &gid,
+                          const opt_sz_type      &decsz,
+                          forward_input_iterator  p0,
+                          forward_input_iterator  p1):
+      id3v2_3_frame(id, p1 - p0, tap, fap, ro, encmth, gid, decsz),
       data_(p0, p1)
     { }
 
     template <typename forward_input_iterator>
-    unknown_id3v2_3_frame(unsigned char id0,
-                          unsigned char id1,
-                          unsigned char id2,
-                          unsigned char id3,
-                          tag_alter_preservation tap,
+    unknown_id3v2_3_frame(unsigned char           id0,
+                          unsigned char           id1,
+                          unsigned char           id2,
+                          unsigned char           id3,
+                          tag_alter_preservation  tap,
                           file_alter_preservation fap,
-                          read_only read_only,
-                          const boost::optional<unsigned char> &encmth,
-                          const boost::optional<unsigned char> &group_id,
-                          const boost::optional<std::size_t> &decsz,
-                          forward_input_iterator p0,
-                          forward_input_iterator p1):
-      unknown_id3v2_3_frame(frame_id4(id0, id1, id2), tap, fap, read_only,
-                            encmth, group_id, decsz, p0, p1)
+                          read_only               ro,
+                          const id_type          &encmth,
+                          const id_type          &gid,
+                          const opt_sz_type      &decsz,
+                          forward_input_iterator  p0,
+                          forward_input_iterator  p1):
+      unknown_id3v2_3_frame(frame_id4(id0, id1, id2), tap, fap, ro, encmth, gid, decsz, p0, p1)
     { }
 
     template <typename forward_input_iterator>
     unknown_id3v2_3_frame(const char id[4],
-                          tag_alter_preservation tap,
+                          tag_alter_preservation  tap,
                           file_alter_preservation fap,
-                          read_only read_only,
-                          const boost::optional<unsigned char> &encmth,
-                          const boost::optional<unsigned char> &group_id,
-                          const boost::optional<std::size_t> &decsz,
-                          forward_input_iterator p0,
-                          forward_input_iterator p1):
-      unknown_id3v2_3_frame(frame_id4(id), tap, fap, read_only, encmth,
-                            group_id, decsz, p0, p1)
+                          read_only               ro,
+                          const id_type          &encmth,
+                          const id_type          &gid,
+                          const opt_sz_type      &decsz,
+                          forward_input_iterator  p0,
+                          forward_input_iterator  p1):
+      unknown_id3v2_3_frame(frame_id4(id), tap, fap, ro, encmth, gid, decsz, p0, p1)
     { }
+
+    virtual id3v2_3_frame* clone() const
+    { return new unknown_id3v2_3_frame(*this); }
 
   public:
 
-    template <typename forward_output_iterator>
-    forward_output_iterator data(forward_output_iterator p) const {
-      return std::copy(data_.begin(), data_.end(), p);
-    }
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
+    template <typename forward_output_iterator>
+    forward_output_iterator data(forward_output_iterator p) const
+    { return std::copy(data_.begin(), data_.end(), p); }
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   private:
     std::vector<unsigned char> data_;
 
@@ -287,18 +448,38 @@ namespace scribbu {
 
   public:
     template <typename forward_input_iterator>
-    UFID(forward_input_iterator p0,
-         forward_input_iterator p1,
-         tag_alter_preservation tap,
+    UFID(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
          file_alter_preservation fap,
-         read_only read_only,
-         const boost::optional<unsigned char> &encmth,
-         const boost::optional<unsigned char> &group_id,
-         const boost::optional<std::size_t> &decsz):
-    id3v2_3_frame("UFID", p1 - p0, tap, fap, read_only,
-                  encmth, group_id, decsz),
-      unique_file_id(p0, p1)
+         read_only               ro,
+         const id_type          &encmth,
+         const id_type          &gid,
+         const opt_sz_type      &decsz):
+    id3v2_3_frame("UFID", p1 - p0, tap, fap, ro, encmth, gid, decsz),
+    unique_file_id(p0, p1)
     { }
+
+    virtual id3v2_3_frame* clone() const
+    { return new UFID(*this); }
+
+    static
+    std::unique_ptr<id3v2_3_frame>
+    create(const frame_id4        &id,
+           const unsigned char    *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type          &encmth,
+           const id_type          &gid,
+           const opt_sz_type      &decsz);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -312,38 +493,48 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static
-    std::unique_ptr<id3v2_3_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t> &decsz);
-
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   }; // End class UFID.
 
   class ENCR: public id3v2_3_frame, public encryption_method {
 
   public:
     template <typename forward_input_iterator>
-    ENCR(forward_input_iterator p0,
-         forward_input_iterator p1,
-         tag_alter_preservation tap,
+    ENCR(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
          file_alter_preservation fap,
-         read_only read_only,
-         const boost::optional<unsigned char> &encmth,
-         const boost::optional<unsigned char> &group_id,
-         const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame("ENCR", p1-p0, tap, fap, read_only, encmth,
-                    group_id, decsz),
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("ENCR", p1-p0, tap, fap, ro, encmth, gid, decsz),
       encryption_method(p0, p1)
     { }
 
+    virtual id3v2_3_frame* clone() const
+    { return new ENCR(*this); }
+
+    static std::unique_ptr<id3v2_3_frame>
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
+
   public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -357,19 +548,12 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static
-    std::unique_ptr<id3v2_3_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t> &decsz);
-
-  };
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
+  }; // End class ENCR.
 
   /**
    * \class id3v2_3_text_frame
@@ -418,57 +602,48 @@ namespace scribbu {
   public:
 
     template <typename forward_input_iterator>
-    id3v2_3_text_frame(const frame_id4 &id,
-                       forward_input_iterator p0,
-                       forward_input_iterator p1,
-                       tag_alter_preservation tap,
+    id3v2_3_text_frame(const frame_id4         &id,
+                       forward_input_iterator  p0,
+                       forward_input_iterator  p1,
+                       tag_alter_preservation  tap,
                        file_alter_preservation fap,
-                       read_only read_only,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &group_id,
-                       const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame(id, p1 - p0, tap,
-                    fap, read_only,
-                    encmth, group_id,
-                    decsz)
+                       read_only               ro,
+                       const id_type           &encmth,
+                       const id_type           &gid,
+                       const opt_sz_type       &decsz):
+      id3v2_3_frame(id, p1 - p0, tap, fap, ro, encmth, gid, decsz)
     {
       unicode_ = *p0++;
       std::copy(p0, p1, std::back_inserter(text_));
     }
 
     template <typename forward_input_iterator>
-    id3v2_3_text_frame(const char id[4],
-                       forward_input_iterator p0,
-                       forward_input_iterator p1,
-                       tag_alter_preservation tap,
+    id3v2_3_text_frame(const char              id[4],
+                       forward_input_iterator  p0,
+                       forward_input_iterator  p1,
+                       tag_alter_preservation  tap,
                        file_alter_preservation fap,
-                       read_only read_only,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &group_id,
-                       const boost::optional<std::size_t> &decsz):
-      id3v2_3_text_frame(frame_id4(id), p0, p1, tap,
-                         fap, read_only,
-                         encmth, group_id,
-                         decsz)
+                       read_only               ro,
+                       const id_type           &encmth,
+                       const id_type           &gid,
+                       const opt_sz_type       &decsz):
+      id3v2_3_text_frame(frame_id4(id), p0, p1, tap, fap, ro, encmth, gid, decsz)
     { }
 
     template <typename forward_input_iterator>
-    id3v2_3_text_frame(unsigned char id0,
-                       unsigned char id1,
-                       unsigned char id2,
-                       unsigned char id3,
-                       forward_input_iterator p0,
-                       forward_input_iterator p1,
-                       tag_alter_preservation tap,
+    id3v2_3_text_frame(unsigned char           id0,
+                       unsigned char           id1,
+                       unsigned char           id2,
+                       unsigned char           id3,
+                       forward_input_iterator  p0,
+                       forward_input_iterator  p1,
+                       tag_alter_preservation  tap,
                        file_alter_preservation fap,
-                       read_only read_only,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &group_id,
-                       const boost::optional<std::size_t> &decsz):
-      id3v2_3_text_frame(frame_id4(id0, id1, id2, id3), p0, p1,
-                         tap, fap,
-                         read_only, encmth, group_id,
-                         decsz)
+                       read_only               ro,
+                       const id_type           &encmth,
+                       const id_type           &gid,
+                       const opt_sz_type       &decsz):
+      id3v2_3_text_frame(frame_id4(id0, id1, id2, id3), p0, p1, tap, fap, ro, encmth, gid, decsz)
     { }
 
     /**
@@ -498,35 +673,52 @@ namespace scribbu {
                        tag_alter_preservation tap = tag_alter_preservation::preserve,
                        file_alter_preservation fap = file_alter_preservation::preserve,
                        read_only ro = read_only::clear,
-                       const boost::optional<unsigned char> &encmth = boost::none,
-                       const boost::optional<unsigned char> &grid = boost::none,
-                       const boost::optional<std::size_t> &decsz = boost::none):
+                       const id_type &encmth = boost::none,
+                       const id_type &grid = boost::none,
+                       const opt_sz_type &decsz = boost::none):
       id3v2_3_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE : 
                                                     encoding::ISO_8859_1, add_bom, rsp),
                          tap, fap, ro, encmth, grid, decsz)
     { }
 
+    virtual id3v2_3_frame* clone() const
+    { return new id3v2_3_text_frame(*this); }
+
+    static std::unique_ptr<id3v2_3_text_frame>
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
+
   private:
-    id3v2_3_text_frame(const frame_id4 &id,
-                       bool unicode,
+    id3v2_3_text_frame(const frame_id4                  &id,
+                       bool                             unicode,
                        const std::vector<unsigned char> &text,
-                       tag_alter_preservation tap,
-                       file_alter_preservation fap,
-                       read_only ro,
-                       const boost::optional<unsigned char> &encmth,
-                       const boost::optional<unsigned char> &grid,
-                       const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame(id, text.size(), tap, fap, ro, encmth, grid, decsz),
+                       tag_alter_preservation           tap,
+                       file_alter_preservation          fap,
+                       read_only                        ro,
+                       const id_type                    &encmth,
+                       const id_type                    &grid,
+                       const opt_sz_type                &decsz):
+      id3v2_3_frame(id, text.size() + 1, tap, fap, ro, encmth, grid, decsz),
       unicode_(unicode),
       text_(text)
     { }
 
   public:
 
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
     template <typename forward_output_iterator>
-    forward_output_iterator text(forward_output_iterator p) const {
-      return std::copy(text_.begin(), text_.end(), p);
-    }
+    forward_output_iterator text(forward_output_iterator p) const
+    { return std::copy(text_.begin(), text_.end(), p); }
 
     typedef scribbu::encoding encoding;
     typedef scribbu::on_no_encoding on_no_encoding;
@@ -562,26 +754,19 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
-    unsigned char unicode() const {
-      return unicode_;
-    }
+    unsigned char unicode() const
+    { return unicode_; }
 
     void set(const std::string &text,
              encoding src = encoding::UTF_8,
              bool add_bom = false,
              on_no_encoding rsp = on_no_encoding::fail);
 
-    static std::unique_ptr<id3v2_3_text_frame>
-    create(const frame_id4                      &id,
-           const unsigned char                  *p,
-           std::size_t                           cb,
-           tag_alter_preservation                tap,
-           file_alter_preservation               fap,
-           read_only                             read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t>   &decsz);
-
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   private:
     unsigned char unicode_;
     std::vector<unsigned char> text_;
@@ -626,32 +811,38 @@ namespace scribbu {
 
   public:
     template <typename forward_input_iterator>
-    TXXX(forward_input_iterator p0,
-         forward_input_iterator p1,
-         tag_alter_preservation tap,
+    TXXX(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
          file_alter_preservation fap,
-         read_only read_only,
-         const boost::optional<unsigned char> &encmth,
-         const boost::optional<unsigned char> &group_id,
-         const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame("TXXX", p1 - p0, tap, fap, read_only,
-                    encmth, group_id, decsz),
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("TXXX", p1 - p0, tap, fap, ro, encmth, gid, decsz),
       user_defined_text(3, p0, p1)
     { }
 
-  public:
+    virtual id3v2_3_frame* clone() const
+    { return new TXXX(*this); }
 
     static
     std::unique_ptr<id3v2_3_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
            file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t> &decsz);
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -679,36 +870,45 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   }; // End class TXXX.
 
   // Comments
   class COMM: public id3v2_3_frame, public comments {
+
   public:
+
     template <typename forward_input_iterator>
-    COMM(forward_input_iterator p0,
-         forward_input_iterator p1,
-         tag_alter_preservation tap,
+    COMM(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
          file_alter_preservation fap,
-         read_only read_only,
-         const boost::optional<unsigned char> &encmth,
-         const boost::optional<unsigned char> &group_id,
-         const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame("COMM", p1 - p0, tap, fap, read_only,
-                    encmth, group_id, decsz),
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("COMM", p1 - p0, tap, fap, ro, encmth, gid, decsz),
       comments(3, p0, p1)
     { }
 
+    virtual id3v2_3_frame* clone() const
+    { return new COMM(*this); }
+
     static
     std::unique_ptr<id3v2_3_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
            file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t> &decsz);
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
 
     template <typename string_type>
     string_type
@@ -735,57 +935,101 @@ namespace scribbu {
       return id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
                                                 unicode(), dst, rsp, src);
     }
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   }; // End class COMM.
 
   // play count
   class PCNT: public id3v2_3_frame, public play_count {
   public:
     template <typename forward_input_iterator>
-    PCNT(forward_input_iterator p0,
-         forward_input_iterator p1,
-         tag_alter_preservation tap,
+    PCNT(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
          file_alter_preservation fap,
-         read_only read_only,
-         const boost::optional<unsigned char> &encmth,
-         const boost::optional<unsigned char> &group_id,
-         const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame("PCNT", p1 - p0, tap,
-                    fap, read_only,
-                    encmth, group_id,
-                    decsz),
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("PCNT", p1 - p0, tap, fap, ro, encmth, gid, decsz),
       play_count(p0, p1)
     { }
 
+    virtual id3v2_3_frame* clone() const
+    { return new PCNT(*this); }
+
     static
     std::unique_ptr<id3v2_3_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
            file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t> &decsz);
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
 
+  public:
+    
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+    std::size_t count() const
+    { return play_count::count(); }
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   }; // End class PCNT.
 
   /// Popularimeter; cf. sec 4.18
   class POPM: public id3v2_3_frame, public popularimeter {
   public:
     template <typename forward_input_iterator>
-    POPM(forward_input_iterator p0,
-         forward_input_iterator p1,
-         tag_alter_preservation tap,
+    POPM(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
          file_alter_preservation fap,
-         read_only read_only,
-         const boost::optional<unsigned char> &encmth,
-         const boost::optional<unsigned char> &group_id,
-         const boost::optional<std::size_t> &decsz):
-      id3v2_3_frame("POPM", p1 - p0, tap, fap, read_only,
-                    encmth, group_id, decsz),
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("POPM", p1 - p0, tap, fap, ro, encmth, gid, decsz),
       popularimeter(p0, p1)
     { }
+
+    virtual id3v2_3_frame* clone() const
+    { return new POPM(*this); }
+
+    static
+    std::unique_ptr<id3v2_3_frame>
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
     template <typename string_type>
     string_type
@@ -799,18 +1043,11 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static
-    std::unique_ptr<id3v2_3_frame>
-    create(const frame_id4 &id,
-           const unsigned char *p,
-           std::size_t cb,
-           tag_alter_preservation tap,
-           file_alter_preservation fap,
-           read_only read_only,
-           const boost::optional<unsigned char> &encmth,
-           const boost::optional<unsigned char> &group_id,
-           const boost::optional<std::size_t> &decsz);
-
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+    
   }; // End class POPM.
 
 } // End namespace scribbu.

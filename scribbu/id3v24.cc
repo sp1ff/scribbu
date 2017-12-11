@@ -1,7 +1,32 @@
-#include "id3v24.hh"
-#include "framesv24.hh"
+#include <id3v24.hh>
+
+#include <framesv24.hh>
+
+#include <algorithm>
+#include <numeric>
 
 #include <zlib.h>
+
+const char PAD[] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const size_t CBPAD = sizeof(PAD);
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,7 +158,9 @@ scribbu::id3v2_4_tag::invalid_ext_header::what() const noexcept
 }
 
 scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
-                                             const unsigned char *p1)
+                                             const unsigned char *p1):
+  size_dirty_(false),
+  crc_dirty_ (false)
 {
   using scribbu::detail::unsigned_from_sync_safe;
 
@@ -151,7 +178,7 @@ scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
 
   // We only know how to parse the first:
   bool is_update_  = p0[5] & 0x40;
-  bool has_crc_    = p0[5] & 0x20;
+  bool fcrc_    = p0[5] & 0x20;
   bool restricted_ = p0[5] & 0x10;
 
   // 00 01 02 03  04  05  06  07 08 09 0a 0b 0c
@@ -166,7 +193,7 @@ scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
     ++p0;
   }
 
-  if (has_crc_) {
+  if (fcrc_) {
     if (p0 + 6 > p1 || 0x05 != p0[0]) {
       throw invalid_ext_header();
     }
@@ -237,10 +264,39 @@ scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
 
 }
 
-std::uint32_t scribbu::id3v2_4_tag::ext_header::crc() const
+std::size_t
+scribbu::id3v2_4_tag::ext_header::size() const
 {
-  if (!has_crc()) {
+  if (size_dirty_) {
+    throw std::logic_error("dirty ID3v2.3 extended header");
+  }
+  return size_;
+}
+
+std::uint32_t
+scribbu::id3v2_4_tag::ext_header::crc() const
+{
+  if (crc_dirty_ || !has_crc()) {
     throw invalid_ext_header();
+  }
+  return crc_;
+}
+
+std::uint32_t
+scribbu::id3v2_4_tag::ext_header::crc(const id3v2_4_tag &tag) const
+{
+  using namespace std;
+  if (crc_dirty_) {
+    crc_ = accumulate(tag.begin(), tag.end(), crc32(0L, Z_NULL, 0),
+                      [](uint32_t checksum, const id3v2_4_frame &F)
+                      { return F.crc(checksum); });
+    size_t cbpad = tag.padding();
+    while (cbpad) {
+      size_t toadd = min(cbpad, CBPAD);
+      crc_ = crc32(crc_, (const unsigned char*)PAD, toadd);
+      cbpad -= toadd;
+    }
+    crc_dirty_ = false;
   }
   return crc_;
 }
@@ -256,22 +312,133 @@ scribbu::id3v2_4_tag::ext_header::get_restrictions() const
                          image_sz_restriction_);
 }
 
-scribbu::id3v2_4_tag::id3v2_4_tag(std::istream &is):
-  id3v2_tag(is)
+std::size_t
+scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag) const
 {
-  get_default_generic_frame_parsers(std::inserter(generic_parsers_,
-                                                  generic_parsers_.begin()));
-  get_default_text_frame_parsers(std::inserter(text_parsers_,
-                                               text_parsers_.begin()));
+  using namespace std;
 
+  using scribbu::detail::sync_safe_from_unsigned;
+
+  size_t cb = 0;
+
+  unsigned char buf[6];
+  sync_safe_from_unsigned(size(), buf);
+
+  buf[4] = 0x01;
+
+  unsigned char flags = 0x0;
+  if (is_update()) {
+    flags |= 64;
+  }
+  if (has_crc()) {
+    flags |= 32;
+  }
+  if (restricted()) {
+    flags |= 16;
+  }
+  
+  buf[5] = flags;
+
+  os.write((char*)buf, 6);
+  cb += 6;
+
+  // Move on to flag data
+  if (is_update()) {
+    char zed = 0;
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  if (has_crc()) {
+    sync_safe_from_unsigned(crc(tag), buf);
+    os.write((char*)buf, 5);
+    cb += 5;
+  }
+
+  if (restricted()) {
+
+    tag_size ts;
+    bool te;
+    text_size sz;
+    bool ie;
+    image_size is;
+    tie(ts, te, sz, ie, is) = get_restrictions();
+    // tuple<tag_size, bool, text_size, bool, image_size> T = get_restrictions();
+    // ts = get<0>(T);
+    // te = get<1>(T);
+    // sz = get<2>(T);
+    // is = get<3>(T);
+      
+    unsigned char tagr = 0x00;
+
+    switch (ts) {
+    case tag_size::more_restricted:
+      tagr |= (0x1 << 6);
+      break;
+    case tag_size::very_restricted:
+      tagr |= (0x2 << 6);
+      break;
+    case tag_size::extremely_restricted:
+      tagr |= (0x3 << 6);
+      break;
+    }
+
+    if (te) {
+      tagr |= (1 << 5);
+    }
+
+    switch (sz) {
+    case text_size::restricted:
+      tagr |= (1 << 3);
+      break;
+    case text_size::more_restricted:
+      tagr |= (2 << 3);
+      break;
+    case text_size::very_restricted:
+      tagr |= (3 << 3);
+      break;
+    }
+
+    if (ie) {
+      tagr |= (1 << 2);
+    }
+      
+    switch (is) {
+    case image_size::restricted:
+      tagr |= 0x1;
+      break;
+    case image_size::more_restricted:
+      tagr |= 0x2;
+      break;
+    case image_size::very_restricted:
+      tagr |= 0x3;
+      break;
+    }
+
+    os.write((char*)&tagr, 1);
+    cb += 1;
+  }
+  
+  return cb;  
+}
+
+scribbu::id3v2_4_tag::id3v2_4_tag(std::istream &is): id3v2_tag(is)
+{
+  get_default_generic_frame_parsers(std::inserter(
+    generic_parsers_, generic_parsers_.begin()));
+  get_default_text_frame_parsers(std::inserter(
+    text_parsers_, text_parsers_.begin()));
+
+  // id3v2_tag has consumed the first five bytes of the header-- this call will
+  // consume the next five...
+  std::size_t size;
   unsigned char flags;
-  std::tie(flags, size_) = parse_flags_and_size(is);
+  std::tie(flags, size) = parse_flags_and_size(is);
 
   unsynchronised(0 != (flags & 0x80));
   experimental_ = flags & 0x20;
   footer_ = flags & 0x10;
-
-  parse(is, flags & 0x40);
+  parse(is, size, flags & 0x40);
 }
 
 scribbu::id3v2_4_tag::id3v2_4_tag(std::istream     &is,
@@ -284,16 +451,15 @@ scribbu::id3v2_4_tag::id3v2_4_tag(std::istream     &is,
                                                   generic_parsers_.begin()));
   get_default_text_frame_parsers(std::inserter(text_parsers_,
                                                   text_parsers_.begin()));
-  size_ = H.size_;
-
-  parse(is, flags() & 0x40);
+  parse(is, H.size_, flags() & 0x40);
 }
 
 /*virtual*/ unsigned char
 scribbu::id3v2_4_tag::flags() const
 {
   unsigned char flags = 0;
-  if (unsynchronised()) {
+  boost::optional<bool> unsync = unsynchronised();
+  if (unsync && *unsync) {
     flags |= 0x80;
   }
   if (pext_header_) {
@@ -308,25 +474,169 @@ scribbu::id3v2_4_tag::flags() const
   return flags;
 }
 
-/*virtual*/ std::size_t
+
+/////////////////////////////////////////////////////////////////////////////
+//                          ID3v2 Serialization                            //
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * \brief Compute the size of this tag (in bytes) exclusive of the ID3v2 header
+ * (i.e. return the total tag size, in bytes, less ten)
+ *
+ *
+ * \param unync [in] The caller shall set this to true to apply
+ * unsynchronisation to \em all frames when computing the tag size
+ *
+ * \return Size Serialized size of this tag, in bytes, exclusive of the ID3v2
+ * header (i.e. the value that could be written in bytes six through nine of
+ * the tag)
+ *
+ *
+ * Computing the tag size is simpler in ID3v2.4 than ID3v2.3. The header,
+ * extended header, padding, & footer are all sync-safe, so unsynchronisation
+ * is applied on a frame-by-frame basis.
+ *
+ * This implementation proceeds as follows:
+ *
+ * - the ID3v2 header is always ten bytes, regardless of whether unsynch is being applied
+ *
+ * - the extended header is synch-safe by design, so its size can be computed
+ *   regardless of whether unsynch is being applied (the size will vary based
+ *   on which flags are set)
+ *
+ * - ask each frame to compute its size; if \a unsync is true, apply
+ *   unsynchronisation unconditionally, otherwise the frame will decide whether
+ *   or not to apply it
+ *
+ * - padding & footer are synch-safe, so their size can be computed regardless
+ *
+ *
+ */
+
+/*virtual*/
+std::size_t
 scribbu::id3v2_4_tag::size(bool unsync) const
 {
-  // TODO(sp1ff): Implement me correctly!
-  return size_;
+  using namespace std;
+
+  size_t cb = padding();
+  if (has_footer()) {
+    cb += 10;
+  }
+  if (pext_header_) {    
+    // TODO(sp1ff): Implement size()
+    cb += pext_header_->size();
+  }
+  return accumulate(begin(), end(), cb,
+                   [unsync](size_t n, const id3v2_4_frame &f)
+                   { return n + f.serialized_size(unsync); });
 }
 
-/*virtual*/ bool
+/**
+ * \brief Return true if all frames would contain false syncs if serialized in
+ * their present state
+ *
+ *
+ * The meaning of this method changes with ID3v2.4. Now, the unsynchronisation
+ * flag means that the unsynchronisation scheme is applied to \em all frames;
+ * consequently, this method will return true if and only if all frames need
+ * it.
+ *
+ * 
+ */
+
+/*virtual*/
+bool
 scribbu::id3v2_4_tag::needs_unsynchronisation() const
 {
-  // TODO(sp1ff): Implement me correctly!
-  return unsynchronised();
+  
+  using namespace std;
+  return all_of(begin(), end(), [](const id3v2_4_frame &f) { return f.needs_unsynchronisation(); });
 }
 
-/*virtual*/ std::size_t
+/**
+ * \brief Serialize this tag to an output stream, perhaps applying the
+ * unsynchronisation scheme if the caller so chooses
+ *
+ *
+ * \param os [in] std output stream to which this tag shall be written
+ *
+ * \param unsync [in] the caller shall set this true to apply unsynchronisation while writing
+ *
+ *
+ * Here, unsynch means "apply to all frames"-- not set means frames will choose
+ * for themselves whether to apply the unsynchronisation scheme.
+ *
+ * This implementation proceeds as follows:
+ *
+ * - write the ID3v2 header
+ *
+ *   + call size() with the \a unsync to get the tag size
+ *
+ *   + the header is synch-safe, so no need to unsynchronise further
+ *
+ * - write the ID3v2.4 extended header, if present
+ *
+ *   + the ID3v2.4 extended header is synch-safe
+ *
+ *   + the CRC checksum here is calculated on frames *and* padding
+ *   (i.e. everything between the extended header & the footer, if present)
+ *
+ *     * the spec says "The CRC is calculated on all the data between the header
+ *       and footer..."-- I'm not sure how to interpret that, but it doesn't
+ *       make much sense to me *other* than in the same way as ID3v2.3-- the
+ *       checksum should be carried out after all the frames have been
+ *       re-synchronised ; this means asking frames to serialize themselves
+ *       \em without unsynch 
+ *
+ * - write the frames
+ *
+ *   + if unsynch is requested, we must force unsynch on each frame
+ *
+ *   + else, each frame should decide for itself
+ *
+ * - write the padding
+ *
+ * - write the footer, if present
+ *
+ *
+ */
+
+/*virtual*/
+std::size_t
 scribbu::id3v2_4_tag::write(std::ostream &os, bool unsync) const
 {
-  // TODO(sp1ff): Implement me correctly!
-  return 0;
+  using namespace std;
+
+  // Write the header...
+  // TODO(sp1ff): Check this
+  write_header(os, flags(), size(unsync));
+  size_t cb = 10;
+
+  if (pext_header_) {
+    // TODO(sp1ff): Implement id3v2_4_tag::ext_header::write
+    cb += pext_header_->write(os, *this);
+  }
+
+  cb = accumulate(begin(), end(), cb,
+                  [&os, unsync](size_t n, const id3v2_4_frame &f)
+                  { return n + f.write(os, unsync); });
+
+  size_t cbpad = padding();
+  while (cbpad) {
+    size_t towrite = min(cbpad, CBPAD);
+    os.write(PAD, towrite);
+    cb += towrite;
+    cbpad -= towrite;
+  }
+
+  // TODO(sp1ff): Implement id3v2_4_tag::write_footer
+  if (has_footer()) {
+    cb += 10;
+    write_footer(os, flags(), size(unsync));
+  }
+
+  return cb;
 }
 
 /*virtual*/ std::size_t
@@ -339,6 +649,352 @@ scribbu::id3v2_4_tag::play_count() const {
   default:
     throw std::logic_error("multiple play counts");
   }
+}
+
+///////////////////////////////////////////////////////////////////////////
+//                           tag as container                            //
+///////////////////////////////////////////////////////////////////////////
+
+scribbu::id3v2_4_tag::mutable_frame_proxy&
+scribbu::id3v2_4_tag::mutable_frame_proxy::operator=(mutable_frame_proxy &&that)
+{
+  using namespace scribbu;
+
+  static const frame_id4 COMID("COMM"), CNTID("PCNT"), POPID("POPM");
+
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  p_->frames_[idx_].swap(that.p_->frames_[that.idx_]);
+  idx_ = that.idx_;
+
+  id3v2_4_tag::frames_type::iterator pnew = p_->frames_.begin() + idx_;
+  frame_id4 id = (**pnew).id();
+  if (id == CNTID) {
+    PCNT_2_4 &frame = dynamic_cast<PCNT_2_4&>(*(pnew->get()));
+    p_->add_frame_to_lookups(frame, idx_);
+  }
+  else if (id == COMID) {
+    COMM_2_4 &frame = dynamic_cast<COMM_2_4&>(*(pnew->get()));
+    p_->add_frame_to_lookups(frame, idx_);
+  }
+  else if (id == POPID) {
+    POPM_2_4 &frame = dynamic_cast<POPM_2_4&>(*(pnew->get()));
+    p_->add_frame_to_lookups(frame, idx_);
+  }
+  else if (id.text_frame()) {
+    id3v2_4_text_frame &frame = dynamic_cast<id3v2_4_text_frame&>(*(pnew->get()));
+    p_->add_frame_to_lookups(frame, idx_);
+  }
+  else {
+    id3v2_4_frame &frame = *(pnew->get());
+    p_->add_frame_to_lookups(frame, idx_);
+  }
+
+  return *this;
+}
+
+scribbu::id3v2_4_tag::mutable_frame_proxy&
+scribbu::id3v2_4_tag::mutable_frame_proxy::operator=(const id3v2_4_frame &frame)
+{
+  std::unique_ptr<id3v2_4_frame> pnew(frame.clone());
+
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  p_->frames_[idx_].swap(pnew);
+  p_->add_frame_to_lookups(*(p_->frames_[idx_]), idx_);
+
+  return *this;
+}
+
+scribbu::id3v2_4_tag::mutable_frame_proxy&
+scribbu::id3v2_4_tag::mutable_frame_proxy::operator=(const id3v2_4_text_frame &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<id3v2_4_text_frame> pnew(new id3v2_4_text_frame(frame));
+  // and saving a reference to that copy.
+  id3v2_4_text_frame &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
+
+  return *this;
+}
+
+scribbu::id3v2_4_tag::mutable_frame_proxy&
+scribbu::id3v2_4_tag::mutable_frame_proxy::operator=(const PCNT_2_4 &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<PCNT_2_4> pnew(new PCNT_2_4(frame));
+  // and saving a reference to that copy.
+  PCNT_2_4 &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
+
+  return *this;
+}
+
+scribbu::id3v2_4_tag::mutable_frame_proxy&
+scribbu::id3v2_4_tag::mutable_frame_proxy::operator=(const COMM_2_4 &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<COMM_2_4> pnew(new COMM_2_4(frame));
+  // and saving a reference to that copy.
+  COMM_2_4 &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
+
+  return *this;
+}
+
+scribbu::id3v2_4_tag::mutable_frame_proxy&
+scribbu::id3v2_4_tag::mutable_frame_proxy::operator=(const POPM_2_4 &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  // We begin by taking a deep copy of `frame'...
+  std::unique_ptr<POPM_2_4> pnew(new POPM_2_4(frame));
+  // and saving a reference to that copy.
+  POPM_2_4 &F = *pnew;
+  // We now remove our current frame from all our tag's lookup tables...
+  p_->remove_frame_from_lookups(p_->frames_[idx_]->id(), idx_);
+  // move the copy into the slot previously occupied by our frame...
+  p_->frames_[idx_] = std::move(pnew);
+  // and finally add the copy back into our lookups, but as the const reference we saved.
+  p_->add_frame_to_lookups(F, idx_);
+
+  return *this;
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::insert(const_iterator p, const id3v2_4_frame &frame)
+{
+  std::unique_ptr<id3v2_4_frame> pnew(frame.clone());
+
+  auto p1 = frames_.emplace(frames_.cbegin() + p.index(), std::move(pnew));
+  std::ptrdiff_t d = p1 - frames_.begin();
+  add_frame_to_lookups(*frames_[d], d);
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::insert(const_iterator p, const id3v2_4_text_frame &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  std::unique_ptr<id3v2_4_text_frame> pnew = std::make_unique<id3v2_4_text_frame>(frame);
+  const id3v2_4_text_frame &F = *pnew;
+
+  auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
+  std::ptrdiff_t d = p1 - frames_.begin();
+  add_frame_to_lookups(F, d);
+
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::insert(const_iterator p, const PCNT_2_4 &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  std::unique_ptr<PCNT_2_4> pnew = std::make_unique<PCNT_2_4>(frame);
+  PCNT_2_4 &F = *pnew;
+
+  auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
+  std::ptrdiff_t d = p1 - frames_.begin();
+  add_frame_to_lookups(F, d);
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::insert(const_iterator p, const COMM_2_4 &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  std::unique_ptr<COMM_2_4> pnew = std::make_unique<COMM_2_4>(frame);
+  COMM_2_4 &F = *pnew;
+
+  auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
+  std::ptrdiff_t d = p1 - frames_.begin();
+  add_frame_to_lookups(F, d);
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::insert(const_iterator p, const POPM_2_4 &frame)
+{
+  // This is a little twisted, but it accomplishes two things:
+  // 1. Carries out one deep copy of our argument
+  // 2. Avoids dynamic_cast
+
+  std::unique_ptr<POPM_2_4> pnew = std::make_unique<POPM_2_4>(frame);
+  POPM_2_4 &F = *pnew;
+
+  auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
+  std::ptrdiff_t d = p1 - frames_.begin();
+  add_frame_to_lookups(F, d);
+}
+
+void
+scribbu::id3v2_4_tag::push_back(const id3v2_4_frame &frame)
+{
+  std::unique_ptr<id3v2_4_frame> pnew(frame.clone());
+
+  frames_.emplace_back(std::move(pnew));
+  std::size_t d = frames_.size() - 1;
+  add_frame_to_lookups(*frames_[d], d);
+}
+
+void
+scribbu::id3v2_4_tag::push_back(const id3v2_4_text_frame &frame)
+{
+  using namespace std;
+  auto pnew = make_unique<id3v2_4_text_frame>(frame);
+  id3v2_4_text_frame &F = *pnew;
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(F, frames_.size() - 1);
+}
+  
+void
+scribbu::id3v2_4_tag::push_back(const PCNT_2_4 &frame)
+{
+  using namespace std;
+  auto pnew = make_unique<PCNT_2_4>(frame);
+  PCNT_2_4 &F = *pnew;
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(F, frames_.size() - 1);
+}
+  
+void
+scribbu::id3v2_4_tag::push_back(const COMM_2_4 &frame)
+{
+  using namespace std;
+  auto pnew = make_unique<COMM_2_4>(frame);
+  COMM_2_4 &F = *pnew;
+  frames_.emplace_back(move(pnew));
+  add_frame_to_lookups(F, frames_.size() - 1);
+}
+
+void
+scribbu::id3v2_4_tag::push_back(const POPM_2_4 &frame)
+{
+  using namespace std;
+  auto pnew = make_unique<POPM_2_4>(frame);
+  POPM_2_4 &F = *pnew;
+  frames_.emplace_back(move(pnew));
+  add_frame_to_lookups(F, frames_.size() - 1);
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::erase(const_iterator p)
+{
+  std::size_t idx = p - begin();
+  remove_frame_from_lookups(p->id(), idx);
+  frames_.erase(frames_.begin() + idx);
+}
+
+scribbu::id3v2_4_tag::iterator
+scribbu::id3v2_4_tag::erase(const_iterator p0, const_iterator p1)
+{
+  const_iterator p2 = p0;
+  for (size_t i = p2 - begin(); p2 != p1; ++p2, ++i) {
+    remove_frame_from_lookups(p2->id(), i);
+  }
+
+  frames_.erase(frames_.begin() + p0.index(),
+                frames_.begin() + p1.index());
+}
+
+std::ostream&
+scribbu::id3v2_4_tag::write_header(std::ostream &os,
+                                   unsigned char flags,
+                                   std::size_t cb) const
+{
+  unsigned char buf[] = { 'I', 'D', '3', 4, 0, flags };
+  os.write((const char*)buf, sizeof(buf));
+  detail::sync_safe_from_unsigned(cb, buf);
+  os.write((const char*)buf, 4);
+  return os;  
+}
+
+std::ostream&
+scribbu::id3v2_4_tag::write_footer(std::ostream &os,
+                                   unsigned char flags,
+                                   std::size_t cb) const
+{
+  unsigned char buf[] = { '3', 'D', 'I', 4, 0, flags };
+  os.write((const char*)buf, sizeof(buf));
+  detail::sync_safe_from_unsigned(cb, buf);
+  os.write((const char*)buf, 4);
+  return os;  
+}
+
+void
+scribbu::id3v2_4_tag::remove_frame_from_lookups(const frame_id4 &id, std::size_t idx)
+{
+  static const frame_id4 COM("COMM"), CNT("PCNT"), POP("POPM");
+
+  if (COM == id) {
+    comm_frame_lookup_type::iterator p =
+      std::find_if(comms_.begin(), comms_.end(),
+                   [idx](const comm_frame_lookup_type::value_type &x)
+                   { return x.second == idx; });
+    comms_.erase(p);
+  }
+  else if (CNT == id) {
+    pcnt_frame_lookup_type::iterator p =
+      std::find_if(pcnts_.begin(), pcnts_.end(),
+                   [idx](const pcnt_frame_lookup_type::value_type &x)
+                   { return x.second == idx; });
+    pcnts_.erase(p);
+  }
+  else if (POP == id) {
+    popm_frame_lookup_type::iterator p =
+      std::find_if(popms_.begin(), popms_.end(),
+                   [idx](const popm_frame_lookup_type::value_type &x)
+                   { return x.second == idx; });
+    popms_.erase(p);
+  }
+  else if (id.text_frame()) {
+    // TODO(sp1ff): This is awful-- better to store the index in text_map_, but
+    // I want to get this working, first.
+    const id3v2_4_frame *pf = frames_[idx].get();
+    text_frame_lookup_type::iterator p =
+      std::find_if(text_map_.begin(), text_map_.end(),
+                   [pf, id](const text_frame_lookup_type::value_type &x)
+                   { return x.first == id && x.second == pf; });
+    text_map_.erase(p);
+  }
+
+  frame_lookup_type::iterator pflu =
+    std::find_if(frame_map_.begin(), frame_map_.end(),
+                 [idx, id](const frame_lookup_type::value_type &x)
+                 { return x.first == id && x.second == idx; });
+  frame_map_.erase(pflu);
 }
 
 void
@@ -401,7 +1057,7 @@ scribbu::id3v2_4_tag::decrypt(const unsigned char *p,
   throw std::logic_error("unimplemented");
 }
 
-void scribbu::id3v2_4_tag::parse(std::istream &is, bool extended)
+void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extended)
 {
   using scribbu::detail::unsigned_from_sync_safe;
 
@@ -423,7 +1079,7 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, bool extended)
     // Size, in bytes, of the tag *after* the common header, *before*
     // resynchronisation. If a footer is present this equals to ('total size' -
     // 20) bytes, otherwise ('total size' - 10) bytes.
-    std::size_t cb_tag = size(false);// TODO(sp1ff): Remove this
+    std::size_t cb_tag = size;
 
     // std::array's size is fixed at compile time, which we can't do, and
     // std::vector is permitted to allocate additional memory to accomodate

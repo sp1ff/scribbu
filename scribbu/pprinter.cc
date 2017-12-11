@@ -827,10 +827,11 @@ scribbu::standard_pprinter::print_id3v2_tag(const id3v2_tag &tag,
   string year = tag.has_year() ? tag.year(dst, rsp, v2enc_) :
     "<no year>";
 
+  boost::optional<bool> unsync = tag.unsynchronised();
   os << sin_ << "ID3v2." << dec << (unsigned)tag.version() << "(." <<
     (unsigned)tag.revision() << ") Tag:\n" <<
     sin_ << tag.size() << " bytes, " <<
-    (tag.unsynchronised() ? "unsynchronised" : "synchronised") << "\n" <<
+    ((unsync && *unsync) ? "unsynchronised" : "synchronised") << "\n" <<
     sin_ << "flags: 0x" << hex << setfill('0') << setw(2) <<
     (unsigned) tag.flags() << "\n" << sin_ << artist << " - " <<
     title << "\n" << sin_ << album;

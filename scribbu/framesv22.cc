@@ -50,26 +50,82 @@ namespace scribbu {
 
 }
 
+/// Return the number of bytes the header will occupy when serialized to
+/// disk, including the header
 std::size_t
-scribbu::id3v2_2_frame::write_header(std::ostream &os, bool unsync) const
+scribbu::id3v2_2_frame::serialized_header_size(bool unsync) const
 {
-  const char zed = 0;
+  std::size_t cb = 6;
+
+  if (unsync) cb += header_needs_unsynchronisation();
+
+  return cb;
+  
+} // End id3v2_2_frame::header_size.
+
+/// Return zero if this tag's header would not contain false syncs if
+/// serialized in its present state; else return the number of false sync it
+/// would contain
+std::size_t
+scribbu::id3v2_2_frame::header_needs_unsynchronisation() const
+{
+  std::size_t num_ffs = 0;
 
   char buf[3]; id().copy(buf);
-  os.write(buf, 3);
+  if (255 == buf[0]) num_ffs++;
+  if (255 == buf[1]) num_ffs++;
+  if (255 == buf[2]) num_ffs++;
 
-  // ID3v2.2 frame sizes are not sync-safe:
   std::size_t cb = size();
   buf[0] = (cb & 0xff0000) >> 16;
   buf[1] = (cb & 0x00ff00) >>  8;
   buf[2] =  cb & 0x0000ff;
+  if (255 == buf[0]) num_ffs++;
+  if (255 == buf[1]) num_ffs++;
+  if (255 == buf[2]) num_ffs++;
+
+  return num_ffs;
+  
+} // End id3v2_2_frame::header_needs_unsynchronisation.
+
+std::size_t
+scribbu::id3v2_2_frame::write_header(std::ostream &os, bool unsync) const
+{
+  std::size_t cb = 6, num_ffs = 0, sz = size();
+
+  char idbuf[3]; id().copy(idbuf);
+
+  char szbuf[3];
+  // ID3v2.2 frame sizes are not sync-safe:
+  szbuf[0] = (sz & 0xff0000) >> 16;
+  szbuf[1] = (sz & 0x00ff00) >>  8;
+  szbuf[2] =  sz & 0x0000ff;
+
+  if (unsync) {
+    num_ffs += unsynchronise_triplet(os, idbuf);
+    num_ffs += unsynchronise_triplet(os, szbuf);
+  }
+  else {
+    os.write(idbuf, 3);
+    os.write(szbuf, 3);
+  }
+
+  return cb + num_ffs;
+
+} // End id3v2_2_frame::write_header.
+
+/// Write a three-tuple while removing false syncs
+std::size_t
+scribbu::id3v2_2_frame::unsynchronise_triplet(std::ostream &os, char buf[3]) const
+{
+  static const char zed = 0;
 
   std::size_t num_ffs = 0;
   if (255 == buf[0]) num_ffs++;
   if (255 == buf[1]) num_ffs++;
   if (255 == buf[2]) num_ffs++;
 
-  if (unsync && num_ffs) {
+  if (num_ffs) {
     os.write(buf, 1);
     if (255 == buf[0]) os.write(&zed, 1);
     os.write(buf + 1, 1);
@@ -81,7 +137,7 @@ scribbu::id3v2_2_frame::write_header(std::ostream &os, bool unsync) const
     os.write(buf, 3);
   }
   
-  return 6 + num_ffs;
+  return num_ffs;
 }
 
 
@@ -89,10 +145,20 @@ scribbu::id3v2_2_frame::write_header(std::ostream &os, bool unsync) const
 //                           unknown_id3v2_2_frame                           //
 ///////////////////////////////////////////////////////////////////////////////
 
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::unknown_id3v2_2_frame::size() const
+{
+  return data_.size();
+}
+
 /*virtual*/ std::size_t
 scribbu::unknown_id3v2_2_frame::serialized_size(bool unsync) const
 {
-  std::size_t cb = 6 + data_.size();
+  std::size_t cb = serialized_header_size(unsync);
+  cb += data_.size();
   if (unsync) {
     cb += detail::count_ffs(data_.begin(), data_.end());
   }
@@ -143,6 +209,16 @@ scribbu::UFI::create(const frame_id3& /*id*/,
   return std::unique_ptr<scribbu::id3v2_2_frame>( new UFI(p, p + cb) );
 }
 
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::UFI::size() const
+{
+  // TODO(sp1ff): Implement unique_file_id::size()
+  return unique_file_id::size();
+}
+
 /*virtual*/ std::size_t
 scribbu::UFI::serialized_size(bool unsync) const
 {
@@ -166,6 +242,13 @@ scribbu::UFI::write(std::ostream &os, bool unsync) const
 ///////////////////////////////////////////////////////////////////////////////
 //                          class id3v2_text_frame                           //
 ///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+std::size_t
+scribbu::id3v2_2_text_frame::size() const
+{
+  return 1 + text_.size();
+}
 
 /*virtual*/ std::size_t
 scribbu::id3v2_2_text_frame::serialized_size(bool unsync) const
@@ -265,6 +348,14 @@ scribbu::TXX::create(const frame_id3& /*id*/,
   return std::unique_ptr<scribbu::id3v2_2_frame>( new TXX(p, p + cb) );
 }
 
+/*virtual*/
+std::size_t
+scribbu::TXX::size() const
+{
+  // TODO(sp1ff): Implement user_defined_text::size()
+  return user_defined_text::size();
+}
+
 /*virtual*/ std::size_t
 scribbu::TXX::serialized_size(bool unsync) const
 {
@@ -295,6 +386,14 @@ scribbu::COM::create(const frame_id3& id,
                      std::size_t cb)
 {
   return std::unique_ptr<scribbu::id3v2_2_frame>( new COM(p, p + cb) );
+}
+
+/*virtual*/
+std::size_t
+scribbu::COM::size() const
+{
+  // TODO(sp1ff): Implement comments::size()
+  return comments::size();
 }
 
 /*virtual*/ std::size_t
@@ -329,6 +428,14 @@ scribbu::CNT::create(const frame_id3& /*id*/,
   return std::unique_ptr<scribbu::id3v2_2_frame>( new CNT(p, p + cb) );
 }
 
+/*virtual*/
+std::size_t
+scribbu::CNT::size() const
+{
+  // TODO(sp1ff): Implement play_count::size()
+  return play_count::size();
+}
+
 /*virtual*/ std::size_t
 scribbu::CNT::serialized_size(bool unsync) const
 {
@@ -361,6 +468,13 @@ scribbu::POP::create(const frame_id3& /*id*/,
   return std::unique_ptr<scribbu::id3v2_2_frame>( new POP(p, p + cb) );
 }
 
+/*virtual*/
+std::size_t
+scribbu::POP::size() const
+{
+  // TODO(sp1ff): Implement popularimeter::size()
+  return popularimeter::size();
+}
 /*virtual*/ std::size_t
 scribbu::POP::serialized_size(bool unsync) const
 {

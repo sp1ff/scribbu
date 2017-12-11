@@ -1,5 +1,265 @@
 #ifndef ID3V2_HH_INCLUDED
 #define ID3V2_HH_INCLUDED 1
+/**
+ * \page scribbu_id3v2 ID3v2 Tags
+ *
+ * \section scribbu_id3v2_intro Introduction
+ *
+ * The \ref scribbu_id3v1 "IDv1" tag had obvious limitations, leading to the
+ * introduction of ID3v2 by Martin Nilsson & Michael Mutschler in 1998 \ref
+ * scribbu_id3v2_refs_2 "[2]". Despite the name, it has almost nothing in
+ * common with ID3v1 : "ID3v2 tags are of variable size, and usually occur at
+ * the start of the file, to aid streaming media. They consist of a number of
+ * frames, each of which contains a piece of metadata. For example, the TIT2
+ * frame contains the title, and the WOAR frame contains the URL of the
+ * artist's website. Frames can be up to 16MB in length, while total tag size
+ * is limited to 256MB. The internationalization problem was solved by allowing
+ * the encoding of strings not only in ISO-8859-1, but also in Unicode \ref
+ * scribbu_id3v2_refs_3 "[3]""
+ *
+ * "There are three versions of ID3v2:
+ *
+ * - ID3v2.2 was the first public version of ID3v2. It used three character
+ *   frame identifiers rather than four (TT2 for the title instead of
+ *   TIT2). Most of the common v2.3 and v2.4 frames have direct analogues in
+ *   v2.2.  Now this standard is considered obsolete.
+ *
+ * - ID3v2.3 expanded the frame identifier to four characters, and added a
+ *   number of frames.  A frame can contain multiple values, separated with a
+ *   null byte. This is the most widely used version of ID3v2 tags.
+ *
+ * - ID3v2.4 is the latest version published, dated November 1, 2000. Notably,
+ *   it allows textual data to be encoded in UTF-8, which was a common practice
+ *   in earlier tags (despite the standard, since it was not supported yet)
+ *   because it has several noticeable advantages over UTF-16. Another new
+ *   feature allows the addition of a tag to the end of the file before other
+ *   tags (like ID3v1).
+ *
+ * Windows Explorer and Windows Media Player cannot handle ID3v2.4 tags in any
+ * version, up to and including Windows 10 / Windows Media Player 12. Windows
+ * can understand ID3v2 up to and including version 2.3. \ref
+ * scribbu_id3v2_refs_3 "[3]""
+ *
+ * \section scribbu_id3v2_discuss Discussion
+ *
+ * \subsection scribbu_id3v2_discuss_header Header
+ *
+ * ID3v2 tags of any version begin with a ten byte header:
+ *
+ \code
+
+  | field                | representation | bytes |              |
+  |----------------------+----------------+-------+--------------|
+  | ID3/file identifier  | "ID3"          |     3 | ID3v2 header |
+  | ID3 version/revision | $xx yy         |     2 |              |
+  | ID3 flags            | %xxxxxxxx      |     1 |              |
+  | ID3 size             | 4*%0xxxxxxx    |     4 |              |
+
+ \endcode
+ *
+ * The flags are version-specific, and documented below.
+ *
+ * "The ID3 tag size is the size of the complete tag after unsychronisation,
+ * including padding, excluding the header (total tag size - 10). The reason to
+ * use 28 bits (representing up to 256MB) for size description is that we don't
+ * want to run out of space here \ref scribbu_id3v2_refs_2 "[2]""
+ *
+ *
+ * \section scribbu_id3v2_unsync Unsynchorisation
+ *
+ * MPEG decoding software uses a two-byte sentinal value in the input stream to
+ * detect the beginning of the audio. MPEG decoding software that is not
+ * ID3-aware could mistakenly interpret that value as the beginning of the
+ * audio should it happen to occur in the ID3v2 header. Unsynchronisation is an
+ * optional encoding scheme for the ID3v2 header to prevent
+ * that. "Unsynchronisation may only be made with MPEG 2 layer I, II and III
+ * and MPEG 2.5 files."  \ref scribbu_id3v2_refs_1 "[1]"
+ *
+ * More specifically, whenever a two byte combination of the form:
+ *
+ *   %11111111 111xxxxx (or $FF $Ex or $FF Fx)
+ *
+ * is encountered in an ID3v2 tag to be written to disk, it is replaced with:
+ *
+ *   %11111111 00000000 111xxxxx
+ *
+ * and the 'unsynchronisation' flag will be set.
+ *
+ * This leaves us with an ambiguous situation on read: if we encounter
+ * a bit pattern
+ *
+ *   %11111111 00000000 111xxxxx
+ *
+ * when reading a tag with the unsynchronisation flag set, we have no way to
+ * know whether that was a false sync that was unsynchronised (and so the three
+ * bytes should be interpreted as %11111111 111xxxxx) or whether those three
+ * bytes had occurred naturally in the tag when it was written. To resolve
+ * this, on encoding with unsynchronisation all two-byte sequences of the form
+ * $FF 00 should also be written as $FF 00 00.
+ *
+ * In ID3v2.2, this is clear. The ten byte header is "sync-safe" by definition,
+ * so it can be read without any additional interpretation, and if the
+ * unsynchronisation flag is set, all two-byte sequences of the form $FF 00
+ * should be interpreted as just $FF.
+ *
+ * ID2v2.3 introduced an extended header, which is *not* sync-safe, and
+ * padding, which *is* (padding bytes must always be $00). In section 3.2 \ref
+ * scribbu_id3v2_refs_4 "[4]" the specification explicitly notes that the
+ * extended header is subject to unsynchronisation.
+ *
+ * ID3v2.4 introduced a different extended header and a footer, both of which
+ * *are* sync-safe, and frames can be unsynhronised individually. The
+ * unsynchronisation flag in the header being set indicates that all frames are
+ * unsynchronised; unset in the header means that at least one frame is *not*
+ * unsynchronised.
+ *
+ *
+ * \section scribbu_impl_notes Implementation Notes
+ *
+ * \subsection scribbu_impl_notes_iterators Frame Iterators
+ *
+ * I originally conceived of & implemented ID3v2 tags & frames as immutable
+ * copies of whatever was read off disk on construction. As the project
+ * developed, it became clear that this was not going to be sufficient and that
+ * the library would need to provide some way of editing frames, as well.
+ *
+ * Consequently, I've tried to make the ID3v2 tag classes behave like a
+ * standard-compliant container for frames... except that the frames are
+ * polymorphic. There are also a lot of ancillary datastructures that need to
+ * be updated when the collection of frames changes. This has been an
+ * interesting design problem & I wanted to note a few of my thoughts here.
+ *
+ * \subsubsection scribbu_impl_notes_iterators_proxies Proxy Iterators
+ *
+ * I can't simply return pointers and/or references to the ID3v2 frames
+ * contained in my tag classes because they have a number of ancillary
+ * datastructures that need to be kept in-sync with the basic collection of
+ * frames. This suggests an iterator that dereferences to a proxy for a frame;
+ * the proxy will do the appropriate things when changed in any way. Even
+ * better, I have an example from which to work: std::vector<bool> (in
+ * bits/stl_bvector.h). It turns out, however, that such containers have a long
+ * & checkered history in C++:
+ *
+ * "The vector<bool> specialization was intentionally put into the standard to
+ * provide an example of how to write a proxied container...This would all have
+ * been well and good, except that the container and iterator requirements were
+ * never updated to allow for proxied containers. In fact, proxied containers
+ * are categorically disallowed; a container<T>::reference must be a true
+ * reference (T&), never a proxy. Iterators have similar requirements;
+ * dereferencing a forward, bidirectional, or random-access iterator must yield
+ * a true reference (T&), never a proxy. These points preclude any proxy-based
+ * containers from meeting the standard container requirements." 
+ * \ref scribbu_id3v2_refs_5 "[5]"
+ *
+ * The problem seems to be that allowing a proxied container makes meeting
+ * complexity guarantees a lot tougher:
+ *
+ * "both the original STL's container requirements and the C++ standard's
+ * container requirements are based on the implicit assumption (among others)
+ * that dereferencing an iterator both is a constant-time operation and
+ * requires negligible time compared to other operations. As James Kanze
+ * correctly pointed out on the comp.std.c++ newsgroup a couple of years
+ * ago,[4] neither of these assumptions is true for a disk-based container or a
+ * packed-representation container."
+ * \ref scribbu_id3v2_refs_5 "[5]"
+ *
+ * From his article, it's not clear to me whether there is any other problem
+ * beyond that (e.g. do any of the standard algorithms take the address of
+ * the thing returned by dereferencing an iterator?):
+ *
+ * "Proxied collections are a useful tool and can often be appropriate,
+ * especially for collections that can become very large. Every programmer
+ * should know about them. They just don't fit as well into STL as many people
+ * thought, that's all. Even vector<bool> is still a perfectly good model for
+ * how to write a proxied collection; it's just not a container, that's all,
+ * and it should be called something else (some people asked for "bitvector")
+ * so that people wouldn't think that it has anything to do with a conforming
+ * container."
+ * \ref scribbu_id3v2_refs_5 "[5]"
+ *
+ * Eric Niebler's far more recent article suggests not:
+ *
+ * "An interesting historical note: the original STL design didn’t have the
+ * “true reference” requirement that causes the problem. Take a look at the SGI
+ * docs for the Forward Iterator concept. Nowhere does it say that *it should
+ * be a real reference. The docs for Trivial Iterators specifically mention
+ * proxy references and say they’re legit." \ref scribbu_id3v2_refs_6 "[6]"
+ *
+ * I did some experimenting & found that I could get the standard algorithms to
+ * work just fine with a proxied approach, and based on that, I've proceeded
+ * down this implementation path.
+ *
+ * As an aside, I \em did try boost:;iterator_facade, but couldn't get it to
+ * work with a proxy; that may be my own ignorance, but I enjoyed coding up my
+ * own "from scratch" in any event.
+ * 
+ *
+ * \subsection scribbu_impl_notes_serdes Serialization
+ *
+ * Moving to a notion of tags as mutable containers rather than read-only
+ * copies of what had been read off disk introduced another problem:
+ * serialization.  At first, implementing method size() was simple-- return the
+ * size field as read from disk.  Once I introduced tag & frame constructors
+ * allowing in-memory construction, size now had to be computed. This was not
+ * difficult for ID3v2.2 tags, but in version 2.3 a problem presented itself:
+ * how to compute that in the presence of compression and/or encryption of
+ * individual frames?  One would need to provisionally serialize the frame,
+ * compress and/or encrypt it, and then count the number of bytes remaining.
+ *
+ * The problem becomes worse when determining whether unsynchronisation is
+ * needed-- one needs to (in the worst case) serialize all frames (inclduing
+ * compression & encryption), compute a checksum and \em then check for false
+ * syncs.
+ *
+ * The easiest approach would have been an interface providing a single method:
+ *
+ \code
+
+   enum { unsync_always, unsncy_if_needed, unsync_never } unsync;
+   size_t write(ostream &os, unsync x) const;
+
+ \endcode
+ *
+ * This could be implemented by serializing everything once (including any
+ * compression and encryption) and then deciding whether to apply
+ * unsynchronisation on the way out.
+ *
+ * However, this would eliminate the possibility of methods size() and
+ * needs_unsynchronisation() which I found unpalatable. When I realized I could
+ * apply lazy evaluation & a "dirty" flag to individual frames to avoid
+ * repeated serialization I decided to go with an interface that presents a
+ * naiive approach, easily implemented for ID3v2.2. frames, that would mask a
+ * more complex implementation in the case of later frame implementations.
+ *
+ *
+ * \section scribbu_id3v2_refs References
+ *
+ * 1. \anchor scribbu_id3v2_refs_1 Martin Nilsson, cited 2015: ID3 tag
+ *    version 2 [Availbale online at http://id3.org/id3v2-00]
+ *
+ * 2. \anchor scribbu_id3v2_refs_2 Martin Nilsson, cited 2015:
+ *    Contributors [Available online at http://id3.org/Contributors]
+ *
+ * 3. \anchor scribbu_id3v2_refs_3 Unknown, cited 2015:
+ *    ID3v2 [Available online at https://en.wikipedia.org/wiki/ID3#ID3v2]
+ *
+ * 4. \anchor scribbu_id3v2_refs_4 Martin Nilsson, cited 2015: ID3 tag
+ *    version 2.4.0 - Main Structure [Availbale online at
+ *    http://id3.org/id3v2.4.0-structure]
+ *
+ * 5. \anchor scribbu_id3v2_refs_5 Herb Sutter, cited 2016: When Is a Container 
+ *    Not a Container? [Available online at http://www.gotw.ca/publications/mill09.htm]
+ *
+ * 6. \anchor scribbu_id3v2_refs_6 Eric Niebler, cited 2016: To Be or Not to Be
+ *    (an Iterator) [Available online at
+ *    http://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/]
+ *
+ * 7. \anchor scribbu_id3v2_refs_7 B. Stroustrup and A. Sutton (Editors): A
+ *    Concept Design for the STL [Available online at
+ *    http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf\
+ *
+ *
+ */
 
 #include <exception>
 #include <iostream>
@@ -14,154 +274,6 @@
 #include <scribbu/charsets.hh>
 #include <scribbu/errors.hh>
 #include <scribbu/framesv2.hh>
-
-/**
- * \page scribbu_id3v2 ID3v2 Tags
- *
- * \section scribbu_id3v2_intro Introduction
- *
- * The \ref scribbu_id3v1 "IDv1"  tag had obvious limitations, leading
- * to the introduction of ID3v2  by Martin Nilsson & Michael Mutschler
- * in 1998 \ref  scribbu_id3v2_refs_2 "[2]". Despite the  name, it has
- * almost nothing  in common with  ID3v1: "ID3v2 tags are  of variable
- * size, and usually occur at the  start of the file, to aid streaming
- * media. They consist of a number of frames, each of which contains a
- * piece of metadata. For example,  the TIT2 frame contains the title,
- * and the WOAR frame contains the URL of the artist's website. Frames
- * can be  up to 16MB  in length, while total  tag size is  limited to
- * 256MB. The internationalization problem  was solved by allowing the
- * encoding of strings  not only in ISO-8859-1, but  also in Unicode."
- * \ref scribbu_id3v2_refs_3 "[3]".
- *
- * "There are three versions of ID3v2:
- *
- * - ID3v2.2  was the  first public  version of  ID3v2. It  used three
- *   character frame identifiers  rather than four (TT2  for the title
- *   instead of  TIT2). Most of the  common v2.3 and v2.4  frames have
- *   direct  analogues  in  v2.2.  Now  this  standard  is  considered
- *   obsolete.
- *
- * - ID3v2.3  expanded the  frame identifier  to four  characters, and
- *   added a  number of frames.  A frame can contain  multiple values,
- *   separated with a null byte. This  is the most widely used version
- *   of ID3v2 tags.
- *
- * - ID3v2.4  is  the  latest  version published,  dated  November  1,
- *   2000. Notably,  it allows  textual data to  be encoded  in UTF-8,
- *   which  was  a  common  practice  in  earlier  tags  (despite  the
- *   standard, since it was not  supported yet) because it has several
- *   noticeable advantages over UTF-16. Another new feature allows the
- *   addition of a tag to the end  of the file before other tags (like
- *   ID3v1).
- *
- * Windows  Explorer and  Windows Media  Player cannot  handle ID3v2.4
- * tags in any version, up to and including Windows 10 / Windows Media
- * Player 12. Windows can understand ID3v2 up to and including version
- * 2.3." \ref scribbu_id3v2_refs_3 "[3]".
- *
- * \section scribbu_id3v2_discuss Discussion
- *
- * \subsection scribbu_id3v2_discuss_header Header
- *
- * ID3v2 tags of any version begin with a ten byte header:
- *
- \code
-
-   +--------------------+-----------+---+
-   |ID3/file identifier |   "ID3"   | 3 |
-   +--------------------+-----------+---+
-   |ID3 version/revision|   $xx yy  | 2 |
-   +--------------------+-----------+---+
-   |ID3 flags           | %xxxxxxxx | 1 |
-   +--------------------+-----------+---+
-   |ID3 size            |4*%0xxxxxxx| 4 |
-   +--------------------+-----------+---+
-
- \endcode
- *
- * The version/revision values corresponding  to different versions of
- * the specification are documented below.
- *
- * The flags are version-specific, and documented below.
- *
- * "The  ID3  tag  size  is  the   size  of  the  complete  tag  after
- * unsychronisation,  including padding,  excluding the  header (total
- * tag  size -  10). The  reason to  use 28  bits (representing  up to
- * 256MB) for  size description is  that we don't  want to run  out of
- * space here." \ref scribbu_id3v2_refs_2 "[2]"
- *
- *
- * \section scribbu_id3v2_unsync Unsynchorisation
- *
- * MPEG decoding software uses a two-byte sentinal value in the input
- * stream to detect the beginning of the audio. MPEG decoding software
- * that is not ID3-aware could mistakenly interpret that value as the
- * beginning of the audio should it happen to occur in the ID3v2
- * header. Unsynchronisation is an optional encoding scheme for the
- * ID3v2 header to prevent that. "Unsynchronisation may only be made
- * with MPEG 2 layer I, II and III and MPEG 2.5 files."
- * \ref scribbu_id3v2_refs_1 "[1]"
- *
- * More specifically, whenever a two byte combination of the form:
- *
- *   %11111111 111xxxxx (or $FF $Ex or $FF Fx)
- *
- * is encountered in an ID3v2 tag to be written to disk, it is
- * replaced with:
- *
- *   %11111111 00000000 111xxxxx
- *
- * and the 'unsynchronisation' flag will be set.
- *
- * This leaves us with an ambiguous situation on read: if we encounter
- * a bit pattern
- *
- *   %11111111 00000000 111xxxxx
- *
- * when reading a tag with the unsynchronisation flag set, we have no
- * way to know whether that was a false sync that was unsynchronised
- * (and so the three bytes should be interpreted as %11111111
- * 111xxxxx) or whether those three bytes had occurred naturally in
- * the tag when it was written. To resolve this, on encoding with
- * unsynchronisation all two-byte sequences of the form $FF 00 should
- * also be written as $FF 00 00.
- *
- * In ID3v2.2, this is clear. The ten byte header is "sync-safe" by
- * definition, so it can be read without any additional
- * interpretation, and if the unsynchronisation flag is set, all
- * two-byte sequences of the form $FF 00 should be interpreted as just
- * $FF.
- *
- * ID2v2.3 introduced an extended header, which is *not* sync-safe,
- * and padding, which *is* (padding bytes must always be $00). In
- * section 3.2 \ref scribbu_id3v2_refs_4 "[4]" the specification
- * explicitly notes that the extended header is subject to
- * unsynchronisation.
- *
- * ID3v2.4 introduced a different extended header and a footer, both
- * of which *are* sync-safe, and frames can be unsynhronised
- * individually. The unsynchronisation flag in the header being set
- * indicates that all frames are unsynchronised; unset in the header
- * means that at least one frame is *not* unsynchronised.
- *
- *
- * \section scribbu_id3v2_refs References
- *
- * - \anchor scribbu_id3v2_refs_1 Martin Nilsson, cited 2015: ID3 tag
- *   version 2 [Availbale online at http://id3.org/id3v2-00]
- *
- * - \anchor scribbu_id3v2_refs_2 Martin Nilsson, cited 2015:
- *   Contributors [Available online at http://id3.org/Contributors]
- *
- * - \anchor scribbu_id3v2_refs_3 Unknown, cited 2015:
- *   ID3v2 [Available online at https://en.wikipedia.org/wiki/ID3#ID3v2]
- *
- * - \anchor scribbu_id3v2_refs_4 Martin Nilsson, cited 2015: ID3 tag
- *   version 2.4.0 - Main Structure [Availbale online at
- *   http://id3.org/id3v2.4.0-structure]
- *
- *
- */
 
 namespace scribbu {
 
@@ -336,27 +448,24 @@ namespace scribbu {
   class id3v2_tag {
 
   public:
+    ///////////////////////////////////////////////////////////////////////////////
+    //                             Nested Types                                  //
+    ///////////////////////////////////////////////////////////////////////////////
 
-    /// Some frames are constrained by the standard to be unique
+    // Some frames are constrained by the standard to be unique
     class duplicate_frame_error: public error
     {
     public:
-      duplicate_frame_error(const frame_id3 &id, std::size_t n):
-        id3_(id), n_(n)
+      duplicate_frame_error(const frame_id3 &id, std::size_t n): id3_(id), n_(n)
       { }
-      duplicate_frame_error(const frame_id4 &id, std::size_t n):
-        id4_(id), n_(n)
+      duplicate_frame_error(const frame_id4 &id, std::size_t n): id4_(id), n_(n)
       { }
-
-    public:
       virtual const char * what() const noexcept(true);
-
     private:
       frame_id3 id3_;
       frame_id4 id4_;
       std::size_t n_;
       mutable std::shared_ptr<std::string> pwhat_;
-
     };
 
     class unknown_frame_error: public error
@@ -366,15 +475,11 @@ namespace scribbu {
       { }
       unknown_frame_error(const frame_id4 &id): id4_(id)
       { }
-
-    public:
       virtual const char * what() const noexcept(true);
-
     private:
       frame_id3 id3_;
       frame_id4 id4_;
       mutable std::shared_ptr<std::string> pwhat_;
-
     };
 
     class reserved_frame_error: public error
@@ -384,15 +489,11 @@ namespace scribbu {
       { }
       reserved_frame_error(const frame_id4 &id): id4_(id)
       { }
-
-    public:
       virtual const char * what() const noexcept(true);
-
     private:
       frame_id3 id3_;
       frame_id4 id4_;
       mutable std::shared_ptr<std::string> pwhat_;
-
     };
 
     class invalid_tag: public error
@@ -400,10 +501,7 @@ namespace scribbu {
     public:
       invalid_tag()
       { }
-
-    public:
-      virtual const char * what() const noexcept;
-
+      virtual const char * what() const noexcept(true);
     };
 
     class no_tag: public error
@@ -411,10 +509,7 @@ namespace scribbu {
     public:
       no_tag()
       { }
-
-    public:
-      virtual const char * what() const noexcept;
-
+      virtual const char * what() const noexcept(true);
     };
 
     class unknown_version: public error
@@ -423,13 +518,9 @@ namespace scribbu {
       unknown_version(unsigned char version):
         version_(version)
       { }
-
-    public:
-      unsigned char get_version() const {
-        return version_;
-      }
-      virtual const char * what() const noexcept;
-
+      unsigned char get_version() const
+      { return version_; }
+      virtual const char * what() const noexcept(true);
     private:
       unsigned char version_;
       mutable std::shared_ptr<std::string> pwhat_;
@@ -438,43 +529,65 @@ namespace scribbu {
     typedef scribbu::encoding encoding;
 
   public:
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                             Construction                              //
+    ///////////////////////////////////////////////////////////////////////////
+
     /// Initialize from the first five bytes of \a is
     id3v2_tag(std::istream &is);
     /// Initialize from an id3v2_info
     id3v2_tag(const id3v2_info &H);
     /// Initialize "from scratch"
     id3v2_tag(unsigned char ver, unsigned char rev):
-      version_(ver), revision_(rev), unsync_(false)
+      version_(ver), revision_(rev), unsync_(boost::none)
     { }
 
   public:
-
     /////////////////////////////////////////////////////////////////////////////
     //                      Common ID3v2 Attributes                            //
     /////////////////////////////////////////////////////////////////////////////
 
-    unsigned char version() const {
-      return version_;
-    }
-    unsigned char revision() const {
-      return revision_;
-    }
-    bool unsynchronised() const {
-      return unsync_;
-    }
-    void unsynchronised(bool f) {
-      unsync_ = f;
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    //                          ID3v2 Serialization                            //
-    /////////////////////////////////////////////////////////////////////////////
-
+    /// Return the ID3v2 version of this tag (e.g. an ID3v2.3 tag will return 3)
+    unsigned char version() const
+    { return version_; }
+    /// Return the ID3v2 revision of this tag; no revisions other than zero
+    /// were ever defined AFAIK
+    unsigned char revision() const
+    { return revision_; }
+    /// Return whether or not the unsynchronisation scheme was applied during
+    /// the most recent serialization or desieralization; if this tag was never
+    /// serdes, return boost:;none
+    boost::optional<bool> unsynchronised() const
+    { return unsync_; }
+    /// Retrieve this tag's ID3v2 flags; the exact meaning of each bit will
+    /// depend on the particular ID3v2 version
     virtual unsigned char flags() const = 0;
-    virtual std::size_t size(bool unsync = true) const = 0;
-    virtual bool needs_unsynchronisation() const = 0;
-    virtual std::size_t write(std::ostream &os, bool unsync = true) const = 0;
 
+    /////////////////////////////////////////////////////////////////////////////
+    //                          id3v2 Serialization                            //
+    /////////////////////////////////////////////////////////////////////////////
+
+    /// Compute the serialized size of this tag (in bytes) exclusive of the
+    /// ID3v2 header (i.e. return the total tag size on disk, in bytes, less
+    /// ten)
+    virtual std::size_t size(bool unsync = false) const = 0;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
+    virtual bool needs_unsynchronisation() const = 0;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
+    virtual std::size_t write(std::ostream &os, bool unsync = false) const = 0;
+
+    /////////////////////////////////////////////////////////////////////////////
+    //                  attributes common to all ID3v2 tags                    //
+    /////////////////////////////////////////////////////////////////////////////
+
+    virtual std::size_t num_frames() const = 0;
+    virtual std::size_t padding() const = 0;
+    virtual void padding(std::size_t padding) = 0;
+    
     /////////////////////////////////////////////////////////////////////////////
     //                    Frames Common to all ID3v2 Tags                      //
     /////////////////////////////////////////////////////////////////////////////
@@ -575,14 +688,265 @@ namespace scribbu {
          bool add_bom = false,
          on_no_encoding rsp = on_no_encoding::fail) = 0;
 
+    //////////////////////////////////////////////////////////////////////////
+    //                           iterator support                           //
+    //////////////////////////////////////////////////////////////////////////
+
   protected:
+
+    /**
+     * \class frame_iterator_base
+     *
+     * \brief Functionality common to both const & mutable iterators
+     *
+     * \param impl_type (non-const) (random-access) iterator type in the
+     * underlying frame collection
+     *
+     *
+     * I've factored our as much iterator functionality as possible here. It's
+     * implemented in terms of a mutable iterator; the const_iterator takes
+     * place of enforcing RO semantics.
+     *
+     *
+     */
+
+    template <typename impl_type>
+    class frame_iterator_base {
+
+    public:
+      /// std iterator category-- all frame iterators are random-access
+      typedef std::random_access_iterator_tag iterator_category;
+      /// result of subtracting two frame iterators
+      typedef std::ptrdiff_t difference_type;
+      /// constructs a "one-past-the-end" iterator
+      frame_iterator_base()
+      { }
+      /// \a p0 is the beginning of the container & \a p is the position which
+      /// will represent this
+      frame_iterator_base(const impl_type &p0, const impl_type &p): p0_(p0), p_(p)
+      { }
+      virtual ~frame_iterator_base()
+      { }
+
+    public:
+      /// retrieve this iterator's index in the enclosing container
+      std::size_t index() const
+      { return p_ - p0_; }
+      friend difference_type operator-(const frame_iterator_base &lhs,
+                                       const frame_iterator_base &rhs)
+      { return lhs.p_ - rhs.p_; }
+      friend bool operator==(const frame_iterator_base &lhs,
+                             const frame_iterator_base &rhs)
+      { return lhs.p_ == rhs.p_; }
+      friend bool operator!=(const frame_iterator_base &lhs,
+                             const frame_iterator_base &rhs)
+      { return ! (lhs == rhs); }
+      friend bool operator<(const frame_iterator_base &lhs,
+                            const frame_iterator_base &rhs)
+      { return lhs.p_ < rhs.p_; }
+
+    protected:
+      /// increment this iterator by n; return a referene to this iterator
+      frame_iterator_base& incr(std::ptrdiff_t n = 1)
+      { p_ += n; return *this; }
+      /// decrement this iterator by n; return a referene to this iterator
+      frame_iterator_base& decr(std::ptrdiff_t n = 1)
+      { p_ -= n; return *this; }
+
+    protected:
+      impl_type p0_, p_;
+    };
+
+    /**
+     * \class frame_iterator
+     *
+     * \brief non-const frame iterator
+     *
+     *
+     */
+
+    template <class tag_type, class frame_type, class proxy_type, class impl_type>
+    class frame_iterator: public frame_iterator_base<impl_type> {
+
+      typedef frame_iterator_base<impl_type> base_type;
+
+    public:
+      /// std iterator category-- all frame iterators are random-access
+      typedef std::random_access_iterator_tag iterator_category;
+      /// result of subtracting two frame iterators
+      typedef std::ptrdiff_t difference_type;
+
+    public:
+      /// The type "pointed to" by this iterator
+      typedef frame_type value_type;
+      typedef frame_type *pointer;
+      typedef frame_type &reference;
+
+      frame_iterator()
+      { }
+      
+      explicit frame_iterator(tag_type *pown, const impl_type &p):
+        base_type(pown->frames_.begin(), p), pown_(pown)
+      { }
+
+      frame_iterator& operator++()
+      { base_type::incr(); return *this; }
+
+      frame_iterator operator++(int)
+      {
+        frame_iterator tmp(*this);
+        base_type::incr();
+        return tmp;
+      }
+
+      frame_iterator& operator--()
+      { base_type::decr(); return *this; }
+
+      frame_iterator operator--(int)
+      {
+        frame_iterator tmp(*this);
+        base_type::decr();
+        return tmp;
+      }
+
+      frame_iterator& operator+=(difference_type i)
+      { base_type::incr(i); return *this; }
+
+      frame_iterator& operator-=(difference_type i)
+      { base_type::decr(i); return *this; }
+
+      frame_iterator operator+(difference_type i)
+      {
+        frame_iterator tmp(*this);
+        tmp += i;
+        return tmp;
+      }
+
+      frame_iterator operator-(difference_type i)
+      {
+        frame_iterator tmp(*this);
+        tmp -= i;
+        return tmp;
+      }
+
+      proxy_type operator*() const
+      { return proxy_type(pown_, base_type::index()); }
+
+      proxy_type operator->() const
+      { return proxy_type(pown_, base_type::index()); }
+
+      proxy_type operator[](difference_type i)
+      { return *(*this + i); }
+
+    private:
+      tag_type *pown_;
+
+    };
+
+    /**
+     * \class const_frame_iterator
+     *
+     * \brief const frame iterator
+     *
+     *
+     */
+
+    template <class frame_type, class impl_type>
+    class const_frame_iterator: public frame_iterator_base<impl_type> {
+
+      typedef frame_iterator_base<impl_type> base_type;
+
+    public:
+      /// std iterator category-- all frame iterators are random-access
+      typedef std::random_access_iterator_tag iterator_category;
+      /// result of subtracting two frame iterators
+      typedef std::ptrdiff_t difference_type;
+
+    public:
+      /// The type "pointed to" by this iterator
+      typedef frame_type value_type;
+      typedef const frame_type *pointer;
+      typedef const frame_type &reference;
+
+      const_frame_iterator()
+      { }
+      
+      explicit const_frame_iterator(const impl_type &p0,
+                                    const impl_type &p):
+        frame_iterator_base<impl_type>(p0, p)
+      { }
+
+      template <class tag_type, typename proxy_type>
+      const_frame_iterator(const frame_iterator<tag_type, frame_type, proxy_type, impl_type> &p):
+        frame_iterator_base<impl_type>(p)
+      { }
+
+      const_frame_iterator& operator++()
+      { base_type::incr(); return *this; }
+
+      const_frame_iterator operator++(int)
+      {
+        const_frame_iterator tmp(*this);
+        base_type::incr();
+        return tmp;
+      }
+
+      const_frame_iterator& operator--()
+      { base_type::decr(); return *this; }
+
+      const_frame_iterator operator--(int)
+      {
+        const_frame_iterator tmp(*this);
+        base_type::decr();
+        return tmp;
+      }
+
+      const_frame_iterator& operator+=(difference_type i)
+      { base_type::incr(i); return *this; }
+
+      const_frame_iterator& operator-=(difference_type i)
+      { base_type::decr(i); return *this; }
+
+      const_frame_iterator operator+(difference_type i)
+      {
+        const_frame_iterator tmp(*this);
+        tmp += i;
+        return tmp;
+      }
+
+      const_frame_iterator operator-(difference_type i)
+      {
+        const_frame_iterator tmp(*this);
+        tmp -= i;
+        return tmp;
+      }
+      reference operator*() const
+      {
+        return *(base_type::p_->get());
+      }
+
+      pointer operator->() const
+      { return base_type::p_->get(); }
+
+    };
+
+  protected:
+    /// Set the "unsynchronised" field
+    void unsynchronised(bool f)
+    { unsync_ = f; }
+    /// Parse the flags & size from an ID3v2 header
     std::pair<unsigned char, std::size_t>
     parse_flags_and_size(std::istream &is);
 
   private:
+    /// ID3v2 version (e.g. for an ID3v2.3 flag, this would be "3")
     unsigned char version_;
+    /// ID3v2 revision; AFAIK no value other than "0" was ever defined by spec
     unsigned char revision_;
-    bool unsync_;
+    /// Whether or not unsynchronisation was applied during
+    /// serialization/deserialization for this tag; if this tag has never been
+    /// serdes, then this member will be boost::none 
+    boost::optional<bool> unsync_;
 
   }; // End class id3v2_tag.
 

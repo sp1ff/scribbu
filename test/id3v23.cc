@@ -386,7 +386,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
   BOOST_CHECK(0 == tag.revision());
   BOOST_CHECK(452951 == tag.size());
   BOOST_CHECK(0 == tag.flags());
-  BOOST_CHECK(!tag.unsynchronised());
+  boost::optional<bool> unsync = tag.unsynchronised();
+  BOOST_CHECK(unsync && ! *unsync);
   BOOST_CHECK(!tag.experimental());
   BOOST_CHECK(!tag.has_extended_header());
   BOOST_CHECK(335921 == tag.padding());
@@ -1211,6 +1212,7 @@ BOOST_AUTO_TEST_CASE( test_unsync )
   fs::ifstream ifs2(DATA2, fs::ifstream::binary);
   id3v2_3_tag tag2(ifs2);
 
+  BOOST_CHECK(607 == tag2.size());
   text = tag2.album();
   BOOST_CHECK("http://music.download.com" == text);
   text = tag2.title();
@@ -1222,24 +1224,42 @@ BOOST_AUTO_TEST_CASE( test_unsync )
 
 /**
  *
+ * I found a file with a compressed frame in the taglib test suite
+ * (tests/data/compressed_id3_frame.mp3), but it appeared to have some
+ * problems. Here's the raw hex:
  *
- \code
+  \code
 
  000000 49 44 33 03 00 00 00 00 2c 34 41 50 49 43 00 00  >ID3.....,4APIC..<
  000010 10 5d 00 80 00 00 00 9b 78 9c ed 9d fb 5b 13 57  >.]......x....[.W<
  000020 1a c7 ed 7f b1 7f c2 fe b6 3f 6d bb dd c7 ee b3  >.........?m.....<
- 000030 b5 d6 d6 f5 5e bb 5a ef ca 03 ab 16 15 05 5b 2a  >....^.Z.......[*<
- 000040 a2 20 d8 2a 88 d8 05 5d 84 c8 45 41 6e 22 f7 20  >. .*...]..EAn". <
- 000050 97 a0 5c 44 2e 51 90 7b 80 2a 01 14 14 94 5b 0a  >..\D.Q.{.*....[.<
+ *
+ 001070 d7 57 4f 41 52 00 00 00 00 00 00 50 4f 50 4d 00  >.WOAR......POPM.<
+ 001080 00 00 06 00 00 00 00 00 00 00 00 54 52 43 4b 00  >...........TRCK.<
+ 001090 00 00 01 00 00 00 54 43 4f 4e 00 00 00 0d 00 00  >......TCON......<
+ 0010a0 00 54 65 63 68 6e 6f 2d 44 61 6e 63 65 43 4f 4d  >.Techno-DanceCOM<
+ 0010b0 4d 00 00 00 05 00 00 00 65 6e 67 00 54 59 45 52  >M.......eng.TYER<
+ 0010c0 00 00 00 01 00 00 00 54 41 4c 42 00 00 00 0c 00  >.......TALB.....<
+ 0010d0 00 00 3c 55 6e 64 65 66 69 6e 65 64 3e 54 50 45  >..<Undefined>TPE<
+ 0010e0 31 00 00 00 05 00 00 00 4d 6f 62 79 54 49 54 32  >1.......MobyTIT2<
+ 0010f0 00 00 00 1f 00 00 00 42 72 61 76 65 68 65 61 72  >.......Bravehear<
+ 001100 74 20 54 68 65 6d 65 20 28 54 65 63 68 6e 6f 20  >t Theme (Techno <
+ 001110 72 65 6d 69 78 00 00 00 00 00 00 00 00 00 00 00  >remix...........<
+ 001120 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+ *
+ 001380 00 00 00 00 00 00 00 00                          >........<
+ 001388
 
  \endcode
+ *
+ * Broken out:
  *
  \code
 
  000000 49 44 33                                         ID3: ID3v2 header
  000003          03 00                                   ID3v2.3(.0)
  000005                00                                no flags
- 000006                   00 00 2c 34                    0x1634 = 5684 bytes [1]
+ 000006                   00 00 2c 34                    0x1634 = 5684 bytes [1] <========
  00000a                               41 50 49 43        APIC frame
  00000e                                           00 00  0x105d = 4189 bytes
  000010 10 5d
@@ -1278,12 +1298,13 @@ BOOST_AUTO_TEST_CASE( test_unsync )
     -> b 01 0110 0011 0100 = 0x1634 = 5684
 
  This is incorrect-- the tag is actually 0x1388 bytes in size; subtracting
- 10 for the frame header gives 0x1373. Making this sync-safe:
+ 10 for the tag header gives 0x137e. Making that sync-safe gives:
 
- 0x1373 = b0001 0011 0111 0011 -> b 010 0110 111 0011
- -> b 0010 0110 0111 0011 = 0x2673
+ 0x137e = b0001 0011 0111 1110 -> b00  01 0011 0  111 1110 ->
+ b...  001 0011 0  0111 1110 -> b0010 0110 0111 1110 = 0x267f
 
- 2. This is also incorrect; the actual uncompressed size is 86427 = 0x1519B
+
+ 3. This is also incorrect; the actual uncompressed size is 86427 = 0x1519B
 
  \endcode
  *
@@ -1300,6 +1321,7 @@ BOOST_AUTO_TEST_CASE( test_compressed )
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
   id3v2_3_tag tag1(ifs1);
+  BOOST_CHECK(4990 == tag1.size());
   BOOST_CHECK(1 == tag1.has_title());
   BOOST_CHECK("Braveheart Theme (Techno remix" == tag1.title());
 }

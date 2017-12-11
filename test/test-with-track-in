@@ -22,5 +22,3 @@ EOF
 sed -e 's_^".*/data_"data_' $OUTPUT_FILE | sort > with-track-in.log
 diff with-track-in.log ${srcdir}/data/with-track-in-golden.log || exit 1
 exit 0
-
-

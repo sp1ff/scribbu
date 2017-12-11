@@ -87,7 +87,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
   BOOST_CHECK(0 == tag.flags());
   BOOST_CHECK(!tag.has_extended_header());
   BOOST_CHECK(!tag.has_footer());
-  BOOST_CHECK(!tag.unsynchronised());
+  boost::optional<bool> unsync = tag.unsynchronised();
+  BOOST_CHECK(unsync && ! *unsync);
   BOOST_CHECK(1024 == tag.padding());
 
   BOOST_TEST_MESSAGE( "Album: '" << tag.album() << "'." );

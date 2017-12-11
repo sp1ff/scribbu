@@ -44,35 +44,23 @@ namespace scribbu {
 
   public:
 
-    id3v2_2_frame(const frame_id3 &id,
-                  std::size_t      size):
-      id3v2_frame(size, id.experimental()),
-      id_(id)
+    id3v2_2_frame(const frame_id3 &id): id3v2_frame(id.experimental()), id_(id)
     { }
-
-    id3v2_2_frame(unsigned char id0,
-                  unsigned char id1,
-                  unsigned char id2,
-                  std::size_t   size):
-      id3v2_frame(size, ('X' == id0 || 'Y' == id0 || 'Z' == id0)),
+    id3v2_2_frame(unsigned char id0, unsigned char id1, unsigned char id2):
+      id3v2_frame('X' == id0 || 'Y' == id0 || 'Z' == id0),
       id_(id0, id1, id2)
     { }
-
-    id3v2_2_frame(const char  id[3],
-                  std::size_t size):
-      id3v2_frame(size, ('X' == id[0] || 'Y' == id[0] || 'Z' == id[0])),
+    id3v2_2_frame(const char id[3]):
+      id3v2_frame('X' == id[0] || 'Y' == id[0] || 'Z' == id[0]),
       id_(id)
     { }
+    virtual id3v2_2_frame* clone() const = 0;
 
   public:
 
     /// Return the three character ID for this frame
-    frame_id3 id() const {
-      return id_;
-    }
-
-    /// Perform a deep copy
-    virtual id3v2_2_frame* clone() const = 0;
+    frame_id3 id() const
+    { return id_; }
 
     /**
      * \brief Convert ID3v2.2 encoded text to an arbitrary encoding
@@ -130,9 +118,22 @@ namespace scribbu {
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
 
-    /// Write an ID3v2.2 header
+    /// Return the number of bytes the header will occupy when serialized to
+    /// disk
+    std::size_t serialized_header_size(bool unsync) const;
+    /// Return zero if this tag's header would not contain false syncs if
+    /// serialized in its present state; else return the number of false sync
+    /// it would contain
+    std::size_t header_needs_unsynchronisation() const;
+    /// Serialize this tag's header to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
     std::size_t write_header(std::ostream &os, bool unsync) const;
 
+  private:
+    /// Write a three-tuple while removing false syncs
+    std::size_t unsynchronise_triplet(std::ostream &os, char buf[3]) const;
+    
   private:
     frame_id3 id_;
 
@@ -146,7 +147,7 @@ namespace scribbu {
     unknown_id3v2_2_frame(const frame_id3       &id,
                           forward_input_iterator p0,
                           forward_input_iterator p1):
-      id3v2_2_frame(id, p1 - p0),
+      id3v2_2_frame(id),
       data_(p0, p1)
     { }
 
@@ -166,26 +167,34 @@ namespace scribbu {
       unknown_id3v2_2_frame(frame_id3(id), p0, p1)
     { }
 
-  public:
-
     virtual id3v2_2_frame* clone() const
     { return new unknown_id3v2_2_frame(*this); }
 
-    virtual std::size_t serialized_size(bool unsync) const;
-    virtual std::size_t needs_unsynchronisation() const;
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+  public:
 
     /// Retrieve this frames payload, exclusive of identifier & size
     template <typename forward_output_iterator>
-    forward_output_iterator data(forward_output_iterator p) const {
-      return std::copy(data_.begin(), data_.end(), p);
-    }
+    forward_output_iterator data(forward_output_iterator p) const
+    { return std::copy(data_.begin(), data_.end(), p); }
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the header
+    virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
+    virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
   private:
     std::vector<unsigned char> data_;
 
   }; // End class unknown_id3v2_2_frame.
-
   
   /// Unique File Identifier (cf. 4.1 of the ID3v2.2 spec)
   class UFI: public id3v2_2_frame, public unique_file_id {
@@ -193,9 +202,17 @@ namespace scribbu {
   public:
     template <typename forward_input_iterator>
     UFI(forward_input_iterator p0, forward_input_iterator p1):
-      id3v2_2_frame("UFI", p1 - p0),
+      id3v2_2_frame("UFI"),
       unique_file_id(p0, p1)
     { }
+
+    virtual id3v2_2_frame* clone() const
+    { return new UFI(*this); }
+
+    static std::unique_ptr<id3v2_2_frame>
+    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+  public:
 
     template <typename string_type>
     string_type
@@ -209,14 +226,18 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src.get(), dst, rsp);
     }
 
-    static std::unique_ptr<id3v2_2_frame>
-    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
-
-    virtual id3v2_2_frame* clone() const
-    { return new UFI(*this); }
-
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the six-byte header
     virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
     virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
     virtual std::size_t write(std::ostream &os, bool unsync) const;
 
   }; // End class UFI.
@@ -269,7 +290,7 @@ namespace scribbu {
     id3v2_2_text_frame(const frame_id3       &id,
                        forward_input_iterator p0,
                        forward_input_iterator p1):
-      id3v2_2_frame(id, p1 - p0)
+      id3v2_2_frame(id)
     {
       unicode_ = *p0++;
       std::copy(p0, p1, std::back_inserter(text_));
@@ -319,29 +340,27 @@ namespace scribbu {
                                                     encoding::ISO_8859_1, add_bom, rsp))
     { }
 
+    virtual id3v2_2_frame* clone() const
+    { return new id3v2_2_text_frame(*this); }
+
+    static std::unique_ptr<id3v2_2_text_frame>
+    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
   private:
     id3v2_2_text_frame(const frame_id3 &id,
                        bool unicode,
                        const std::vector<unsigned char> &text):
-      id3v2_2_frame(id, text.size()),
+      id3v2_2_frame(id),
       unicode_(unicode),
       text_(text)
     { }
 
   public:
 
-    virtual std::size_t serialized_size(bool unsync) const;
-    virtual std::size_t needs_unsynchronisation() const;
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
-
-    virtual id3v2_2_frame* clone() const
-    { return new id3v2_2_text_frame(*this); }
-
     /// Retrieve the raw textual data
     template <typename forward_output_iterator>
-    forward_output_iterator text(forward_output_iterator p) const {
-      return std::copy(text_.begin(), text_.end(), p);
-    }
+    forward_output_iterator text(forward_output_iterator p) const
+    { return std::copy(text_.begin(), text_.end(), p); }
 
     typedef scribbu::encoding encoding;
     typedef scribbu::on_no_encoding on_no_encoding;
@@ -377,17 +396,27 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
-    unsigned char unicode() const {
-      return unicode_;
-    }
+    unsigned char unicode() const
+    { return unicode_; }
 
     void set(const std::string &text,
              encoding src = encoding::UTF_8,
              bool add_bom = false,
              on_no_encoding rsp = on_no_encoding::fail);
 
-    static std::unique_ptr<id3v2_2_text_frame>
-    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the six-byte header
+    virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
+    virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
   private:
     unsigned char unicode_;
@@ -435,9 +464,12 @@ namespace scribbu {
     template <typename forward_input_iterator>
     TXX(forward_input_iterator p0,
         forward_input_iterator p1):
-      id3v2_2_frame("TXX", p1 - p0),
+      id3v2_2_frame("TXX"),
       user_defined_text(2, p0, p1)
     { }
+
+    virtual id3v2_2_frame* clone() const
+    { return new TXX(*this); }
 
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
@@ -468,12 +500,19 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the six-byte header
     virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
     virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
     virtual std::size_t write(std::ostream &os, bool unsync) const;
-
-    virtual id3v2_2_frame* clone() const
-    { return new TXX(*this); }
 
   }; // End class TXX.
 
@@ -484,12 +523,17 @@ namespace scribbu {
     template <typename forward_input_iterator>
     COM(forward_input_iterator p0,
         forward_input_iterator p1):
-      id3v2_2_frame("COM", p1 - p0),
+      id3v2_2_frame("COM"),
       comments(2, p0, p1)
     { }
 
+    virtual id3v2_2_frame* clone() const
+    { return new COM(*this); }
+
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+  public:
 
     template <typename string_type>
     string_type
@@ -517,14 +561,21 @@ namespace scribbu {
                                                 unicode(), dst, rsp, src);
     }
 
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the six-byte header
     virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
     virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
     virtual std::size_t write(std::ostream &os, bool unsync) const;
 
-    virtual id3v2_2_frame* clone() const
-    { return new COM(*this); }
-
-  };
+  }; // End class COM.
 
   /// play count
   class CNT: public id3v2_2_frame, public play_count {
@@ -533,25 +584,36 @@ namespace scribbu {
     template <typename forward_input_iterator>
     CNT(forward_input_iterator p0,
         forward_input_iterator p1):
-      id3v2_2_frame("CNT", p1 - p0),
+      id3v2_2_frame("CNT"),
       play_count(p0, p1)
     { }
-
-    std::size_t count() const {
-      return play_count::count();
-    }
-
-    static std::unique_ptr<id3v2_2_frame>
-    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
-
-    virtual std::size_t serialized_size(bool unsync) const;
-    virtual std::size_t needs_unsynchronisation() const;
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
 
     virtual id3v2_2_frame* clone() const
     { return new CNT(*this); }
 
-  };
+    static std::unique_ptr<id3v2_2_frame>
+    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+  public:
+    
+    std::size_t count() const
+    { return play_count::count(); }
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the six-byte header
+    virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
+    virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  }; // End class CNT.
 
   /// Popularimeter
   class POP: public id3v2_2_frame, public popularimeter {
@@ -560,9 +622,17 @@ namespace scribbu {
     template <typename forward_input_iterator>
     POP(forward_input_iterator p0,
         forward_input_iterator p1):
-      id3v2_2_frame("POP", p1 - p0),
+      id3v2_2_frame("POP"),
       popularimeter(p0, p1)
     { }
+
+    virtual id3v2_2_frame* clone() const
+    { return new POP(*this); }
+
+    static std::unique_ptr<id3v2_2_frame>
+    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+
+  public:
 
     template <typename string_type>
     string_type
@@ -576,15 +646,19 @@ namespace scribbu {
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
-    static std::unique_ptr<id3v2_2_frame>
-    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
-
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the six-byte header
     virtual std::size_t serialized_size(bool unsync) const;
+    /// Return true if this the serialization of this tag would contain false
+    /// syncs if serialized in its present state
     virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
     virtual std::size_t write(std::ostream &os, bool unsync) const;
-
-    virtual id3v2_2_frame* clone() const
-    { return new POP(*this); }
 
   }; // End class POP.
 

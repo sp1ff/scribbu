@@ -22,7 +22,6 @@
 ;;   If `track' has an ID3v2 tag without a TENC frame, add a TENC frame of "Winamp"
 ;;   else if `track' has no ID3v2 tag. create one with only a TENC frame of "Winamp"
 ;;   else print a warning consisting of the TENC frames in the extant ID3v2 frames.
-
 (define (cleanup-encoded-by-1 track)
   (format #t "cleanup-encoded-by-1: ~s\n" (scribbu/get-path track))
   (if (scribbu/has-id3v1-tag track)
@@ -38,9 +37,7 @@
 					(begin
 					  (display "... no ID3v2 tags\n")
 					  (scribbu/make-id3v2-tag track 0)
-					  (display "Checkpoint 0\n")
 					  (scribbu/set-id3v2-attribute track 0 'encoded-by "Winamp")
-					  (display "Checkpoint 1\n")
 					  (format #t "Writing ~s...\n"
 							  (string-join (list (basename (scribbu/get-path track)) "out") "."))
 					  (scribbu/write-id3v2-tag

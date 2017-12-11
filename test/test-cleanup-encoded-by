@@ -9,4 +9,8 @@ if [ ! -z "$t_err" ]; then
 	echo "stderr: $t_err"
 	exit 1
 fi
+
+../src/scribbu dump elliot-goldenthal.id3v1.tag.out > test-cleanup-encoded-by.out || exit 1
+diff test-cleanup-encoded-by.out ${srcdir}/data/golden-test-cleanup-encoded-by.out || exit 1
+
 exit $t_stat

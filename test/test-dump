@@ -10,4 +10,3 @@ sed -e 's_^".*/data_"data_' dump2.$$.log > dump2.log
 rm dump2.$$.log
 diff dump2.log ${srcdir}/data/dump2-golden.log || exit 1
 exit 0
-

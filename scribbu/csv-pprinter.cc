@@ -6,6 +6,19 @@
 #include <scribbu/id3v24.hh>
 #include <scribbu/id3v1.hh>
 
+// TODO(sp1ff): Needed?
+namespace {
+  unsigned int optional_to_uint(const boost::optional<bool> &x)
+  {
+    if (x) {
+      return *x ? 1 : 0;
+    }
+    else {
+      return ~0;
+    }
+  }
+}
+
 /*static*/
 const boost::optional<scribbu::encoding>
 scribbu::csv_pprinter::DEFAULT_V1ENC = boost::none;
@@ -30,7 +43,7 @@ scribbu::csv_pprinter::pprint_v2_2_tag(const id3v2_2_tag &tag,
         (unsigned)tag.revision() << COMMA <<
         tag.size() << COMMA <<
         "0x" << hex << setw(2) << setfill('0') << (unsigned)tag.flags() <<
-         COMMA << (unsigned)tag.unsynchronised() << COMMA;
+        COMMA << optional_to_uint(tag.unsynchronised()) << COMMA;
 
   for (auto id: {"TP1", "TT2", "TAL", "TCO", "TEN", "TYR", "TLA"}) {
     if (tag.has_frame(id)) {
@@ -82,7 +95,7 @@ scribbu::csv_pprinter::pprint_v2_3_tag(const id3v2_3_tag &tag,
         (unsigned)tag.revision() << COMMA <<
         tag.size() << COMMA <<
         "0x" << hex << setw(2) << setfill('0') << (unsigned)tag.flags() <<
-        COMMA << (unsigned) tag.unsynchronised() << COMMA;
+        COMMA << optional_to_uint(tag.unsynchronised()) << COMMA;
 
   for (auto id: {"TPE1", "TIT2", "TALB", "TCON", "TENC", "TYER", "TLAN"}) {
     if (tag.has_frame(id)) {
@@ -134,7 +147,7 @@ scribbu::csv_pprinter::pprint_v2_4_tag(const id3v2_4_tag &tag,
         (unsigned)tag.revision() << COMMA <<
         tag.size() << COMMA <<
         "0x" << hex << setw(2) << setfill('0') << (unsigned)tag.flags() <<
-        COMMA << (unsigned)tag.unsynchronised() << COMMA;
+        COMMA << optional_to_uint(tag.unsynchronised()) << COMMA;
 
   for (auto id: {"TPE1", "TIT2", "TALB", "TCON", "TENC", "TYER", "TLAN"}) {
     if (tag.has_frame(id)) {

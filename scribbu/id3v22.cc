@@ -159,7 +159,6 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream &is): id3v2_tag(is)
   unsynchronised(0 != (flags & 0x80));
   compression_ = flags & 0x40;
   parse(is, size);
-
 }
 
 scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
@@ -177,9 +176,11 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
 }
 
 /*virtual*/ unsigned char
-scribbu::id3v2_2_tag::flags() const {
+scribbu::id3v2_2_tag::flags() const
+{
   unsigned char flags = 0;
-  if (unsynchronised()) {
+  boost::optional<bool> unsync = unsynchronised();
+  if (unsync && *unsync) {
     flags |= 0x80;
   }
   if (compression_) {
@@ -188,25 +189,28 @@ scribbu::id3v2_2_tag::flags() const {
   return flags;
 }
 
-/*virtual*/ std::size_t
+/////////////////////////////////////////////////////////////////////////////
+//                          ID3v2 Serialization                            //
+/////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+std::size_t
 scribbu::id3v2_2_tag::size(bool unsync) const
 {
-  using namespace std;
-  size_t cb = padding();
-  cb += accumulate(begin(), end(), 0,
-                   [unsync](size_t n, const id3v2_2_frame &f)
-                   { return n + f.serialized_size(unsync); });
-  return cb;
+  return std::accumulate(begin(), end(), padding(),
+                        [unsync](size_t n, const id3v2_2_frame &f)
+                        { return n + f.serialized_size(unsync); });
 }
 
-/*virtual*/ bool
+/*virtual*/
+bool
 scribbu::id3v2_2_tag::needs_unsynchronisation() const
 {
-  using namespace std;
-  return any_of(begin(), end(), [](const id3v2_2_frame &f) { return f.needs_unsynchronisation(); });
+  return std::any_of(begin(), end(), [](const id3v2_2_frame &f) { return f.needs_unsynchronisation(); });
 }
 
-/*virtual*/ std::size_t
+/*virtual*/
+std::size_t
 scribbu::id3v2_2_tag::write(std::ostream &os, bool unsync) const
 {
   using namespace std;
@@ -228,6 +232,10 @@ scribbu::id3v2_2_tag::write(std::ostream &os, bool unsync) const
   
   return cb;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+//                    Frames Common to all ID3v2 Tags                      //
+/////////////////////////////////////////////////////////////////////////////
 
 /*virtual*/ std::size_t
 scribbu::id3v2_2_tag::play_count() const {
@@ -379,7 +387,7 @@ scribbu::id3v2_2_tag::mutable_frame_proxy::operator=(const POP &frame)
   return *this;
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_frame &frame)
 {
   std::unique_ptr<id3v2_2_frame> pnew(frame.clone());
@@ -389,7 +397,7 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_frame &frame)
   add_frame_to_lookups(*frames_[d], d);
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_text_frame &frame)
 {
   // This is a little twisted, but it accomplishes two things:
@@ -405,7 +413,7 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_text_frame &frame)
 
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::insert(const_iterator p, const CNT &frame)
 {
   // This is a little twisted, but it accomplishes two things:
@@ -420,7 +428,7 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const CNT &frame)
   add_frame_to_lookups(F, d);
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::insert(const_iterator p, const COM &frame)
 {
   // This is a little twisted, but it accomplishes two things:
@@ -435,7 +443,7 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const COM &frame)
   add_frame_to_lookups(F, d);
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::insert(const_iterator p, const POP &frame)
 {
   // This is a little twisted, but it accomplishes two things:
@@ -500,7 +508,7 @@ scribbu::id3v2_2_tag::push_back(const POP &frame)
   add_frame_to_lookups(F, frames_.size() - 1);
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::erase(const_iterator p)
 {
   std::size_t idx = p - begin();
@@ -508,7 +516,7 @@ scribbu::id3v2_2_tag::erase(const_iterator p)
   frames_.erase(frames_.begin() + idx);
 }
 
-scribbu::id3v2_2_tag::mutable_frame_iterator
+scribbu::id3v2_2_tag::iterator
 scribbu::id3v2_2_tag::erase(const_iterator p0, const_iterator p1)
 {
   const_iterator p2 = p0;
@@ -715,7 +723,8 @@ void scribbu::id3v2_2_tag::parse(std::istream &is, std::size_t size)
 
     // Re-synchronise, if needed. Take care to deallocate the old buffer before
     // constructing any frames.
-    if (unsynchronised()) {
+    boost::optional<bool> unsync = unsynchronised();
+    if (unsync && *unsync) {
       cb_tag = resynchronise(pb.get(), cb_tag);
     }
 

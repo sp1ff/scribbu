@@ -472,4 +472,4 @@ scribbu::id3v2_tag::parse_flags_and_size(std::istream &is)
 
   return std::make_pair(flags, cb);
 
-}
+} // End method parse_flags_and_size.

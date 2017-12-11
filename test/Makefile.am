@@ -8,6 +8,7 @@ CLEANFILES = id3v20B id3v21B report.last.csv id3v20A trackB report.csv \
 	with-track-in.log test.write.2.2.dat tag22.dat elliot-goldenthal.id3v1.tag.out
 TESTS = $(check_PROGRAMS) test-split test-rename test-report test-dump test-with-track-in \
 	test-fs-generator test-cleanup-encoded-by
+XFAIL_TESTS = test-cleanup-encoded-by
 unit_SOURCES = unit.cc charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
 	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc scribbu.cc id3v2-edit.cc

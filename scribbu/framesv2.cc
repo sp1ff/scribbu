@@ -1,11 +1,102 @@
 #include "framesv2.hh"
 
-#include <iconv.h>
 #include <boost/functional/hash.hpp>
+#include <boost/static_assert.hpp>
+
+#include <arpa/inet.h>
+#include <iconv.h>
 
 
-bool scribbu::detail::is_false_sync(unsigned char x, unsigned char y) {
+bool
+scribbu::detail::is_false_sync(unsigned char x, unsigned char y)
+{
   return 255 == x && 233 < y;
+}
+
+std::size_t
+scribbu::detail::count_false_syncs(std::size_t n)
+{
+  std::size_t count = 0;
+  const unsigned char *p = (const unsigned char*)&n;
+  for (std::ptrdiff_t i = 0; i < sizeof(std::size_t) - 1; ++i) {
+    if (is_false_sync(p[i], p[i+1])) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+/// Write \a x to \a os, in big-endian, applying the unsynchronisation scheme
+std::size_t
+scribbu::detail::unsynchronise(std::ostream &os,
+                               std::uint64_t x)
+{
+  using namespace std;
+
+  const char zed = 0;
+
+  uint64_t out = htobe64(x);
+  const unsigned char *p = (const unsigned char*)&out;
+
+  size_t cb = 0;
+
+  os.write((char*)p + 0, 1);
+  cb += 1;
+  if (255 == p[0]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 1, 1);
+  cb += 1;
+  if (255 == p[1]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 2, 1);
+  cb += 1;
+  if (255 == p[2]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 3, 1);
+  cb += 1;
+  if (255 == p[3]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 4, 1);
+  cb += 1;
+  if (255 == p[4]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 5, 1);
+  cb += 1;
+  if (255 == p[5]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 6, 1);
+  cb += 1;
+  if (255 == p[6]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  os.write((char*)p + 7, 1);
+  cb += 1;
+  if (255 == p[7]) {
+    os.write(&zed, 1);
+    cb += 1;
+  }
+
+  return cb;
 }
 
 
@@ -108,9 +199,15 @@ std::size_t std::hash<scribbu::frame_id4>::operator()(const scribbu::frame_id4 &
 ///////////////////////////////////////////////////////////////////////////////
 
 std::size_t
+scribbu::unique_file_id::size() const
+{
+  return owner_.size() + 1 + id_.size(); // Need to add the trailing NULL
+}
+
+std::size_t
 scribbu::unique_file_id::serialized_size(bool unsync) const
 {
-  std::size_t cb = owner_.size() + 1 + id_.size(); // Need to add the trailing NULL
+  std::size_t cb = size();
   if (unsync) {
     cb += count_ffs();
   }
@@ -120,14 +217,7 @@ scribbu::unique_file_id::serialized_size(bool unsync) const
 std::size_t
 scribbu::unique_file_id::needs_unsynchronisation() const
 {
-  using namespace std;
-  using namespace scribbu::detail;
-  size_t count = count_false_syncs(owner_.begin(), owner_.end());
-  if (!owner_.empty() && !id_.empty() && is_false_sync(owner_.back(), id_.front())) {
-    ++count;
-  }
-  count += count_false_syncs(id_.begin(), id_.end());
-  return count;
+  return count_ffs();
 }
 
 std::size_t
@@ -154,8 +244,89 @@ scribbu::unique_file_id::write(std::ostream &os, bool unsync) const
 std::size_t
 scribbu::unique_file_id::count_ffs() const
 {
-  return detail::count_ffs(owner_.begin(), owner_.end()) + 
-    detail::count_ffs(id_.begin(), id_.end());
+  using namespace std;
+  using namespace scribbu::detail;
+  size_t cb = detail::count_ffs(owner_.begin(), owner_.end());
+  // owner is null-terminated, so possibility of a false sync
+  cb += detail::count_ffs(id_.begin(), id_.end());
+  return cb;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                          class encryption_method                          //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::encryption_method::size() const
+{
+  // Need to add the trailing NULL on email_ + the method
+  return email_.size() + 1 + 1 + data_.size();
+}
+
+std::size_t
+scribbu::encryption_method::serialized_size(bool unsync) const
+{
+  // Need to add the trailing NULL on email_ + the method
+  std::size_t cb = email_.size() + 1 + 1 + data_.size();
+  if (unsync) {
+    cb += count_ffs();
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::encryption_method::needs_unsynchronisation() const
+{
+  return count_ffs();
+}
+
+std::size_t
+scribbu::encryption_method::write(std::ostream &os, bool unsync) const
+{
+  const char zed = 0;
+
+  using namespace std;
+  using namespace scribbu::detail;
+  std::size_t cb_ffs = count_ffs();
+  if (unsync && cb_ffs) {
+    std::size_t cb = 0 ;
+    cb += unsynchronise(os, email_.begin(), email_.end());
+    // email is null-terminated, so no possibilty of a false sync
+    os.write(&zed, 1); cb += 1;
+    os.write((const char*)&method_symbol_, 1); cb += 1;
+    if (!data_.empty() && is_false_sync(method_symbol_, data_.front())) {
+      os.write((const char*)&method_symbol_, 1); cb += 1;
+    }
+    cb += unsynchronise(os, data_.begin(), data_.end());
+    return cb;
+  }
+  else {
+    os.write((const char*)&(email_[0]), email_.size());
+    os.write((const char*)&method_symbol_, 1);
+    os.write((const char*)&(data_[0]), data_.size());
+    return email_.size() + 1 + data_.size();
+  }
+}
+
+/// Return the number of bytes with 255 as their value when serialized
+/// without unsynchronisation
+std::size_t
+scribbu::encryption_method::count_ffs() const
+{
+  using namespace std;
+  using namespace scribbu::detail;
+  size_t count = count_false_syncs(email_.begin(), email_.end());
+  if (!email_.empty() && is_false_sync(email_.back(), method_symbol_)) {
+    ++count;
+  }
+  // email_ is null-terminated, so no possibility of a false sync...
+  // but there could be one between method_symbol_ & data_:
+  if (!data_.empty() && is_false_sync(method_symbol_, data_.front())) {
+    ++count;
+  }
+  count += count_false_syncs(data_.begin(), data_.end());
+  return count;
 }
 
 
@@ -164,9 +335,15 @@ scribbu::unique_file_id::count_ffs() const
 ///////////////////////////////////////////////////////////////////////////////
 
 std::size_t
+scribbu::user_defined_text::size() const
+{
+  return 1 + description_.size() + cbnil_ + text_.size();
+}
+
+std::size_t
 scribbu::user_defined_text::serialized_size(bool unsync) const
 {
-  std::size_t cb = 1 + description_.size() + cbnil_ + text_.size();
+  std::size_t cb = size();
   if (unsync) {
     cb += count_ffs();
   }
@@ -259,9 +436,15 @@ scribbu::user_defined_text::count_ffs() const
 ///////////////////////////////////////////////////////////////////////////////
 
 std::size_t
+scribbu::comments::size() const
+{
+  return 4 + description_.size() + cbnil_ + text_.size();
+}
+
+std::size_t
 scribbu::comments::serialized_size(bool unsync) const
 {
-  std::size_t cb = 4 + description_.size() + cbnil_ + text_.size();
+  std::size_t cb = size();
   if (unsync) {
     cb += count_ffs();
   }
@@ -366,9 +549,15 @@ scribbu::play_count::count() const
 }
 
 std::size_t
+scribbu::play_count::size() const
+{
+  return counter_.size();
+}
+
+std::size_t
 scribbu::play_count::serialized_size(bool unsync) const
 {
-  std::size_t cb = counter_.size();
+  std::size_t cb = size();
   if (unsync) {
     cb += count_ffs();
   }
@@ -406,9 +595,15 @@ scribbu::play_count::count_ffs() const
 ///////////////////////////////////////////////////////////////////////////////
 
 std::size_t
+scribbu::popularimeter::size() const
+{
+  return email_.size() + 2 + counter_.size(); // Need to add the trailing NULL
+}
+
+std::size_t
 scribbu::popularimeter::serialized_size(bool unsync) const
 {
-  std::size_t cb = email_.size() + 2 + counter_.size(); // Need to add the trailing NULL
+  std::size_t cb = size();
   if (unsync) {
     cb += count_ffs();
   }

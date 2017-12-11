@@ -2,17 +2,11 @@
 #define SCHEME_HH
 #include <libguile.h>
 
-// TODO(sp1ff): This is my first attempt at integrating Guile into scribbu. I'm
-// writing provisionally; I may delete this & re-write. I may factor out Guile
-// support into a separate library.
-
 extern "C" {
 
   /**
    * \brief Initializae the Guile interpreter
    *
-   *
-   * \param p [in] ignored
    *
    * \return always returns nil
    *
@@ -21,7 +15,7 @@ extern "C" {
    * 
    *   <li>define the scribbu Scheme module
    *   <li>define all scribbu foreign ojbect types
-   *   <li>define all scribbu internal functions
+   *   <li>define all scribbu exported functions
    *
    *
    */
