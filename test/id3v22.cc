@@ -247,5 +247,70 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
   C1.textb(back_inserter(text));
   BOOST_CHECK(text == TXT1);
 
-
 } // End test_id3v2_2_tag.
+
+/**
+ * \brief Test against an ID3v2.2 tag I found in the taglib test suite
+ *
+ *
+ * The raw binary:
+ *
+ \code
+
+ 000000 49 44 33 02 00 00 00 00 03 76 54 44 41 00 00 06  >ID3......vTDA...<
+ 000010 00 30 33 30 34 00 54 52 4b 00 00 03 00 31 00 54  >.0304.TRK....1.T<
+ 000020 59 45 00 00 06 00 32 30 31 30 00 00 00 00 00 00  >YE....2010......<
+ 000030 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+ *
+ 000200 ff fb 10 64 00 0f f0 75 00 3d 00 40 00 00 0e 80  >...d...u.=.@....<
+
+ \endcode
+ *
+ * and broken out:
+ *
+ \code
+
+ 000000 49 44 33 02 00 00 00 00 03 76                    ID3v2.2, no flags, 502 bytes [1]
+ 00000a                               54 44 41 00 00 06  TDA, 6 bytes
+ 000010 00 30 33 30 34 00                                ISO-8859-1 "0304"
+ 000016                   54 52 4b 00 00 03              TRK, 3 bytes
+ 00001c                                     00 31 00     ISO-8859-1 "1"
+ 00001f                                              54  TYE, 6 bytes
+ 000020 59 45 00 00 06
+ 000025                00 32 30 31 30 00                 ISO-8859-1, "2010"
+ 00002b                                  00 00 00 00 00  469 bytes padding
+ 000030 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ *
+ 000200 ff fb 10 64 00 0f f0 75 00 3d 00 40 00 00 0e 80  sync
+
+ 1. 0x0376 = b0000 0011 0111 0110 -> b000 0011 111 0110 -> b00 0001 1111 0110 = 0x01f6
+
+ 2. 0x1d5 = 
+
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_id3v2_2_tag_2 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path TEST_DATA_V2_2(get_data_directory() / "id3v22-tda.mp3");
+
+  fs::ifstream ifsv2_2(TEST_DATA_V2_2, fs::ifstream::binary);
+
+  id3v2_2_tag tag(ifsv2_2);
+
+  BOOST_CHECK(2 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(3 == tag.num_frames());
+  BOOST_CHECK(469 == tag.padding());
+
+  string s = tag.track();
+  BOOST_CHECK("1" == s);
+  s = tag.year();
+  BOOST_CHECK("2010" == s);
+
+} // End test_id3v2_2_tag_2.

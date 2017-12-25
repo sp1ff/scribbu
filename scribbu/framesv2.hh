@@ -129,6 +129,7 @@ namespace scribbu {
 
     std::size_t unsynchronise(std::ostream &os, std::uint64_t);
 
+    // TODO(sp1ff): Remove
     template <typename random_access_iterator>
     std::size_t unsynchronise(std::ostream &os,
                               random_access_iterator p0,
@@ -171,8 +172,9 @@ namespace scribbu {
         pout = copy_n(p, q - p, pout);
         cb += q - p;
         if (q != p1) {
+          *pout++ = 255;
           *pout++ = zed;
-          cb += 1;
+          cb += 2;
           ++q;
         }
         p = q;
@@ -595,7 +597,7 @@ namespace scribbu {
       if ((2 == version || 3 == version) && unicode_) {
         cbnil_ = 2;
       }
-      else if ((4 == version || (1 == unicode_ || 2 == unicode_))) {
+      else if ((4 == version && (1 == unicode_ || 2 == unicode_))) {
         cbnil_ = 2;
       }
       p += cbnil_;

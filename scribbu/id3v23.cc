@@ -296,7 +296,9 @@ scribbu::id3v2_3_tag::ext_header::write(std::ostream &os,
 
 }
 
-scribbu::id3v2_3_tag::id3v2_3_tag(std::istream &is): id3v2_tag(is)
+scribbu::id3v2_3_tag::id3v2_3_tag(std::istream &is):
+  id3v2_tag(is),
+  padding_(0)
 {
   get_default_generic_frame_parsers(
     std::inserter(generic_parsers_, generic_parsers_.begin()));
@@ -317,7 +319,8 @@ scribbu::id3v2_3_tag::id3v2_3_tag(std::istream &is): id3v2_tag(is)
 scribbu::id3v2_3_tag::id3v2_3_tag(std::istream     &is,
                                   const id3v2_info &H):
   id3v2_tag(H),
-  experimental_(H.flags_ & 0x20)
+  experimental_(H.flags_ & 0x20),
+  padding_(0)
 {
   get_default_generic_frame_parsers(
     std::inserter(generic_parsers_, generic_parsers_.begin()));

@@ -268,11 +268,9 @@ namespace scribbu {
     /// If the dirty flag is set, re-serialize & re-apply compression,
     /// encryption & unsynchronisation
     void ensure_cached_data_is_fresh() const;
-    // TODO(sp1ff): Consider re-factoring into framesv2.hh
-    /// Write a four-tuple while removing false syncs
-    std::size_t unsynchronise_quadruplet(std::ostream &os, char buf[4]) const;
-    /// Serialize this frame to \a os, exclusive of any compression, encryption
-    /// or unsynchronisation; return the number of bytes written
+    /// Serialize this frame to \a os, exclusive of the frame header, as well
+    /// as any compression, encryption or unsynchronisation; return the number
+    /// of bytes written
     virtual std::size_t serialize(std::ostream &os) const = 0;
     /// Serialize this tag's header to an output stream, including any special
     /// fields such as decompressed size, group id, &c
@@ -996,7 +994,9 @@ namespace scribbu {
 
   /// Popularimeter; cf. sec 4.18
   class POPM: public id3v2_3_frame, public popularimeter {
+    
   public:
+
     template <typename forward_input_iterator>
     POPM(forward_input_iterator  p0,
          forward_input_iterator  p1,

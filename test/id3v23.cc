@@ -1223,10 +1223,12 @@ BOOST_AUTO_TEST_CASE( test_unsync )
 }
 
 /**
+ * \brief Test compression
+ *
  *
  * I found a file with a compressed frame in the taglib test suite
- * (tests/data/compressed_id3_frame.mp3), but it appeared to have some
- * problems. Here's the raw hex:
+ * (tests/data/compressed_id3_frame.mp3), but it had some problems. Here's the
+ * raw hex:
  *
   \code
 
@@ -1252,19 +1254,19 @@ BOOST_AUTO_TEST_CASE( test_unsync )
 
  \endcode
  *
- * Broken out:
+ * and here's the binary data broken out:
  *
  \code
 
  000000 49 44 33                                         ID3: ID3v2 header
  000003          03 00                                   ID3v2.3(.0)
  000005                00                                no flags
- 000006                   00 00 2c 34                    0x1634 = 5684 bytes [1] <========
+ 000006                   00 00 2c 34                    0x1634 = 5684 bytes [1] <=== error ===
  00000a                               41 50 49 43        APIC frame
  00000e                                           00 00  0x105d = 4189 bytes
  000010 10 5d
  000012       00 80                                      COMPRESSED
- 000014             00 00 00 9b                          DECOMPRESSED SIZE [2]
+ 000014             00 00 00 9b                          DECOMPRESSED SIZE [2] <=== error ====
  000018                         78 9c ed 9d fb 5b 13 57  >.]......x....[.W<
  000020 1a c7 ed 7f b1 7f c2 fe b6 3f 6d bb dd c7 ee b3  >.........?m.....<
  *
@@ -1303,8 +1305,33 @@ BOOST_AUTO_TEST_CASE( test_unsync )
  0x137e = b0001 0011 0111 1110 -> b00  01 0011 0  111 1110 ->
  b...  001 0011 0  0111 1110 -> b0010 0110 0111 1110 = 0x267f
 
+ 2. This is also incorrect; the actual uncompressed size is 86427 = 0x1519B
 
- 3. This is also incorrect; the actual uncompressed size is 86427 = 0x1519B
+ \endcode
+ *
+ * so I updated the data as follows:
+ *
+ \code
+
+ 000000 49 44 33 03 00 00 00 00 26 7e 41 50 49 43 00 00  >ID3.....&~APIC..<
+ 000010 10 5d 00 80 00 01 51 9b 78 9c ed 9d fb 5b 13 57  >.]....Q.x....[.W<
+ 000020 ...
+ 001060 2e c4 9e df e5 2d 7b 5a f8 5c 16 fd 1f 1d ce f7  >.....-{Z.\......<
+ 001070 d7 57 4f 41 52 00 00 00 00 00 00 50 4f 50 4d 00  >.WOAR......POPM.<
+ 001080 00 00 06 00 00 00 00 00 00 00 00 54 52 43 4b 00  >...........TRCK.<
+ 001090 00 00 01 00 00 00 54 43 4f 4e 00 00 00 0d 00 00  >......TCON......<
+ 0010a0 00 54 65 63 68 6e 6f 2d 44 61 6e 63 65 43 4f 4d  >.Techno-DanceCOM<
+ 0010b0 4d 00 00 00 05 00 00 00 65 6e 67 00 54 59 45 52  >M.......eng.TYER<
+ 0010c0 00 00 00 01 00 00 00 54 41 4c 42 00 00 00 0c 00  >.......TALB.....<
+ 0010d0 00 00 3c 55 6e 64 65 66 69 6e 65 64 3e 54 50 45  >..<Undefined>TPE<
+ 0010e0 31 00 00 00 05 00 00 00 4d 6f 62 79 54 49 54 32  >1.......MobyTIT2<
+ 0010f0 00 00 00 1f 00 00 00 42 72 61 76 65 68 65 61 72  >.......Bravehear<
+ 001100 74 20 54 68 65 6d 65 20 28 54 65 63 68 6e 6f 20  >t Theme (Techno <
+ 001110 72 65 6d 69 78 00 00 00 00 00 00 00 00 00 00 00  >remix...........<
+ 001120 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+ *
+ 001380 00 00 00 00 00 00 00 00                          >........<
+ 001388
 
  \endcode
  *
@@ -1321,7 +1348,362 @@ BOOST_AUTO_TEST_CASE( test_compressed )
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
   id3v2_3_tag tag1(ifs1);
+
+  BOOST_CHECK(3 == tag1.version());
+  BOOST_CHECK(0 == tag1.revision());
   BOOST_CHECK(4990 == tag1.size());
+  BOOST_CHECK(10 == tag1.num_frames());
+  BOOST_CHECK(0x273 == tag1.padding());
+
+  vector<POPM> popm;
+  tag1.get_popularimeters(back_inserter(popm));
+  BOOST_CHECK(1 == popm.size());
+
+  string email = popm[0].email<string>();
+  BOOST_CHECK(0 == email.size());
+  unsigned char rating = popm[0].rating();
+  BOOST_CHECK(0 == rating);
+  vector<unsigned char> counter;
+  popm[0].counterb(back_inserter(counter));
+  BOOST_CHECK(4 == counter.size());
+  BOOST_CHECK(counter[0] == 0 && counter[1] == 0 && counter[2] == 0 && counter[3] == 0);
+  
   BOOST_CHECK(1 == tag1.has_title());
   BOOST_CHECK("Braveheart Theme (Techno remix" == tag1.title());
 }
+
+/**
+ * \brief Test a second compressed frame
+ *
+ *
+ * This is a tag I found in id3lib's test suite containing a compressed frame:
+ *
+ \code
+
+ 000000 49 44 33 03 00 00 00 00 01 2f 54 58 58 58 00 00  >ID3....../TXXX..<
+ 000010 00 a5 00 80 00 00 00 f0 78 9c 4d 8d 4b 0e 82 40  >........x.M.K..@<
+ 000020 10 44 39 4a ed d8 28 41 3c 82 6e 5c b8 e3 02 2d  >.D9J..(A<.n\...-<
+ 000030 14 cc 24 ce 0c 99 6e 3f c7 57 01 8d 9b 4a 77 f2  >..$...n?.W...Jw.<
+ 000040 5e 55 d1 a5 30 65 aa fa 14 c1 a7 84 e9 ca a2 75  >^U..0e.........u<
+ 000050 5e a1 f3 8d 9b 32 c3 f8 34 0c 59 02 d1 7d 62 c8  >^....2..4.Y..}b.<
+ 000060 29 40 22 4e c7 fd bd d9 ee ab 1a 26 63 05 b4 8e  >)@"N.......&c...<
+ 000070 2b e6 44 61 ef af fc eb 2f 71 f1 06 a5 c1 47 78  >+.Da..../q....Gx<
+ 000080 2b f5 cb 52 7a e6 59 7f ef fa 45 8c 7c 20 d0 5c  >+..Rz.Y...E.| .\<
+ 000090 ea 31 a4 8c 5f 4d 1c 17 4b 37 78 38 df 39 e8 6d  >.1.._M..K7x8.9.m<
+ 0000a0 62 ee d8 73 f1 9a aa de e1 b0 d2 ec 71 14 13 9c  >b..s........q...<
+ 0000b0 69 32 5b d5 0b 3d 7a 53 87                       >i2[..=zS.<
+ 0000b9
+
+ \endcode
+ *
+ * & broken out:
+ *
+ \code
+
+ 000000 49 44 33 03 00 00 00 00 01 2f                    ID3v2.3.0, no flags, 175 bytes [1]
+ 00000a                               54 58 58 58 00 00  TXXX, 0xa5 = 165 bytes, compressed
+ 000010 00 a5 00 80
+ 000014             00 00 00 f0 78 9c 4d 8d 4b 0e 82 40      >....x.M.K..@<
+ 000020 10 44 39 4a ed d8 28 41 3c 82 6e 5c b8 e3 02 2d  >.D9J..(A<.n\...-<
+ 000030 14 cc 24 ce 0c 99 6e 3f c7 57 01 8d 9b 4a 77 f2  >..$...n?.W...Jw.<
+ 000040 5e 55 d1 a5 30 65 aa fa 14 c1 a7 84 e9 ca a2 75  >^U..0e.........u<
+ 000050 5e a1 f3 8d 9b 32 c3 f8 34 0c 59 02 d1 7d 62 c8  >^....2..4.Y..}b.<
+ 000060 29 40 22 4e c7 fd bd d9 ee ab 1a 26 63 05 b4 8e  >)@"N.......&c...<
+ 000070 2b e6 44 61 ef af fc eb 2f 71 f1 06 a5 c1 47 78  >+.Da..../q....Gx<
+ 000080 2b f5 cb 52 7a e6 59 7f ef fa 45 8c 7c 20 d0 5c  >+..Rz.Y...E.| .\<
+ 000090 ea 31 a4 8c 5f 4d 1c 17 4b 37 78 38 df 39 e8 6d  >.1.._M..K7x8.9.m<
+ 0000a0 62 ee d8 73 f1 9a aa de e1 b0 d2 ec 71 14 13 9c  >b..s........q...<
+ 0000b0 69 32 5b d5 0b 3d 7a 53 87                       >i2[..=zS.<
+ 0000b9
+
+ 1. 0x012f = b0001 0010 1111 -> b 0001  010 1111 -> b 000 1010 1111 =
+    0xaf = 175
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_compressed_2 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Lifted from the taglib test suite
+  static const fs::path DATA(get_data_directory() / "230-compressed.tag");
+
+  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  id3v2_3_tag tag(ifs);
+
+  BOOST_CHECK(3 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(175 == tag.size());
+  BOOST_CHECK(1 == tag.num_frames());
+  BOOST_CHECK(0 == tag.padding());
+
+  BOOST_CHECK(tag.has_frame("TXXX"));
+  const TXXX &txxx = dynamic_cast<const TXXX&>(tag.get_frame("TXXX"));
+
+  BOOST_TEST("compression example" == txxx.description<string>());
+  BOOST_TEST("compression example" == txxx.text<string>());
+
+  size_t xxx = tag.size();
+  BOOST_TEST_MESSAGE("tag.size() returns 0x" << hex << xxx);
+
+  size_t xxy = tag.padding();
+  BOOST_TEST_MESSAGE("tag.padding() returns 0x" << hex << xxy);
+
+}
+
+/**
+ * \brief Test unsynchronisation, again
+ *
+ *
+ * This is another tag I found in id3lib's test suite. Raw data:
+ *
+ \code
+
+ 000000 49 44 33 03 00 80 00 00 42 7d 54 49 54 32 00 00  >ID3.....B}TIT2..<
+ 000010 00 09 00 00 00 41 71 75 61 72 69 75 6d 54 49 54  >.....AquariumTIT<
+ 000020 31 00 00 00 48 00 00 00 53 68 6f 72 74 20 66 72  >1...H...Short fr<
+ 000030 61 63 74 69 6f 6e 20 6f 66 20 27 43 61 72 6e 69  >action of 'Carni<
+ 000040 76 61 6c 20 6f 66 20 74 68 65 20 41 6e 69 6d 61  >val of the Anima<
+ 000050 6c 73 3a 20 41 20 47 72 61 6e 64 20 5a 6f 6f 6c  >ls: A Grand Zool<
+ 000060 6f 67 69 63 61 6c 20 46 61 6e 74 61 73 79 27 54  >ogical Fantasy'T<
+ 000070 43 4f 4d 00 00 00 14 00 00 00 43 61 6d 69 6c 6c  >COM.......Camill<
+ 000080 65 20 53 61 69 6e 74 2d 53 61 eb 6e 73 54 50 45  >e Saint-SasTPE<
+ 000090 32 00 00 00 22 00 00 00 53 6c 6f 76 61 6b 69 61  >2..."...Slovakia<
+ 0000a0 20 52 61 64 69 6f 20 53 79 6d 70 68 6f 6e 79 20  > Radio Symphony <
+ 0000b0 4f 72 63 68 65 73 74 72 61 54 50 45 33 00 00 00  >OrchestraTPE3...<
+ 0000c0 0e 00 00 00 4f 6e 64 72 65 6a 20 4c 65 6e e1 72  >....Ondrej Len<
+ 0000d0 64 54 43 4f 50 00 00 00 1c 00 00 00 31 39 39 36  >dTCOP.......1996<
+ 0000e0 20 48 4e 48 20 69 6e 74 65 72 6e 61 74 69 6f 6e  > HNH internation<
+ 0000f0 61 6c 20 4c 74 64 2e 54 43 4f 4e 00 00 00 05 00  >al Ltd.TCON.....<
+ 000100 00 00 28 33 32 29 49 50 4c 53 00 00 00 2d 00 00  >..(32)IPLS...-..<
+ 000110 00 50 72 6f 64 75 63 65 72 00 4d 61 72 74 69 6e  >.Producer.Martin<
+ 000120 20 53 61 75 65 72 00 50 69 61 6e 6f 00 50 65 74  > Sauer.Piano.Pet<
+ 000130 65 72 20 54 6f 70 65 72 63 7a 65 72 00 41 50 49  >er Toperczer.API<
+ 000140 43 00 00 20 04 00 00 00 69 6d 61 67 65 2f 6a 70  >C.. ....image/jp<
+ 000150 65 67 00 0b 42 2f 57 20 70 69 63 74 75 72 65 20  >eg..B/W picture <
+ 000160 6f 66 20 53 61 69 6e 74 2d 53 61 eb 6e 73 00 ff  >of Saint-Sas.<
+ 000170 d8 ff 00 e0 00 10 4a 46 49 46 00 01 01 00 00 01  >..JFIF......<
+ 000180 00 01 00 00 ff db 00 43 00 08 06 06 07 06 05 08  >....C........<
+ 000190 07 07 07 09 09 08 0a 0c 14 0d 0c 0b 0b 0c 19 12  >................<
+ 0001a0 13 0f 14 1d 1a 1f 1e 1d 1a 1c 1c 20 24 2e 27 20  >........... $.' <
+ 0001b0 22 2c 23 1c 1c 28 37 29 2c 30 31 34 34 34 1f 27  >",#..(7),01444.'<
+ 0001c0 39 3d 38 32 3c 2e 33 34 32 ff db 00 43 01 09 09  >9=82<.342C...<
+ 0001d0 09 0c 0b 0c 18 0d 0d 18 32 21 1c 21 32 32 32 32  >........2!.!2222<
+ 0001e0 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32  >2222222222222222<
+ *
+ 000200 32 32 32 32 32 32 32 32 32 32 32 32 32 32 ff c0  >22222222222222<
+ 000210 00 11 08 00 c3 00 96 03 01 22 00 02 11 01 03 11  >......."......<
+ 000220 01 ff c4 00 1f 00 00 01 05 01 01 01 01 01 01 00  >.............<
+ 000230 00 00 00 00 00 00 00 01 02 03 04 05 06 07 08 09  >................<
+ 000240 0a 0b ff c4 00 b5 10 00 02 01 03 03 02 04 03 05  >............<
+ 000250 05 04 04 00 00 01 7d 01 02 03 00 04 11 05 12 21  >......}........!<
+ 000260 31 41 06 13 51 61 07 22 71 14 32 81 91 a1 08 23  >1A..Qa."q.2...#<
+ 000270 42 b1 c1 15 52 d1 f0 24 33 62 72 82 09 0a 16 17  >B.R$3br.....<
+ 000280 18 19 1a 25 26 27 28 29 2a 34 35 36 37 38 39 3a  >...%&'()*456789:<
+ 000290 43 44 45 46 47 48 49 4a 53 54 55 56 57 58 59 5a  >CDEFGHIJSTUVWXYZ<
+ 0002a0 63 64 65 66 67 68 69 6a 73 74 75 76 77 78 79 7a  >cdefghijstuvwxyz<
+ 0002b0 83 84 85 86 87 88 89 8a 92 93 94 95 96 97 98 99  >................<
+ 0002c0 9a a2 a3 a4 a5 a6 a7 a8 a9 aa b2 b3 b4 b5 b6 b7  >.<
+ 0002d0 b8 b9 ba c2 c3 c4 c5 c6 c7 c8 c9 ca d2 d3 d4 d5  >
+ 0002e0 d6 d7 d8 d9 da e1 e2 e3 e4 e5 e6 e7 e8 e9 ea f1  ><
+ 0002f0 f2 f3 f4 f5 f6 f7 f8 f9 fa ff c4 00 1f 01 00 03  >....<
+ 000300 01 01 01 01 01 01 01 01 01 00 00 00 00 00 00 01  >................<
+ 000310 02 03 04 05 06 07 08 09 0a 0b ff c4 00 b5 11 00  >............<
+ 000320 02 01 02 04 04 03 04 07 05 04 04 00 01 02 77 00  >..............w.<
+ 000330 01 02 03 11 04 05 21 31 06 12 41 51 07 61 71 13  >......!1..AQ.aq.<
+ 000340 22 32 81 08 14 42 91 a1 b1 c1 09 23 33 52 f0 15  >"2...B..#3R<
+ 000350 62 72 d1 0a 16 24 34 e1 25 f1 17 18 19 1a 26 27  >br.$4...&'<
+ 000360 28 29 2a 35 36 37 38 39 3a 43 44 45 46 47 48 49  >()*56789:CDEFGHI<
+ 000370 4a 53 54 55 56 57 58 59 5a 63 64 65 66 67 68 69  >JSTUVWXYZcdefghi<
+ 000380 6a 73 74 75 76 77 78 79 7a 82 83 84 85 86 87 88  >jstuvwxyz.......<
+ 000390 89 8a 92 93 94 95 96 97 98 99 9a a2 a3 a4 a5 a6  >...........<
+ 0003a0 a7 a8 a9 aa b2 b3 b4 b5 b6 b7 b8 b9 ba c2 c3 c4  >
+ 0003b0 c5 c6 c7 c8 c9 ca d2 d3 d4 d5 d6 d7 d8 d9 da e2  ><
+ 0003c0 e3 e4 e5 e6 e7 e8 e9 ea f2 f3 f4 f5 f6 f7 f8 f9  ><
+ 0003d0 fa ff da 00 0c 03 01 00 02 11 03 11 00 3f 00 f7  >.........?.<
+ 0003e0 fa 28 a2 80 0a 28 a2 80 0a 28 a8 e6 9e 1b 68 cc  >(..(..(.h
+ 0003f0 93 ca 91 46 3a b3 b0 50 3f 13 40 12 54 53 4b b0  >.F:P?.@.TSK<
+ 000400 60 75 f5 35 81 7f e3 0d 1a ca da 3b 97 98 85 94  >`u5...;....<
+ 000410 9c 12 85 72 40 f7 c6 4e 3d 7d 3e 80 f0 3a a7 c5  >...r@=}>.
+ 000420 04 b9 bb 41 a7 d9 4a 23 e8 db 48 05 9b ae 18 ed  >.A#H...
+ 000430 3e e4 e3 23 83 f5 a0 0f 44 b9 ba 76 55 70 a8 c7  >>#..DvUp
+ 000440 7e 17 2a ec 33 ee 70 7e 9d 32 7b 62 a3 87 53 87  >~.*~.2{b.S.<
+ 000450 ed 2d 14 91 c9 6b 2b 9c 9d c0 8f 38 aa e7 2a c3  >..+...8
+ 000460 a9 1d c3 02 70 07 1d ab cd 24 f1 a3 df 28 9a ef  >.p..(.
+ 000470 48 bb 10 f5 24 40 d3 03 83 c0 3b 88 dd c8 19 ce  >H.$@.;..
+ 000480 3d b6 d6 45 c7 8c a5 92 4f 2a 76 9a 58 16 50 63  >=.O*v.X.Pc<
+ 000490 62 ed b9 55 70 54 9e 84 91 cf 3c 37 af 18 c8 07  >bpT...7.<
+ 0004a0 bf 40 c4 c6 33 20 93 d1 f8 e7 eb 8a 9a b8 9f 0d  >@3 .....<
+ 0004b0 f8 a2 0b bb 45 f3 a6 57 40 e0 a4 88 e3 38 27 19  >.E@'.<
+ 0004c0 23 8e 3a 1e 72 79 39 c6 2b ad b1 bd 8a fa dd 65  >#.:.ry9.<
+ 0004d0 89 d4 f1 f3 00 73 b4 fa 1a 00 b3 45 14 50 01 45  >.s..E.P.E<
+ 0004e0 14 50 01 45 14 50 01 45 14 50 01 45 14 50 01 45  >.P.E.P.E.P.E.P.E<
+ 0004f0 14 c9 1f 68 3c e3 03 24 e3 38 14 01 1d c5 d2 40  >.h<$...@<
+ 000500 31 f7 9b 19 da 3a ff 00 00 9f ae 05 71 1a 87 89  >1......q...<
+ 000510 e7 d4 f5 39 6c 34 0b 4f ed 2b 94 18 13 18 47 91  >9l4.O....G.<
+ 000520 17 a9 2e 48 2c 47 4c 0c 0e 79 35 4a ff 00 00 5a  >..H,GL..y5J..Z<
+ 000530 93 c4 ba d7 f6 5e 9d 3f 97 a4 c7 38 13 5c 79 e0  >.ĺ^.?..\y
+ 000540 2d d1 04 e5 03 72 48 38 1d 3a 00 7b 60 d7 7f a6  >-rH8.:.{`<
+ 000550 69 b6 da 5d a2 5b db 41 0c 4a aa 14 2c 51 85 00  >i[.J.,Q..<
+ 000560 0e 83 f0 f7 a0 0e 5b 4e f8 7f 6f 33 7d af c4 73  >...[N.o3}<
+ 000570 7f 69 dd 93 bb 67 29 0a 74 e0 28 c0 23 81 db f0  >.ig).t#.<
+ 000580 ae aa cb 4c b0 d3 23 f2 ec 6c a0 b6 53 d4 43 18  >lS.<
+ 000590 5c fd 71 d6 ad d1 40 18 d7 ba 74 92 17 0b 14 6f  >\q֭.׺t....o<
+ 0005a0 1b e7 76 e2 4e 7a 63 23 bf 4f d4 57 14 3c 29 78  >.zc#O.<)x<
+ 0005b0 2e ac a1 b9 53 2d ba c9 e5 3c 92 27 24 1f 94 71  >.S-<.'$..q<
+ 0005c0 df 01 9b 9e 78 dd 93 86 af 4d a4 c0 cd 00 72 f6  >..x.Mr<
+ 0005d0 be 07 d1 d2 23 23 da e2 76 1f eb 23 3e 53 8c 30  >.##v.>S.0<
+ 0005e0 65 39 5c 7c c0 a8 f9 8f 27 1c e7 9c c3 77 a2 6a  >e9\|.'.j<
+ 0005f0 f6 73 34 e9 aa dc bc 7d a4 82 20 64 53 d3 73 27  >s4}. dS'<
+ 000600 f1 f1 e9 cf 53 8c d7 5f 46 7b 50 07 2d e1 9f 11  >S.F{P.-.<
+ 000610 4b 7d 34 f6 5a 83 db 9b b8 1b 1e 65 bc 85 a3 91  >K}4Z...e..<
+ 000620 7a 03 83 ca 9c 83 c1 ef f8 67 aa af 37 f8 83 a2  >z...g7.<
+ 000630 49 62 e9 e2 1d 30 6d 64 70 6e 15 57 27 23 a3 0f  >Ib.0mdpn.W'#.<
+ 000640 4e c0 fe 15 d7 f8 5f 5b 5d 7b 45 8a e8 f1 3a 8d  >N._[]{E.:.<
+ 000650 93 2f 1c 36 39 38 04 f0 68 03 66 8a 28 a0 02 8a  >./.698..f.(..<
+ 000660 28 a0 02 8a 28 a0 02 8a 28 a0 04 66 0a a5 98 e0  >(..(..(.f..
+ 000670 01 92 6b cc fc 75 af 35 cc d2 68 36 f7 46 0d c7  >..ku5h6F.
+ 000680 75 f3 c7 cf 04 00 23 1c 8e 4e 06 71 d8 13 ec 7a  >u.#..N.q<
+ 000690 ef 19 ea f2 68 7e 19 b8 bd 85 43 4c 19 16 35 27  >h~..CL..5'<
+ 0006a0 ab 16 18 af 0d 92 ed 98 c3 bd 8d dc e9 20 c9 52  >....ý. <
+ 0006b0 4b 4c e7 3b b2 72 4b 67 20 67 dc f5 cd 00 77 9e  >KLrKg gw.<
+ 0006c0 14 bb b7 1a c5 ad 9c 24 ad be c2 36 95 08 ca a3  >..ŭ.$..ʣ<
+ 0006d0 fb dd 48 c9 ea 01 e9 8e 71 9a f5 50 72 38 39 15  >.q.Pr89.<
+ 0006e0 f3 96 8b aa cd 61 ab bc bb da 5e 0a 10 0f 0f 8e  >......<
+ 0006f0 00 ef 9e 71 81 ed df 18 af a0 b4 fb 81 71 65 14  >.q...qe.<
+ 000700 80 93 f2 8e 49 cf 6a 00 b7 48 58 0e e2 82 6a bb  >..I.HX.j<
+ 000710 bf 23 81 ef ed 40 12 b3 63 14 a5 bd bb d5 32 cf  >#.@.c.
+ 000720 b8 65 08 e3 82 79 cf e1 56 0b 82 79 4e 9e b4 01  >e.yV..yN..<
+ 000730 2e 7d 69 92 72 a6 90 12 14 72 49 ef 51 c8 1b 04  >.}i.r...rI.<
+ 000740 ec 0c 47 a9 f6 a0 0a f7 51 25 dd 8c b0 4a 7e 47  >G.Q%J~G<
+ 000750 5d 99 07 a6 46 33 fa 9a f3 5f 86 5a b3 e9 fa f5  >]..F3..Z<
+ 000760 ce 89 2e 76 4b 9e 32 4e d9 50 90 71 e8 08 0c 7f  >.vK.2N.q..<
+ 000770 0a ee 27 77 42 cb 86 0c bd 03 12 72 30 7f 4e 9c  >.wB...r0.N.<
+ 000780 f3 d2 bc c0 cc b6 1f 15 05 c4 8a 55 16 eb cd 62  >̶...U.b<
+ 000790 b9 18 0c 09 24 e3 b7 5c f6 e3 9e 28 03 dc e8 a4  >...$(.<
+ 0007a0 04 30 04 1c 82 32 08 a5 a0 02 8a 28 a0 02 8a 28  >.0...2...(..(<
+ 0007b0 e7 d2 80 0a 28 a2 80 3c ef e2 bd db 0d 2a da d1  >..(.<*<
+ 0007c0 1d 40 72 cc e7 7e 0f 05 7e 5c 7b 82 c7 3d 7e 5e  >.@r~..~\{.~^<
+ 0007d0 3a d7 94 4a cb 06 04 5b da 60 70 8c a7 83 d1 54  >:J.[p..<
+ 0007e0 8f fc 78 8f a8 af 5b f8 a7 65 14 da 1a cc db 14  >.x.[e..<
+ 0007f0 ac a8 a4 e3 e6 c9 38 07 3e 83 27 3d 7a f6 c5 78  >.>.'=z<
+ 000800 de e7 57 57 2b 80 39 52 cb 8c 8f a1 eb d7 a7 6c  >WW+.9R.l<
+ 000810 f6 a0 0b 7a 55 be 75 1b 3b 62 a4 cb 2c aa 09 46  >.zUu.;b.F<
+ 000820 04 80 48 19 1e fd 71 db 9c f6 af a1 74 a4 8e 1b  >..H..qt..<
+ 000830 78 a1 84 11 0c 6b 88 f2 72 48 ee 49 af 08 f0 d3  >x...k.H.<
+ 000840 43 69 a8 1b d9 d9 f3 10 f3 14 77 27 d4 71 92 7a  >Ci.w'.z<
+ 000850 60 9c 73 8a f7 1f 0f 4a 2e 34 d8 67 20 87 78 c3  >`.s...J.4 .x
+ 000860 30 66 c9 5c 93 c1 ff 00 00 eb 9f 4a 00 d8 3d 0d  >0f...J..<
+ 000870 47 e5 8e 4e dc fd 79 a7 e7 24 e2 b0 b5 6d 75 d2  >GNyⰵmu
+ 000880 63 a7 e9 28 2e 35 0c 67 9e 23 8b 9c 02 c7 f1 ce  >c.5.g.#...
+ 000890 06 49 c7 4a 00 d3 b9 68 e0 0b 24 b2 24 68 0f 2c  >.I.ӹh$$h.,<
+ 0008a0 ee 14 0f c4 d4 23 55 b1 60 54 5d 42 4e 70 31 20  >.#U`T]BNp1 <
+ 0008b0 e7 d7 bf d7 fc 2b c9 bc 49 a1 49 ab 13 7d 71 ac  >+ɼII.}q<
+ 0008c0 dc dc 46 aa 72 d1 43 fb be 38 c2 b3 32 a3 f3 fd  >Fr8³2<
+ 0008d0 d2 71 cd 70 17 36 ff 00 00 d9 b7 a1 2d ae 24 3b  >.6..ٷ-$;<
+ 0008e0 4f 07 6b 46 e3 3f de 53 c8 fd 45 00 7d 3c ac 0c  >O.kFE.}<.<
+ 0008f0 45 81 27 e5 fe 13 92 4e 3a 0f 7e 95 9b a8 78 9f  >E.'..N:.~..x.<
+ 000900 48 d2 8a c7 79 7b 1c 6c 47 f1 1c 76 cf f9 ff 00  >H{.lGv.<
+ 000910 00 f5 d5 3f 05 05 bb f0 ac 0f 2d c9 ba 32 92 cd  >...-ɺ2.
+ 000920 21 63 9c fa 60 f4 3e dd ba 57 8d eb 81 6e bc 5d  >!c.`ݺW.n]<
+ 000930 a8 ad c4 8e f1 41 3b c6 03 32 c7 80 9c 77 e1 47  >;2.w<
+ 000940 1f af ad 00 7a 65 c7 c4 1f 0d de 07 47 7b 98 8c  >..ze..G{..<
+ 000950 6b b9 24 08 72 0f 3d 87 1f cf af d2 b8 5f 16 4e  >k$.r.=..ϯҸ_.N<
+ 000960 c7 c5 36 f3 ec 12 07 44 31 bc 4c 54 cb 86 20 1f  >6..D1LT .<
+ 000970 50 4f 4f 51 4d d3 d3 c3 8a b1 c4 a6 ce ea e7 03  >POOQMĦ<
+
+ \endcode
+ *
+ * & broken out:
+ *
+ \code
+
+ 000000 49 44 33 03 00 80 00 00 42 7d                    ID3v2.3(.0) tag, unsynch, 8573 bytes [1]
+ 00000a                               54 49 54 32 00 00  TIT2, 0 bytes, no flags
+ 000010 00 09 00 00
+ 000014             00 41 71 75 61 72 69 75 6d           ISO-8859-1, "Aquarium"
+ 00001d                                        54 49 54  TIT1, 0x48 = 72 bytes, no flags
+ 000020 31 00 00 00 48 00 00
+ 000027                      00 53 68 6f 72 74 20 66 72  ISO-8859-1, "Short fraction of 'Carnival of the Animals: A Grand Zoological Fantasy'"
+ 000030 61 63 74 69 6f 6e 20 6f 66 20 27 43 61 72 6e 69  
+ 000040 76 61 6c 20 6f 66 20 74 68 65 20 41 6e 69 6d 61  
+ 000050 6c 73 3a 20 41 20 47 72 61 6e 64 20 5a 6f 6f 6c  
+ 000060 6f 67 69 63 61 6c 20 46 61 6e 74 61 73 79 27     
+ 00006f                                              54  TCOM, 0x14 = 20 bytes, no flags
+ 000070 43 4f 4d 00 00 00 14 00 00
+ 000079                            00 43 61 6d 69 6c 6c  IS-8859-1, "Camille Saint-Sas"
+ 000080 65 20 53 61 69 6e 74 2d 53 61 eb 6e 73
+ 00008d                                        54 50 45  TPE2, 0x22 = 34 bytse, no flags
+ 000090 32 00 00 00 22 00 00
+ 000097                      00 53 6c 6f 76 61 6b 69 61  ISO-8859-1, "Slovakia Radio Symphony Orchestra"
+ 0000a0 20 52 61 64 69 6f 20 53 79 6d 70 68 6f 6e 79 20
+ 0000b0 4f 72 63 68 65 73 74 72 61
+ 0000b9                            54 50 45 33 00 00 00  TPE3, 0x0e = 14 bytes, no flags
+ 0000c0 0e 00 00
+ 0000c3          00 4f 6e 64 72 65 6a 20 4c 65 6e e1 72  ISO-8859-1, "Ondrej Lend"
+ 0000d0    54 43 4f 50 00 00 00 1c 00 00                 TCOP, 0x1c = 28 bytes, no flags
+ 0000db                                  00 31 39 39 36  ISO-8859-1, "1996 HNH international Ltd.
+ 0000e0 20 48 4e 48 20 69 6e 74 65 72 6e 61 74 69 6f 6e  
+ 0000f0 61 6c 20 4c 74 64 2e 
+ 0000f7                      54 43 4f 4e 00 00 00 05 00  TCON, 5 bytes, no flags
+ 000100 00 
+ 000101    00 28 33 32 29                                ISO-8859-1, "(32)"
+ 000101                   49 50 4c 53 00 00 00 2d 00 00  IPLS, 0x2d = 45 bytes, no flags
+ 000110 00 50 72 6f 64 75 63 65 72 00 4d 61 72 74 69 6e  ISO-8859-1, Producer: Martin Sauer
+ 000120 20 53 61 75 65 72 00 50 69 61 6e 6f 00           Piano: Peter Toperczer
+ 00013d                                        41 50 49  APIC, 0x2004 = 8196 bytes, no flags
+ 000140 43 00 00 20 04 00 00
+ 000147                      00                          ISO-8859-1
+ 000148                         69 6d 61 67 65 2f 6a 70  "image/jpeg"
+ 000150 65 67 00
+ 000153          0b                                      Picture Type: Composer
+ 000154             42 2f 57 20 70 69 63 74 75 72 65 20  "B/W picture of Saint-Sas"
+ 000160 6f 66 20 53 61 69 6e 74 2d 53 61 eb 6e 73 00
+ 00016f                                              ff  
+ 000170 d8 ff 00 e0 00 10 4a 46 49 46 00 01 01 00 00 01  >..JFIF......<
+ 000180 00 01 00 00 ff db 00 43 00 08 06 06 07 06 05 08  >....C........<
+ 000190 07 07 07 09 09 08 0a 0c 14 0d 0c 0b 0b 0c 19 12  >................<
+ 0001a0 13 0f 14 1d 1a 1f 1e 1d 1a 1c 1c 20 24 2e 27 20  >........... $.' <
+ 0001b0 22 2c 23 1c 1c 28 37 29 2c 30 31 34 34 34 1f 27  >",#..(7),01444.'<
+ 0001c0 39 3d 38 32 3c 2e 33 34 32 ff db 00 43 01 09 09  >9=82<.342C...<
+ 0001d0 09 0c 0b 0c 18 0d 0d 18 32 21 1c 21 32 32 32 32  >........2!.!2222<
+ 0001e0 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32  >2222222222222222<
+ *
+ 002180 7f 2a ca a0 0f ff d9                             [2]
+ 002187
+
+ ... 60 ff00s in total for this frame
+
+ 1. 0x427d = b0100 0010 0111 1101 -> b 100 0010  111 1101 =
+    b 0010 0001 0111 1101 = 0x217d = 8573
+
+ 2. this frames has 60 instances of 0xff 00: 0x147 + 0x2004 + 60 = 0x2187
+
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_unsync_2 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Lifted from the taglib test suite
+  static const fs::path DATA(get_data_directory() / "230-picture.tag");
+
+  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  id3v2_3_tag tag(ifs);
+
+  BOOST_CHECK(3 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  
+  size_t cb = tag.size(true);
+  BOOST_CHECK(8573 == cb);
+  
+  BOOST_CHECK(8573 == tag.size());
+}
+

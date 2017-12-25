@@ -50,6 +50,9 @@ scribbu::id3v2_3_plus_frame::crc(std::uint32_t crc) const
  * including the ehader (i.e. the size of the required buffer)
  *
  *
+ * \todo Override separately for ID3v2.4-- should respect the unsync flag.
+ *
+ *
  */
 
 /*virtual*/
@@ -90,6 +93,9 @@ scribbu::id3v2_3_plus_frame::needs_unsynchronisation() const
  * unsynchronisation scheme be applied, and false to request that it not.
  *
  * \return The number of bytes written to \a os
+ *
+ *
+ * \todo Override separately for ID3v2.4-- should respect the unsync flag.
  *
  *
  */
@@ -163,22 +169,28 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
     }
     else {
 
-      // Else, just copy it.
+      // else, just copy it.
       payload.resize(cb_no_ceu);
       copy(buf.begin(), buf.end(), payload.begin());
 
     }
 
-    // TODO(sp1ff): Apply unsynch here to the frame payload, in the ID3v2.4 case.
+    // In the case of ID3v2.4, unsynchorinisation is applied on a frame-by-frame
+    // basis, so we would need to check the releveant flag, and if it's set,
+    // unsynchronise the payload.
 
+    // What I'm doing instead is assembling the entire frame payload in
+    // `cache-', & then applying unsynchronisation to that.  In the case of
+    // ID3v2.4, the frame header is sync-safe to begin with, so the data in the
+    // SERIALIZED_WITH_CEU will be exactly what we would have gotten by writing
+    // the header & then unsynchronising the payload.
 
-    // Now that we've got the actual payload (post compression, encryption, and/or
-    // unsynchronisation), we can serialize the hader...
+    // Serialize the frame header...
     stringstream hdr;
     write_header(hdr, payload.size(), cb_no_ceu);
     buf = hdr.str();
 
-    // and accumulate the entire thing in cache.
+    // and accumulate the entire thing in `cache_'.
     cache_[SERIALIZED_WITH_CE].resize(buf.size() + payload.size());
     auto pout = copy(buf.begin(), buf.end(), cache_[SERIALIZED_WITH_CE].begin());
     copy(payload.begin(), payload.end(), pout);
@@ -187,55 +199,15 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
     num_false_syncs_ = count_false_syncs(cache_[SERIALIZED_WITH_CE].begin(),
                                          cache_[SERIALIZED_WITH_CE].end());
 
-    // and if any are found...
-    if (num_false_syncs_) {
-
-      // apply unsynchronisation, putting the output into SERIALIZED_WITH_CEU.
-      unsynchronise(back_inserter(cache_[SERIALIZED_WITH_CEU]),
-                    cache_[SERIALIZED_WITH_CE].begin(),
-                    cache_[SERIALIZED_WITH_CE].end());
-
-    }
-    else {
-      // Otherwise, just copy it over (awful, I know).
-      cache_[SERIALIZED_WITH_CEU] = cache_[SERIALIZED_WITH_CE];
-    }
+    // and prepare an unsynchronised copy.
+    unsynchronise(back_inserter(cache_[SERIALIZED_WITH_CEU]),
+                  cache_[SERIALIZED_WITH_CE].begin(),
+                  cache_[SERIALIZED_WITH_CE].end());
 
     dirty(false);
   }
   
 }
-
-/// Write a four-tuple while removing false syncs
-std::size_t
-scribbu::id3v2_3_plus_frame::unsynchronise_quadruplet(std::ostream &os,
-                                                      char buf[4]) const
-{
-  static const char zed = 0;
-
-  std::size_t num_ffs = 0;
-  if (255 == buf[0]) num_ffs++;
-  if (255 == buf[1]) num_ffs++;
-  if (255 == buf[2]) num_ffs++;
-  if (255 == buf[3]) num_ffs++;
-
-  if (num_ffs) {
-    os.write(buf, 1);
-    if (255 == buf[0]) os.write(&zed, 1);
-    os.write(buf + 1, 1);
-    if (255 == buf[1]) os.write(&zed, 1);
-    os.write(buf + 2, 1);
-    if (255 == buf[2]) os.write(&zed, 1);
-    os.write(buf + 3, 1);
-    if (255 == buf[3]) os.write(&zed, 1);
-  }
-  else {
-    os.write(buf, 4);
-  }
-  
-  return num_ffs;
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
