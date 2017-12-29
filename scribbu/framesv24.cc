@@ -188,7 +188,7 @@ scribbu::UFID_2_4::size() const
 std::size_t
 scribbu::UFID_2_4::serialize(std::ostream &os) const
 {
-  return unique_file_id::write(os, false);
+  return unique_file_id::write(os);
 }
 
 
@@ -231,7 +231,7 @@ scribbu::ENCR_2_4::size() const
 std::size_t
 scribbu::ENCR_2_4::serialize(std::ostream &os) const
 {
-  return encryption_method::write(os, false);
+  return encryption_method::write(os);
 }
 
 
@@ -364,7 +364,7 @@ scribbu::TXXX_2_4::size() const
 std::size_t
 scribbu::TXXX_2_4::serialize(std::ostream &os) const
 {
-  return user_defined_text::write(os, false);
+  return user_defined_text::write(os);
 }
 
 
@@ -404,7 +404,7 @@ scribbu::COMM_2_4::size() const
 std::size_t
 scribbu::COMM_2_4::serialize(std::ostream &os) const
 {
-  return comments::write(os, false);
+  return comments::write(os);
 }
 
 
@@ -444,7 +444,7 @@ scribbu::PCNT_2_4::size() const
 std::size_t
 scribbu::PCNT_2_4::serialize(std::ostream &os) const
 {
-  return play_count::write(os, false);
+  return play_count::write(os);
 }
  
 
@@ -484,5 +484,5 @@ scribbu::POPM_2_4::size() const
 std::size_t
 scribbu::POPM_2_4::serialize(std::ostream &os) const
 {
-  return popularimeter::write(os, false);
+  return popularimeter::write(os);
 }

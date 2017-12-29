@@ -110,6 +110,17 @@ scribbu::id3v2_3_plus_frame::write(std::ostream &os, bool unsync) const
   return cache_[idx].size();
 }
 
+/*virtual*/
+void
+scribbu::id3v2_3_plus_frame::dirty(bool f) const
+{
+  if (f) {
+    cache_[SERIALIZED_WITH_CE ].clear();
+    cache_[SERIALIZED_WITH_CEU].clear();
+  }
+  id3v2_frame::dirty(f);
+}
+
 /**
  * \brief If the dirty flag is set, re-serialize & re-apply compression,
  * encryption & unsynchronisation
@@ -126,7 +137,7 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
 
   // This logic is still too complex for my tastes, but this is as simple
   // as I've been able to get it so far. If the 'dirty" flag is set...
-  if (dirty()) {
+  if (is_dirty()) {
 
     // clear our cache & re-build it.
     cache_[SERIALIZED_WITH_CE ].clear();
@@ -379,7 +390,7 @@ scribbu::UFID::size() const
 std::size_t
 scribbu::UFID::serialize(std::ostream &os) const
 {
-  return unique_file_id::write(os, false);
+  return unique_file_id::write(os);
 }
 
 
@@ -415,7 +426,7 @@ scribbu::ENCR::size() const
 std::size_t
 scribbu::ENCR::serialize(std::ostream &os) const
 {
-  return encryption_method::write(os, false);
+  return encryption_method::write(os);
 }
 
 
@@ -523,7 +534,7 @@ scribbu::TXXX::size() const
 std::size_t
 scribbu::TXXX::serialize(std::ostream &os) const
 {
-  return user_defined_text::write(os, false);
+  return user_defined_text::write(os);
 }
 
 
@@ -560,7 +571,7 @@ scribbu::COMM::size() const
 std::size_t
 scribbu::COMM::serialize(std::ostream &os) const
 {
-  return comments::write(os, false);
+  return comments::write(os);
 }
 
 
@@ -597,7 +608,7 @@ scribbu::PCNT::size() const
 std::size_t
 scribbu::PCNT::serialize(std::ostream &os) const
 {
-  return play_count::write(os, false);
+  return play_count::write(os);
 }
 
 
@@ -634,5 +645,5 @@ scribbu::POPM::size() const
 std::size_t
 scribbu::POPM::serialize(std::ostream &os) const
 {
-  return popularimeter::write(os, false);
+  return popularimeter::write(os);
 }

@@ -1,5 +1,6 @@
 #include <id3v23.hh>
 
+#include <framesv2.hh>
 #include <id3v2.hh>
 
 #include <algorithm>
@@ -148,7 +149,7 @@ scribbu::id3v2_3_tag::static_initializer::~static_initializer()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//                             class id3v2_3_tag                             //
+//                        class id3v2_3_tag::ext_header                      //
 ///////////////////////////////////////////////////////////////////////////////
 
 /*virtual*/ const char *
@@ -159,142 +160,131 @@ scribbu::id3v2_3_tag::invalid_ext_header::what() const noexcept
 
 scribbu::id3v2_3_tag::ext_header::ext_header(const unsigned char *p0,
                                              const unsigned char *p1):
-  crc_dirty_(false),
-  size_dirty_(false)
+  dirty_(true)
 {
   using scribbu::detail::uint32_from_non_sync_safe;
   using scribbu::detail::unsigned_from_non_sync_safe;
 
-  if (p0 + 10 > p1) {
+  std::size_t cb = unsigned_from_non_sync_safe(p0[0], p0[1], p0[2], p0[3]);
+
+  bool fcrc = p0[4] & 0x80;
+
+  if ( (fcrc && cb != 10) || (!fcrc && cb !=6 ) ) {
     throw invalid_ext_header();
   }
-  size_ = unsigned_from_non_sync_safe(p0[0], p0[1], p0[2], p0[3]);
-  fcrc_ = p0[4] & 0x80;
+  
   cbpad_ = unsigned_from_non_sync_safe(p0[6], p0[7], p0[8], p0[9]);
-  if (fcrc_) {
-    if (14 > p1 - p0) {
-      throw invalid_ext_header();
-    }
+
+  if (fcrc) {
     crc_ = uint32_from_non_sync_safe(p0[10], p0[11], p0[12], p0[13]);
   }
 }
 
-/// Compute the size of this extended header
-std::size_t
-scribbu::id3v2_3_tag::ext_header::size(bool unsync, const id3v2_3_tag &tag) const
+/// Construct a fresh, new extended header; if a CRC is desired, pass the tag
+/// whose frames are to be checksummed
+scribbu::id3v2_3_tag::ext_header::ext_header(std::size_t        cbpad,
+                                             const id3v2_3_tag *ptag_for_crc /*= std::nullptr*/):
+  cbpad_(cbpad), dirty_(true)
 {
-  using scribbu::detail::count_ffs;
-
-  if (size_dirty_) {
-
-    if (unsync && has_crc()) {
-      size_ = 10 + count_ffs(crc(tag));
-    }
-    else {
-      size_ = has_crc() ? 10 : 6;
-    }
-    size_dirty_ = false;
+  if (ptag_for_crc) {
+    crc(*ptag_for_crc);
   }
-  return size_;
 }
 
+/// Compute the size on disk
 std::size_t
-scribbu::id3v2_3_tag::ext_header::size() const
+scribbu::id3v2_3_tag::ext_header::serialized_size(bool unsync /*= false*/) const
 {
-  if (size_dirty_) {
-    throw std::logic_error("dirty ID3v2.3 extended header");
-  }
-  return size_;
+  ensure_cached_data_is_fresh();
+  return cache_[unsync ? SERIALIZED_WITH_UNSYNC : SERIALIZED].size();
+}
+
+/// True if the serialized form would contain false syncs
+std::size_t
+scribbu::id3v2_3_tag::ext_header::needs_unsynchronisation() const
+{
+  ensure_cached_data_is_fresh();
+  return num_false_syncs_;
 }
 
 std::uint32_t
 scribbu::id3v2_3_tag::ext_header::crc(const id3v2_3_tag &tag) const
 {
   using namespace std;
-  if (crc_dirty_) {
-    crc_ = accumulate(tag.begin(), tag.end(), crc32(0L, Z_NULL, 0),
-                      [](uint32_t checksum, const id3v2_3_frame &F)
-                      { return F.crc(checksum); });
-    crc_dirty_ = false;
+  uint32_t crc = accumulate(tag.begin(), tag.end(), crc32(0L, Z_NULL, 0),
+                            [](uint32_t checksum, const id3v2_3_frame &F)
+                            { return F.crc(checksum); });
+  if ( ! (bool)crc_ || *crc_ != crc ) {
+    dirty_ = true;
+    crc_ = crc;
   }
-  return crc_;
-}
-
-std::uint32_t
-scribbu::id3v2_3_tag::ext_header::crc() const
-{
-  if (crc_dirty_ || !has_crc()) {
-    throw std::logic_error("dirty ID3v2.3 extended header");
-  }
-  return crc_;
-}
-
-bool
-scribbu::id3v2_3_tag::ext_header::needs_unsynchronisation(const id3v2_3_tag &tag) const
-{
-  using scribbu::detail::count_false_syncs;
-
-  std::size_t count = count_false_syncs(size(false, tag));
-  count += count_false_syncs(cbpad_);
-  if (has_crc()) {
-    count += count_false_syncs(crc(tag));
-  }
-  return count;
+  return *crc_;
 }
 
 std::size_t
-scribbu::id3v2_3_tag::ext_header::write(std::ostream &os,
-                                        const id3v2_3_tag &tag,
-                                        bool unsync /*= false*/) const
+scribbu::id3v2_3_tag::ext_header::write(std::ostream &os, bool unsync) const
 {
   using namespace std;
+  ensure_cached_data_is_fresh();
+  size_t idx = unsync ? SERIALIZED : SERIALIZED_WITH_UNSYNC;
+  os.write((char*)&cache_[idx][0], cache_[idx].size());
+  return cache_[idx].size();
+}
 
-  size_t cb = 0;
+void
+scribbu::id3v2_3_tag::ext_header::ensure_cached_data_is_fresh() const
+{
+  using namespace std;
+  using scribbu::detail::count_false_syncs;
+  using scribbu::detail::unsynchronise;
+
+  if ( !dirty_ ) {
+    return;
+  }
+
+  cache_[SERIALIZED].clear();
+  cache_[SERIALIZED_WITH_UNSYNC].clear();
+
+  stringstream stm;
 
   // TODO(sp1ff): Re-factor writing ints
   // TODO(sp1ff): Have I assumed little-endian host order throughout?!
-  size_t cbhdr = size(unsync, tag);
-  if (unsync) {
-    cb += detail::unsynchronise(os, cbhdr);
-  }
-  else {
-    cbhdr = htonl(cbhdr);
-    os.write((char*)&cbhdr, 4);
-    cb += 4;
-  }
+  
+  size_t cbhdr = size();
+  cbhdr = htonl(cbhdr);
+  stm.write((char*)&cbhdr, 4);
 
   char buf[2] = { 0x00, 0x00 };
   if (has_crc()) {
     buf[0] = 0x80;
   }
-  os.write(buf, 2);
-  cb += 2;
+  stm.write(buf, 2);
     
   size_t cbpad = padding_size();
-  if (unsync) {
-    cb += detail::unsynchronise(os, cbpad);
-  }
-  else {
-    size_t cbpad = htonl(cbpad);
-    os.write((char*)&cbpad, 4);
-    cb += 4;
-  }
+  cbpad = htonl(cbpad);
+  stm.write((char*)&cbpad, 4);
 
   if (has_crc()) {
-    uint32_t crc32 = crc(tag);
-    if (unsync) {
-      cb += detail::unsynchronise(os, crc32);
-    }
-    else {
-      crc32 = htonl(crc32);
-      os.write((char*)&crc32, 4);
-      cb += 4;
-    }
+    uint32_t crc32 = crc();
+    crc32 = htonl(crc32);
+    stm.write((char*)&crc32, 4);
   }
 
-  return cb;
-
+  string sbuf = stm.str();
+  copy(sbuf.begin(), sbuf.end(), back_inserter(cache_[SERIALIZED]));
+  num_false_syncs_ = count_false_syncs(cache_[SERIALIZED].begin(),
+                                       cache_[SERIALIZED].end());
+  unsynchronise(back_inserter(cache_[SERIALIZED_WITH_UNSYNC]),
+                cache_[SERIALIZED].begin(),
+                cache_[SERIALIZED].end());
+  
+  dirty_ = false;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                             class id3v2_3_tag                             //
+///////////////////////////////////////////////////////////////////////////////
 
 scribbu::id3v2_3_tag::id3v2_3_tag(std::istream &is):
   id3v2_tag(is),
@@ -338,9 +328,9 @@ scribbu::id3v2_3_tag::id3v2_3_tag(std::size_t cbpad /*= 0*/,
 {
   using namespace std;
   if (want_extended_header::with_crc == ext) {
-    pext_header_ = make_shared<ext_header>(cbpad, true);
+    pext_header_ = make_shared<ext_header>(cbpad, this);
   } else if (want_extended_header::present == ext) {
-    pext_header_ = make_shared<ext_header>(cbpad, false);
+    pext_header_ = make_shared<ext_header>(cbpad);
   }
 }
 
@@ -434,15 +424,29 @@ scribbu::id3v2_3_tag::size(bool unsync) const
 {
   using namespace std;
 
-  size_t cb = padding();
+  // We do not include the ID3v2 header...
+  size_t cb = 0;
 
+  // but we *do* include the extended header, if it's present...
   if (pext_header_) {
-    cb += pext_header_->size(unsync, *this) + 4;
+    if (pext_header_->has_crc()) {
+      pext_header_->crc(*this);
+    }
+    cb += pext_header_->serialized_size(unsync);
   }
 
-  return accumulate(begin(), end(), cb,
-                    [unsync](size_t n, const id3v2_3_frame &f)
-                    { return n + f.serialized_size(unsync); });
+  // we of course include all our frames...
+  cb += accumulate(begin(), end(), 0,
+                   [unsync](size_t n, const id3v2_3_frame &f)
+                   { return n + f.serialized_size(unsync); });
+
+  // TODO(sp1ff): If unsync, check the last byte of the last frame; if
+  // it's0xff, add one.
+  
+  cb += padding();
+
+  return cb;
+
 }
 
 /**
@@ -481,9 +485,16 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
 
   using namespace std;
 
-  if (pext_header_ && pext_header_->needs_unsynchronisation(*this)) {
-    return true;
+  if (pext_header_) {
+    if (pext_header_->has_crc()) {
+      pext_header_->crc(*this);
+    }
+    if (pext_header_->needs_unsynchronisation()) {
+      return true;
+    }
   }
+
+  // TODO(sp1ff): Check the last byte of the last frame...
 
   return any_of(begin(), end(), [](const id3v2_3_frame &F) { return F.needs_unsynchronisation(); });
 }
@@ -539,6 +550,9 @@ scribbu::id3v2_3_tag::write(std::ostream &os, bool unsync) const
   size_t cb = 10;
 
   if (pext_header_) {
+    if (pext_header_->has_crc()) {
+      pext_header_->crc(*this);
+    }
     cb += pext_header_->write(os, unsync);
   }
 

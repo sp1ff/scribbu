@@ -98,6 +98,8 @@ namespace scribbu {
 
     bool is_false_sync(unsigned char x, unsigned char y);
 
+    bool needs_unsync(unsigned char x, unsigned char y);
+
     template <typename forward_iterator>
     std::size_t count_false_syncs(forward_iterator p0, forward_iterator p1) {
       if (p0 == p1) return 0;
@@ -114,71 +116,37 @@ namespace scribbu {
 
     template <typename forward_iterator>
     std::size_t count_ffs(forward_iterator p0, forward_iterator p1) {
-      return std::count_if(p0, p1, [](unsigned char x) { return 255 == x; });
-    }
-
-    inline std::size_t count_ffs(std::uint32_t x)
-    {
-      std::size_t n = 0;
-      if (0xff ==  (x & 0x000000ff))        ++n;
-      if (0xff == ((x & 0x0000ff00) >>  8)) ++n;
-      if (0xff == ((x & 0x00ff0000) >> 16)) ++n;
-      if (0xff == ((x & 0xff000000) >> 24)) ++n;
-      return n;
-    }
-
-    std::size_t unsynchronise(std::ostream &os, std::uint64_t);
-
-    // TODO(sp1ff): Remove
-    template <typename random_access_iterator>
-    std::size_t unsynchronise(std::ostream &os,
-                              random_access_iterator p0,
-                              random_access_iterator p1)
-    {
-      using namespace std;
-
-      const char zed = 0;
-      const auto F = [](unsigned char x) { return 255 == x; };
-
-      ptrdiff_t cb = 0;
-      for (auto p = p0; p != p1; ) {
-        auto q = find_if(p, p1, F);
-        os.write((char*)&(p[0]), q - p);
-        cb += q - p;
-        if (q != p1) {
-          os.write(&zed, 1);
-          cb += 1;
-          ++q;
-        }
-        p = q;
+      if (p0 == p1) return 0;
+      std::size_t count = 0;
+      for (forward_iterator p2 = p0 + 1; p2 < p1; ) {
+        if (needs_unsync(*p0++, *p2++)) ++count;
       }
-      return cb;
+      return count;
     }
 
-    template <typename random_access_iterator,
-              typename forward_output_iterator>
-    std::size_t unsynchronise(forward_output_iterator pout,
-                              random_access_iterator p0,
-                              random_access_iterator p1)
+    template <typename output_iterator,
+              typename input_iterator>
+    std::size_t unsynchronise(output_iterator pout,
+                              input_iterator  p0,
+                              input_iterator  p1)
     {
       using namespace std;
 
-      const char zed = 0;
-      const auto F = [](unsigned char x) { return 255 == x; };
-
       ptrdiff_t cb = 0;
       for (auto p = p0; p != p1; ) {
-        auto q = find_if(p, p1, F);
+        auto q = find(p, p1, 0xff);
         pout = copy_n(p, q - p, pout);
         cb += q - p;
         if (q != p1) {
-          *pout++ = 255;
-          *pout++ = zed;
-          cb += 2;
-          ++q;
+          *pout++ = 0xff; ++cb; ++q;
+          if (q != p1 && (0x00 == *q || (*q & 0xe0) == 0xe0)) {
+            *pout++ = 0x00; ++cb;
+          }
         }
         p = q;
+
       }
+
       return cb;
     }
 
@@ -314,7 +282,7 @@ namespace scribbu {
 
   public:
 
-    id3v2_frame(bool experimental): experimental_(experimental)
+    id3v2_frame(bool experimental): experimental_(experimental), dirty_(true)
     { }
     virtual ~id3v2_frame()
     { }
@@ -339,8 +307,16 @@ namespace scribbu {
     /// will be updated accordingly)
     virtual std::size_t write(std::ostream &os, bool unsync) const = 0;
 
+  protected:
+
+    virtual bool is_dirty() const
+    { return dirty_; }
+    virtual void dirty(bool f) const
+    { dirty_ = f; }
+    
   private:
     bool experimental_;
+    mutable bool dirty_;
 
   }; // End class id3v2_frame.
 
@@ -399,10 +375,11 @@ namespace scribbu {
       return std::copy(id_.begin(), id_.end(), pout);
     }
 
+    // TODO(sp1ff): Needed?
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
-    std::size_t write(std::ostream &os, bool unsync) const;
+    std::size_t write(std::ostream &os) const;
 
   private:
     /// Return the number of bytes with 255 as their value when serialized
@@ -458,7 +435,7 @@ namespace scribbu {
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
-    std::size_t write(std::ostream &os, bool unsync) const;
+    std::size_t write(std::ostream &os) const;
 
   private:
     /// Return the number of bytes with 255 as their value when serialized
@@ -541,7 +518,7 @@ namespace scribbu {
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
-    std::size_t write(std::ostream &os, bool unsync) const;
+    std::size_t write(std::ostream &os) const;
 
   private:
     /// Return the number of bytes with 255 as their value when serialized
@@ -631,7 +608,7 @@ namespace scribbu {
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
-    std::size_t write(std::ostream &os, bool unsync) const;
+    std::size_t write(std::ostream &os) const;
 
   private:
     /// Return the number of bytes with 255 as their value when serialized
@@ -668,7 +645,7 @@ namespace scribbu {
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
-    std::size_t write(std::ostream &os, bool unsync) const;
+    std::size_t write(std::ostream &os) const;
 
   private:
     /// Return the number of bytes with 255 as their value when serialized
@@ -713,7 +690,7 @@ namespace scribbu {
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
-    std::size_t write(std::ostream &os, bool unsync) const;
+    std::size_t write(std::ostream &os) const;
 
   private:
     /// Return the number of bytes with 255 as their value when serialized

@@ -13,6 +13,12 @@ scribbu::detail::is_false_sync(unsigned char x, unsigned char y)
   return 255 == x && 233 < y;
 }
 
+bool
+scribbu::detail::needs_unsync(unsigned char x, unsigned char y)
+{
+  return 255 == x && (233 < y || 0 == y);
+}
+
 std::size_t
 scribbu::detail::count_false_syncs(std::size_t n)
 {
@@ -24,79 +30,6 @@ scribbu::detail::count_false_syncs(std::size_t n)
     }
   }
   return count;
-}
-
-/// Write \a x to \a os, in big-endian, applying the unsynchronisation scheme
-std::size_t
-scribbu::detail::unsynchronise(std::ostream &os,
-                               std::uint64_t x)
-{
-  using namespace std;
-
-  const char zed = 0;
-
-  uint64_t out = htobe64(x);
-  const unsigned char *p = (const unsigned char*)&out;
-
-  size_t cb = 0;
-
-  os.write((char*)p + 0, 1);
-  cb += 1;
-  if (255 == p[0]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 1, 1);
-  cb += 1;
-  if (255 == p[1]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 2, 1);
-  cb += 1;
-  if (255 == p[2]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 3, 1);
-  cb += 1;
-  if (255 == p[3]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 4, 1);
-  cb += 1;
-  if (255 == p[4]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 5, 1);
-  cb += 1;
-  if (255 == p[5]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 6, 1);
-  cb += 1;
-  if (255 == p[6]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  os.write((char*)p + 7, 1);
-  cb += 1;
-  if (255 == p[7]) {
-    os.write(&zed, 1);
-    cb += 1;
-  }
-
-  return cb;
 }
 
 
@@ -220,25 +153,36 @@ scribbu::unique_file_id::needs_unsynchronisation() const
   return count_ffs();
 }
 
+// std::size_t
+// scribbu::unique_file_id::write(std::ostream &os, bool unsync) const
+// {
+//   const char zed = 0;
+
+//   std::size_t cb_ffs = count_ffs();
+//   if (unsync && cb_ffs) {
+//     std::size_t cb = 0 ;
+//     cb += detail::unsynchronise(os, owner_.begin(), owner_.end());
+//     os.write(&zed, 1); cb += 1;
+//     cb += detail::unsynchronise(os, id_.begin(), id_.end());
+//     return cb;
+//   }
+//   else {
+//     os.write((const char*)&(owner_[0]), owner_.size());
+//     os.write(&zed, 1);
+//     os.write((const char*)&(id_[0]), id_.size());
+//     return owner_.size() + 1 + id_.size();
+//   }
+// }
+
 std::size_t
-scribbu::unique_file_id::write(std::ostream &os, bool unsync) const
+scribbu::unique_file_id::write(std::ostream &os) const
 {
   const char zed = 0;
 
-  std::size_t cb_ffs = count_ffs();
-  if (unsync && cb_ffs) {
-    std::size_t cb = 0 ;
-    cb += detail::unsynchronise(os, owner_.begin(), owner_.end());
-    os.write(&zed, 1); cb += 1;
-    cb += detail::unsynchronise(os, id_.begin(), id_.end());
-    return cb;
-  }
-  else {
-    os.write((const char*)&(owner_[0]), owner_.size());
-    os.write(&zed, 1);
-    os.write((const char*)&(id_[0]), id_.size());
-    return owner_.size() + 1 + id_.size();
-  }
+  os.write((const char*)&(owner_[0]), owner_.size());
+  os.write(&zed, 1);
+  os.write((const char*)&(id_[0]), id_.size());
+  return owner_.size() + 1 + id_.size();
 }
 
 std::size_t
@@ -281,32 +225,44 @@ scribbu::encryption_method::needs_unsynchronisation() const
   return count_ffs();
 }
 
+// std::size_t
+// scribbu::encryption_method::write(std::ostream &os, bool unsync) const
+// {
+//   const char zed = 0;
+
+//   using namespace std;
+//   using namespace scribbu::detail;
+//   std::size_t cb_ffs = count_ffs();
+//   if (unsync && cb_ffs) {
+//     std::size_t cb = 0 ;
+//     cb += unsynchronise(os, email_.begin(), email_.end());
+//     // email is null-terminated, so no possibilty of a false sync
+//     os.write(&zed, 1); cb += 1;
+//     os.write((const char*)&method_symbol_, 1); cb += 1;
+//     if (!data_.empty() && is_false_sync(method_symbol_, data_.front())) {
+//       os.write((const char*)&method_symbol_, 1); cb += 1;
+//     }
+//     cb += unsynchronise(os, data_.begin(), data_.end());
+//     return cb;
+//   }
+//   else {
+//     os.write((const char*)&(email_[0]), email_.size());
+//     os.write((const char*)&method_symbol_, 1);
+//     os.write((const char*)&(data_[0]), data_.size());
+//     return email_.size() + 1 + data_.size();
+//   }
+// }
+
 std::size_t
-scribbu::encryption_method::write(std::ostream &os, bool unsync) const
+scribbu::encryption_method::write(std::ostream &os) const
 {
   const char zed = 0;
 
-  using namespace std;
-  using namespace scribbu::detail;
-  std::size_t cb_ffs = count_ffs();
-  if (unsync && cb_ffs) {
-    std::size_t cb = 0 ;
-    cb += unsynchronise(os, email_.begin(), email_.end());
-    // email is null-terminated, so no possibilty of a false sync
-    os.write(&zed, 1); cb += 1;
-    os.write((const char*)&method_symbol_, 1); cb += 1;
-    if (!data_.empty() && is_false_sync(method_symbol_, data_.front())) {
-      os.write((const char*)&method_symbol_, 1); cb += 1;
-    }
-    cb += unsynchronise(os, data_.begin(), data_.end());
-    return cb;
-  }
-  else {
-    os.write((const char*)&(email_[0]), email_.size());
-    os.write((const char*)&method_symbol_, 1);
-    os.write((const char*)&(data_[0]), data_.size());
-    return email_.size() + 1 + data_.size();
-  }
+  os.write((const char*)&(email_[0]), email_.size());
+  os.write((const char*)&method_symbol_, 1);
+  os.write((const char*)&(data_[0]), data_.size());
+  return email_.size() + 1 + data_.size();
+
 }
 
 /// Return the number of bytes with 255 as their value when serialized
@@ -371,50 +327,27 @@ scribbu::user_defined_text::needs_unsynchronisation() const
 }
 
 std::size_t
-scribbu::user_defined_text::write(std::ostream &os, bool unsync) const
+scribbu::user_defined_text::write(std::ostream &os) const
 {
   const char zed = 0;
   const char uzed[2] = { 0, 0 };
 
   std::size_t cb = 0;
-  std::size_t cb_ffs = count_ffs();
-  if (unsync && cb_ffs) {
-    if (255 == unicode_) {
-      unsigned char buf[2] = { unicode_, 0 };
-      os.write((char*)buf, 2);
-      cb += 2;
-    }
-    else {
-      os.write((const char*)&unicode_, 1);
-      cb += 1;
-      cb += detail::unsynchronise(os, description_.begin(), description_.end());
-    }
-    if (2 == cbnil_) {
-      os.write(uzed, 2);
-      cb += 2;
-    }
-    else {
-      os.write(&zed, 1);
-      cb += 1;
-    }
-    cb += detail::unsynchronise(os, text_.begin(), text_.end());
+  os.write((const char*)&unicode_, 1);
+  cb += 1;
+  os.write((const char*)&(description_[0]), description_.size());
+  cb += description_.size();
+  if (2 == cbnil_) {
+    os.write(uzed, 2);
+    cb += 2;
   }
   else {
-    os.write((const char*)&unicode_, 1);
+    os.write(&zed, 1);
     cb += 1;
-    os.write((const char*)&(description_[0]), description_.size());
-    cb += description_.size();
-    if (2 == cbnil_) {
-      os.write(uzed, 2);
-      cb += 2;
-    }
-    else {
-      os.write(&zed, 1);
-      cb += 1;
-    }
-    os.write((const char*)&(text_[0]), text_.size());
-    cb += text_.size();
   }
+  os.write((const char*)&(text_[0]), text_.size());
+  cb += text_.size();
+
   return cb;
 }
 
@@ -472,40 +405,23 @@ scribbu::comments::needs_unsynchronisation() const
 }
 
 std::size_t
-scribbu::comments::write(std::ostream &os, bool unsync) const
+scribbu::comments::write(std::ostream &os) const
 {
   const char zed[2] = { 0, 0 };
 
   std::size_t cb = 0;
-  std::size_t cb_ffs = count_ffs();
-  if (unsync && cb_ffs) {
-    if (255 == unicode_) {
-      unsigned char buf[2] = { unicode_, 0 };
-      os.write((const char*)buf, 2);
-      cb += 2;
-    }
-    else {
-      os.write((const char*)&unicode_, 1);
-      cb += 1;
-    }
-    cb += detail::unsynchronise(os, lang_, lang_ + 3);
-    cb += detail::unsynchronise(os, description_.begin(), description_.end());
-    os.write(zed, cbnil_);
-    cb += cbnil_;
-    cb += detail::unsynchronise(os, text_.begin(), text_.end());
-  }
-  else {
-    os.write((const char*)&unicode_, 1);
-    cb += 1;
-    os.write((const char*)lang_, 3);
-    cb += 3;
-    os.write((const char*)&(description_[0]), description_.size());
-    cb += description_.size();
-    os.write(zed, cbnil_);
-    cb += cbnil_;
-    os.write((const char*)&(text_[0]), text_.size());
-    cb += text_.size();
-  }
+
+  os.write((const char*)&unicode_, 1);
+  cb += 1;
+  os.write((const char*)lang_, 3);
+  cb += 3;
+  os.write((const char*)&(description_[0]), description_.size());
+  cb += description_.size();
+  os.write(zed, cbnil_);
+  cb += cbnil_;
+  os.write((const char*)&(text_[0]), text_.size());
+  cb += text_.size();
+
   return cb;
 }
 
@@ -571,16 +487,10 @@ scribbu::play_count::needs_unsynchronisation() const
 }
 
 std::size_t
-scribbu::play_count::write(std::ostream &os, bool unsync) const
+scribbu::play_count::write(std::ostream &os) const
 {
-  std::size_t cb_ffs = count_ffs();
-  if (unsync && cb_ffs) {
-    return detail::unsynchronise(os, counter_.begin(), counter_.end());
-  }
-  else {
-    os.write((const char*)&(counter_[0]), counter_.size());
-    return counter_.size();
-  }
+  os.write((const char*)&(counter_[0]), counter_.size());
+  return counter_.size();
 }
 
 std::size_t
@@ -627,33 +537,15 @@ scribbu::popularimeter::needs_unsynchronisation() const
 }
 
 std::size_t
-scribbu::popularimeter::write(std::ostream &os, bool unsync) const
+scribbu::popularimeter::write(std::ostream &os) const
 {
   static const char zed = 0;
 
-  std::size_t cb_ffs = count_ffs();
-  if (unsync && cb_ffs) {
-    std::size_t cb = detail::unsynchronise(os, email_.begin(), email_.end());
-    os.write(&zed, 1);
-    if (255 == rating_) {
-      unsigned char buf[2] = { rating_, 0 };
-      os.write((const char*)buf, 2);
-      cb += 2;
-    }
-    else {
-      os.write((const char*)&rating_, 1);
-      cb += 1;
-    }
-    cb += detail::unsynchronise(os, counter_.begin(), counter_.end());
-    return cb;
-  }
-  else {
-    os.write((const char*)&(email_[0]), email_.size());
-    os.write(&zed, 1);
-    os.write((const char*)&rating_, 1);
-    os.write((const char*)&(counter_[0]), counter_.size());
-    return email_.size() + 2 + counter_.size();
-  }
+  os.write((const char*)&(email_[0]), email_.size());
+  os.write(&zed, 1);
+  os.write((const char*)&rating_, 1);
+  os.write((const char*)&(counter_[0]), counter_.size());
+  return email_.size() + 2 + counter_.size();
 }
 
 std::size_t

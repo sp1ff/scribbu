@@ -1104,6 +1104,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
  * \brief Test unsynchronised data
  *
  * 
+ * First file (unsynch.id3), raw data:
+ *
  \code
 
  000000 49 44 33 03 00 80 00 00 01 30 54 49 54 32 00 00  >ID3......0TIT2..<
@@ -1194,8 +1196,6 @@ BOOST_AUTO_TEST_CASE( test_unsync )
 
   // Lifted from the taglib test suite
   static const fs::path DATA1(get_data_directory() / "unsynch.id3");
-  // Bill LeFaive - Orlando.mp3
-  static const fs::path DATA2(get_data_directory() / "orlando.mp3");
 
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
   id3v2_3_tag tag1(ifs1);
@@ -1209,11 +1209,114 @@ BOOST_AUTO_TEST_CASE( test_unsync )
   text = tag1.track();
   BOOST_CHECK("03" == text);
 
+}
+
+/**
+ * \brief Test an ID3v2.3 tag with an extended header
+ *
+ *
+ * Test file (orlando.mp3), raw data:
+ *
+ \code
+
+ 000000 49 44 33 03 00 40 00 00 04 5f 00 00 00 06 00 00  >ID3..@..._......<
+ 000010 00 00 00 00 54 41 4c 42 00 00 00 1c 00 00 00 68  >....TALB.......h<
+ 000020 74 74 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e  >ttp://music.down<
+ 000030 6c 6f 61 64 2e 63 6f 6d 00 00 54 49 54 32 00 00  >load.com..TIT2..<
+ 000040 00 0a 00 00 00 4f 72 6c 61 6e 64 6f 00 00 54 49  >.....Orlando..TI<
+ 000050 54 33 00 00 00 1d 00 00 00 68 74 74 70 3a 2f 2f  >T3.......http://<
+ 000060 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f 61 64 2e 63  >music.download.c<
+ 000070 6f 6d 2f 00 00 54 50 45 31 00 00 00 0f 00 00 00  >om/..TPE1.......<
+ 000080 42 69 6c 6c 20 4c 65 46 61 69 76 65 00 00 54 43  >Bill LeFaive..TC<
+ 000090 4f 4d 00 00 00 0f 00 00 00 42 69 6c 6c 20 4c 65  >OM.......Bill Le<
+ 0000a0 46 61 69 76 65 00 00 57 4f 41 46 00 00 00 01 00  >Faive..WOAF.....<
+ 0000b0 00 00 57 50 55 42 00 00 00 1b 00 00 68 74 74 70  >..WPUB......http<
+ 0000c0 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f 61  >://music.downloa<
+ 0000d0 64 2e 63 6f 6d 2f 00 57 58 58 58 00 00 00 36 00  >d.com/.WXXX...6.<
+ 0000e0 00 00 68 74 74 70 3a 2f 2f 6d 75 73 69 63 2e 64  >..http://music.d<
+ 0000f0 6f 77 6e 6c 6f 61 64 2e 63 6f 6d 2f 00 68 74 74  >ownload.com/.htt<
+ 000100 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f  >p://music.downlo<
+ 000110 61 64 2e 63 6f 6d 2f 54 52 43 4b 00 00 00 04 00  >ad.com/TRCK.....<
+ 000120 00 00 31 00 00 54 43 4f 50 00 00 00 14 00 00 00  >..1..TCOP.......<
+ 000130 32 30 30 36 20 42 69 6c 6c 20 4c 65 46 61 69 76  >2006 Bill LeFaiv<
+ 000140 65 00 00 54 50 55 42 00 00 00 1c 00 00 00 68 74  >e..TPUB.......ht<
+ 000150 74 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c  >tp://music.downl<
+ 000160 6f 61 64 2e 63 6f 6d 00 00 00 00 00 00 00 00 00  >oad.com.........<
+ 000170 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+ *
+ 000260 00 00 00 00 00 00 00 00 00 ff fb b0 4c 00 05 14  >............L...<
+
+ \endcode
+ *
+ * broken out:
+ *
+ \code
+
+ 000000 49 44 33 03 00                                   ID3, v2.3
+ 000005                40                                flags: ext. header
+ 000006                   00 00 04 5f                    0x025f = 607 bytes
+ 00000a                               00 00 00 06        ext. header is 6 bytes
+ 00000e                                           00 00  no flags
+ 000010 00 00 00 00                                      no padding
+ 000014             54 41 4c 42 00 00 00 1c 00 00 00 68  TALB, 0x1c = 28 bytes, no flags
+ 000020 74 74 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e  >ttp://music.down<
+ 000030 6c 6f 61 64 2e 63 6f 6d 00 00                    >load.com..
+ 00003a                               54 49 54 32 00 00  TIT2, 10 bytes, no flags
+ 000040 00 0a 00 00 00 4f 72 6c 61 6e 64 6f 00 00        >.....Orlando..
+ 00004e                                           54 49  TIT3, 0x1d = 29 bytes
+ 000050 54 33 00 00 00 1d 00 00 00 68 74 74 70 3a 2f 2f  >T3.......http://<
+ 000060 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f 61 64 2e 63  >music.download.c<
+ 000070 6f 6d 2f 00 00                                   >om/..
+ 000075                54 50 45 31 00 00 00 0f 00 00 00  TPE1, 15 bytes
+ 000080 42 69 6c 6c 20 4c 65 46 61 69 76 65 00 00        >Bill LeFaive..
+ 00008e                                           54 43  TCOM, 15 bytes
+ 000090 4f 4d 00 00 00 0f 00 00 00 42 69 6c 6c 20 4c 65  >OM.......Bill Le<
+ 0000a0 46 61 69 76 65 00 00 
+ 0000a7                      57 4f 41 46 00 00 00 01 00  WOAF, 1 byte
+ 0000b0 00 00 
+ 0000b2       57 50 55 42 00 00 00 1b 00 00 68 74 74 70  WPUB, 0x1b = 27 bytes
+ 0000c0 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f 61  >://music.downloa<
+ 0000d0 64 2e 63 6f 6d 2f 00
+ 0000d7                      57 58 58 58 00 00 00 36 00  WXXX, 0x36 = 54 bytes
+ 0000e0 00 00 68 74 74 70 3a 2f 2f 6d 75 73 69 63 2e 64  >..http://music.d<
+ 0000f0 6f 77 6e 6c 6f 61 64 2e 63 6f 6d 2f 00 68 74 74  >ownload.com/.htt<
+ 000100 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f  >p://music.downlo<
+ 000110 61 64 2e 63 6f 6d 2f 
+ 000117                      54 52 43 4b 00 00 00 04 00  TRCK, 4 bytes
+ 000120 00 00 31 00 00
+ 000125                54 43 4f 50 00 00 00 14 00 00 00  TCOP, 0x14 = 20 bytes
+ 000130 32 30 30 36 20 42 69 6c 6c 20 4c 65 46 61 69 76  >2006 Bill LeFaiv<
+ 000140 65 00 00                                         >e..
+ 000143          54 50 55 42 00 00 00 1c 00 00 00 68 74  TPUB, 0x1c = 28 bytes
+ 000150 74 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c  >tp://music.downl<
+ 000160 6f 61 64 2e 63 6f 6d 00 00                       >oad.com..
+ 000169                            00 00 00 00 00 00 00  0x100 = 256 bytes of padding
+ 000170 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ *
+ 000260 00 00 00 00 00 00 00 00 00
+ 000269                            ff fb b0 4c 00 05 14  >............L...<
+
+ 1. 0x04 5f = 0b 0000 0100 0101 1111 -> 0b  000 0100  101 1111 =
+    0b0000 0010 0101 1111 = 0x025f
+    
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_ext_header )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Bill LeFaive - Orlando.mp3
+  static const fs::path DATA2(get_data_directory() / "orlando.mp3");
+
   fs::ifstream ifs2(DATA2, fs::ifstream::binary);
   id3v2_3_tag tag2(ifs2);
 
   BOOST_CHECK(607 == tag2.size());
-  text = tag2.album();
+  string text = tag2.album();
   BOOST_CHECK("http://music.download.com" == text);
   text = tag2.title();
   BOOST_CHECK("Orlando" == text);
@@ -1703,7 +1806,36 @@ BOOST_AUTO_TEST_CASE( test_unsync_2 )
   
   size_t cb = tag.size(true);
   BOOST_CHECK(8573 == cb);
-  
-  BOOST_CHECK(8573 == tag.size());
+
+  cb = tag.size();
+  BOOST_CHECK(8513 == cb);
 }
+
+/**
+ *
+ * I copied this one from id3lib: per their notes: "This ID3v2.3.0 tag is from
+ * an mp3 file submitted by a user who found a bug in earlier versions of
+ * id3lib.  It was converted from the old MusicMatch tagging format by the
+ * MusicMatch Jukebox application."
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_ozzy )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Lifted from the taglib test suite
+  static const fs::path DATA(get_data_directory() / "ozzy.tag");
+
+  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  id3v2_3_tag tag(ifs);
+
+  BOOST_CHECK(3 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+
+  BOOST_CHECK(14 == tag.num_frames());
+}
+
 

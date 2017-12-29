@@ -113,6 +113,37 @@
  * unsynchronised; unset in the header means that at least one frame is *not*
  * unsynchronised.
  *
+ * It is important to note that tag components (headers, frames, padding &c)
+ * can be considered independently for purposes of unsynchronisation (with one
+ * exception, on which more below). An ID3v2 header may never contain false
+ * syncs and may never \em introduce a false sync, since its last byte may
+ * never have its high bit set. An ID3v2 tag may contains false syncs within
+ * itself, but may never \em complete a false sync introduced by a preceding
+ * component, since the frame header begins with an ASCII character (which
+ * may not be zero nor may it have its high bit set).
+ *
+ * An ID3v2.3 extended header may contain false syncs within itself, but will
+ * never complete a false sync (since it follws an ID3v2 header) and may never
+ * introduce a false sync, since it must be followed by a frame (compliant tags
+ * must contain at least one frmae). ID3v2.2 definss no extended header and
+ * ID3v2.4's header & footer are sync-safe.
+ *
+ * The one exception to this is when the last frame in a tag has a final byte
+ * of 0xff. If there is no padding (or footer, in the case of ID3v2.4) this
+ * is a false sync. If there is padding, it will introduce a 0xff 0x00 pattern
+ * which must be written as 0xff 0x00 0x00 if unsynchronisation is being
+ * applied.
+ *
+ * This might suggest handling unsynchronisation at a tag level (e.g. when
+ * serializing a frame, have all components write themselves to a temporary
+ * buffer without applying the unsynchronisation scheme, then applying it in
+ * one fell swoop), but this is unattractive for two reasons:
+ *
+ *   - ID3v2.4 applies the usnychronisation scheme on a frame-by-frame basis
+ *   - ID3v2.3+ frames can be encrypted and/or compressed, suggesting that they
+ *     will be caching representations of themselves in various forms; I don't
+ *     want to cache individual frames \em and entire tags
+ *
  *
  * \section scribbu_impl_notes Implementation Notes
  *

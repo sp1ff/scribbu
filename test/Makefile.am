@@ -6,7 +6,7 @@ EXTRA_DIST = test-split test-rename test-report test-dump test-fs-generator \
 CLEANFILES = id3v20B id3v21B report.last.csv id3v20A trackB report.csv \
 	id3v1A trackA Pogues,\ The\ --\ Lorca\'s\ Novena.mp3 dump1.log \
 	dump2.log with-track-in.log test.write.2.2.dat tag22.dat \
-	elliot-goldenthal.id3v1.tag.out
+	elliot-goldenthal.id3v1.tag.out test-cleanup-encoded-by.out
 TESTS = $(check_PROGRAMS) test-split test-rename test-report test-dump \
 	test-with-track-in test-fs-generator test-cleanup-encoded-by
 XFAIL_TESTS = test-cleanup-encoded-by

@@ -1,6 +1,8 @@
 #ifndef ID3V23_HH_INCLUDED
 #define ID3V23_HH_INCLUDED 1
 
+#include <cstddef>
+
 #include <scribbu/errors.hh>
 #include <scribbu/id3v2.hh>
 #include <scribbu/framesv23.hh>
@@ -119,40 +121,50 @@ namespace scribbu {
     //// ID3v2.3 extended header
     class ext_header {
 
+    private:
+
+      static const std::size_t SERIALIZED = 0;
+      static const std::size_t SERIALIZED_WITH_UNSYNC = 1;
+
     public:
       /// Construct from a (resynchronised) serialization
       ext_header(const unsigned char *p0, const unsigned char *p1);
-      /// Construct a fresh, new extended header
-      ext_header(std::size_t cbpad, bool fcrc = false):
-        cbpad_     (cbpad),
-        fcrc_      (fcrc ),
-        crc_dirty_ (true ),
-        size_dirty_(true )
-      { }
+      /// Construct a fresh, new extended header; if a CRC is desired, pass the tag
+      /// whose frames are to be checksummed
+      ext_header(std::size_t cbpad, const id3v2_3_tag *ptag_for_crc = nullptr);
 
     public:
       /// Compute the size of this extended header
-      std::size_t size(bool unsync, const id3v2_3_tag &tag) const;
-      /// Retrieve the size-- will throw if our size calculation is dirty
-      std::size_t size() const;
+      std::size_t size() const
+      { return has_crc() ? 10 : 6; }
+      /// Compute the size on disk
+      std::size_t serialized_size(bool unsync = false) const;
+      /// True if the serialized form would contain false syncs
+      std::size_t needs_unsynchronisation() const;
+      /// Determine whether this header has a CRC
       bool has_crc() const
-      { return fcrc_; }
-      /// Compute the CRC checksum for this header
+      { return (bool) crc_; }
+      /// Update/compute the CRC checksum for this header
       std::uint32_t crc(const id3v2_3_tag &tag) const;
-      /// Retrieve the CRC-- will throw if our CRC calculation is dirty
-      std::uint32_t crc() const;
+      /// Retrieve the CRC-- will throw if we have no CRC
+      std::uint32_t crc() const
+      { return *crc_; }
       std::size_t padding_size() const
       { return cbpad_; }
-      bool needs_unsynchronisation(const id3v2_3_tag &tag) const;
-      std::size_t write(std::ostream &os, const id3v2_3_tag &tag, bool unsync = false) const;
+      /// Write this header to an ostream without unsynchronisation; if this header
+      /// is configured to include a CRC, it will be updated based on \a tag
+      std::size_t write(std::ostream &os, bool unsync = false) const;
+
+    private:
+
+      void ensure_cached_data_is_fresh() const;
 
     private:
       std::size_t cbpad_;
-      bool fcrc_;
-      mutable bool crc_dirty_;
-      mutable std::uint32_t crc_;
-      mutable bool size_dirty_;
-      mutable std::size_t size_;
+      mutable boost::optional<std::uint32_t> crc_;
+      mutable bool dirty_;
+      mutable std::size_t num_false_syncs_;
+      mutable std::vector<unsigned char> cache_[2];
 
     };
 

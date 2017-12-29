@@ -42,6 +42,14 @@ namespace scribbu {
 
   class id3v2_2_frame: public id3v2_frame {
 
+  protected:
+
+    /// Index of the cached copy of this frame in serialized form
+    static const unsigned char SERIALIZED = 0;
+    /// Index of the cached copy of this frame in serialized form with
+    /// unsynchronisation applied
+    static const unsigned char SERIALIZED_WITH_UNSYNC = 1;
+    
   public:
 
     id3v2_2_frame(const frame_id3 &id): id3v2_frame(id.experimental()), id_(id)
@@ -118,6 +126,19 @@ namespace scribbu {
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
 
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the header
+    virtual std::size_t serialized_size(bool unsync) const;
+    /// Return zero if this tag would not contain false syncs if serialized in
+    /// its present state; else return the number of false sync it would
+    /// contain
+    virtual std::size_t needs_unsynchronisation() const;
+    /// Serialize this tag to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+    /// will be updated accordingly)
+    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+
     /// Return the number of bytes the header will occupy when serialized to
     /// disk
     std::size_t serialized_header_size(bool unsync) const;
@@ -128,14 +149,26 @@ namespace scribbu {
     /// Serialize this tag's header to an output stream, perhaps applying the
     /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
     /// will be updated accordingly)
-    std::size_t write_header(std::ostream &os, bool unsync) const;
+    std::size_t write_header(std::ostream &os, std::size_t cb_payload) const;
+
+  protected:
+    /// Mark this instance as dirty & invalidate the cache
+    virtual void dirty(bool f) const;
 
   private:
+    /// Refresh the cache, if dirty (otherwise, do nothing)
+    void ensure_cached_data_is_fresh() const;
+    /// Serialize this frame to \a os, exclusive of the frame header, as well
+    /// as any compression, encryption or unsynchronisation; return the number
+    /// of bytes written
+    virtual std::size_t serialize(std::ostream &os) const = 0;
     /// Write a three-tuple while removing false syncs
     std::size_t unsynchronise_triplet(std::ostream &os, char buf[3]) const;
     
   private:
     frame_id3 id_;
+    mutable std::size_t num_false_syncs_;
+    mutable std::vector<unsigned char> cache_[2];
 
   }; // End class id3v2_2_frame.
 
@@ -180,16 +213,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   private:
     std::vector<unsigned char> data_;
@@ -229,16 +257,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class UFI.
 
@@ -407,16 +430,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   private:
     unsigned char unicode_;
@@ -503,16 +521,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class TXX.
 
@@ -564,16 +577,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class COM.
 
@@ -602,16 +610,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class CNT.
 
@@ -649,16 +652,11 @@ namespace scribbu {
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
-    /// Return the number of bytes this frame will occupy when serialized to
-    /// disk, including the six-byte header
-    virtual std::size_t serialized_size(bool unsync) const;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
-    virtual std::size_t needs_unsynchronisation() const;
-    /// Serialize this tag to an output stream, perhaps applying the
-    /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
-    /// will be updated accordingly)
-    virtual std::size_t write(std::ostream &os, bool unsync) const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class POP.
 

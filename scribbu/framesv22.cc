@@ -50,6 +50,40 @@ namespace scribbu {
 
 }
 
+/// Return the number of bytes this frame will occupy when serialized to
+/// disk, including the header
+/*virtual*/
+std::size_t
+scribbu::id3v2_2_frame::serialized_size(bool unsync) const
+{
+  ensure_cached_data_is_fresh();
+  return cache_[unsync ? SERIALIZED : SERIALIZED_WITH_UNSYNC].size();
+}
+
+/// Return zero if this tag would not contain false syncs if serialized in
+/// its present state; else return the number of false sync it would
+/// contain
+/*virtual*/
+std::size_t
+scribbu::id3v2_2_frame::needs_unsynchronisation() const
+{
+  ensure_cached_data_is_fresh();
+  return num_false_syncs_;
+}
+
+/// Serialize this tag to an output stream, perhaps applying the
+/// unsynchronisation scheme if the caller so chooses ("unsynchronised"
+/// will be updated accordingly)
+/*virtual*/
+std::size_t
+scribbu::id3v2_2_frame::write(std::ostream &os, bool unsync) const
+{
+  ensure_cached_data_is_fresh();
+  unsigned char idx = unsync ? SERIALIZED : SERIALIZED_WITH_UNSYNC;
+  os.write((char*)&cache_[idx][0], cache_[idx].size());
+  return cache_[idx].size();
+}
+
 /// Return the number of bytes the header will occupy when serialized to
 /// disk, including the header
 std::size_t
@@ -89,9 +123,10 @@ scribbu::id3v2_2_frame::header_needs_unsynchronisation() const
 } // End id3v2_2_frame::header_needs_unsynchronisation.
 
 std::size_t
-scribbu::id3v2_2_frame::write_header(std::ostream &os, bool unsync) const
+scribbu::id3v2_2_frame::write_header(std::ostream &os,
+                                     std::size_t cb_payload) const
 {
-  std::size_t cb = 6, num_ffs = 0, sz = size();
+  std::size_t sz = cb_payload;
 
   char idbuf[3]; id().copy(idbuf);
 
@@ -101,18 +136,63 @@ scribbu::id3v2_2_frame::write_header(std::ostream &os, bool unsync) const
   szbuf[1] = (sz & 0x00ff00) >>  8;
   szbuf[2] =  sz & 0x0000ff;
 
-  if (unsync) {
-    num_ffs += unsynchronise_triplet(os, idbuf);
-    num_ffs += unsynchronise_triplet(os, szbuf);
-  }
-  else {
-    os.write(idbuf, 3);
-    os.write(szbuf, 3);
-  }
+  os.write(idbuf, 3);
+  os.write(szbuf, 3);
 
-  return cb + num_ffs;
+  return 6;
 
 } // End id3v2_2_frame::write_header.
+
+/*virtual*/
+void
+scribbu::id3v2_2_frame::dirty(bool f) const
+{
+  if (f) {
+    cache_[SERIALIZED            ].clear();
+    cache_[SERIALIZED_WITH_UNSYNC].clear();
+  }
+  id3v2_frame::dirty(f);
+}
+
+/// Refresh the cache, if dirty (otherwise, do nothing)
+void
+scribbu::id3v2_2_frame::ensure_cached_data_is_fresh() const
+{
+  using namespace std;
+  using scribbu::detail::count_false_syncs;
+  using scribbu::detail::unsynchronise;
+
+  if (is_dirty()) {
+
+    // Clear the cache...
+    cache_[SERIALIZED].clear();
+    cache_[SERIALIZED_WITH_UNSYNC].clear();
+
+    stringstream os;
+    serialize(os);
+    string payload = os.str();
+
+    stringstream hdr;
+    write_header(hdr, payload.size());
+    string buf = hdr.str();
+
+    // Accumulate the entire thing in `cache_'.
+    cache_[SERIALIZED].resize(buf.size() + payload.size());
+    auto pout = copy(buf.begin(), buf.end(), cache_[SERIALIZED].begin());
+    copy(payload.begin(), payload.end(), pout);
+
+    // Either way, count the # of false syncs in that buffer...
+    num_false_syncs_ = count_false_syncs(cache_[SERIALIZED].begin(),
+                                         cache_[SERIALIZED].end());
+
+    // and prepare an unsynchronised copy.
+    unsynchronise(back_inserter(cache_[SERIALIZED_WITH_UNSYNC]),
+                  cache_[SERIALIZED].begin(),
+                  cache_[SERIALIZED].end());
+
+    dirty(false);
+  }
+}
 
 /// Write a three-tuple while removing false syncs
 std::size_t
@@ -154,46 +234,14 @@ scribbu::unknown_id3v2_2_frame::size() const
   return data_.size();
 }
 
-/*virtual*/ std::size_t
-scribbu::unknown_id3v2_2_frame::serialized_size(bool unsync) const
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::unknown_id3v2_2_frame::serialize(std::ostream &os) const
 {
-  std::size_t cb = serialized_header_size(unsync);
-  cb += data_.size();
-  if (unsync) {
-    cb += detail::count_ffs(data_.begin(), data_.end());
-  }
-  return cb;
-}
-
-/*virtual*/ std::size_t
-scribbu::unknown_id3v2_2_frame::needs_unsynchronisation() const
-{
-  // TODO(sp1ff): Will probably factor this out, but...  we seek two-byte
-  // sequences where the first is 255 & the second is greater than 223.  NB
-  // False sync's can't occur across frame boundries-- since the first byte of
-  // the frame will be an ASCII character, it will be less than 224. Even if
-  // the last byte of a frame is ff, the first padding byte will be zero (if
-  // there is no padding, then we can't have a false sync). Note that if the
-  // last byte is ff and unsync *is* turned on, we need to write an add'l 00
-  // when we serialize.
-  using namespace scribbu::detail;
-  return count_false_syncs(data_.begin(), data_.end());
-}
-
-/*virtual*/ std::size_t
-scribbu::unknown_id3v2_2_frame::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  std::size_t cb_ffs = detail::count_ffs(data_.begin(), data_.end());
-  if (unsync && cb_ffs) {
-    std::size_t cb = 0;
-    cb += detail::unsynchronise(os, data_.begin(), data_.end());
-    return cb;
-  }
-  else {
-    os.write((char*)&(data_[0]), data_.size());
-    return 6 + data_.size();
-  }
+  os.write((char*)&(data_[0]), data_.size());
+  return data_.size();
 }
 
 
@@ -219,23 +267,13 @@ scribbu::UFI::size() const
   return unique_file_id::size();
 }
 
-/*virtual*/ std::size_t
-scribbu::UFI::serialized_size(bool unsync) const
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::UFI::serialize(std::ostream &os) const
 {
-  return 6 + unique_file_id::serialized_size(unsync);
-}
-
-/*virtual*/ std::size_t
-scribbu::UFI::needs_unsynchronisation() const
-{
-  return unique_file_id::needs_unsynchronisation();
-}
-
-/*virtual*/ std::size_t
-scribbu::UFI::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  return 6 + unique_file_id::write(os, unsync);
+  return unique_file_id::write(os);
 }
 
 
@@ -248,53 +286,6 @@ std::size_t
 scribbu::id3v2_2_text_frame::size() const
 {
   return 1 + text_.size();
-}
-
-/*virtual*/ std::size_t
-scribbu::id3v2_2_text_frame::serialized_size(bool unsync) const
-{
-  std::size_t cb = 6 + 1 + text_.size();
-  if (unsync) {
-    cb += detail::count_ffs(text_.begin(), text_.end());
-    if (255 == unicode_) ++cb;
-  }
-  return cb;
-}
-
-/*virtual*/ std::size_t
-scribbu::id3v2_2_text_frame::needs_unsynchronisation() const
-{
-  using namespace scribbu::detail;
-  size_t cb = is_false_sync(unicode_, text_.front()) ? 1 : 0;
-  cb += count_false_syncs(text_.begin(), text_.end());
-  return cb;
-}
-
-/*virtual*/ std::size_t
-scribbu::id3v2_2_text_frame::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  std::size_t cb_ffs = 255 == unicode_ ? 1 : 0;
-  cb_ffs += detail::count_ffs(text_.begin(), text_.end());
-  if (unsync && cb_ffs) {
-    std::size_t cb = 0;
-    if (255 == unicode_) {
-      unsigned char buf[2] = { unicode_, 0 };
-      os.write((const char*)buf, 2);
-      cb += 2;
-    }
-    else {
-      os.write((const char*)&unicode_, 1);
-      cb += 1;
-    }
-    cb += detail::unsynchronise(os, text_.begin(), text_.end());
-    return cb;
-  }
-  else {
-    os.write((char*)&unicode_, 1);
-    os.write((char*)&(text_[0]), text_.size());
-    return 1 + text_.size();
-  }
 }
 
 void
@@ -335,6 +326,17 @@ scribbu::id3v2_2_text_frame::create(const frame_id3& id,
     new id3v2_2_text_frame(id, p, p + cb) );
 }
 
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::id3v2_2_text_frame::serialize(std::ostream &os) const
+{
+  os.write((char*)&unicode_, 1);
+  os.write((char*)&(text_[0]), text_.size());
+  return 1 + text_.size();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                 class TXX                                 //
@@ -356,23 +358,13 @@ scribbu::TXX::size() const
   return user_defined_text::size();
 }
 
-/*virtual*/ std::size_t
-scribbu::TXX::serialized_size(bool unsync) const
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::TXX::serialize(std::ostream &os) const
 {
-  return 6 + user_defined_text::serialized_size(unsync);
-}
-
-/*virtual*/ std::size_t
-scribbu::TXX::needs_unsynchronisation() const
-{
-  return user_defined_text::needs_unsynchronisation();
-}
-
-/*virtual*/ std::size_t
-scribbu::TXX::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  return 6 + user_defined_text::write(os, unsync);
+  return user_defined_text::write(os); 
 }
 
 
@@ -396,23 +388,13 @@ scribbu::COM::size() const
   return comments::size();
 }
 
-/*virtual*/ std::size_t
-scribbu::COM::serialized_size(bool unsync) const
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::COM::serialize(std::ostream &os) const
 {
-  return 6 + comments::serialized_size(unsync);
-}
-
-/*virtual*/ std::size_t
-scribbu::COM::needs_unsynchronisation() const
-{
-  return comments::needs_unsynchronisation();
-}
-
-/*virtual*/ std::size_t
-scribbu::COM::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  return 6 + comments::write(os, unsync);
+  return comments::write(os);
 }
 
 
@@ -436,23 +418,13 @@ scribbu::CNT::size() const
   return play_count::size();
 }
 
-/*virtual*/ std::size_t
-scribbu::CNT::serialized_size(bool unsync) const
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::CNT::serialize(std::ostream &os) const
 {
-  return 6 + play_count::serialized_size(unsync);
-}
-
-/*virtual*/ std::size_t
-scribbu::CNT::needs_unsynchronisation() const
-{
-  return play_count::needs_unsynchronisation();
-}
-
-/*virtual*/ std::size_t
-scribbu::CNT::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  return 6 + play_count::write(os, unsync);
+ return play_count::write(os);
 }
 
 
@@ -475,21 +447,13 @@ scribbu::POP::size() const
   // TODO(sp1ff): Implement popularimeter::size()
   return popularimeter::size();
 }
-/*virtual*/ std::size_t
-scribbu::POP::serialized_size(bool unsync) const
+
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/
+std::size_t
+scribbu::POP::serialize(std::ostream &os) const
 {
-  return 6 + popularimeter::serialized_size(unsync);
+  return popularimeter::write(os);
 }
 
-/*virtual*/ std::size_t
-scribbu::POP::needs_unsynchronisation() const
-{
-  return popularimeter::needs_unsynchronisation();
-}
-
-/*virtual*/ std::size_t
-scribbu::POP::write(std::ostream &os, bool unsync) const
-{
-  write_header(os, unsync);
-  return 6 + popularimeter::write(os, unsync);
-}

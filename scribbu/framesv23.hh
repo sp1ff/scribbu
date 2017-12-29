@@ -163,8 +163,7 @@ namespace scribbu {
       read_only_ (ro  ),
       compressed_(cmp ),
       enc_method_(enc ),
-      group_id_  (gid ),
-      dirty_     (true)
+      group_id_  (gid )
     { }
 
     /// Construct with an array of four chars et al.
@@ -203,8 +202,7 @@ namespace scribbu {
       read_only_ (that.readonly()),
       compressed_(that.compressed()),
       enc_method_(that.encrypted()),
-      group_id_  (that.grouped()),
-      dirty_     (true)
+      group_id_  (that.grouped())
     { }
       
 
@@ -256,10 +254,7 @@ namespace scribbu {
     { return fap_ == file_alter_preservation::discard; }
     bool ro() const
     { return read_only_ == read_only::set; }
-    bool dirty() const
-    { return dirty_; }
-    void dirty(bool f) const
-    { dirty_ = f; }
+    virtual void dirty(bool f) const;
     unsigned char encmeth() const
     { return enc_method_.get(); }
     unsigned char gid() const
@@ -274,7 +269,8 @@ namespace scribbu {
     virtual std::size_t serialize(std::ostream &os) const = 0;
     /// Serialize this tag's header to an output stream, including any special
     /// fields such as decompressed size, group id, &c
-    virtual std::size_t write_header(std::ostream &os, std::size_t cb_payload,
+    virtual std::size_t write_header(std::ostream &os,
+                                     std::size_t cb_payload,
                                      std::size_t dlind) const = 0;
     
   private:
@@ -292,7 +288,6 @@ namespace scribbu {
     id_type                 group_id_;
 
     // TODO(sp1ff): Implment copy & move ctors and assignment operators
-    mutable bool dirty_;
     mutable std::size_t num_false_syncs_;
     mutable std::vector<unsigned char> cache_[2];
 
