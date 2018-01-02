@@ -247,10 +247,11 @@ scribbu::id3v2_3_tag::ext_header::ensure_cached_data_is_fresh() const
 
   stringstream stm;
 
-  // TODO(sp1ff): Re-factor writing ints
-  // TODO(sp1ff): Have I assumed little-endian host order throughout?!
-  
   size_t cbhdr = size();
+  if (cbhdr > 0xffffffff) {
+    throw invalid_ext_header();
+  }
+
   cbhdr = htonl(cbhdr);
   stm.write((char*)&cbhdr, 4);
 

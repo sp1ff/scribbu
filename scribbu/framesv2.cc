@@ -153,27 +153,6 @@ scribbu::unique_file_id::needs_unsynchronisation() const
   return count_ffs();
 }
 
-// std::size_t
-// scribbu::unique_file_id::write(std::ostream &os, bool unsync) const
-// {
-//   const char zed = 0;
-
-//   std::size_t cb_ffs = count_ffs();
-//   if (unsync && cb_ffs) {
-//     std::size_t cb = 0 ;
-//     cb += detail::unsynchronise(os, owner_.begin(), owner_.end());
-//     os.write(&zed, 1); cb += 1;
-//     cb += detail::unsynchronise(os, id_.begin(), id_.end());
-//     return cb;
-//   }
-//   else {
-//     os.write((const char*)&(owner_[0]), owner_.size());
-//     os.write(&zed, 1);
-//     os.write((const char*)&(id_[0]), id_.size());
-//     return owner_.size() + 1 + id_.size();
-//   }
-// }
-
 std::size_t
 scribbu::unique_file_id::write(std::ostream &os) const
 {
@@ -185,6 +164,7 @@ scribbu::unique_file_id::write(std::ostream &os) const
   return owner_.size() + 1 + id_.size();
 }
 
+// TODO(sp1ff): Needed?
 std::size_t
 scribbu::unique_file_id::count_ffs() const
 {
@@ -225,34 +205,6 @@ scribbu::encryption_method::needs_unsynchronisation() const
   return count_ffs();
 }
 
-// std::size_t
-// scribbu::encryption_method::write(std::ostream &os, bool unsync) const
-// {
-//   const char zed = 0;
-
-//   using namespace std;
-//   using namespace scribbu::detail;
-//   std::size_t cb_ffs = count_ffs();
-//   if (unsync && cb_ffs) {
-//     std::size_t cb = 0 ;
-//     cb += unsynchronise(os, email_.begin(), email_.end());
-//     // email is null-terminated, so no possibilty of a false sync
-//     os.write(&zed, 1); cb += 1;
-//     os.write((const char*)&method_symbol_, 1); cb += 1;
-//     if (!data_.empty() && is_false_sync(method_symbol_, data_.front())) {
-//       os.write((const char*)&method_symbol_, 1); cb += 1;
-//     }
-//     cb += unsynchronise(os, data_.begin(), data_.end());
-//     return cb;
-//   }
-//   else {
-//     os.write((const char*)&(email_[0]), email_.size());
-//     os.write((const char*)&method_symbol_, 1);
-//     os.write((const char*)&(data_[0]), data_.size());
-//     return email_.size() + 1 + data_.size();
-//   }
-// }
-
 std::size_t
 scribbu::encryption_method::write(std::ostream &os) const
 {
@@ -265,6 +217,7 @@ scribbu::encryption_method::write(std::ostream &os) const
 
 }
 
+// TODO(sp1ff): Needed?
 /// Return the number of bytes with 255 as their value when serialized
 /// without unsynchronisation
 std::size_t
@@ -351,6 +304,7 @@ scribbu::user_defined_text::write(std::ostream &os) const
   return cb;
 }
 
+// TODO(sp1ff): Needed?
 std::size_t
 scribbu::user_defined_text::count_ffs() const
 {
@@ -425,6 +379,7 @@ scribbu::comments::write(std::ostream &os) const
   return cb;
 }
 
+// TODO(sp1ff): Needed?
 std::size_t
 scribbu::comments::count_ffs() const
 {
@@ -493,6 +448,7 @@ scribbu::play_count::write(std::ostream &os) const
   return counter_.size();
 }
 
+// TODO(sp1ff): Needed?
 std::size_t
 scribbu::play_count::count_ffs() const
 {
@@ -548,6 +504,7 @@ scribbu::popularimeter::write(std::ostream &os) const
   return email_.size() + 2 + counter_.size();
 }
 
+// TODO(sp1ff): Needed?
 std::size_t
 scribbu::popularimeter::count_ffs() const
 {

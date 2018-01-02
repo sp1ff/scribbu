@@ -126,15 +126,23 @@ std::size_t
 scribbu::id3v2_2_frame::write_header(std::ostream &os,
                                      std::size_t cb_payload) const
 {
-  std::size_t sz = cb_payload;
-
   char idbuf[3]; id().copy(idbuf);
 
   char szbuf[3];
-  // ID3v2.2 frame sizes are not sync-safe:
-  szbuf[0] = (sz & 0xff0000) >> 16;
-  szbuf[1] = (sz & 0x00ff00) >>  8;
-  szbuf[2] =  sz & 0x0000ff;
+
+  // ID3v2.2 frame sizes are not sync-safe: We have 24 bits with
+  // which to represent the size, meaning we can represent frame
+  // sizes up to 0xffffff (inclusive).
+
+  const std::size_t MAX_FRAME_SIZE = 0xffffff;
+  if (cb_payload > MAX_FRAME_SIZE) {
+    // TODO(sp1ff): Custom exception here!
+    throw std::logic_error("Invalid ID3v2.2 frame size");
+  }
+  
+  szbuf[0] = (cb_payload & 0xff0000) >> 16;
+  szbuf[1] = (cb_payload & 0x00ff00) >>  8;
+  szbuf[2] =  cb_payload & 0x0000ff;
 
   os.write(idbuf, 3);
   os.write(szbuf, 3);
