@@ -1,6 +1,9 @@
 #include "command-utilities.hh"
 
+#include <sstream>
 #include <unordered_map>
+
+#include <boost/algorithm/string/replace.hpp>
 
 namespace po = boost::program_options;
 
@@ -41,5 +44,13 @@ print_usage(std::ostream                  &os,
             const po::options_description &opts,
             const std::string             &usage)
 {
-  os << usage << opts << std::endl;
+  using namespace std;
+
+  // Workaround for https://svn.boost.org/trac10/ticket/4644; marked as fixed
+  // some time ago, but still happening...
+  stringstream stm4644;
+  stm4644 << opts;
+  string str4644 = stm4644.str();
+  boost::algorithm::replace_all(str4644, "--h ", "-h  ");
+  os << usage << str4644  << std::endl;
 }

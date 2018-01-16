@@ -1,0 +1,182 @@
+.\" Copyright (C) 2018  Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu 1 2018-01-14 "scribbu 0.4" "scribbu Manual"
+.SH NAME
+scribbu \- The extensible tool for tagging your music collection
+.SH SYNOPSIS
+.HP
+.B scribbu
+[(-c|--config) config-file] [-h|--help] [-v|--version] [--info]
+.RS 8
+.br
+([(-e|--expression) expr] |
+.br
+[(-f|--file) file] |
+.br
+[<sub-command> <args>])
+.RE
+
+.SH DESCRIPTION
+.BR scribbu
+is a C++ library & associated command-line tool for working with
+ID3-tagged files (presumably music). In addition to making the library
+available to C++ programmers, the scribbu command embeds
+.B Guile,
+allowing it to be scripted using
+.B Scheme
+(a LISP dialect).
+
+.B scribbu
+can be invoked in a few ways:
+
+.IP "  1."
+with a Scheme expression
+.RI ( -e ", " --expression )
+or Scheme file
+.RI ( -f ", " --file "). "
+In this case,
+.B scribbu
+will evaluate the given program & exit.
+
+.IP "  2."
+with no arguments at all. In this case,
+.B scribbu
+will drop into a Scheme shell in which the user can evaluate arbitrary
+Scheme expressions.
+
+.IP "  3."
+with a sub-command & relevant options & arguments.
+.B scribbu
+implements the following sub-commands:
+.IP
+.BR scribbu-dump (1)
+.RS 8
+.B scribbu dump
+will write the contents of any & all ID3 tags found in one or more
+files to
+.IR stdout .
+.RE
+.IP
+.BR scribbu-rename (1)
+.RS 8
+.B scribbu rename
+will rename one or more files based on the contents of their ID3 tags; e.g.
+.B scribbu rename -t "%A-%T.mp3" *.mp3
+will rename all the files matching
+.IR *.mp3 " to " <artist>-<title>.mp3
+where "artist" and "title" are derived from their ID3 tags (if any).
+.RE
+.IP
+.BR scribbu-report (1)
+.RS 8
+.B scribbu report
+will generate a report listing ID3 attributes on one or more files on
+.I stdout.
+Only
+.SM CSV
+format is supported currently.
+.RE
+.IP
+.BR scribbu-split (1)
+.RS 8
+.B scribbu split
+will split one file into many; with each new file corresponding to some
+component of the input file: ID3v1 tag, data, and/or ID3v2 tag(s).
+.RE
+.P
+Any sub-command can be invoked with
+.IR --help " or " -h
+for more information (or see the man pages referenced above).
+
+.SS Getting Help
+
+man pages are available for the
+.B scribbu
+command itself (i.e. this page), as well as all sub-commands. Their
+pages can be viewed by typing
+.IR "man scribbu-SUBCOMMAND" " where " SUB-COMMAND
+is the name of the sub-command for which help is sought.
+
+For
+.B scribbu
+and each sub-command, passing the
+.I -h
+option will produce a brief, unformatted usage message on
+.IR stdout ". " --help
+will produce the corresponding man page, unless modified with the
+.I --info
+flag, in which case the corresponding node will be displayed in
+the users's Info viewer (i.e. the same behavior as
+.RB "git " (git "(1)). "
+
+The primary documentation, however, is the
+.BR scribbu " Texinfo manual, "
+which should be available via:
+.IR "info scribbu" ". "
+
+.SS Scripting scribbu with Scheme
+
+.B TODO(sp1ff) Write me!
+
+.SH OPTIONS
+.PP
+\-v, \-\-version
+.RS 4
+Print
+.B scribbu
+version on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help; this man page by default, or the
+.B scribbu
+node in the local Info system if the
+.I --info
+flag is also given.
+.RE
+.PP
+\-\-info
+.RS 4
+Modify the
+.I --help
+flag by using the users's Infor viewer in stead of man page viewer.
+.RE
+.PP
+\-c, \-\-config=config-file
+.RS4
+Specify a configuration file other than
+.I ~/.scribbu
+from which options shall be read (see
+.B FILES
+below).
+
+.SH FILES
+
+.SS ~/.scribbu
+
+.B TOOD(sp1ff):
+Describe configuration file format in the
+.B scribbu
+man page!
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu-dump "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1)"
+

@@ -1,0 +1,70 @@
+.\" Copyright (C) 2018  Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu 1 2018-01-14 "scribbu 0.4" "scribbu Manual"
+.SH NAME
+scribbu-split \- split a file into ID3v2, track & ID3v1 pieces
+.SH SYNOPSIS
+.BR scribbu " [(-c|--config) config-file] " dump " [-h] [--help] [--info]"
+.RS 8
+.br
+[--suffix arg] <file>
+
+.SH DESCRIPTION
+
+Split a file into it's ID3v2 tag, track data, and/or ID3v1 tag. The
+input files will be named
+.IB id3v2 NS
+for
+.B N
+= 0,1,2..., and
+.I S
+is the suffix specified with the
+.I --suffix
+option (if given).
+
+Similarly, the track data & ID3v1 tag (if any) will be written into
+files named
+.IB track S
+and
+.IB id3v1 S ". "
+
+.SH OPTIONS
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help; this man page by default, or the
+.B scribbu-rename
+node in the local Info system if the
+.I --info
+flag is also given.
+.RE
+.PP
+\-\-info
+.RS 4
+Modify the
+.I --help
+flag by using the users's Infor viewer instead of man page viewer.
+.RE
+.PP
+\-\-suffix arg
+.RS 4
+Suffix to append to each output file (in the spirit of
+.RB split( split(1) ")."
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu "(1), " scribbu-dump "(1), " scribbu-rename "(1), " scribbu-report "(1)"

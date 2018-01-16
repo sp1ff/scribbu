@@ -82,22 +82,12 @@ namespace {
     return 0;
   }
 
-  // TODO: Update scribbu.cc USAGE messagevvvvvvvvvvvv
-  const std::string USAGE(R"(scribbu -- tag your music
-
-scribbu is tool for managing your MP3 collection.
+  const std::string USAGE(R"(scribbu -- the extensible tool for tagging your music collection
 
 Usage:
-    scribbu [OPTION...] SUB-COMMAND
+    scribbu [OPTION...] [SUB-COMMAND]
 
-where SUB-COMMAND is one of:
-
-    - split: split a file into ID3v2 tag(s), track data, and ID3v1 tag
-    - rename: rename a file based on it's tag(s)
-    - report: generate a report on the contents of one or more directories
-    - dump: dump the tags for one or more files or directories
-
-For sub-command help, run 'scribbu SUB-COMMAND --help'
+For detailed help, say `scribbu --help'. To see the scribbu manual, say `info scribbu'.
 )");
   
   const fs::path DEFCFG("~/.scribbu");
@@ -188,28 +178,22 @@ main(int argc, char * argv[])
   po::options_description gopts("Global options");
   gopts.add_options()
     ("config,c", po::value<fs::path>()->default_value(DEFCFG),
-     "path (absolute or relative) to the config file")
-    ("expression,e", po::value<string>(), "Expression to evaluate")
+     "path (absolute or relative) to the config file from which additional"
+     " options will be read")
+    ("expression,e", po::value<string>(), "Scheme expression to evaluate")
     ("file,f", po::value<string>(), "Scheme file to evaluate")
-    ("help,h", "print the " PACKAGE " usage message & exit with status zero")
+    ("h", "print the " PACKAGE " usage message & exit with status zero")
+    ("help", "show more detailed help")
     ("version,v", "print the " PACKAGE " version & exit with status zero");
-
-  po::options_description xgopts("Developer-only global options");
-  xgopts.add_options()
-    ("man", "print the " PACKAGE " usage message including developer-only"
-     " options & exit with status zero");
 
   po::options_description hidden;
   hidden.add_options()
     ("sub-command", po::value<vector<string>>());
 
-  po::options_description global; // for error reporting, below.
-  global.add(gopts).add(xgopts);
-
   try {
 
     po::options_description allopts;
-    allopts.add(gopts).add(xgopts).add(hidden);
+    allopts.add(gopts).add(hidden);
 
     // In order to have boost accept later positional parameters, it
     // seems we need to stuff them all one option (as opposed to
@@ -219,6 +203,10 @@ main(int argc, char * argv[])
 
     po::parsed_options parsed = po::command_line_parser(argc, argv).
       options(allopts).
+      // Workaround for
+      // https://stackoverflow.com/questions/3621181/short-options-only-in-boostprogram-options
+      style(po::command_line_style::default_style |
+            po::command_line_style::allow_long_disguise).
       positional(popts).
       allow_unregistered().
       run();
@@ -257,9 +245,9 @@ main(int argc, char * argv[])
       // If we're here, we going to do *something*, albeit as little
       // as printing help; how much help was requested (if any)?
       help_level help = help_level::none;
-      if (vm.count("man")) {
+      if (vm.count("help")) {
         help = help_level::verbose;
-      } else if (vm.count("help")) {
+      } else if (vm.count("h")) {
         help = help_level::regular;
       }
 
@@ -286,10 +274,13 @@ main(int argc, char * argv[])
       } else {
 
         if (help_level::verbose == help) {
-          print_usage(cout, gopts, USAGE);
+          // TODO(sp1ff): Might be nice to support other man page readeres
+          // (woman, e.g.)
+          execlp("man", "man", "scribbu", (char *)NULL);
+          throw runtime_error("failed to exec"); // TODO(sp1ff): grab errno
         }
         else if (help_level::regular == help) {
-          print_usage(cout, global, USAGE);
+          print_usage(cout, gopts, USAGE);
         }
         else {
 

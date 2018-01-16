@@ -13,3 +13,5 @@ config.h.in
 README
 build-aux/
 sp1ff
+configure
+stamp-h1

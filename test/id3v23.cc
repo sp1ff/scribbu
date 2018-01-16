@@ -1546,8 +1546,8 @@ BOOST_AUTO_TEST_CASE( test_compressed_2 )
   BOOST_CHECK(tag.has_frame("TXXX"));
   const TXXX &txxx = dynamic_cast<const TXXX&>(tag.get_frame("TXXX"));
 
-  BOOST_TEST("compression example" == txxx.description<string>());
-  BOOST_TEST("compression example" == txxx.text<string>());
+  BOOST_CHECK("compression example" == txxx.description<string>());
+  BOOST_CHECK("compression example" == txxx.text<string>());
 
   size_t xxx = tag.size();
   BOOST_TEST_MESSAGE("tag.size() returns 0x" << hex << xxx);

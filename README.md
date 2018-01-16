@@ -1,7 +1,7 @@
 scribbu - tag your music
 ========================
 
-This directory contains the 0.2 release of scribbu.
+This directory contains the 0.4 release of scribbu.
 
 See the file NEWS for the user-visible changes from previous releases.
 
@@ -70,5 +70,3 @@ None.
 
 -------------------------------------------------------------------------------
 Copyright (C) 2015-2017 Michael Herstine <sp1ff@pobox.com>
-
-

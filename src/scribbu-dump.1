@@ -1,0 +1,127 @@
+.\" Copyright (C) 2018  Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu 1 2018-01-14 "scribbu 0.4" "scribbu Manual"
+.SH NAME
+scribbu-dump \- dump ID3 tags from one or more files
+.SH SYNOPSIS
+.BR scribbu " [(-c|--config) config-file] " dump " [-h] [--help] [--info]"
+.RS 8
+.br
+[-1|--id3v1-tags]
+.br
+[-D|--track-data]
+.br
+[-2|id3v2-tags]
+.br
+[(-i|--indent) arg]
+.br
+[-g|--no-expand-genre]
+.br
+[(-e|--expression) regex]
+.br
+[(-f|--format) format]
+.br
+[(-c|--v1-encoding) encoding]
+.br
+<files>
+
+.SH DESCRIPTION
+
+.B scribbu dump
+will walk each file and/or directory specified, reading each file
+found, looking for ID3 tags therein, and pretty-printing what it
+finds to
+.IR stdout ". "
+The format is controlled by the
+.I --format
+flag, which may be either "standard" (the default) or "csv".
+
+.SH OPTIONS
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help; this man page by default, or the
+.B scribbu-dump
+node in the local Info system if the
+.I --info
+flag is also given.
+.RE
+.PP
+\-\-info
+.RS 4
+Modify the
+.I --help
+flag by using the users's Infor viewer instead of man page viewer.
+.RE
+.PP
+\-1, \-\-id3v1-tags
+.RS4
+Display ID3v1 tags only.
+.RE
+.PP
+\-D, \-\-track\-data
+.RS 4
+Display track data only.
+.RE
+.PP
+\-2, \-\-id3v2\-tags
+splay ID3v2 tags only.
+.RE
+.PP
+\-i, \-\-indent arg
+.RS 4
+Indent all output
+.I arg
+spaces.
+.RE
+.PP
+\-g, \-\-no\-expand\-genre
+.RS 4
+Don't attempt to expand the genre when specified as a numeric constant.
+.RE
+.PP
+\-e, \-\-expression regex
+.RS 4
+Define a regular expression for filtering the files to be pretty-printed. For
+each file, its entire path will be
+.B matched
+against this regular expression before being pretty-printed (& non-matches
+will be ignored).
+.RE
+.PP
+\-f, \-\-format arg
+.RS4
+The desired output format; at present, only two values are supported for
+this option:
+.IP
+"standard", which is the default, pretty-prints the selectd portions of
+each file to
+.I stdout
+with one attribute (artist, title &c) per row.
+.IP
+"csv", which will print one line in CSV format per file.
+.RE
+.PP
+\-c, \-\-v1\-encoding arg
+.RS4
+Specify an encoding for text in ID3v1 tags (CP1252 by default).
+>RE
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1)"
+

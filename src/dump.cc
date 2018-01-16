@@ -26,10 +26,8 @@ USAGE:
 
     scribbu dump [OPTION] FILE-OR-DIRECTORY...
 
-scribbu dump will walk each file and/or directory specified, reading each file
-found, looking for ID3 tags therein, and printing the results. The format is
-controlled by the --format flag, which may be either "standard" (the default),
-or "csv".
+For detailed help, say `scribbu dump --help'. To see the manual, say
+`info "scribbu (dump) "'.
 )");
 
 }
@@ -306,7 +304,10 @@ namespace {
       if (help_level::regular == help) {
         print_usage(cout, docopts, USAGE);
       } else if (help_level::verbose == help) {
-        print_usage(cout, all, USAGE);
+        // TODO(sp1ff): Might be nice to support other man page readeres
+        // (woman, e.g.)
+        execlp("man", "man", "scribbu-dump", (char *)NULL);
+        throw runtime_error("failed to exec"); // TODO(sp1ff): grab errno
       } else {
 
         po::variables_map vm;

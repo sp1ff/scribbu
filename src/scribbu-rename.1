@@ -1,0 +1,197 @@
+.\" Copyright (C) 2018  Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu-rename 1 2018-01-14  "scribbu 0.4" "scribbu Manual"
+.SH NAME
+scribbu rename \- Rename files according to the ID3 tag attributes
+.SH SYNOPSIS
+.BR scribbu " [(-c|--config) config-file] " rename " [-h] [--help] [--info]"
+.RS 8
+.br
+[-n|--dry-run] [-v|--verbose] [(-o|--output) arg] [-r|--rename]
+[(-t|--template) arg]
+<file-or-directory> <file-or-directory>...
+
+.SH DESCRIPTION
+
+Rename one or more files, and/or the files in one or more directories,
+according to their ID3 tags. By default, each file will be renamed to
+.I <artist> - <title>.<extension>
+where
+.IR artist " & " title
+are derived from the file's ID3 tags.
+
+The caller can customize this, however, using the
+.IR --template option ". "
+This option accepts a string that mixes text with replacement
+parameters (such as title, artist, album &c).
+
+The replacement parameters begin with a % (escape % signs that do
+.B not
+start a replacement with a backslash). Each parameter has a
+one-characer short form as well as a long-form name. For example,
+artist can be represented as either 'A' or "artist". The short form
+would be
+.IR %A ", the long " %(artist) ". "
+
+If the long form is used, the action of the replacement paramter may,
+optionally, be modified by giving options after a colon. The options
+take the form:
+.IR opt0&opt1&opt2&... ", "
+where
+.I opt
+.SB i
+is of the form
+.I name=value
+or just
+.IR name ". "
+To continue the example, if we wanted the
+artist to always be taken from the ID3v1 tag, and that field is
+encoded as ISO-8859-1, we could say:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+%(artist:v1-only&v1-encoding=iso-8859-1)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+
+.SS Tag-based replacements
+
+Replacement name: short form, long form
+
+.RS 4
+.IP "Album: L, album"
+.IP "Artist: A, artist"
+.IP "Content Type: G, {content-type,genre}"
+.IP "Encoded by: e, encoded-by"
+.IP "Title: T, title"
+.IP "Year: Y, year"
+.RE
+
+Tag-based replacements take the following options:
+
+.RS 4
+.IP "source of the replacement text"
+prefer-v2, prefer-v1, v2-only, v1-only
+.IP "character encoding when the ID3v1 tag is used"
+v1-encoding={auto, iso-8859-1,ascii,cp1252,utf-8,utf-16-be,utf-16,le,utf-32}
+.IP "handling \"The ...\""
+the(suffix), the=suffix,the=prefix
+.IP "capitalizing words"
+capitalization, capitalization={all-upper,all-lower}
+.IP "handling whitespace"
+compress, ws="TEXT"
+.IP output character set
+output=iso-8859-1,ascii,...
+.RE
+
+E.g.
+.I %(artist:prefer-v2&v1-encoding=cp1252&the=suffix&compress)
+applied to a file whose ID3v2 tag had an artist frame of "The Pogues"
+would produce "Pogues, The".
+
+In addition to the above, the year can be formatted as two digits or four
+by giving "yy" or "yyyy" in the options for that replacement.
+
+.SS Filename-based replacement parameters
+
+Replacement name: short form, long form
+
+.RS 4
+.IP "basename: b, basename"
+.IP "extension: E, extension (incl. dot)"
+.RE
+
+These take the same "The", capitalization & whitespace options as tag-based
+replacements.
+
+.SS Replacements based on the track data:
+
+Replacement name: short form, long form
+
+.RS 4
+.IP "MD5 checksum: 5, md5"
+.IP "size: S, size (bytes)"
+.RE
+
+Both replacements take the following options:
+
+.RS 4
+.IP "base: base={decimal,hex}"
+.ip "case for hexadecimal digits: hex-case={U,L}"
+.RE
+
+.SH OPTIONS
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help; this man page by default, or the
+.B scribbu-rename
+node in the local Info system if the
+.I --info
+flag is also given.
+.RE
+.PP
+\-\-info
+.RS 4
+Modify the
+.I --help
+flag by using the users's Infor viewer instead of man page viewer.
+.RE
+.PP
+\-n|\-\-dry\-run
+.RS 4
+Dry-run; only print what
+.I would
+happen
+.RE
+.PP
+\-o, \-\-output arg
+.RS 4
+If specified, copy the output files to this directory, rather than
+renaming in-place.
+.RE
+.PP
+\-r, \-\-rename
+.RS 4
+Remove the source file (ignored if
+.I --dry-run is given)
+.RE
+.PP
+\-t, \-\-template arg
+.RS 4
+Template by which to rename the files (defaults to
+.IR "%A - %T.mp3" ).
+.RE
+.PP
+\-v, \-\-verbose
+.RS 4
+Produce verbose output.
+.RE
+.PP
+<argument...>
+.RS 4
+One or more files or directories to be examined; if a directory is
+given, it will be searched recursively.
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu "(1), " scribbu-dump "(1), " scribbu-report "(1), " scribbu-split "(1)"

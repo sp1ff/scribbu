@@ -1,0 +1,51 @@
+.\" Copyright (C) 2018  Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu 1 2018-01-14 "scribbu 0.4" "scribbu Manual"
+.SH NAME
+scribbu-report \- generate a report on one or more files' ID3 tags
+.SH SYNOPSIS
+.B scribbu " [(-c|--config) config-file] " report " [-h] [--help] [--info]"
+.RS 8
+[(-c|--num-comments) arg] [(-o|--output) output] [(-1|--v1-encoding) arg]
+<file-or-directory> <file-or-directory...>
+.RE
+
+.SH DESCRIPTION
+
+Generate a report on one or more files containing ID3 tags. The
+assumed workflow is to have
+.B scribbu
+do the work of extracting ID3 data from the input files, and to use
+some other tool better suited to querying & reporting.  Consequently,
+filtering mechanisms are minimal, and the output format (CSV) is
+chosen to facilitate transformation to other formats as well as import
+by other tools.
+
+.SH OPTIONS
+.PP
+\-c, \-\-num\-comments arg
+.RS 4
+Number of comment tags to be printed (their # will always be
+reported). Defaults to six.
+.RE
+.PP
+\-o, \-\-output arg
+.RS 4
+\.csv file to which the results will be written
+.RE
+.PP
+\-1, \-\-v1\-encoding arg
+.RS 4
+Encoding to be used for text in ID3v1 tags (defaults to (CP1252).
+.RE
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu "(1), " scribbu-dump "(1), " scribbu-rename "(1), " scribbu-split "(1)"
