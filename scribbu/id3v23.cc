@@ -1057,7 +1057,9 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, std::size_t size, bool extend
     // Unlike ID3v2.2, we may have an extended header next.
     if (extended) {
       pext_header_.reset(new ext_header(p0, p1));
-      p0 += pext_header_->size() + 4; // TODO(sp1ff): Why +4?
+      // N.B. ID3v2.3 extended header `size' excludes the four bytes
+      // in the header expressing the size.
+      p0 += pext_header_->size() + 4;
     }
 
     static const frame_id4 ENCR("ENCR");

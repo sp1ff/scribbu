@@ -235,3 +235,123 @@ BOOST_AUTO_TEST_CASE( test_rare_frames )
   BOOST_CHECK("13" == s);
 }
 
+/**
+ * \brief Test an ID3v2.4 frame with an extended header
+ *
+ *
+ * Raw data:
+ *
+ \code
+
+   od -Ax -tx1z id3v2.4.ext.tag
+   000000 49 44 33 04 00 40 00 00 00 5c 00 00 00 0c 01 20  >ID3..@...\..... <
+   000010 05 0a 47 3d 24 71 54 52 43 4b 00 00 00 02 00 00  >..G=$qTRCK......<
+   000020 00 38 54 58 58 58 00 00 00 24 00 00 00 45 6e 63  >.8TXXX...$...Enc<
+   000030 6f 64 65 64 20 62 79 00 52 69 70 70 65 64 20 77  >oded by.Ripped w<
+   000040 69 74 68 20 53 74 72 65 61 6d 72 69 70 70 65 72  >ith Streamripper<
+   000050 54 49 54 32 00 00 00 0c 00 00 00 53 68 61 6e 61  >TIT2.......Shana<
+   000060 67 6f 6c 64 65 6e ff fb 90 c4 00 00 00 00 00 00  >golden..........<
+   000070 00 00 00 00 00 00 00 00 00 00 00 58 69 6e 67 00  >...........Xing.<
+   000080 00 00 0f 00 00 2e 10 00 32 a5 fa 00 02 05 07 09  >........2.......<
+   000090 0c 0f 11 13 16 18 1b 1d 1f 22 25 27 2a 2c 2f 31  >........."%'*,/1<
+   0000a0 34 36 39 3c 3f 41 44 46 49 4b 4e 50 53 56 58 5b  >469<?ADFIKNPSVX[<
+   0000b0 5d 60 62 65 67 6a 6d 6f 72 74 77 79 7c 7f 81 84  >]`begjmortwy|...<
+   0000c0 87 89 8c 8e 91 93 96 98 9b 9e a0 a3 a6 a8 aa ad  >................<
+   0000d0 af b2 b5 b7 ba bd bf c2 c4 c7 c9 cc cf d1 d4 d7  >................<
+   0000e0 d9 dc de e0 e3 e6 e8 eb ee f0 f3 f6 f8 fa fd 00  >................<
+   0000f0 00 00 50 4c 41 4d 45 33 2e 39 39 72 04 b9 00 00  >..PLAME3.99r....<
+   000100 00 00 00 00 00 00 35 20 24 03 f0 41 00 01 e0 00  >......5 $..A....<
+   000110 32 a5 fa 80 44 d8 cd 00 00 00 00 00 00 00 00 00  >2...D...........<
+   000120 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+   *
+   000200 00 00 00 00 00 00 00                             >.......<
+   000207
+
+ \endcode
+ *
+ * broken out:
+ *
+ \code
+
+   000000 49 44 33 04 00                                   ID3 v2.4 tag
+   000005                40                                flags: ext. header present
+   000006                   00 00 00 5c                    size: 0x5c = 92 bytes
+   00000a                               00 00 00 0c        Ext. header is 0x0c = 12 bytes
+   00000e                                           01 20  1 flag byte: CRC data present
+   000010 05 0a 47 3d 24 71                                CRC-32 := 0xa8ef5271 [1]
+   000016                   54 52 43 4b 00 00 00 02 00 00  TRCK, 2 bytes, no flags
+   000020 00 38                                            ISO-8859-1 "8"
+   000022       54 58 58 58 00 00 00 24 00 00              TXXX, 36 bytes, no flags
+   00002c                                     00 45 6e 63  ISO-8859-1, "Encoded by",
+   000030 6f 64 65 64 20 62 79 00 52 69 70 70 65 64 20 77  "Ripped with Streamripper"
+   000040 69 74 68 20 53 74 72 65 61 6d 72 69 70 70 65 72
+   000050 54 49 54 32 00 00 00 0c 00 00                    TIT2, 0x0c = 12 bytes, no flags
+   00005a                               00 53 68 61 6e 61  ISO-8859-1, "Shanagolden"
+   000060 67 6f 6c 64 65 6e
+   00006g                   ff fb 90 c4 00 00 00 00 00 00  track data...
+   *
+   000200 00 00 00 00 00 00 00                             >.......<
+   000207
+
+   1. 0x0a 47 3d 24 71 = b0000 1010 0100 0111 0011 1101 0010 0100 0111 0001 =>
+
+      b 000 1010 100 0111 011 1101 010 0100 111 0001
+      b 1010 1000 1110 1111 0101 0010 0111 0001
+     0x    a
+
+
+      b  000 1010  100 0111  011 1101  010 0100  111 0001 =
+      b 0000 1010 1000 1110 1111 0101 0010 0111 0001 = 
+      0x   0    a    8    e    f    5    2    7    1 = 0x0a8ef5271
+
+ \endcode
+ *
+ *
+ */
+
+BOOST_AUTO_TEST_CASE( test_id3v24_ext_header )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path DATA(get_data_directory() / "id3v2.4.ext.tag");
+
+  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  id3v2_4_tag tag(ifs);
+  
+  BOOST_CHECK(4 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(false == tag.unsynchronised());
+  BOOST_CHECK(0x40 == tag.flags());
+
+  BOOST_CHECK(92 == tag.size());
+  BOOST_CHECK(false == tag.needs_unsynchronisation());
+  BOOST_CHECK(3 == tag.num_frames());
+  size_t cb = tag.padding();
+  BOOST_CHECK(0 == cb);
+
+  string s = tag.track();
+  BOOST_CHECK("8" == s);
+  s = tag.title();
+  BOOST_CHECK("Shanagolden" == s);
+
+  BOOST_CHECK(0 == tag.has_album());
+  BOOST_CHECK(0 == tag.has_artist());
+  BOOST_CHECK(0 == tag.has_content_type());
+  BOOST_CHECK(0 == tag.has_encoded_by());
+  BOOST_CHECK(0 == tag.has_languages());
+  BOOST_CHECK(0 == tag.has_play_count());
+  BOOST_CHECK(0 == tag.has_year());
+  
+  BOOST_CHECK(false == tag.experimental());
+  BOOST_CHECK(true  == tag.has_extended_header());
+  BOOST_CHECK(false == tag.has_footer());
+
+  id3v2_4_tag::ext_header H = tag.extended_header();
+  BOOST_CHECK(12 == H.size());
+  // TODO(sp1ff): Check update
+  BOOST_CHECK(H.has_crc());
+  BOOST_CHECK(0xa8ef5271 == H.crc());
+  // TODO(sp1ff): Check restricted
+
+}

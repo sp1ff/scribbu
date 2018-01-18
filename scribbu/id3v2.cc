@@ -53,10 +53,10 @@ scribbu::detail::uint32_from_sync_safe(unsigned char b0,
   // ID3v2 specification) & will return the correct value regardless of the
   // host byte order.
   return ( (b0 & 0x0f) << 28 ) |
-         ( (b2 & 0x7f) << 21 ) |
-         ( (b3 & 0x7f) << 14 ) |
-         ( (b4 & 0x7f) <<  7 ) |
-         (b4 & 0x7f);
+         ( (b1 & 0x7f) << 21 ) |
+         ( (b2 & 0x7f) << 14 ) |
+         ( (b3 & 0x7f) <<  7 ) |
+           (b4 & 0x7f);
 }
 
 std::size_t

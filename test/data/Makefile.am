@@ -8,4 +8,4 @@ on-green-dolphin-street.mp3 u2-promenade.mp3 sleepwalking.mp3 \
 nan-1.mp3 lunch4bfast.mp3 lunch4bfast2.mp3 orlando.mp3 compressed.mp3 \
 duplicate_id3v2.mp3 with-track-in-golden.log unsynch.id3 searchresults.dat \
 id3v22-tda.mp3 230-compressed.tag 230-picture.tag ozzy.tag rare_frames.mp3 \
-golden-test-cleanup-encoded-by.out
+golden-test-cleanup-encoded-by.out id3v2.4.ext.tag

@@ -160,7 +160,8 @@ scribbu::id3v2_4_tag::invalid_ext_header::what() const noexcept
 scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
                                              const unsigned char *p1):
   size_dirty_(false),
-  crc_dirty_ (false)
+  crc_dirty_ (false),
+  fcrc_      (false)
 {
   using scribbu::detail::unsigned_from_sync_safe;
 
@@ -177,9 +178,9 @@ scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
   }
 
   // We only know how to parse the first:
-  bool is_update_  = p0[5] & 0x40;
-  bool fcrc_    = p0[5] & 0x20;
-  bool restricted_ = p0[5] & 0x10;
+ is_update_  = p0[5] & 0x40;
+ fcrc_       = p0[5] & 0x20;
+ restricted_ = p0[5] & 0x10;
 
   // 00 01 02 03  04  05  06  07 08 09 0a 0b 0c
   //    size    | # | f | 00 |05  crc data      |
@@ -256,10 +257,6 @@ scribbu::id3v2_4_tag::ext_header::ext_header(const unsigned char *p0,
     image_sz_restriction_ = image_size(0x03 & p0[1]);
 
     p0 += 2;
-  }
-
-  if (p0 != p1) {
-    throw invalid_ext_header();
   }
 
 }
@@ -422,7 +419,8 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
   return cb;  
 }
 
-scribbu::id3v2_4_tag::id3v2_4_tag(std::istream &is): id3v2_tag(is)
+scribbu::id3v2_4_tag::id3v2_4_tag(std::istream &is): id3v2_tag(is), padding_(0)
+                                                     
 {
   get_default_generic_frame_parsers(std::inserter(
     generic_parsers_, generic_parsers_.begin()));
@@ -445,13 +443,14 @@ scribbu::id3v2_4_tag::id3v2_4_tag(std::istream     &is,
                                   const id3v2_info &H):
   id3v2_tag(H),
   experimental_(H.flags_ & 0x20),
-  footer_(H.flags_ & 0x10)
+  footer_(H.flags_ & 0x10),
+  padding_(0)
 {
   get_default_generic_frame_parsers(std::inserter(generic_parsers_,
                                                   generic_parsers_.begin()));
   get_default_text_frame_parsers(std::inserter(text_parsers_,
                                                   text_parsers_.begin()));
-  parse(is, H.size_, flags() & 0x40);
+  parse(is, H.size_, H.flags_ & 0x40);
 }
 
 /*virtual*/ unsigned char
@@ -1096,7 +1095,7 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extend
     // Unlike ID3v2.2, we may have an extended header next.
     if (extended) {
       pext_header_.reset(new ext_header(p0, p1));
-      p0 += pext_header_->size() + 4;
+      p0 += pext_header_->size();
     }
 
     static const frame_id4 ENCR("ENCR");
