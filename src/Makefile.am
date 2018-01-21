@@ -12,6 +12,4 @@ scribbu_LDADD = ../scribbu/libscribbu.la \
 	$(BOOST_PROGRAM_OPTIONS_LIB)     \
 	$(BOOST_REGEX_LIB)               \
 	$(BOOST_SYSTEM_LIB)              \
-	-lpthread -lcrypt -lltdl -lgmp
-dist_man_MANS = scribbu.1 scribbu-dump.1 scribbu-rename.1 scribbu-report.1 \
-		scribbu-split.1
+	-lpthread -lltdl -lgmp

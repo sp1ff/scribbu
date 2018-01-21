@@ -29,7 +29,9 @@ AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
                  [Define if libffi is available on this platform.]),
                  AC_MSG_ERROR([libffi not found]))
 
-PKG_CHECK_MODULES([GUILE], [guile-2.2])
+GUILE_PKG([2.2 2.0])
+GUILE_FLAGS
+GUILE_PROGS
 GUILE_SITE_DIR
 
 DX_DOXYGEN_FEATURE(ON)
