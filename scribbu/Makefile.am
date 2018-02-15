@@ -1,5 +1,5 @@
 # Tell automake that these two must be built first; we say how below
-BUILT_SOURCES = tbt-parser.hh tbt-lexer.hh
+BUILT_SOURCES = tbt-parser.hh tbt-lexer.hh scheme.x
 
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(GUILE_CFLAGS)
@@ -14,4 +14,8 @@ include_HEADERS = scribbu.hh errors.hh charsets.hh ostream.hh id3v1.hh framesv2.
 tbt-lexer.hh: Makefile
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) $(srcdir)/tbt-lexer.ll
 
-DISTCLEANFILES = tbt-lexer.cc tbt-lexer.hh
+DISTCLEANFILES = tbt-lexer.cc tbt-lexer.hh scheme.x
+
+SUFFIXES = .x
+.cc.x:
+	guile-snarf -o $@ $< $(AM_CPPFLAGS) -I$(builddir)/..

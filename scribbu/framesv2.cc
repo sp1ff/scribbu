@@ -142,7 +142,7 @@ scribbu::unique_file_id::serialized_size(bool unsync) const
 {
   std::size_t cb = size();
   if (unsync) {
-    cb += count_ffs();
+    cb += count_syncs(false);
   }
   return cb;
 }
@@ -150,7 +150,7 @@ scribbu::unique_file_id::serialized_size(bool unsync) const
 std::size_t
 scribbu::unique_file_id::needs_unsynchronisation() const
 {
-  return count_ffs();
+  return count_syncs(true);
 }
 
 std::size_t
@@ -164,16 +164,16 @@ scribbu::unique_file_id::write(std::ostream &os) const
   return owner_.size() + 1 + id_.size();
 }
 
-// TODO(sp1ff): Needed?
 std::size_t
-scribbu::unique_file_id::count_ffs() const
+scribbu::unique_file_id::count_syncs(bool false_only) const
 {
   using namespace std;
   using namespace scribbu::detail;
-  size_t cb = detail::count_ffs(owner_.begin(), owner_.end());
+
+  size_t n = detail::count_syncs(owner_.begin(), owner_.end(), false_only);
   // owner is null-terminated, so possibility of a false sync
-  cb += detail::count_ffs(id_.begin(), id_.end());
-  return cb;
+  n += detail::count_syncs(id_.begin(), id_.end(), false_only);
+  return n;
 }
 
 
@@ -194,7 +194,7 @@ scribbu::encryption_method::serialized_size(bool unsync) const
   // Need to add the trailing NULL on email_ + the method
   std::size_t cb = email_.size() + 1 + 1 + data_.size();
   if (unsync) {
-    cb += count_ffs();
+    cb += count_syncs(false);
   }
   return cb;
 }
@@ -202,7 +202,7 @@ scribbu::encryption_method::serialized_size(bool unsync) const
 std::size_t
 scribbu::encryption_method::needs_unsynchronisation() const
 {
-  return count_ffs();
+  return count_syncs(true);
 }
 
 std::size_t
@@ -217,24 +217,33 @@ scribbu::encryption_method::write(std::ostream &os) const
 
 }
 
-// TODO(sp1ff): Needed?
-/// Return the number of bytes with 255 as their value when serialized
-/// without unsynchronisation
 std::size_t
-scribbu::encryption_method::count_ffs() const
+scribbu::encryption_method::count_syncs(bool false_only) const
 {
   using namespace std;
   using namespace scribbu::detail;
-  size_t count = count_false_syncs(email_.begin(), email_.end());
-  if (!email_.empty() && is_false_sync(email_.back(), method_symbol_)) {
-    ++count;
+  
+  size_t count = detail::count_syncs(email_.begin(), email_.end(), false_only);
+
+  if (!email_.empty()) {
+    if (false_only && is_false_sync(email_.back(), method_symbol_)) {
+      ++count;
+    }
+    else if (!false_only && needs_unsync(email_.back(), method_symbol_)) {
+      ++count;
+    }
   }
   // email_ is null-terminated, so no possibility of a false sync...
   // but there could be one between method_symbol_ & data_:
-  if (!data_.empty() && is_false_sync(method_symbol_, data_.front())) {
-    ++count;
+  if (!data_.empty()) {
+    if (false_only && is_false_sync(method_symbol_, data_.front())) {
+      ++count;
+    }
+    else if (!false_only && is_false_sync(method_symbol_, data_.front())) {
+      ++count;
+    }
   }
-  count += count_false_syncs(data_.begin(), data_.end());
+  count += detail::count_syncs(data_.begin(), data_.end(), false_only);
   return count;
 }
 
@@ -242,6 +251,66 @@ scribbu::encryption_method::count_ffs() const
 ///////////////////////////////////////////////////////////////////////////////
 //                          class user_defined_text                          //
 ///////////////////////////////////////////////////////////////////////////////
+
+scribbu::user_defined_text::user_defined_text(id3v2_version ver,
+                                              const std::string &text,
+                                              encoding src,
+                                              use_unicode unicode,
+                                              const std::string &dsc /*= std::string()*/)
+{
+  encoding dst;
+  bool add_bom;
+  if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
+    switch (unicode) {
+    case use_unicode::no:
+      unicode_ = 0;
+      dst = encoding::ISO_8859_1;
+      add_bom = false;
+      cbnil_ = 1;
+      break;
+    case use_unicode::yes:
+      unicode_ = 1;
+      dst = encoding::UCS_2;
+      add_bom = false;
+      cbnil_ = 2;
+      break;
+    case use_unicode::with_bom:
+      unicode_ = 1;
+      dst = encoding::UCS_2;
+      add_bom = true;
+      cbnil_ = 2;
+      break;
+    }
+  }
+  else {
+    switch (unicode) {
+    case use_unicode::no:
+      unicode_ = 0;
+      dst = encoding::ISO_8859_1;
+      add_bom = false;
+      cbnil_ = 1;
+      break;
+    case use_unicode::yes:
+      unicode_ = 4;
+      dst = encoding::UTF_8;
+      add_bom = false;
+      cbnil_ = 1;
+      break;
+    case use_unicode::with_bom:
+      unicode_ = 4;
+      dst = encoding::UTF_8;
+      add_bom = true;
+      cbnil_ = 1;
+      break;
+    }
+  }
+
+  text_ = convert_encoding(text, src, dst, add_bom);
+  if (!dsc.empty()) {
+    description_ = convert_encoding(dsc, src, dst, add_bom);
+  }
+  
+}
 
 std::size_t
 scribbu::user_defined_text::size() const
@@ -254,7 +323,7 @@ scribbu::user_defined_text::serialized_size(bool unsync) const
 {
   std::size_t cb = size();
   if (unsync) {
-    cb += count_ffs();
+    cb += count_syncs(false);
   }
   return cb;
 }
@@ -262,21 +331,8 @@ scribbu::user_defined_text::serialized_size(bool unsync) const
 std::size_t
 scribbu::user_defined_text::needs_unsynchronisation() const
 {
-  using namespace std;
-  using namespace scribbu::detail;
+  return count_syncs(true);
 
-  size_t count = 0;
-  if (description_.size() && is_false_sync(unicode_, description_.front())) {
-    ++count;
-  }
-  count += count_false_syncs(description_.begin(), description_.end());
-  if (description_.size() &&
-      text_.size() &&
-      is_false_sync(description_.back(), text_.front())) {
-    ++count;
-  }
-  count += count_false_syncs(text_.begin(), text_.end());
-  
 }
 
 std::size_t
@@ -304,16 +360,25 @@ scribbu::user_defined_text::write(std::ostream &os) const
   return cb;
 }
 
-// TODO(sp1ff): Needed?
 std::size_t
-scribbu::user_defined_text::count_ffs() const
+scribbu::user_defined_text::count_syncs(bool false_only) const
 {
+  using namespace scribbu::detail;
+
   std::size_t cb = 0;
-  if (255 == unicode_) {
+
+  if (false_only && description_.size() &&
+      is_false_sync(unicode_, description_.front())) {
     ++cb;
   }
-  cb += detail::count_ffs(description_.begin(), description_.end());
-  cb += detail::count_ffs(text_.begin(), text_.end());
+  else if (!false_only && description_.size() &&
+           needs_unsync(unicode_, description_.front())) {
+    ++cb;
+  }
+  
+  cb += detail::count_syncs(description_.begin(), description_.end(), false_only);
+  cb += detail::count_syncs(text_.begin(), text_.end(), false_only);
+
   return cb;
 }
 
@@ -321,6 +386,73 @@ scribbu::user_defined_text::count_ffs() const
 ///////////////////////////////////////////////////////////////////////////////
 //                              class comments                               //
 ///////////////////////////////////////////////////////////////////////////////
+
+scribbu::comments::comments(id3v2_version ver,
+                            language lang,
+                            const std::string &text,
+                            encoding src,
+                            use_unicode unicode,
+                            const std::string &dsc /*= std::string()*/)
+{
+  if (language::from_locale == lang) {
+    lang = language_from_locale();
+  }
+
+  language_to_iso_639_2(lang, lang_);
+
+  encoding dst;
+  bool add_bom;
+  if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
+    switch (unicode) {
+    case use_unicode::no:
+      unicode_ = 0;
+      dst = encoding::ISO_8859_1;
+      add_bom = false;
+      cbnil_ = 1;
+      break;
+    case use_unicode::yes:
+      unicode_ = 1;
+      dst = encoding::UCS_2;
+      add_bom = false;
+      cbnil_ = 2;
+      break;
+    case use_unicode::with_bom:
+      unicode_ = 1;
+      dst = encoding::UCS_2;
+      add_bom = true;
+      cbnil_ = 2;
+      break;
+    }
+  }
+  else {
+    switch (unicode) {
+    case use_unicode::no:
+      unicode_ = 0;
+      dst = encoding::ISO_8859_1;
+      add_bom = false;
+      cbnil_ = 1;
+      break;
+    case use_unicode::yes:
+      unicode_ = 4;
+      dst = encoding::UTF_8;
+      add_bom = false;
+      cbnil_ = 1;
+      break;
+    case use_unicode::with_bom:
+      unicode_ = 4;
+      dst = encoding::UTF_8;
+      add_bom = true;
+      cbnil_ = 1;
+      break;
+    }
+  }
+
+  text_ = convert_encoding(text, src, dst, add_bom);
+  if (!dsc.empty()) {
+    description_ = convert_encoding(dsc, src, dst, add_bom);
+  }
+  
+}
 
 std::size_t
 scribbu::comments::size() const
@@ -333,7 +465,7 @@ scribbu::comments::serialized_size(bool unsync) const
 {
   std::size_t cb = size();
   if (unsync) {
-    cb += count_ffs();
+    cb += count_syncs(false);
   }
   return cb;
 }
@@ -341,21 +473,7 @@ scribbu::comments::serialized_size(bool unsync) const
 std::size_t
 scribbu::comments::needs_unsynchronisation() const
 {
-  using namespace std;
-  using namespace scribbu::detail;
-  size_t count = is_false_sync(unicode_, lang_[0]) ? 1 : 0;
-  count += count_false_syncs(lang_, lang_ + 3);
-  if (description_.size() && is_false_sync(lang_[2], description_.front())) {
-    ++count;
-  }
-  count += count_false_syncs(description_.begin(), description_.end());
-  if (description_.size() &&
-      text_.size() &&
-      is_false_sync(description_.back(), text_.front())) {
-    ++count;
-  }
-  count += count_false_syncs(text_.begin(), text_.end());
-  return count; 
+  return count_syncs(true);
 }
 
 std::size_t
@@ -379,17 +497,44 @@ scribbu::comments::write(std::ostream &os) const
   return cb;
 }
 
-// TODO(sp1ff): Needed?
 std::size_t
-scribbu::comments::count_ffs() const
+scribbu::comments::count_syncs(bool false_only) const
 {
+  using namespace scribbu::detail;
+
   std::size_t cb = 0;
-  if (255 == unicode_) {
+
+  if (false_only && is_false_sync(unicode_, lang_[0])) {
     ++cb;
   }
-  cb += detail::count_ffs(lang_, lang_ + 3);
-  cb += detail::count_ffs(description_.begin(), description_.end());
-  cb += detail::count_ffs(text_.begin(), text_.end());
+  else if (!false_only && needs_unsync(unicode_, lang_[0])) {
+    ++cb;
+  }
+  
+  cb += detail::count_syncs(lang_, lang_ + 3, false_only);
+
+  if (false_only && description_.size() &&
+      is_false_sync(lang_[2], description_.front())) {
+    ++cb;
+  }
+  else if (!false_only && description_.size() &&
+           needs_unsync(lang_[2], description_.front())) {
+    ++cb;
+  }
+
+  cb += detail::count_syncs(description_.begin(), description_.end(), false_only);
+
+  if (false_only && description_.size() &&
+      is_false_sync(description_.back(), text_.front())) {
+    ++cb;
+  }
+  else if (!false_only && description_.size() &&
+           needs_unsync(description_.back(), text_.front())) {
+    ++cb;
+  }
+  
+  cb += detail::count_syncs(text_.begin(), text_.end(), false_only);
+  
   return cb;
 }
 
@@ -430,7 +575,7 @@ scribbu::play_count::serialized_size(bool unsync) const
 {
   std::size_t cb = size();
   if (unsync) {
-    cb += count_ffs();
+    cb += count_syncs(false);
   }
   return cb;
 }
@@ -438,7 +583,7 @@ scribbu::play_count::serialized_size(bool unsync) const
 std::size_t
 scribbu::play_count::needs_unsynchronisation() const
 {
-  return scribbu::detail::count_false_syncs(counter_.begin(), counter_.end());
+  return count_syncs(true);
 }
 
 std::size_t
@@ -448,11 +593,10 @@ scribbu::play_count::write(std::ostream &os) const
   return counter_.size();
 }
 
-// TODO(sp1ff): Needed?
 std::size_t
-scribbu::play_count::count_ffs() const
+scribbu::play_count::count_syncs(bool false_only) const
 {
-  return detail::count_ffs(counter_.begin(), counter_.end());
+  return detail::count_syncs(counter_.begin(), counter_.end(), false_only);
 }
 
 
@@ -471,7 +615,7 @@ scribbu::popularimeter::serialized_size(bool unsync) const
 {
   std::size_t cb = size();
   if (unsync) {
-    cb += count_ffs();
+    cb += count_syncs(false);
   }
   return cb;
 }
@@ -479,17 +623,7 @@ scribbu::popularimeter::serialized_size(bool unsync) const
 std::size_t
 scribbu::popularimeter::needs_unsynchronisation() const
 {
-  using namespace std;
-  using namespace scribbu::detail;
-
-  std::size_t count = 0;
-  count = count_false_syncs(email_.begin(), email_.end());
-  count += count_false_syncs(counter_.begin(), counter_.end());
-
-  if (email_.size() && is_false_sync(email_.back(), rating_)) ++count;
-  if (counter_.size() && is_false_sync(rating_, counter_.back())) ++count;
-
-  return count;
+  return count_syncs(true);
 }
 
 std::size_t
@@ -504,13 +638,22 @@ scribbu::popularimeter::write(std::ostream &os) const
   return email_.size() + 2 + counter_.size();
 }
 
-// TODO(sp1ff): Needed?
 std::size_t
-scribbu::popularimeter::count_ffs() const
+scribbu::popularimeter::count_syncs(bool false_only) const
 {
   std::size_t cb = 0;
-  cb += detail::count_ffs(email_.begin(), email_.end());
-  if (255 == rating_) ++cb;
-  cb += detail::count_ffs(counter_.begin(), counter_.end());
+
+  cb += detail::count_syncs(email_.begin(), email_.end(), false_only);
+  if (false_only && counter_.size() &&
+      detail::is_false_sync(rating_, counter_.front())) {
+    ++cb;
+  }
+  else if (!false_only && counter_.size() &&
+           detail::needs_unsync(rating_, counter_.front())) {
+    ++cb;
+  }
+
+  cb += detail::count_syncs(counter_.begin(), counter_.end(), false_only);
+  
   return cb;
 }

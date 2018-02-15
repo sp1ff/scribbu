@@ -249,6 +249,39 @@ scribbu::id3v2_2_tag::play_count() const {
   }
 }
 
+/*virtual*/
+void
+scribbu::id3v2_2_tag::add_comment(const std::string &text,
+                                  language lang /*= language::from_locale*/,
+                                  encoding src /*= encoding::UTF_8*/,
+                                  use_unicode unicode /*= use_unicode::no*/,
+                                  const std::string &description /*= std::string()*/,
+                                  on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::unique_ptr<COM> pnew = std::make_unique<COM>(lang, text, src, unicode, description);
+
+  std::ptrdiff_t d = frames_.size();
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(*pnew, d);
+  
+}
+
+/*virtual*/
+void
+scribbu::id3v2_2_tag::add_user_defined_text(const std::string &text,
+                                            encoding src /*= encoding::UTF_8*/,
+                                            use_unicode unicode /*= use_unicode::no*/,
+                                            const std::string &description /*= std::string()*/,
+                                            on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::unique_ptr<TXX> pnew = std::make_unique<TXX>(text, src, unicode, description);
+
+  std::ptrdiff_t d = frames_.size();
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(*pnew, d);
+  
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             tag as container                              //
@@ -395,6 +428,7 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_frame &frame)
   auto p1 = frames_.emplace(frames_.cbegin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(*frames_[d], d);
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_2_tag::iterator
@@ -405,12 +439,13 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const id3v2_2_text_frame &frame)
   // 2. Avoids dynamic_cast
 
   std::unique_ptr<id3v2_2_text_frame> pnew = std::make_unique<id3v2_2_text_frame>(frame);
-  const id3v2_2_text_frame &F = *pnew;
+  id3v2_2_text_frame &F = *pnew;
 
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
 
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_2_tag::iterator
@@ -426,6 +461,8 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const CNT &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_2_tag::iterator
@@ -441,6 +478,8 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const COM &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_2_tag::iterator
@@ -456,6 +495,8 @@ scribbu::id3v2_2_tag::insert(const_iterator p, const POP &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 void
@@ -567,13 +608,14 @@ scribbu::id3v2_2_tag::remove_frame_from_lookups(const frame_id3 &id, std::size_t
     pops_.erase(p);
   }
   else if (id.text_frame()) {
-    // TODO(sp1ff): This is awful-- better to store the index in text_map_, but
-    // I want to get this working, first.
     const id3v2_2_frame *pf = frames_[idx].get();
     text_frame_lookup_type::iterator p =
       std::find_if(text_map_.begin(), text_map_.end(),
                    [pf, id](const text_frame_lookup_type::value_type &x)
                    { return x.first == id && x.second == pf; });
+    if (text_map_.end() == p) {
+      throw std::logic_error("Oops");
+    }
     text_map_.erase(p);
   }
 

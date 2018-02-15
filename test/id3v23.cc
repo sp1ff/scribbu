@@ -715,7 +715,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   BOOST_CHECK("GN/ExtData" == s);
 
   s = p->text<string>();
-  BOOST_CHECK("GN/ExtData" == s);
+  BOOST_CHECK("GNXDWEcxAV2SFNbvJmtoMGb6y9FVaeg4e93ptInPDkRMXxW70zFOqxxGmqajiaouQGcteGfJ2g0cvnc9cFxi0Vrhu2KUxVg9X9XssMbw59DiwQdsiFqiEUCTigmjAFKysy7tUMX/FKE=" == s);
 
   fs::ifstream ifs03(TEST_FILE_03, fs::ifstream::binary);
   id3v2_3_tag tag03(ifs03);
@@ -1547,7 +1547,7 @@ BOOST_AUTO_TEST_CASE( test_compressed_2 )
   const TXXX &txxx = dynamic_cast<const TXXX&>(tag.get_frame("TXXX"));
 
   BOOST_CHECK("compression example" == txxx.description<string>());
-  BOOST_CHECK("compression example" == txxx.text<string>());
+  BOOST_CHECK("This sample user text frame came from an ID3v2-3.0 tag.  The frame has the 'compression' bit set in it's frame header.  This is the new method for compressing frames, which supercedes the 2.01 Compressed Data Metaframe." == txxx.text<string>());
 
   size_t xxx = tag.size();
   BOOST_TEST_MESSAGE("tag.size() returns 0x" << hex << xxx);

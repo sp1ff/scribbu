@@ -57,6 +57,10 @@ namespace scribbu {
    *     scheme defined.
    *
    *
+   * \todo implement insert overloads for id3v2_2_frame&&,
+   * initializer_list<id3v2_2_frame>, and range (i.e. two iterators)
+   *
+   *
    */
 
   class id3v2_2_tag: public id3v2_tag {
@@ -229,6 +233,21 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail)
     { set_text_frame("TYE", text, src, add_bom, rsp); }
 
+    virtual void
+    add_comment(const std::string &text,
+                language lang = language::from_locale,
+                encoding src = encoding::UTF_8,
+                use_unicode unicode = use_unicode::no,
+                const std::string &description = std::string(),
+                on_no_encoding rsp = on_no_encoding::fail);
+
+    virtual void
+    add_user_defined_text(const std::string &text,
+                          encoding src = encoding::UTF_8,
+                          use_unicode unicode = use_unicode::no,
+                          const std::string &dsc = std::string(),
+                          on_no_encoding rsp = on_no_encoding::fail);
+
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////
@@ -284,6 +303,9 @@ namespace scribbu {
     typedef std::vector<std::unique_ptr<id3v2_2_frame>> frames_type;
     friend class mutable_frame_proxy;
 
+
+  public:
+    
     /**
      * \class mutable_frame_proxy
      *
@@ -291,7 +313,7 @@ namespace scribbu {
      * is dereferenced
      *
      *
-     * Mutable (i.e. non-const_) iterators dereference to an instance of this
+     * Mutable (i.e. non-const) iterators dereference to an instance of this
      * class. This class knows how to keep id3v2_2_tag data structures in-sync
      * when changes are made to the frame wrapped by its instances. Cf.
      * \ref scribbu_impl_notes_iterators_proxies "here" for detailes on
@@ -405,6 +427,7 @@ namespace scribbu {
       id3v2_2_tag &me = const_cast<id3v2_2_tag&>(*this);
       return iterator(&me, me.frames_.begin());
     }
+
     const_iterator cend() const {
       id3v2_2_tag &me = const_cast<id3v2_2_tag&>(*this);
       return iterator(&me, me.frames_.end());
@@ -428,11 +451,6 @@ namespace scribbu {
 
     iterator
     insert(const_iterator p, const id3v2_2_frame &frame);
-
-    // TODO(sp1ff): Implement overloads for
-    //   - id3v2_2_frame&&
-    //   - initializer_list<id3v2_2_frame>
-    //   - range (i.e. two iterators)
 
     iterator
     insert(const_iterator p, const id3v2_2_text_frame &frame);
@@ -629,7 +647,6 @@ namespace scribbu {
     frame_lookup_type;
 
     typedef
-    // std::unordered_multimap<frame_id3, const id3v2_2_text_frame*>
     std::unordered_multimap<frame_id3, id3v2_2_text_frame*>
     text_frame_lookup_type;
 

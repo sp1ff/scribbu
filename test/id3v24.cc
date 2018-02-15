@@ -349,9 +349,7 @@ BOOST_AUTO_TEST_CASE( test_id3v24_ext_header )
 
   id3v2_4_tag::ext_header H = tag.extended_header();
   BOOST_CHECK(12 == H.size());
-  // TODO(sp1ff): Check update
   BOOST_CHECK(H.has_crc());
   BOOST_CHECK(0xa8ef5271 == H.crc());
-  // TODO(sp1ff): Check restricted
 
 }

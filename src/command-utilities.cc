@@ -19,6 +19,15 @@ namespace {
   
 }
 
+register_command::register_command(const std::string &s, handler_type f)
+{
+  handler_map &M = get_handler_map();
+  if (M.count(s)) {
+    throw std::out_of_range(s);
+  }
+  M[s] = f;
+}
+
 bool
 has_sub_command(const std::string &s)
 {
@@ -28,15 +37,6 @@ has_sub_command(const std::string &s)
 handler_type get_sub_command(const std::string &s)
 {
   return get_handler_map().at(s);
-}
-
-register_command::register_command(const std::string &s, handler_type f)
-{
-  handler_map &M = get_handler_map();
-  if (M.count(s)) {
-    throw std::out_of_range(s);
-  }
-  M[s] = f;
 }
 
 void

@@ -65,7 +65,6 @@ namespace scribbu {
 
   public:
     id3v2_4_frame(const frame_id4        &id,
-                  std::size_t             size,
                   tag_alter_preservation  tap,
                   file_alter_preservation fap,
                   read_only               ro,
@@ -74,13 +73,12 @@ namespace scribbu {
                   const id_type          &gid,
                   bool                    unsynch,
                   const dli_type         &dli):
-      id3v2_3_plus_frame(id, size, tap, fap, ro, cmp, enc, gid),
+      id3v2_3_plus_frame(id, tap, fap, ro, cmp, enc, gid),
       compressed_(cmp),
       unsynchronised_(unsynch),
       data_len_indicator_(dli)
     { }
     id3v2_4_frame(const char              id[4],
-                  std::size_t             size,
                   tag_alter_preservation  tap,
                   file_alter_preservation fap,
                   read_only               ro,
@@ -89,13 +87,12 @@ namespace scribbu {
                   bool                    cmp,
                   bool                    unsynch,
                   const dli_type         &dli):
-      id3v2_4_frame(frame_id4(id), size, tap, fap, ro, cmp, enc, gid, unsynch, dli)
+      id3v2_4_frame(frame_id4(id), tap, fap, ro, cmp, enc, gid, unsynch, dli)
     { }
     id3v2_4_frame(unsigned char id0,
                   unsigned char id1,
                   unsigned char id2,
                   unsigned char id3,
-                  std::size_t size,
                   tag_alter_preservation tap,
                   file_alter_preservation fap,
                   read_only ro,
@@ -104,7 +101,7 @@ namespace scribbu {
                   bool cmprsd,
                   bool unsynch,
                   const boost::optional<std::size_t> &dli):
-      id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), size,
+      id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3),
                          tap, fap, ro, cmprsd, enc, gid)
     { }
     virtual id3v2_4_frame* clone() const = 0;
@@ -149,7 +146,7 @@ namespace scribbu {
                           const boost::optional<std::size_t> &dli,
                           forward_input_iterator p0,
                           forward_input_iterator p1):
-      id3v2_4_frame(id, p1 - p0, tap, fap, ro, cmprsd, enc, gid, 
+      id3v2_4_frame(id, tap, fap, ro, cmprsd, enc, gid, 
                     unsynch, dli),
       data_(p0, p1)
     { }
@@ -226,7 +223,7 @@ namespace scribbu {
              bool cmprsd,
              bool unsynch,
              const boost::optional<std::size_t> &dli):
-      id3v2_4_frame("UFID", p1 - p0, tap, fap, ro, enc, gid,
+      id3v2_4_frame("UFID", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
       unique_file_id(p0, p1)
     { }
@@ -289,7 +286,7 @@ namespace scribbu {
              bool                                  cmprsd,
              bool                                  unsynch,
              const boost::optional<std::size_t>   &dli):
-      id3v2_4_frame("ENCR", p1 - p0, tap, fap, ro, enc, gid,
+      id3v2_4_frame("ENCR", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
       encryption_method(p0, p1)
     { }
@@ -409,7 +406,7 @@ namespace scribbu {
                        bool                                  cmprsd,
                        bool                                  unsynch,
                        const boost::optional<std::size_t>   &dli):
-      id3v2_4_frame(id, p1 - p0, tap, fap, ro, cmprsd, enc, gid, unsynch, dli)
+      id3v2_4_frame(id, tap, fap, ro, cmprsd, enc, gid, unsynch, dli)
     {
       unicode_ = *p0++;
       std::copy(p0, p1, std::back_inserter(text_));
@@ -500,7 +497,7 @@ namespace scribbu {
                        bool cmp,
                        bool unsync,
                        const boost::optional<std::size_t> &dli):
-      id3v2_4_frame(id, text.size() + 1, tap, fap, ro, cmp, enc, gid, unsync, dli),
+      id3v2_4_frame(id, tap, fap, ro, cmp, enc, gid, unsync, dli),
       unicode_(encshim2(dstenc)),
       text_(text)
     { }
@@ -574,19 +571,34 @@ namespace scribbu {
   class TXXX_2_4: public id3v2_4_frame, public user_defined_text {
   public:
     template <typename forward_input_iterator>
-    TXXX_2_4(forward_input_iterator                p0,
-             forward_input_iterator                p1,
-             tag_alter_preservation                tap,
-             file_alter_preservation               fap,
-             read_only                             ro,
-             const boost::optional<unsigned char> &enc,
-             const boost::optional<unsigned char> &gid,
-             bool                                  cmprsd,
-             bool                                  unsynch,
-             const boost::optional<std::size_t>   &dli):
-      id3v2_4_frame("TXXX", p1 - p0, tap, fap, ro, enc, gid,
+    TXXX_2_4(forward_input_iterator  p0,
+             forward_input_iterator  p1,
+             tag_alter_preservation  tap,
+             file_alter_preservation fap,
+             read_only               ro,
+             const id_type          &enc,
+             const id_type          &gid,
+             bool                    cmprsd,
+             bool                    unsynch,
+             const opt_sz_type      &dli):
+      id3v2_4_frame("TXXX", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
-      user_defined_text(4, p0, p1)
+      user_defined_text(id3v2_version::v4, p0, p1)
+    { }
+
+    TXXX_2_4(const std::string      &text,
+             encoding                src,
+             use_unicode             unicode,
+             tag_alter_preservation  tap,
+             file_alter_preservation fap,
+             read_only               ro,
+             const id_type          &enc,
+             const id_type          &gid,
+             bool                    cmprsd,
+             bool                    unsynch,
+             const std::string      &dsc = std::string()):
+      id3v2_4_frame("TXXX", tap, fap, ro, enc, gid, cmprsd, unsynch, boost::none),
+      user_defined_text(id3v2_version::v4, text, src, unicode, dsc)
     { }
 
     virtual id3v2_4_frame* clone() const
@@ -600,11 +612,11 @@ namespace scribbu {
            tag_alter_preservation                tap,
            file_alter_preservation               fap,
            read_only                             ro,
-           const boost::optional<unsigned char> &enc,
-           const boost::optional<unsigned char> &gid,
+           const id_type &enc,
+           const id_type &gid,
            bool                                  cmprsd,
            bool                                  unsynch,
-           const boost::optional<std::size_t>   &dli);
+           const opt_sz_type   &dli);
 
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
@@ -648,36 +660,53 @@ namespace scribbu {
   class COMM_2_4: public id3v2_4_frame, public comments {
   public:
     template <typename forward_input_iterator>
-    COMM_2_4(forward_input_iterator                p0,
-             forward_input_iterator                p1,
-             tag_alter_preservation                tap,
-             file_alter_preservation               fap,
-             read_only                             ro,
-             const boost::optional<unsigned char> &enc,
-             const boost::optional<unsigned char> &gid,
-             bool                                  cmprsd,
-             bool                                  unsynch,
-             const boost::optional<std::size_t>   &dli):
-      id3v2_4_frame("COMM", p1 - p0, tap, fap, ro, enc, gid,
+    COMM_2_4(forward_input_iterator  p0,
+             forward_input_iterator  p1,
+             tag_alter_preservation  tap,
+             file_alter_preservation fap,
+             read_only               ro,
+             const id_type          &enc,
+             const id_type          &gid,
+             bool                    cmprsd,
+             bool                    unsynch,
+             const opt_sz_type   &dli):
+      id3v2_4_frame("COMM", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
-      comments(4, p0, p1)
+      comments(id3v2_version::v4, p0, p1)
+    { }
+
+    COMM_2_4(language                lang,
+             const std::string      &text,
+             encoding                src,
+             use_unicode             unicode,
+             tag_alter_preservation  tap,
+             file_alter_preservation fap,
+             read_only               ro,
+             const id_type          &enc,
+             const id_type          &gid,
+             bool                    cmprsd,
+             bool                    unsynch,
+             const opt_sz_type      &dli,
+             const std::string      &dsc = std::string()):
+      id3v2_4_frame("COMM", tap, fap, ro, enc, gid, cmprsd, unsynch, dli),
+      comments(id3v2_version::v4, lang, text, src, unicode, dsc)
     { }
 
     virtual id3v2_4_frame* clone() const
     { return new COMM_2_4(*this); }
 
     static std::unique_ptr<id3v2_4_frame>
-    create(const frame_id4                      &id,
-           const unsigned char                  *p,
-           std::size_t                           cb,
-           tag_alter_preservation                tap,
-           file_alter_preservation               fap,
-           read_only                             ro,
-           const boost::optional<unsigned char> &enc,
-           const boost::optional<unsigned char> &gid,
-           bool                                  cmprsd,
-           bool                                  unsynch,
-           const boost::optional<std::size_t>   &dli);
+    create(const frame_id4        &id,
+           const unsigned char    *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type          &enc,
+           const id_type          &gid,
+           bool                    cmprsd,
+           bool                    unsynch,
+           const opt_sz_type      &dli);
 
   public:
 
@@ -733,7 +762,7 @@ namespace scribbu {
              bool                                  cmprsd,
              bool                                  unsynch,
              const boost::optional<std::size_t>   &dli):
-      id3v2_4_frame("PCNT", p1 - p0, tap, fap, ro, enc, gid,
+      id3v2_4_frame("PCNT", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
       play_count(p0, p1)
     { }
@@ -785,7 +814,7 @@ namespace scribbu {
              bool                                  cmprsd,
              bool                                  unsynch,
              const boost::optional<std::size_t>   &dli):
-      id3v2_4_frame("POPM", p1 - p0, tap, fap, ro, enc, gid,
+      id3v2_4_frame("POPM", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
       popularimeter(p0, p1)
     { }

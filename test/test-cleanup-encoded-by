@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
 # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
 cols=$(tput cols)
 eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-cleanup-encoded-by.scm ${srcdir} \
@@ -6,6 +7,7 @@ eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-cleanup-encoded-
          > >(t_std=$(cat); typeset -p t_std) )"
 t_stat=$?
 echo "$t_std"
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-encoded-by.scm' | grep -v 'newer than compiled')
 if [ ! -z "$t_err" ]; then
     printf '=%.0s' $(seq 1 $cols)
 	echo "$t_err"

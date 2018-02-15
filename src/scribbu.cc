@@ -1,19 +1,15 @@
 #include "config.h"
+#include "command-utilities.hh"
+#include <scribbu/scribbu.hh>
+#include <scribbu/scheme.hh>
 
+#include <iostream>
+#include <libguile.h>
 #include <signal.h>
 #include <sys/resource.h>
 
-#include <iostream>
-
 #include <boost/filesystem/fstream.hpp>
 #include <boost/lexical_cast.hpp>
-
-#include <libguile.h>
-
-#include "command-utilities.hh"
-
-#include <scribbu/scribbu.hh>
-#include <scribbu/scheme.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -130,6 +126,7 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
 
 }
 
+/// The Big Kahuna
 int
 main(int argc, char * argv[])
 {
@@ -159,7 +156,7 @@ main(int argc, char * argv[])
   }
 # endif
 
-  // Finally, setup the signal handler.
+  // Next, setup the signal handler...
   struct sigaction sigact = { 0 }, oldact = { 0 };
   sigact.sa_handler = sig_handler;
   sigact.sa_flags = SA_ONSTACK;
@@ -168,6 +165,7 @@ main(int argc, char * argv[])
     return 3;
   }
 
+  //  and finally carry out library initialization.
   scribbu::static_initialize();
 
   int status = EXIT_SUCCESS;
@@ -274,7 +272,7 @@ main(int argc, char * argv[])
       } else {
 
         if (help_level::verbose == help) {
-          // TODO(sp1ff): Might be nice to support other man page readeres
+          // TODO(sp1ff): Might be nice to support other man page readers
           // (woman, e.g.)
           execlp("man", "man", "scribbu", (char *)NULL);
           throw runtime_error("failed to exec"); // TODO(sp1ff): grab errno

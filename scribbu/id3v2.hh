@@ -17,7 +17,7 @@
  * the encoding of strings not only in ISO-8859-1, but also in Unicode \ref
  * scribbu_id3v2_refs_3 "[3]""
  *
- * "There are three versions of ID3v2:
+ * ``There are three versions of ID3v2:
  *
  * - ID3v2.2 was the first public version of ID3v2. It used three character
  *   frame identifiers rather than four (TT2 for the title instead of
@@ -37,32 +37,35 @@
  *
  * Windows Explorer and Windows Media Player cannot handle ID3v2.4 tags in any
  * version, up to and including Windows 10 / Windows Media Player 12. Windows
- * can understand ID3v2 up to and including version 2.3. \ref
- * scribbu_id3v2_refs_3 "[3]""
+ * can understand ID3v2 up to and including version 2.3.'' \ref scribbu_id3v2_refs_3 "[3]"
  *
  * \section scribbu_id3v2_discuss Discussion
  *
  * \subsection scribbu_id3v2_discuss_header Header
  *
- * ID3v2 tags of any version begin with a ten byte header:
+ * ID3v2 tags of any version begin with a ten byte header (throughout, '$'
+ * denotes a hexadecimal quantity, and % a binary):
  *
- \code
+ \verbatim
 
-  | field                | representation | bytes |              |
-  |----------------------+----------------+-------+--------------|
-  | ID3/file identifier  | "ID3"          |     3 | ID3v2 header |
-  | ID3 version/revision | $xx yy         |     2 |              |
-  | ID3 flags            | %xxxxxxxx      |     1 |              |
-  | ID3 size             | 4*%0xxxxxxx    |     4 |              |
+  | field                | representation | bytes |
+  |----------------------+----------------+-------+
+  | ID3/file identifier  | "ID3"          |     3 |
+  | ID3 version/revision | $xx yy         |     2 |
+  | ID3 flags            | %xxxxxxxx      |     1 |
+  | ID3 size             | 4*%0xxxxxxx    |     4 |
 
- \endcode
+ \endverbatim
  *
- * The flags are version-specific, and documented below.
- *
- * "The ID3 tag size is the size of the complete tag after unsychronisation,
- * including padding, excluding the header (total tag size - 10). The reason to
- * use 28 bits (representing up to 256MB) for size description is that we don't
- * want to run out of space here \ref scribbu_id3v2_refs_2 "[2]""
+ * The flags are version-specific, and documented on their respective pages
+ * (cf. scribbu::id3v2_2_tag, scribbu::id3v2_3_tag & scribbu::id3v2_4_tag).
+ * The size is expressed as a four-byte sync-safe (see \ref
+ * scribbu_id3v2_unsync "below") unsigned integer (28 bits, in other words).
+ * It is the number of bytes in the tag \em after any unsynchronisation has
+ * been applied, including padding, excluding the header. Expressed
+ * differently, it is the size of the tag once serialized to disk, less the
+ * header. Expressed yet another way, it is the number of bytes remaining to be
+ * read by a reader after the ten-byte header.
  *
  *
  * \section scribbu_id3v2_unsync Unsynchorisation
@@ -70,14 +73,14 @@
  * MPEG decoding software uses a two-byte sentinal value in the input stream to
  * detect the beginning of the audio. MPEG decoding software that is not
  * ID3-aware could mistakenly interpret that value as the beginning of the
- * audio should it happen to occur in the ID3v2 header. Unsynchronisation is an
+ * audio should it happen to occur in the ID3v2 tag. Unsynchronisation is an
  * optional encoding scheme for the ID3v2 header to prevent
  * that. "Unsynchronisation may only be made with MPEG 2 layer I, II and III
  * and MPEG 2.5 files."  \ref scribbu_id3v2_refs_1 "[1]"
  *
  * More specifically, whenever a two byte combination of the form:
  *
- *   %11111111 111xxxxx (or $FF $Ex or $FF Fx)
+ *   %11111111 111xxxxx (i.e. $FF $Ex or $FF Fx)
  *
  * is encountered in an ID3v2 tag to be written to disk, it is replaced with:
  *
@@ -94,18 +97,21 @@
  * know whether that was a false sync that was unsynchronised (and so the three
  * bytes should be interpreted as %11111111 111xxxxx) or whether those three
  * bytes had occurred naturally in the tag when it was written. To resolve
- * this, on encoding with unsynchronisation all two-byte sequences of the form
- * $FF 00 should also be written as $FF 00 00.
+ * this, on applying unsynchronisation all two-byte sequences of the form $FF
+ * 00 should also be written as $FF 00 00.
  *
- * In ID3v2.2, this is clear. The ten byte header is "sync-safe" by definition,
- * so it can be read without any additional interpretation, and if the
- * unsynchronisation flag is set, all two-byte sequences of the form $FF 00
- * should be interpreted as just $FF.
+ * In ID3v2.2, deserialization is straightforward. The ten byte header is
+ * "sync-safe" by definition, so it can be read without any additional
+ * interpretation, and if the unsynchronisation flag is set, all two-byte
+ * sequences of the form $FF 00 should be interpreted as just $FF.
  *
  * ID2v2.3 introduced an extended header, which is *not* sync-safe, and
  * padding, which *is* (padding bytes must always be $00). In section 3.2 \ref
  * scribbu_id3v2_refs_4 "[4]" the specification explicitly notes that the
- * extended header is subject to unsynchronisation.
+ * extended header \em is subject to unsynchronisation. Therefore, in the end,
+ * ID3v2.3 tags are deserialized in the same way as ID3v2.2: once the header is
+ * read, all two-byte sequences of the form $FF 00 should again be interpreted
+ * as just $FF.
  *
  * ID3v2.4 introduced a different extended header and a footer, both of which
  * *are* sync-safe, and frames can be unsynhronised individually. The
@@ -125,7 +131,7 @@
  * An ID3v2.3 extended header may contain false syncs within itself, but will
  * never complete a false sync (since it follws an ID3v2 header) and may never
  * introduce a false sync, since it must be followed by a frame (compliant tags
- * must contain at least one frmae). ID3v2.2 definss no extended header and
+ * must contain at least one frmae). ID3v2.2 defines no extended header and
  * ID3v2.4's header & footer are sync-safe.
  *
  * The one exception to this is when the last frame in a tag has a final byte
@@ -143,6 +149,9 @@
  *   - ID3v2.3+ frames can be encrypted and/or compressed, suggesting that they
  *     will be caching representations of themselves in various forms; I don't
  *     want to cache individual frames \em and entire tags
+ *
+ * Therefore, scribbu tags write themselves component-by-component, applying
+ * unsynchronisation (if requested) as they go.
  *
  *
  * \section scribbu_impl_notes Implementation Notes
@@ -171,7 +180,7 @@
  * bits/stl_bvector.h). It turns out, however, that such containers have a long
  * & checkered history in C++:
  *
- * "The vector<bool> specialization was intentionally put into the standard to
+ * ``The vector<bool> specialization was intentionally put into the standard to
  * provide an example of how to write a proxied container...This would all have
  * been well and good, except that the container and iterator requirements were
  * never updated to allow for proxied containers. In fact, proxied containers
@@ -179,48 +188,46 @@
  * reference (T&), never a proxy. Iterators have similar requirements;
  * dereferencing a forward, bidirectional, or random-access iterator must yield
  * a true reference (T&), never a proxy. These points preclude any proxy-based
- * containers from meeting the standard container requirements." 
+ * containers from meeting the standard container requirements.''
  * \ref scribbu_id3v2_refs_5 "[5]"
  *
  * The problem seems to be that allowing a proxied container makes meeting
  * complexity guarantees a lot tougher:
  *
- * "both the original STL's container requirements and the C++ standard's
+ * ``both the original STL's container requirements and the C++ standard's
  * container requirements are based on the implicit assumption (among others)
  * that dereferencing an iterator both is a constant-time operation and
  * requires negligible time compared to other operations. As James Kanze
  * correctly pointed out on the comp.std.c++ newsgroup a couple of years
- * ago,[4] neither of these assumptions is true for a disk-based container or a
- * packed-representation container."
- * \ref scribbu_id3v2_refs_5 "[5]"
+ * ago, neither of these assumptions is true for a disk-based container or a
+ * packed-representation container.'' \ref scribbu_id3v2_refs_5 "[5]"
  *
  * From his article, it's not clear to me whether there is any other problem
  * beyond that (e.g. do any of the standard algorithms take the address of
  * the thing returned by dereferencing an iterator?):
  *
- * "Proxied collections are a useful tool and can often be appropriate,
+ * ``Proxied collections are a useful tool and can often be appropriate,
  * especially for collections that can become very large. Every programmer
  * should know about them. They just don't fit as well into STL as many people
  * thought, that's all. Even vector<bool> is still a perfectly good model for
  * how to write a proxied collection; it's just not a container, that's all,
  * and it should be called something else (some people asked for "bitvector")
  * so that people wouldn't think that it has anything to do with a conforming
- * container."
- * \ref scribbu_id3v2_refs_5 "[5]"
+ * container.'' \ref scribbu_id3v2_refs_5 "[5]"
  *
  * Eric Niebler's far more recent article suggests not:
  *
- * "An interesting historical note: the original STL design didn’t have the
+ * ``An interesting historical note: the original STL design didn’t have the
  * “true reference” requirement that causes the problem. Take a look at the SGI
  * docs for the Forward Iterator concept. Nowhere does it say that *it should
  * be a real reference. The docs for Trivial Iterators specifically mention
- * proxy references and say they’re legit." \ref scribbu_id3v2_refs_6 "[6]"
+ * proxy references and say they’re legit.'' \ref scribbu_id3v2_refs_6 "[6]"
  *
  * I did some experimenting & found that I could get the standard algorithms to
  * work just fine with a proxied approach, and based on that, I've proceeded
  * down this implementation path.
  *
- * As an aside, I \em did try boost:;iterator_facade, but couldn't get it to
+ * As an aside, I \em did try boost::iterator_facade, but couldn't get it to
  * work with a proxy; that may be my own ignorance, but I enjoyed coding up my
  * own "from scratch" in any event.
  * 
@@ -235,10 +242,10 @@
  * difficult for ID3v2.2 tags, but in version 2.3 a problem presented itself:
  * how to compute that in the presence of compression and/or encryption of
  * individual frames?  One would need to provisionally serialize the frame,
- * compress and/or encrypt it, and then count the number of bytes remaining.
+ * compress and/or encrypt it, and then count the resulting number of bytes.
  *
  * The problem becomes worse when determining whether unsynchronisation is
- * needed-- one needs to (in the worst case) serialize all frames (inclduing
+ * needed-- one needs to (in the worst case) serialize all frames (including
  * compression & encryption), compute a checksum and \em then check for false
  * syncs.
  *
@@ -246,7 +253,7 @@
  *
  \code
 
-   enum { unsync_always, unsncy_if_needed, unsync_never } unsync;
+   enum { unsync_always, unsnyc_if_needed, unsync_never } unsync;
    size_t write(ostream &os, unsync x) const;
 
  \endcode
@@ -259,35 +266,35 @@
  * needs_unsynchronisation() which I found unpalatable. When I realized I could
  * apply lazy evaluation & a "dirty" flag to individual frames to avoid
  * repeated serialization I decided to go with an interface that presents a
- * naiive approach, easily implemented for ID3v2.2. frames, that would mask a
+ * naiive approach, easily implemented for ID3v2.2 frames, that would mask a
  * more complex implementation in the case of later frame implementations.
  *
  *
  * \section scribbu_id3v2_refs References
  *
  * 1. \anchor scribbu_id3v2_refs_1 Martin Nilsson, cited 2015: ID3 tag
- *    version 2 [Availbale online at http://id3.org/id3v2-00]
+ * version 2 [Availbale online at http://id3.org/id3v2-00]
  *
  * 2. \anchor scribbu_id3v2_refs_2 Martin Nilsson, cited 2015:
- *    Contributors [Available online at http://id3.org/Contributors]
+ * Contributors [Available online at http://id3.org/Contributors]
  *
  * 3. \anchor scribbu_id3v2_refs_3 Unknown, cited 2015:
- *    ID3v2 [Available online at https://en.wikipedia.org/wiki/ID3#ID3v2]
+ * ID3v2 [Available online at https://en.wikipedia.org/wiki/ID3#ID3v2]
  *
  * 4. \anchor scribbu_id3v2_refs_4 Martin Nilsson, cited 2015: ID3 tag
- *    version 2.4.0 - Main Structure [Availbale online at
- *    http://id3.org/id3v2.4.0-structure]
- *
+ * version 2.4.0 - Main Structure [Availbale online at
+ * http://id3.org/id3v2.4.0-structure]
+ * 
  * 5. \anchor scribbu_id3v2_refs_5 Herb Sutter, cited 2016: When Is a Container 
- *    Not a Container? [Available online at http://www.gotw.ca/publications/mill09.htm]
+ * Not a Container? [Available online at http://www.gotw.ca/publications/mill09.htm]
  *
  * 6. \anchor scribbu_id3v2_refs_6 Eric Niebler, cited 2016: To Be or Not to Be
- *    (an Iterator) [Available online at
- *    http://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/]
+ * (an Iterator) [Available online at
+ * http://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/]
  *
  * 7. \anchor scribbu_id3v2_refs_7 B. Stroustrup and A. Sutton (Editors): A
- *    Concept Design for the STL [Available online at
- *    http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf\
+ * Concept Design for the STL [Available online at
+ * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf\
  *
  *
  */
@@ -310,41 +317,86 @@ namespace scribbu {
 
   namespace detail {
 
+    /// Return an unsigned int from a three-octet sync-safe int; this
+    /// implementation assumes that the input is in big-endian (per the ID3v2
+    /// specification) & will return the correct value regardless of the host
+    /// byte order.
     std::size_t unsigned_from_sync_safe(unsigned char b0,
                                         unsigned char b1,
                                         unsigned char b2);
-    std::uint32_t uint32_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2,
-                                        unsigned char b3);
-    std::uint32_t uint32_from_sync_safe(unsigned char b0,
-                                        unsigned char b1,
-                                        unsigned char b2,
-                                        unsigned char b3,
-                                        unsigned char b4);
+
+    /// Return an unsigned int from a four-octet sync-safe int; this
+    /// implementation assumes that the input is in big-endian (per the ID3v2
+    /// specification) & will return the correct value regardless of the host
+    /// byte order.
     std::size_t unsigned_from_sync_safe(unsigned char b0,
                                         unsigned char b1,
                                         unsigned char b2,
                                         unsigned char b3);
-    std::uint32_t uint32_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2);
-    std::size_t unsigned_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2);
-    std::uint32_t uint32_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2,
-                                            unsigned char b3);
-    std::size_t unsigned_from_non_sync_safe(unsigned char b0,
-                                            unsigned char b1,
-                                            unsigned char b2,
-                                            unsigned char b3);
+
+    /// Return an unsigned int from a five-octet sync-safe int; this
+    /// implementation assumes that the input is in big-endian (per the ID3v2
+    /// specification) & will return the correct value regardless of the host
+    /// byte order.
     std::size_t unsigned_from_sync_safe(unsigned char b0,
                                         unsigned char b1,
                                         unsigned char b2,
                                         unsigned char b3,
                                         unsigned char b4);
+
+    /// Return a thirty-two bit unsigned int from a four-octet sync-safe int;
+    /// this implementation assumes that the input is in big-endian (per the
+    /// ID3v2 specification) & will return the correct value regardless of the
+    /// host byte order.
+    std::uint32_t uint32_from_sync_safe(unsigned char b0,
+                                        unsigned char b1,
+                                        unsigned char b2,
+                                        unsigned char b3);
+
+    /// Return a thirty-two bit unsigned int from a five-octet sync-safe int;
+    /// this implementation assumes that the input is in big-endian (per the
+    /// ID3v2 specification) & will return the correct value regardless of the
+    /// host byte order.
+    std::uint32_t uint32_from_sync_safe(unsigned char b0,
+                                        unsigned char b1,
+                                        unsigned char b2,
+                                        unsigned char b3,
+                                        unsigned char b4);
+
+    /// Return an unsigned int from a three-octet non-sync-fafe int; this
+    /// implementation assumes that the input is in big-endian (per the ID3v2
+    /// specification) & will return the correct value regardless of the host
+    /// byte order.
+    std::size_t unsigned_from_non_sync_safe(unsigned char b0,
+                                            unsigned char b1,
+                                            unsigned char b2);
+
+    /// Return an unsigned int from a four-octet non-sync-fafe int; this
+    /// implementation assumes that the input is in big-endian (per the ID3v2
+    /// specification) & will return the correct value regardless of the host
+    /// byte order.
+    std::size_t unsigned_from_non_sync_safe(unsigned char b0,
+                                            unsigned char b1,
+                                            unsigned char b2,
+                                            unsigned char b3);
+
+    /// Return a thirty-two bit unsigned int from a three-octet non-sync-safe
+    /// int; this implementation assumes that the input is in big-endian (per
+    /// the ID3v2 specification) & will return the correct value regardless of
+    /// the host byte order.
+    std::uint32_t uint32_from_non_sync_safe(unsigned char b0,
+                                            unsigned char b1,
+                                            unsigned char b2);
+
+    /// Return a thirty-two bit unsigned int from a four-octet non-sync-safe
+    /// int; this implementation assumes that the input is in big-endian (per
+    /// the ID3v2 specification) & will return the correct value regardless of
+    /// the host byte order.
+    std::uint32_t uint32_from_non_sync_safe(unsigned char b0,
+                                            unsigned char b1,
+                                            unsigned char b2,
+                                            unsigned char b3);
+
     void sync_safe_from_unsigned(std::size_t x, unsigned char b[]);
   }
 
@@ -370,26 +422,24 @@ namespace scribbu {
   };
 
   /**
-   * \brief Determine  whether an  input stream  is positioned  at the
-   * start of an ID3v2  tag; if it is, return data  found in the ID3v2
-   * header
+   * \brief Determine whether an input stream is positioned at the start of an
+   * ID3v2 tag; if it is, return data found in the ID3v2 header
    *
    * \param is [in] the input stream to be probed for an ID3v2 tag
    *
-   * \param restore_get_if_found  [in,opt] If the caller  sets this to
-   * true (the  default), and an  ID3v2 tag is  present in \a  is, the
-   * input  streams get  pointer  will  be reset  to  its position  on
-   * entry. If  the caller sets it  to false, the get  pointer will be
-   * left positioned ten  bytes further than it was on  entry (i.e. it
-   * will be positioned to the first  byte after the ID3v2 header). If
-   * no ID3v2  tag is present, the  get pointer is always  restored to
+   * \param restore_get_if_found [in,opt] If the caller sets this to true (the
+   * default), and an ID3v2 tag is present in \a is, the input stream's get
+   * pointer will be reset to its position on entry. If the caller sets it to
+   * false, the get pointer will be left positioned ten bytes further than it
+   * was on entry (i.e. it will be positioned to the first byte after the ID3v2
+   * header). If no ID3v2 tag is present, the get pointer is always restored to
    * where it was on entry to this function.
    *
    * \retrun an id3v2_info struct containing the results
    *
    *
-   * This is intended to be used as a peek operation where the
-   * caller can avoid a full parse of the tag; it does the following:
+   * This is intended to be used as a peek operation where the caller can avoid
+   * a full parse of the tag; it does the following:
    *
    * - read the first ten bytes
    * - if it's not an ID3v2 tag, restore the get ptr & so indicate to
@@ -417,14 +467,14 @@ namespace scribbu {
    * \return The number of bytes in the resynchronized buffer
    *
    *
-   * "Unsynchronisation"   refers   to   the    process   of   removing   false
-   * synchronisations when  writing an ID3v2  tag; cf.  sec.  5 of  the ID3v2.3
-   * specification, or  \ref scribbu_id3v2_unsync  "here" for  background.  For
-   * purposes of  this discussion, resynchronisation  refers to the  process of
+   * "Unsynchronisation" refers to the process of removing false
+   * synchronisations when writing an ID3v2 tag; cf.  sec.  5 of the ID3v2.3
+   * specification, or \ref scribbu_id3v2_unsync "here" for background.  For
+   * purposes of this discussion, resynchronisation refers to the process of
    * replacing each two-byte sequence 0xff, 0x00 with just 0xff in the provided
    * buffer.
    *
-   * This  implementation   will  perform   the  resynchronisation   in  place;
+   * This implementation will perform the resynchronisation in place;
    * i.e. given an input buffer like so:
    *
    \code
@@ -443,16 +493,16 @@ namespace scribbu {
    *
    * and return a value of eleven.
    *
-   * I chose this interface for two reasons,  the first being that it avoids an
-   * allocation  &  the  second  being  that the  copies  follow  a  particular
+   * I chose this interface for two reasons, the first being that it avoids an
+   * allocation & the second being that the copies follow a particular
    * pattern. In this example, we copy the following ranges:
    *
    * - [4,7) -> [3,6)
    * - [8,11) -> [6,9)
    * - [12,14) -> [9,11)
    *
-   * Note  that for  each successive  false sync  being restored,  we can  copy
-   * successively  larger  & larger  chunks  at  each  time, leaving  open  the
+   * Note that for each successive false sync being restored, we can copy
+   * successively larger & larger chunks at each time, leaving open the
    * possibility for optimization through loop unrolling, SSE, &c.
    *
    *
@@ -468,7 +518,7 @@ namespace scribbu {
    *
    * Class id3v2_tag handles some functionality common to all ID3v2 tags, such
    * as version/revision information & the unsynch attribute, but it mostly
-   * defines an interface to which all concrete ID3v2 tags can conform,
+   * defines an interface to which all concrete ID3v2 tags shall conform,
    * enabling client code to work in a version-independent way (e.g. a client
    * should be able to ask for the "artist" without having to worry about
    * whether the tag is ID3v2.2, 2.3 or 2.4).
@@ -719,6 +769,82 @@ namespace scribbu {
          bool add_bom = false,
          on_no_encoding rsp = on_no_encoding::fail) = 0;
 
+    /**
+     * \brief Add a comment frame
+     *
+     *
+     * \param text [in] comment text
+     *
+     * \param lang [in, opt] optional ISO-639-2 language code in which this
+     * comment is expressed
+     *
+     * \param src [in, opt] optional encoding scheme used in the comment text &
+     * description
+     *
+     * \param unicode [in, opt] if \a no, the comment will be encoded as
+     * ISO-8859-1; if yes as Unicode (the preciseu unicode form will be
+     * determined by the implementation, no which more below), and if with_bom
+     * Unicode with a Byte Order Mark
+     *
+     * \param description [in, opt] optional brief description of the comment
+     * text
+     *
+     * \param rsp [in, opt] action on conversion failure
+     *
+     *
+     * ID3v2.2 & .3 only offer IOS-8859-1 and UCS-2 encoding; ID3v2.4 offers
+     * ISO-8859-1, UTF-16, UTF-16BE, & UTF-8. This virtual, since it applies to
+     * all versions, allows the caller to only choose between "unicode" and
+     * "not unicode". If the caller wants finer-grained control they'll need to
+     * cast their tag to id3v2_4_tag & invoke the relevant method thereon.
+     *
+     *
+     */
+    
+    virtual void
+    add_comment(const std::string &text,
+                language lang = language::from_locale,
+                encoding src = encoding::UTF_8,
+                use_unicode unicode = use_unicode::no,
+                const std::string &description = std::string(),
+                on_no_encoding rsp = on_no_encoding::fail) = 0;
+
+    /**
+     * \brief Add a user-defined text frame
+     *
+     *
+     * \param text [in] user-defined text
+     *
+     * \param src [in, opt] optional encoding scheme used in the comment text &
+     * description
+     *
+     * \param unicode [in, opt] if \a no, the comment will be encoded as
+     * ISO-8859-1; if yes as Unicode (the preciseu unicode form will be
+     * determined by the implementation, no which more below), and if with_bom
+     * Unicode with a Byte Order Mark
+     *
+     * \param dsc [in, opt] optional brief description of the comment
+     * text
+     *
+     * \param rsp [in, opt] action on conversion failure
+     *
+     *
+     * ID3v2.2 & .3 only offer IOS-8859-1 and UCS-2 encoding; ID3v2.4 offers
+     * ISO-8859-1, UTF-16, UTF-16BE, & UTF-8. This virtual, since it applies to
+     * all versions, allows the caller to only choose between "unicode" and
+     * "not unicode". If the caller wants finer-grained control they'll need to
+     * cast their tag to id3v2_4_tag & invoke the relevant method thereon.
+     *
+     *
+     */
+    
+    virtual void
+    add_user_defined_text(const std::string &text,
+                          encoding src = encoding::UTF_8,
+                          use_unicode unicode = use_unicode::no,
+                          const std::string &dsc = std::string(),
+                          on_no_encoding rsp = on_no_encoding::fail) = 0;
+
     //////////////////////////////////////////////////////////////////////////
     //                           iterator support                           //
     //////////////////////////////////////////////////////////////////////////
@@ -736,7 +862,7 @@ namespace scribbu {
      *
      * I've factored our as much iterator functionality as possible here. It's
      * implemented in terms of a mutable iterator; the const_iterator takes
-     * place of enforcing RO semantics.
+     * care of enforcing RO semantics.
      *
      *
      */
@@ -792,6 +918,8 @@ namespace scribbu {
      * \class frame_iterator
      *
      * \brief non-const frame iterator
+     *
+     * \param tag_type concrete subclass
      *
      *
      */

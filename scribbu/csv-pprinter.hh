@@ -1,5 +1,6 @@
 #ifndef CSV_PPRINTER_INCLUDED_HH
 #define CSV_PPRINTER_INCLUDED_HH 1
+
 #include <scribbu/pprinter.hh>
 
 namespace scribbu {

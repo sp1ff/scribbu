@@ -144,7 +144,6 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
   BOOST_CHECK(2 == tag.version());
   BOOST_CHECK(0 == tag.revision());
 
-
   /////////////////////////////////////////////////////////////////////////////
 
   id3v2_2_tag::iterator p = tag.begin();
@@ -314,3 +313,32 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag_2 )
   BOOST_CHECK("2010" == s);
 
 } // End test_id3v2_2_tag_2.
+
+BOOST_AUTO_TEST_CASE( test_id3v2_2_tag_as_container )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path TEST_DATA(get_data_directory() / "id3v2.2.tag");
+
+  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+
+  id3v2_2_tag tag(ifs);
+
+  BOOST_CHECK(2 == tag.version());
+  BOOST_CHECK(0 == tag.revision());
+  BOOST_CHECK(9 == tag.num_frames());
+
+  vector<unsigned char> D = { 0xba, 0xbe };
+  UFI ufi(D.begin(), D.end());
+  auto p = tag.insert(tag.begin(), ufi);
+  BOOST_CHECK(p == tag.begin());
+
+  id3v2_2_text_frame F("TCO",  string("test"), encoding::UTF_8);
+  p = tag.insert(p, F);
+  BOOST_CHECK( p->id() == "TCO" );
+
+  tag.erase(p);
+  BOOST_CHECK( 10 == tag.num_frames() );
+
+}

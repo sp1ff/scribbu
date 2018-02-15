@@ -1,0 +1,4 @@
+# -*- python -*-
+VERSION = '0.4'
+EMAIL = 'sp1ff@pobox.com'
+AUTHOR = 'Michael Herstine <sp1ff@pobox.com>'

@@ -11,14 +11,14 @@ This function is for testing & debugging purposes. It will simply print the trac
 path, the ID3v1 comment (if any) and the ID3v2 TENC frame (if any)."
   (format #t "~s: " (scribbu/get-path track))
   (if (scribbu/has-id3v1-tag track)
-	  (format #t "ID3v1 comment: ~s" (scribbu/get-id3v1-string track 'comment))
+	  (format #t "ID3v1 comment: ~s" (scribbu/get-id3v1-string track 'scribbu/comment))
 	  (display "<no ID3v1 match>"))
   (let ((num-tags (scribbu/get-id3v2-tag-count track)))
 	  (do ((i 0 (1+ i)))
 		    ((>= i num-tags))
-	    (if (scribbu/has-id3v2-attribute track i 'encoded-by)
+	    (if (< 0 (scribbu/has-frame track i 'scribbu/encoded-by))
 		      (format #t ", tag ~d/encoded-by: ~s" i
-				          (scribbu/get-id3v2-attribute track i 'encoded-by)))))
+				          (scribbu/get-frame track i 'scribbu/encoded-by)))))
   (format #t "\n"))
 
 (define (cleanup-encoded-by track)
@@ -34,13 +34,13 @@ frames in the extant ID3v2 frames."
   
   (if (scribbu/has-id3v1-tag track)
 	    (let ((r (make-regexp ".*winamp.*" regexp/icase)))
-		    (if (regexp-exec r (scribbu/get-id3v1-string track 'comment))
+		    (if (regexp-exec r (scribbu/get-id3v1-string track 'scribbu/comment))
 			      (begin
 			        (let ((num-tags (scribbu/get-id3v2-tag-count track)))
 				        (if (eq? num-tags 0)
 					          (begin
 					            (scribbu/make-id3v2-tag track 0)
-					            (scribbu/set-id3v2-attribute track 0 'encoded-by "Winamp")
+					            (scribbu/set-frame track 0 'scribbu/encoded-by "Winamp")
 					            (scribbu/write-id3v2-tag
 					             track 0
 					             (string-join (list (basename (scribbu/get-path track)) "out") ".")))
@@ -48,12 +48,12 @@ frames in the extant ID3v2 frames."
 					            (begin
 						            (do ((i 0 (1+ i)))
 							              ((>= i num-tags))
-						              (if (scribbu/has-id3v2-attribute track i 'encoded-by)
+						              (if (scribbu/has-frame track i 'scribbu/encoded-by)
 							                (set!
 							                 encoders
-							                 (cons (scribbu/get-id3v2-attribute track i 'encoded-by) encoders))
+							                 (cons (scribbu/get-frame track i 'scribbu/encoded-by) encoders))
 							                (begin
-							                  (scribbu/set-id3v2-attribute track i 'encoded-by "Winamp")
+							                  (scribbu/set-frame track i 'scribbu/encoded-by "Winamp")
 							                  (scribbu/write-id3v2-tag
 							                   track i
 							                   (string-join (list

@@ -39,38 +39,38 @@ namespace scribbu {
    *
    \code
 
-   | field                | representation     | bytes |                         |
-   |----------------------+--------------------+-------+-------------------------|
-   | ID3/file identifier  | "ID3"              |     3 | ID3v2 header            |
-   | ID3 version/revision | $03 00             |     2 |                         |
-   | ID3 flags            | %xyz00000          |     1 |                         |
-   | ID3 size             | 4*%0xxxxxxx        |     4 | [1]                     |
-   |----------------------+--------------------+-------+-------------------------|
-   | Extended header size | $xx xx xx xx       |     4 | ID3v2.3 Ext. header [2] |
-   | Extended Flags       | %x0000000 00000000 |     2 |                         |
-   | Size of padding      | $xx xx xx xx       |     4 |                         |
-   | CRC Checksum         | $xx xx xx xx       |     4 | (optional)              |
-   |----------------------+--------------------+-------+-------------------------|
-   | Frame ID             | $xx xx xx xx       |     4 |                         |
-   | Size                 | $xx xx xx xx       |     4 | [4]                     |
-   | Flags                | $xx xx             |     2 |                         |
-   | Decompressed Size    | $xx xx xx xx       |     4 | (optional) [5]          |
-   | Encryption Method    | $xx                |     1 | (optional) [5]          |
-   | Group Identifier     | $xx                |     1 | (optional) [5]          |
-   | Frame data           |                    |       |                         |
-   |----------------------+--------------------+-------+-------------------------|
-   | padding              | 00                 |     * |                         |
+   | field                | representation     | bytes |                     |
+   |----------------------+--------------------+-------+---------------------|
+   | ID3/file identifier  | "ID3"              |     3 | ID3v2 header        |
+   | ID3 version/revision | $03 00             |     2 |                     |
+   | ID3 flags            | %xyz00000          |     1 |                     |
+   | ID3 size             | 4*%0xxxxxxx        |     4 |                     |
+   |----------------------+--------------------+-------+---------------------|
+   | Extended header size | $xx xx xx xx       |     4 | ID3v2.3 Ext. header |
+   | Extended Flags       | %x0000000 00000000 |     2 |                     |
+   | Size of padding      | $xx xx xx xx       |     4 |                     |
+   | CRC Checksum         | $xx xx xx xx       |     4 | (optional)          |
+   |----------------------+--------------------+-------+---------------------|
+   | Frame ID             | $xx xx xx xx       |     4 |                     |
+   | Size                 | $xx xx xx xx       |     4 |                     |
+   | Flags                | $xx xx             |     2 |                     |
+   | Decompressed Size    | $xx xx xx xx       |     4 | (optional)          |
+   | Encryption Method    | $xx                |     1 | (optional)          |
+   | Group Identifier     | $xx                |     1 | (optional)          |
+   | Frame data           |                    |       |                     |
+   |----------------------+--------------------+-------+---------------------|
+   | padding              | 00                 |     * |                     |
 
    \endcode
    *
    * Flags:
    *
-   *   - x (bit 7): unsynchornisation was applied
+   *   - x (bit 7): unsynchornisation was applied (see \ref scribbu_id3v2_unsync "here")
    *   - y (bit 6): extended header is present (on which more below)
    *   - z (bit 5): experimental ("This flag should always be set when 
-   *   the tag is in an experimental stage.")
+   *     the tag is in an experimental stage.")
    *
-   * Extended header (optional):
+   * The Optional Extended Header:
    *
    \code
 
@@ -93,13 +93,12 @@ namespace scribbu {
    *
    * Note that the extended header size & size of padding are \em not
    * sync-safe-- section 3.2 \ref scribbu_id3v2_refs_4 "[4]" of the
-   * specification explicitly notes that the extended header is subject
-   * to unsynchronisation.
+   * specification explicitly notes that the extended header is subject to
+   * unsynchronisation.
    *
-   * CRC data  is a four  byte CRC32  checksum appended to  the extended
-   * header; the checksum is  calculated before unsynchronization on the
-   * data  between the  extended header  &  the padding  (i.e. just  the
-   * frames).
+   * CRC data is a four byte CRC32 checksum appended to the extended header;
+   * the checksum is calculated before unsynchronization on the data between
+   * the extended header & the padding (i.e. just the frames).
    *
    *
    */
@@ -333,13 +332,25 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail)
     { set_text_frame("TYER", text, src, add_bom, rsp); }
 
+    virtual void
+    add_comment(const std::string &text,
+                language lang = language::from_locale,
+                encoding src = encoding::UTF_8,
+                use_unicode unicode = use_unicode::no,
+                const std::string &description = std::string(),
+                on_no_encoding rsp = on_no_encoding::fail);
+
+    virtual void
+    add_user_defined_text(const std::string &text,
+                          encoding src = encoding::UTF_8,
+                          use_unicode unicode = use_unicode::no,
+                          const std::string &dsc = std::string(),
+                          on_no_encoding rsp = on_no_encoding::fail);
 
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////
 
-    // TODO(sp1ff): Needed?
-    // std::uint32_t crc() const;
     bool experimental() const
     { return experimental_; }
     bool has_extended_header() const

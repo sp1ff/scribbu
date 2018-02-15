@@ -48,6 +48,7 @@
 
 #include <boost/exception/all.hpp>
 
+#include <scribbu/charsets.hh>
 #include <scribbu/scribbu.hh>
 
 namespace scribbu {
@@ -55,30 +56,11 @@ namespace scribbu {
   namespace detail {
 
     template <typename forward_input_iterator>
-    forward_input_iterator find_trailing_null(bool                   unicode,
-                                              unsigned char          version,
-                                              forward_input_iterator p0,
-                                              forward_input_iterator p1) {
-
-      std::size_t code_unit;
-
-      if (2 == version || 3 == version) {
-        if (0 == unicode) {
-          code_unit = 1;
-        }
-        else {
-          code_unit = 2;
-        }
-      }
-      else {
-        if (0 == unicode || 3 == unicode) {
-          code_unit = 1;
-        }
-        else {
-          code_unit = 2;
-        }
-      }
-
+    forward_input_iterator
+    find_trailing_null(std::size_t            code_unit,
+                       forward_input_iterator p0,
+                       forward_input_iterator p1)
+    {
       // Walk [p0, p1) seeking the first sequence of `code_unit' zero bytes.
       std::size_t saw_nil = 0;
       for ( ; p0 < p1; p0 += code_unit) {
@@ -101,6 +83,21 @@ namespace scribbu {
     bool needs_unsync(unsigned char x, unsigned char y);
 
     template <typename forward_iterator>
+    std::size_t count_syncs(forward_iterator p0, forward_iterator p1, bool false_only) {
+      if (p0 == p1) return 0;
+      std::size_t count = 0;
+      for (forward_iterator p2 = p0 + 1; p2 < p1; ) {
+        if (false_only) {
+          if (is_false_sync(*p0++, *p2++)) ++count;
+        }
+        else {
+          if (needs_unsync(*p0++, *p2++)) ++count;
+        }
+      }
+      return count;
+    }
+
+    template <typename forward_iterator>
     std::size_t count_false_syncs(forward_iterator p0, forward_iterator p1) {
       if (p0 == p1) return 0;
       std::size_t count = 0;
@@ -113,16 +110,6 @@ namespace scribbu {
     std::size_t count_false_syncs(std::size_t n);
 
     std::size_t count_false_syncs(std::ostream &os);
-
-    template <typename forward_iterator>
-    std::size_t count_ffs(forward_iterator p0, forward_iterator p1) {
-      if (p0 == p1) return 0;
-      std::size_t count = 0;
-      for (forward_iterator p2 = p0 + 1; p2 < p1; ) {
-        if (needs_unsync(*p0++, *p2++)) ++count;
-      }
-      return count;
-    }
 
     template <typename output_iterator,
               typename input_iterator>
@@ -151,6 +138,16 @@ namespace scribbu {
     }
 
   } // End namespace detail.
+
+  /// Enumeration of expressiong a tri-state option: do not use Unicode,
+  /// use Unicode, or use Unicode with Byte Order Marking
+    enum class use_unicode {
+      no, yes, with_bom
+    };
+
+  /// Enumeration for arguments that need to express one of the
+  /// three ID3v2 versions of which scribbuy is aware
+  enum class id3v2_version { v2, v3, v4 };
 
   /// ID3v2.2 identifier-- a simple UDT representing a three-character,
   /// ASCII-encoded frame ID for use in hashed collections
@@ -375,16 +372,14 @@ namespace scribbu {
       return std::copy(id_.begin(), id_.end(), pout);
     }
 
-    // TODO(sp1ff): Needed?
     std::size_t size() const;
     std::size_t serialized_size(bool unsync) const;
     std::size_t needs_unsynchronisation() const;
     std::size_t write(std::ostream &os) const;
 
   private:
-    /// Return the number of bytes with 255 as their value when serialized
-    /// without unsynchronisation
-    std::size_t count_ffs() const;
+    /// Count the number of false syncs or required unsyncs
+    std::size_t count_syncs(bool false_only) const;
 
   private:
     std::vector<unsigned char> owner_;
@@ -438,9 +433,7 @@ namespace scribbu {
     std::size_t write(std::ostream &os) const;
 
   private:
-    /// Return the number of bytes with 255 as their value when serialized
-    /// without unsynchronisation
-    std::size_t count_ffs() const;
+    std::size_t count_syncs(bool false_only) const;
 
   private:
     std::vector<unsigned char> email_;
@@ -476,28 +469,34 @@ namespace scribbu {
   public:
 
     template <typename forward_input_iterator>
-    user_defined_text(unsigned char version,
+    user_defined_text(id3v2_version ver,
                       forward_input_iterator p0,
                       forward_input_iterator p1):
       cbnil_(1)
     {
       unicode_ = *p0++;
 
+      if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
+        cbnil_ = unicode_ ? 2: 1;
+      }
+      else {
+        cbnil_ = (0 == unicode_ || 3 == unicode_) ? 1 : 2;
+      }
+
       // Find the first $00 or $00 00, depending on the encoding.
-      forward_input_iterator p = detail::find_trailing_null(unicode_, version,
-                                                            p0, p1);
+      forward_input_iterator p = detail::find_trailing_null(cbnil_, p0, p1);
       // [p0, p) has description (including the terminating null), [p, p1)
       // contains the string.
       std::copy(p0, p, std::back_inserter(description_));
-      if ((2 == version || 3 == version) && unicode_) {
-        cbnil_ = 2;
-      }
-      else if ((4 == version || (1 == unicode_ || 2 == unicode_))) {
-        cbnil_ = 2;
-      }
       p += cbnil_;
       std::copy(p, p1, std::back_inserter(text_));
     }
+
+    user_defined_text(id3v2_version ver,
+                      const std::string &text,
+                      encoding src,
+                      use_unicode unicode,
+                      const std::string &dsc = std::string());
 
   public:
 
@@ -521,9 +520,7 @@ namespace scribbu {
     std::size_t write(std::ostream &os) const;
 
   private:
-    /// Return the number of bytes with 255 as their value when serialized
-    /// without unsynchronisation
-    std::size_t count_ffs() const;
+    std::size_t count_syncs(bool false_only) const;
 
   private:
     unsigned char cbnil_;
@@ -559,27 +556,40 @@ namespace scribbu {
 
   public:
 
+    /// Construct from a raw buffer (forward_input_iterator shall dereference
+    /// to an unsigned char)
     template <typename forward_input_iterator>
-    comments(unsigned char version,
+    comments(id3v2_version ver,
              forward_input_iterator p0,
              forward_input_iterator p1):
       cbnil_(1)
     {
       unicode_ = *p0++;
+
+      if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
+        cbnil_ = unicode_ ? 2 : 1;
+      }
+      else {
+        cbnil_ = (0 == unicode_ || 3 == unicode_) ? 1 : 2;
+      }
+
       std::copy(p0, p0 + 3, lang_);
       p0 += 3;
-      forward_input_iterator p = detail::find_trailing_null(unicode_, version,
-                                                            p0, p1);
+
+      forward_input_iterator p = detail::find_trailing_null(cbnil_, p0, p1);
       std::copy(p0, p, std::back_inserter(description_));
-      if ((2 == version || 3 == version) && unicode_) {
-        cbnil_ = 2;
-      }
-      else if ((4 == version && (1 == unicode_ || 2 == unicode_))) {
-        cbnil_ = 2;
-      }
+
       p += cbnil_;
       std::copy(p, p1, std::back_inserter(text_));
     }
+
+    /// Construct from arbitrary text
+    comments(id3v2_version ver,
+             language lang,
+             const std::string &text,
+             encoding src,
+             use_unicode unicode,
+             const std::string &dsc = std::string());
 
   public:
 
@@ -611,9 +621,7 @@ namespace scribbu {
     std::size_t write(std::ostream &os) const;
 
   private:
-    /// Return the number of bytes with 255 as their value when serialized
-    /// without unsynchronisation
-    std::size_t count_ffs() const;
+    std::size_t count_syncs(bool false_only) const;
 
   private:
     unsigned char cbnil_;
@@ -648,9 +656,7 @@ namespace scribbu {
     std::size_t write(std::ostream &os) const;
 
   private:
-    /// Return the number of bytes with 255 as their value when serialized
-    /// without unsynchronisation
-    std::size_t count_ffs() const;
+    std::size_t count_syncs(bool false_only) const;
 
   private:
     std::vector<unsigned char> counter_;
@@ -693,9 +699,7 @@ namespace scribbu {
     std::size_t write(std::ostream &os) const;
 
   private:
-    /// Return the number of bytes with 255 as their value when serialized
-    /// without unsynchronisation
-    std::size_t count_ffs() const;
+    std::size_t count_syncs(bool false_only) const;
 
   private:
     std::vector<unsigned char> email_;

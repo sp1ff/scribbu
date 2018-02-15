@@ -19,44 +19,7 @@ scribbu::detail::unsigned_from_sync_safe(unsigned char b0,
                                          unsigned char b1,
                                          unsigned char b2)
 {
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
-  return ( (b0 & 0x7f) << 14 ) |
-         ( (b1 & 0x7f) <<  7 ) |
-           (b2 & 0x7f);
-}
-
-std::uint32_t
-scribbu::detail::uint32_from_sync_safe(unsigned char b0,
-                                       unsigned char b1,
-                                       unsigned char b2,
-                                       unsigned char b3)
-{
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
-  return ( (b0 & 0x7f) << 21 ) |
-         ( (b1 & 0x7f) << 14 ) |
-         ( (b2 & 0x7f) <<  7 ) |
-           (b3 & 0x7f);
-}
-
-std::uint32_t
-scribbu::detail::uint32_from_sync_safe(unsigned char b0,
-                                       unsigned char b1,
-                                       unsigned char b2,
-                                       unsigned char b3,
-                                       unsigned char b4)
-{
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
-  return ( (b0 & 0x0f) << 28 ) |
-         ( (b1 & 0x7f) << 21 ) |
-         ( (b2 & 0x7f) << 14 ) |
-         ( (b3 & 0x7f) <<  7 ) |
-           (b4 & 0x7f);
+  return ( (b0 & 0x7f) << 14 ) | ( (b1 & 0x7f) << 7 ) | (b2 & 0x7f);
 }
 
 std::size_t
@@ -65,9 +28,6 @@ scribbu::detail::unsigned_from_sync_safe(unsigned char b0,
                                          unsigned char b2,
                                          unsigned char b3)
 {
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
   return uint32_from_sync_safe(b0, b1, b2, b3);
 }
 
@@ -82,14 +42,29 @@ scribbu::detail::unsigned_from_sync_safe(unsigned char b0,
 }
 
 std::uint32_t
-scribbu::detail::uint32_from_non_sync_safe(unsigned char b0,
-                                           unsigned char b1,
-                                           unsigned char b2)
+scribbu::detail::uint32_from_sync_safe(unsigned char b0,
+                                       unsigned char b1,
+                                       unsigned char b2,
+                                       unsigned char b3)
 {
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
-  return ( b0 << 16 ) | ( b1 <<  8 ) | b2;
+  return ( (b0 & 0x7f) << 21 ) |
+         ( (b1 & 0x7f) << 14 ) |
+         ( (b2 & 0x7f) <<  7 ) |
+           (b3 & 0x7f);
+}
+
+std::uint32_t
+scribbu::detail::uint32_from_sync_safe(unsigned char b0,
+                                       unsigned char b1,
+                                       unsigned char b2,
+                                       unsigned char b3,
+                                       unsigned char b4)
+{
+  return ( (b0 & 0x0f) << 28 ) |
+         ( (b1 & 0x7f) << 21 ) |
+         ( (b2 & 0x7f) << 14 ) |
+         ( (b3 & 0x7f) <<  7 ) |
+           (b4 & 0x7f);
 }
 
 std::size_t
@@ -97,25 +72,7 @@ scribbu::detail::unsigned_from_non_sync_safe(unsigned char b0,
                                              unsigned char b1,
                                              unsigned char b2)
 {
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
   return uint32_from_non_sync_safe(b0, b1, b2);
-}
-
-std::uint32_t
-scribbu::detail::uint32_from_non_sync_safe(unsigned char b0,
-                                           unsigned char b1,
-                                           unsigned char b2,
-                                           unsigned char b3)
-{
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
-  return ( b0 << 24 ) |
-         ( b1 << 16 ) |
-         ( b2 <<  8 ) |
-         b3;
 }
 
 std::size_t
@@ -124,10 +81,27 @@ scribbu::detail::unsigned_from_non_sync_safe(unsigned char b0,
                                              unsigned char b2,
                                              unsigned char b3)
 {
-  // N.B. This implementation assumes that the input is in big-endian (per the
-  // ID3v2 specification) & will return the correct value regardless of the
-  // host byte order.
   return uint32_from_non_sync_safe(b0, b1, b2,b3);
+}
+
+std::uint32_t
+scribbu::detail::uint32_from_non_sync_safe(unsigned char b0,
+                                           unsigned char b1,
+                                           unsigned char b2)
+{
+  return ( b0 << 16 ) | ( b1 <<  8 ) | b2;
+}
+
+std::uint32_t
+scribbu::detail::uint32_from_non_sync_safe(unsigned char b0,
+                                           unsigned char b1,
+                                           unsigned char b2,
+                                           unsigned char b3)
+{
+  return ( b0 << 24 ) |
+         ( b1 << 16 ) |
+         ( b2 <<  8 ) |
+         b3;
 }
 
 void

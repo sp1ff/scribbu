@@ -10,13 +10,13 @@ namespace scribbu {
    * \brief Generic basic_ostream insertion implementation
    *
    *
-   * \param f [in] a functor taking \a x & \a os & returning iostate; this is
-   * presumed to do the actual printing
-   *
-   * \param os [in,out] basic_ostream into which \a x shall be inserted
-   *
    * \param x [in] user-defined type to be inserted into an IOStreams output
    * stream
+   *
+   * \param F [in] a functor taking \a x & \a os & returning iostate; this is
+   * presumed to do the actual printing
+   *
+   * \param os [in, out] basic_ostream into which \a x shall be inserted
    *
    * \return \a os after \a x has been inserted into it
    *
@@ -88,7 +88,7 @@ namespace scribbu {
    *
    *    - boolalpha: display booleans as 0/1 or true/false
    *
-   * 4. Internationaliation: Numbers, dates & times, monetary values, and
+   * 4. Internationalisation: Numbers, dates & times, monetary values, and
    *    punctuation vary by country; use the stream's imbued locale for
    *    outputting such quantities. Non-standard facets may need to be defined
    *    for locale-dependent aspects of the user-defined type that aren't
@@ -115,7 +115,7 @@ namespace scribbu {
    *
    \code
 
-      /**
+      /*
        *  @name Inserters
        *
        *  All the @c operator<< functions (aka <em>formatted output
@@ -329,6 +329,7 @@ namespace scribbu {
 
   }; // End class template insert_manip.
 
+  /// Embue an osteram with an encoding scheme
   class ienc
   {
   public:

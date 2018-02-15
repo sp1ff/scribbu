@@ -650,6 +650,50 @@ scribbu::id3v2_4_tag::play_count() const {
   }
 }
 
+/*virtual*/
+void
+scribbu::id3v2_4_tag::add_comment(const std::string &text,
+                                  language lang /*= language::from_locale*/,
+                                  encoding src /*= encoding::UTF_8*/,
+                                  use_unicode unicode /*= use_unicode::no*/,
+                                  const std::string &description /*= std::string()*/,
+                                  on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::unique_ptr<COMM_2_4> pnew = std::make_unique<COMM_2_4>(lang, text, src, unicode,
+                                                              tag_alter_preservation::preserve,
+                                                              file_alter_preservation::preserve,
+                                                              read_only::clear,
+                                                              boost::none,
+                                                              boost::none,
+                                                              false, false,
+                                                              boost::none,
+                                                              description);
+  std::ptrdiff_t d = frames_.size();
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(*pnew, d);
+}
+
+/*virtual*/
+void
+scribbu::id3v2_4_tag::add_user_defined_text(const std::string &text,
+                                            encoding src /*= encoding::UTF_8*/,
+                                            use_unicode unicode /*= use_unicode::no*/,
+                                            const std::string &description /*= std::string()*/,
+                                            on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::unique_ptr<TXXX_2_4> pnew = std::make_unique<TXXX_2_4>(text, src, unicode,
+                                                              tag_alter_preservation::preserve,
+                                                              file_alter_preservation::preserve,
+                                                              read_only::clear,
+                                                              boost::none,
+                                                              boost::none,
+                                                              false, false,
+                                                              description);
+  std::ptrdiff_t d = frames_.size();
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(*pnew, d);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 //                           tag as container                            //
 ///////////////////////////////////////////////////////////////////////////
@@ -795,6 +839,7 @@ scribbu::id3v2_4_tag::insert(const_iterator p, const id3v2_4_frame &frame)
   auto p1 = frames_.emplace(frames_.cbegin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(*frames_[d], d);
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_4_tag::iterator
@@ -805,12 +850,13 @@ scribbu::id3v2_4_tag::insert(const_iterator p, const id3v2_4_text_frame &frame)
   // 2. Avoids dynamic_cast
 
   std::unique_ptr<id3v2_4_text_frame> pnew = std::make_unique<id3v2_4_text_frame>(frame);
-  const id3v2_4_text_frame &F = *pnew;
+  id3v2_4_text_frame &F = *pnew;
 
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
 
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_4_tag::iterator
@@ -826,6 +872,8 @@ scribbu::id3v2_4_tag::insert(const_iterator p, const PCNT_2_4 &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_4_tag::iterator
@@ -841,6 +889,8 @@ scribbu::id3v2_4_tag::insert(const_iterator p, const COMM_2_4 &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_4_tag::iterator
@@ -856,6 +906,8 @@ scribbu::id3v2_4_tag::insert(const_iterator p, const POPM_2_4 &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 void

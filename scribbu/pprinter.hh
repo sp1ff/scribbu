@@ -13,13 +13,14 @@
  *
  * \subsection scribbu_pprinter_discuss_problem The Problem
  *
- * I would like to implement operator<< for id3v2_tags (and for other things,
- * but id3v2_tag presents the most challenging problem). id3v2_tag has three
- * subclasses, each of which contains a polymorphic collection of frames. So
- * far, this could be solved through a virtual function on id3v2_tag & on each
- * frame base class (id3v2_2_frame, id3v2_3 fram & id3v2_4 frame). However, I
- * would also like to be able to support different styles of pretty-printing
- * (compact, standard, detailed, &c).
+ * I would like to implement operator<< for scribbu::id3v2_tag-s (and for other
+ * things, but scribbu::id3v2_tag presents the most challenging
+ * problem). scribbu::id3v2_tag has three subclasses, each of which contains a
+ * polymorphic collection of frames. So far, this could be solved through a
+ * virtual function on scribbu::id3v2_tag & on each frame base class
+ * (scribbu::id3v2_2_frame, scribbu::id3v2_3_frame &
+ * scribbu::id3v2_4_frame). However, I would also like to be able to support
+ * different styles of pretty-printing (compact, standard, detailed, &c).
  *
  * My first approach was to go the virtual function route, and simply
  * dispatch based on the selected style, something like this:
@@ -46,21 +47,21 @@
  *
  * \subsection scribbu_pprinter_discuss_visitor Visitor
  *
- * My next attempt was to implement Visitor (needs reference), which is of
- * course tailor-made for this: I had a set of types which was unlikely to
- * change, and a set of operations that was much more fluid. Each style of
- * pretty-printing would be implemented as a distinct class, eliminating the
- * problem described above. The cost would be adding an "accept" virtual to
- * each type, which would then invoke the relevant visitor method, for two
- * virtual function lookups. There was one wrinkle where frames were involved;
- * employing Visitor in this way would mean:
+ * My next attempt was to implement Visitor \ref scribbu_pprinter_ref_01 "[1]",
+ * which is of course tailor-made for this: I had a set of types which was
+ * unlikely to change, and a set of operations that was much more fluid. Each
+ * style of pretty-printing would be implemented as a distinct class,
+ * eliminating the problem described above. The cost would be adding an
+ * "accept" virtual to each type, which would then invoke the relevant visitor
+ * method, for two virtual function lookups. There was one wrinkle where frames
+ * were involved; employing Visitor in this way would mean:
  *
  *    1. operator<< constructing a Visitor of the appropriate type and invoking
  *       accept on the tag, passing the Visitor as an argument (one virtual
  *       lookup)
  *
  *    2. in the implementation, we would now have resolved the tag type, and so
- *       we could call the appropriate Visitor virtual, passing =*this= as an
+ *       we could call the appropriate Visitor virtual, passing \c *this as an
  *       argument (a second virtual lookup)
  *
  *    3. at this point, we're in the Visitor, and we've resolved both types; we
@@ -69,7 +70,7 @@
  *
  *    4. in the frame's accept implementation, we now have the frame
  *       type, so we can call the appropriate Visitor virtual, passing
- *       *this as an argument (a second virtual lookup for each frame)
+ *       \c *this as an argument (a second virtual lookup for each frame)
  *
  *    5. in the Visitor overload, we've now resolved both the frame type and
  *       the Visitor type & can pretty-print the frame... but this second
@@ -77,7 +78,7 @@
  *       figured out the Visitor type in step 2.
  *
  * Of course, Visitor also introduced the usual dependency problems; moving to
- * Acyclic Visitor (TODO(sp1ff): need reference) would remove that, in the
+ * Acyclic Visitor \ref scribbu_pprinter_ref_02 "[2]" would remove that, in the
  * process substituting the virtual function invocation in 2 for a dynamic
  * cast. It did nothing for the superfluous virtual invocation for each frame.
  *
@@ -110,6 +111,16 @@
  * This preservese the attribute of satisfying the open/closed principal that
  * Visitor offered, while cutting in half the number of virtual function
  * invocations.
+ *
+ *
+ * \section scribbu_pprinter_refs References
+ *
+ * 1. \anchor scribbu_pprinter_ref_01 Unknown, cited 2015: Visitor pattern
+ * [Available online at https://en.wikipedia.org/wiki/Visitor_pattern]
+ *
+ * 2. \anchor scribbu_pprinter_ref_02 Robert C. Martin: Acyclic Visitor
+ * [Available online at
+ * http://condor.depaul.edu/dmumaugh/OOT/Design-Principles/acv.pdf]
  *
  *
  */
@@ -220,7 +231,7 @@ namespace scribbu {
 
   };
 
-  /*
+  /**
    * \brief ABC for pretty-printer manipulators
    *
    *
@@ -249,7 +260,7 @@ namespace scribbu {
    *
    * I can't find much in the Standard on requirements for user-defined
    * manipulators. Since this implementation works by inserting a UDT into the
-   * target ostream, I'm abiding by the same rules as for function pptrint,
+   * target ostream, I'm abiding by the same rules as for function pprint,
    * above, with one exception: since I'm not actually inserting anything into
    * the underlying stream buffer, I'm dispensing with the sentry.
    *

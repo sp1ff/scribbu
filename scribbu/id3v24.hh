@@ -57,7 +57,8 @@ namespace scribbu {
    *     in an experimental stage."
    *   - d (bit 4): footer present
    *
-   * Extended header:
+   *
+   * ID3v2.4 Optional Extended Header:
    *
    \code
 
@@ -368,6 +369,21 @@ namespace scribbu {
          bool add_bom = false,
          on_no_encoding rsp = on_no_encoding::fail)
     { set_text_frame("TYER", text, src, DST, add_bom, rsp); }
+
+    virtual void
+    add_comment(const std::string &text,
+                language lang = language::from_locale,
+                encoding src = encoding::UTF_8,
+                use_unicode unicode = use_unicode::no,
+                const std::string &description = std::string(),
+                on_no_encoding rsp = on_no_encoding::fail);
+    
+    virtual void
+    add_user_defined_text(const std::string &text,
+                          encoding src = encoding::UTF_8,
+                          use_unicode unicode = use_unicode::no,
+                          const std::string &dsc = std::string(),
+                          on_no_encoding rsp = on_no_encoding::fail);
 
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //

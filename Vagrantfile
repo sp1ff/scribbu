@@ -53,6 +53,7 @@ sudo ldconfig
 sudo apt-get -y install autoconf
 sudo apt-get -y install automake
 sudo apt-get -y install libtool
+sudo apt-get -y install texinfo
 sudo apt-get -y install libssl-dev
 sudo apt-get -y install flex
 sudo apt-get -y install bison
@@ -106,7 +107,7 @@ Vagrant.configure(2) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+  # config.vm.synced_folder "/home/mgh/doc/hacking/mp3z", "/mp3z"
   # config.vm.synced_folder "/mnt/Took-Hall/mp3", "/mp3"
 
   # Provider-specific configuration so you can fine-tune various

@@ -1,9 +1,10 @@
 #include "id3v2-utils.hh"
+
 #include "id3v22.hh"
 #include "id3v23.hh"
-#include <scribbu/id3v24.hh>
-#include <scribbu/tbt-parser.hh>
-#include <scribbu/tbt-lexer.hh>
+#include "id3v24.hh"
+#include "tbt-parser.hh"
+#include "tbt-lexer.hh"
 
 #include <numeric>
 

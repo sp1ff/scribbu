@@ -4,9 +4,8 @@
 @settitle scribbu
 @c %**end of header
 @copying
-The extensible tool for tagging your music collection.
 
-Copyright @copyright{} 2018  Michael Herstine
+Copyright @copyright{} 2018 Michael Herstine <sp1ff@pobox.com>
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -44,11 +43,14 @@ This document was typeset with
 
 The extensible tool for tagging your music collection.
 
+This manual corresponds to scribbu version 0.4.
+
 @insertcopying
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
 * Introduction::
+* scribbu Sub-Commands::
 * Scripting scribbu::
 * Copying This Manual::
 * Index::
@@ -67,8 +69,11 @@ The extensible tool for tagging your music collection.
 
 scribbu is a C++ library & associated command-line tool for working
 with ID3-tagged files (presumably music). In addition to making the
-library available to C++ programmers, the scribbu command embeds
-Guile, allowing it to be scripted using Scheme (a LISP dialect).
+library available to C++ programmers, the scribbu command provides
+various operations for working with ID3 tags. Together, they can
+examine ID3 tags, modify them in various ways, and create new tags. It
+also embeds Guile @xref{Top,,, Guile, The Guile Reference Manual},
+allowing it to be scripted using Scheme (a LISP dialect).
 
 It was born when I retired my last Windows machine & could no longer
 use Winamp to manage my library of digital music. It is very crude
@@ -93,25 +98,25 @@ the following sub-commands:
 
 @enumerate
 @item
-@command{scribbu dump} will write the contents of any & all ID3 tags
-found in one or more files to stdout.
+@command{scribbu dump} @xref{scribbu dump}. will write the contents of
+any & all ID3 tags found in one or more files to stdout.
 
 @item
-@command{scribbu rename} will rename one or more files based on the
-contents of their ID3 tags; e.g. `scribbu rename -t %A-%T.mp3 *.mp3'
-will rename all the files matching *.mp3 to
-<artist>-<title>.mp3 where "artist" and "title" are derived
-from their ID3 tags (if any).
+@command{scribbu rename} @xref{scribbu rename}. will rename one or more
+files based on the contents of their ID3 tags; e.g. `scribbu rename -t
+%A-%T.mp3 *.mp3' will rename all the files matching *.mp3 to
+<artist>-<title>.mp3 where "artist" and "title" are derived from their
+ID3 tags (if any).
 
 @item
-@command{scribbu report} will generate a report listing ID3 attributes
-on one or more files on stdout.  Only CSV format is supported
-currently.
+@command{scribbu report} @xref{scribbu report}. will generate a report
+listing ID3 attributes on one or more files on stdout.  Only CSV
+format is supported currently.
 
 @item
-@command{scribbu split} will split one file into many; with each new
-file corresponding to some component of the input file: ID3v1 tag,
-data, and/or ID3v2 tag(s).
+@command{scribbu split} @xref{scribbu split}. will split one file into
+many; with each new file corresponding to some component of the input
+file: ID3v1 tag, data, and/or ID3v2 tag(s).
 
 @end enumerate
 
@@ -119,14 +124,455 @@ data, and/or ID3v2 tag(s).
 
 Any sub-command can be invoked with @option{--help} or @option{-h} for
 more information. Add the @option{--info} option to display this
-manual
+manual.
 
-@c add nodes for each sbu-command
+
+@node scribbu Sub-Commands
+@chapter scribbu Sub-Commands
+
+At prsesent, scribbu has four subcommands: @command{dump},
+@command{rename}, @command{report} & @command{split}. This chapter
+discusses their general use; run, e.g., @command{scribbu dump --help}
+for a detailed description of the sub-command's options & arguments.
+
+@menu
+* scribbu dump::
+* scribbu rename::
+* scribbu report::
+* scribbu split::
+@end menu
+
+@node scribbu dump
+@section scribbu dump
+
+@command{scribbu dump} will walk a collection of files and/or
+directories, reading each file found & looking for ID3 tags therein,
+and pretty-print what it finds to stdout. The format is controlled by
+the @command{--format} flag, which may be either ``standard'' (the
+default) or ``csv'' (comma-separated variables).
+
+For instance:
+
+@example
+scribbu dump cerulean.mp3
+"cerulean.mp3":
+ID3v2.3(.0) Tag:
+295607 bytes, synchronised
+flags: 0x00
+The Ocean Blue - Questions Of Travel (LP Version)
+Cerulean (US Release) (track 6/12), 2005
+Content-type Alternative Rock
+POPM: rating@@winamp.com
+rating: 255
+counter: 00000000
+frame PRIV (8207 bytes)
+TIT2: Questions Of Travel (LP Version)
+TPE1: The Ocean Blue
+TALB: Cerulean (US Release)
+TCON: Alternative Rock
+TPE3:
+TRCK: 6/12
+TYER: 2005
+TPE2: The Ocean Blue
+COMM (<no description>):
+tags=90s,sub-genres=shoegazer
+TCOP: 2005 Warner Bros. Records Inc. Manufactured & Marketed by Warner Strategic Marketing.
+TPOS: 1/1
+frame APIC (286673 bytes)
+82 bytes of padding
+7760096 bytes of track data:
+MD5: 32e73c84659bcf729333d7dd2efca044
+ID3v1.1: The Ocean Blue - Questions Of Travel (LP Versio
+Cerulean (US Release) (track 6), 2005
+tags=90s,sub-genres=shoegaze
+unknown genre 255
+@end example
+
+@node scribbu rename
+@section scribbu rename
+
+@command{scribbu rename} renames one or more files according to their
+ID3 tags. By default, each file will be renamed to ``<artist> -
+<title>.<extension>'', where ``artist'' & ``title'' are derived from
+the files' ID3 tags.
+
+The caller can customize this, however, using the @command{--template}
+option. This option accepts a string that mixes text with replacement
+parameters (such as title, artist, album and so forth).
+
+Example: Suppose we have a directory ``~/music/stuff'' containing
+several .mp3 files that we would like to name in a uniform manner, say
+``album - title.mp3''. We know the files contain a mixture of ID3v2 &
+ID3v1 tags & we would like this information to be taken from the ID3v2
+tags if possible, falling back to ID3v1 when not. Suppose further that
+we know the ID3v1 tags were written using Windows Code Page 1252 for
+their encoding. Finally, let's say we would like to transform the
+artist name so that a leading ``The'' is turned into a suffix (for
+instance, change ``The Pogues'' to ``Pogues, The'').
+
+This could all be done with the command:
+
+@example
+scribbu rename -r \
+--template='%(artist:prefer-v2&v1-encoding=cp1252&the=suffix) - %(title:prefer-v2&v1-encoding=cp1252).mp3' \
+~/music/stuff
+@end example
+
+The @command{-r} option directs scribbu to remove the original
+files. See @command{scribbu rename --help} for a full description,
+including the complete list of replacement parameters.
+
+@node scribbu report
+@section scribu report
+
+@command{scribbu report} will generate a report on one or more files'
+ID3 tags. The idea is to use scribbu to do the work of scanning the
+tags in combination with some other tool better suited to querying &
+reporting. Consequently, filtering mechanisms are minimal, and the
+output format (CSV) is chosen to facilitate transformation to other
+formats as well as import by other tools.
+
+@node scribbu split
+@section scribbu split
+
+@command{scribbu split} splits a file into it's ID3v2 tag(s), track data,
+and /or ID3v1 tag.
 
 @node Scripting scribbu
 @chapter Scripting scribbu
 
-You can script scribbu using Scheme.
+scribbu, in addition to its various sub-commands, embeds Guile
+@xref{Top,,, guile, The Guile Reference Manual}.  This means that it
+contains a Scheme interpreter to which it exposes a number of built-in
+functions & types.
+
+Users can invoke this interpreter in a few ways:
+
+@enumerate
+@item
+Invoke scribbu with a Scheme expression (@option{-e},
+@option{--expression}) or Scheme file (@option{-f}, @option{--file}).
+In this case, scribbu will evaluate the given program & exit.
+
+@item
+Invoke scribbu with no arguments at all. In this case, scribbu will
+drop into a Scheme shell in which the user can evaluate arbitrary
+Scheme expressions.
+
+@c TODO(sp1ff): Document using scribbu interactively
+
+@end enumerate
+
+scribbu depends on Scheme for control flow, program structure,
+variables & so forth. Its contribution is the set of built-in types &
+functions it exports to the Scheme interpreter, as its associated
+Scheme libraries which are installed as part of the scribbu package.
+
+@menu
+* scribbu Types::
+* scribbu Functions::
+@end menu
+
+@node scribbu Types
+@section scribbu Types
+
+scribbu defines one foreign object type: @code{track}. @code{track} instances
+can be created via @code{scribbu/make-track} like so:
+
+@lisp
+(set! t (scribbu/make-track "~/music/my-track.mp3"))
+@end lisp
+
+Since so many functions require a @code{track}, they can also be created
+as part of an enclosing function like @code{scribbu/with-track-in}, e.g.:
+
+@lisp
+(scribbu/with-track-in "~/music"
+  (lambda (track)
+    (format #t "~s\n" (scribbu/get-path track))))
+@end lisp
+
+This form will create a @code{track} for every file in ``~/music'' (recursively)
+and pass that track to the function provided.
+
+@code{track} has one slot, the path of the file from which it was created. This
+can be retrieved via @code{scribbu/get-track}.
+
+@node scribbu Functions
+@section scribbu Functions
+
+scribbu exports the following functions:
+
+@menu
+* scribbu/add-id3v2-comment::
+* scribbu/add-user-defined-text::
+* scribbu/delete-id3v2-tag::
+* scribbu/get-id3v1-string::
+* scribbu/get-id3v2-attribute::
+* scribbu/get-id3v2-tag-count::
+* scribbu/get-frame::
+* scribbu/get-path::
+* scribbu/has-frame::
+* scribbu/has-id3v1-tag::
+* scribbu/make-id3v2-tag::
+* scribbu/make-track::
+* scribbu/set-frame::
+* scribbu/with-track-in::
+* scribbu/write-id3v2-tag::
+* scribbu/write-track::
+@end menu
+
+@node scribbu/add-id3v2-comment
+@subsection scribbu/add-id3v2-comment
+
+@code{scribbu/add-id3v2-comment track index, text)} will add a new
+comment frame to the @code{index}-th ID3v2 tag in @code{track}. The caller
+may optionally specify the following keyword arguments:
+
+@enumerate
+
+@item
+@code{language}: The three-letter ISO-639-2 language code to be specified
+in this comment frame (``ENG'', for instance). If not specified, the
+value will be deduced from the Scheme locale.
+
+@item
+@code{source-encoding}: The encoding used for the input text; if not given
+it will be deduced from the Scheme locale.
+
+@c TODO(sp1ff): List all the encoding values
+
+@item
+@code{unicode}: A boolean; if set to true, the implementation will
+select a Unicode encoding for the text in the new frame. The default
+is false (i.e. ISO-8859-1 will be used).
+
+@item
+@code{description}: An optional string to be used for the description
+field of the ID3v2 comment tag. If given, it is assumed to be in the same
+encoding as @code{text}.
+
+@end enumerate
+
+@node scribbu/add-user-defined-text
+@subsection scribbu/add-user-defined-text
+
+@code{scribbu/add-user-defined-text track index, text)} will add a new
+user-defined text frame to the @code{index}-th ID3v2 tag in
+@code{track}. The caller may optionally specify the following keyword
+arguments:
+
+@enumerate
+
+@item
+@code{language}: The three-letter ISO-639-2 language code to be specified
+in this frame (``ENG'', for instance). If not specified, the
+value will be deduced from the Scheme locale.
+
+@item
+@code{source-encoding}: The encoding used for the input text; if not given
+it will be deduced from the Scheme locale.
+
+@c TODO(sp1ff): List all the encoding values
+
+@item
+@code{unicode}: A boolean; if set to true, the implementation will
+select a Unicode encoding for the text in the new frame. The default
+is false (i.e. ISO-8859-1 will be used).
+
+@item
+@code{description}: An optional string to be used for the description
+field of the ID3v2 comment tag. If given, it is assumed to be in the same
+encoding as @code{text}.
+
+@end enumerate
+
+@node scribbu/delete-id3v2-tag
+@subsection scribbu/delete-id3v2-tag
+
+@code{scribbu/delete-id3v2-tag track index} will remove the @code{index}-th
+ID3v2 tag from @code{track}.
+
+@node scribbu/get-id3v1-string
+@subsection scribbu/get-id3v1-string
+
+@code{(scribbu/get-id3v1-string track item ...)} retrieves a field
+from an ID3v1 tag. @code{item} may be one of the following symbols:
+
+@enumerate
+
+@item
+@code{scribbu/album}
+@item
+@code{scribbu/artist}
+@item
+@code{scribbu/comment}
+@item
+@code{scribbu/title}
+@item
+@code{scribbu/year}
+
+@end enumerate
+
+The caller may optionally specify the keyword arguments
+@code{source-encoding} and @code{destination-encoding}. The former
+tells scribbu the encoding used for text in the ID3v1 tag & the latter
+the desired output encoding.
+
+@c TODO(sp1ff): List encoding strings
+
+@node scribbu/get-id3v2-attribute
+@subsection scribbu/get-id3v2-attribute
+
+@code{(scribbu/has-id3v2-attribute track index attribute)} returns
+@code{#true} if the given attribute is present in the @code{index}-th
+ID3v2 tag in @code{track}, @code{#false} else. @code{attribute} may be
+a string naming the ID3v2 frame, or one of the following symbols:
+
+@itemize
+
+@item
+@code{album}
+
+@item
+@code{artist}
+
+@item
+@code{content-type}
+
+@item
+@code{encoded-by}
+
+@item
+@code{title}
+
+@item
+@code{year}
+
+@end itemize
+
+@c TODO(sp1ff): Make a list of defined attribute symbols
+
+@node scribbu/get-id3v2-tag-count
+@subsection scribbu/get-id3v2-tag-count
+
+@code{(scribbu/get-id3v2-tag-count track)} returns the number of
+ID3v2 tags present in @code{track}
+
+@node scribbu/get-frame
+@subsection scribbu/get-frame
+
+@code{(scribbu/get-frame track index ids)} will retrieve the contents
+of one or more frames from the @code{index}-th ID3v2 frame in
+@code{track}.  @code{ids} can be either a symbol or a list of symbols.
+
+@c TODO(sp1ff): Centerlize the symbol list somewhere
+
+@node scribbu/get-path
+@subsection scribbu/get-path
+
+@code{(scribbu/get-path track)} return the filesystem path from which
+@code{track} was created (as a string).
+
+@node scribbu/has-frame
+@subsection scribbu/has-frame
+
+@code{(scribbu/has-frame track index, id)} returns true if the @code{index}-th
+ID3v2 frame in @code{track} contains frame @code{id}.
+
+@code{id} may be one of the predefined symbols:
+
+@enumerate
+
+@item
+@code{scribbu/album}
+
+@item
+@code{scribbu/artist}
+
+@item
+@code{scribbu/content-type}
+
+@item
+@code{scribbu/encoded-by}
+
+@item
+@code{scribbu/title}
+
+@item
+@code{scribbu/track}
+
+@item
+@code{scribbu/year}
+
+@end enumerate
+
+or it may be a string naming the ID3v2 frame identifier
+(e.g. ``COMM'', for comment). Note that each version of the standard
+used different identifiers, the caller will either need to know the
+ID3v2 version of the tag being queried, or query it repeatedly with
+every variant of the frame ID in which the caller is interested.
+
+@node scribbu/has-id3v1-tag
+@subsection scribbu/has-id3v1-tag
+
+@code{(scribbu/has-id3v1-tag track)} returns @code{#true} if @code{track}
+contains an ID3v1 tag, and @code{#false} else.
+
+@node scribbu/make-id3v2-tag
+@subsection scribbu/make-id3v2-tag
+
+@code{(scribbu/make-id3v2-tag track index ...)} will create a new,
+empty ID3v2 tag in @code{track} after position @code{index}. The
+caller may also specify the following optional keyword parameters:
+
+@enumerate
+
+@item
+@code{padding} the number of bytes to allocate for padding
+
+@item
+@code{experimental} if true, this tag will have its ``experimental''
+flag set
+
+@item
+@code{extended-hedaer} if true, this tag will have an extended header
+
+@item
+@code{checksum} if true, this tag will have an extended header with
+CRC-32 checsum
+
+@end enumerate
+
+@node scribbu/make-track
+@subsection scribbu/make-track
+
+@code{(scribbu/make-track path)} will create a @code{track} instance
+based on the contents of the file at @code{path}.
+
+@node scribbu/set-frame
+@subsection scribbu/set-frame
+
+@code{(scribbu/set-frame track index attr val)} will set the track attribute
+@code{attr} to @code{val} in the @code{index}-th ID3v2 tag in @code{track}.
+
+@node scribbu/with-track-in
+@subsection scribbu/with-track-in
+
+@code{(scribbu/with-track-in dir fcn)} walk @code{dir} recursively,
+invoking @code{fcn} on each file therein.
+
+@node scribbu/write-id3v2-tag
+@subsection scribbu/write-id3v2-tag
+
+@code{(scribbu/write-id3v2-tag track index out)} will write the @code{index}-th
+ID3v2 tag in @code{track} to @code{out}.
+
+@node scribbu/write-track
+@subsection scribbu/write-track
+
+@code{(scribbu/write-id3v2-tag track index out)} will write
+the @code{index}-th ID3v2 tag in @code{track} to @code{out}.
 
 @node Copying This Manual
 @appendix Copying This Manual

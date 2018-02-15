@@ -1,16 +1,14 @@
 #include "config.h"
+#include "command-utilities.hh"
+#include <scribbu/id3v1.hh>
+#include <scribbu/id3v2-utils.hh>
+#include <scribbu/id3v2.hh>
+#include <scribbu/scribbu.hh>
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-
-#include "command-utilities.hh"
-
-#include <scribbu/id3v1.hh>
-#include <scribbu/id3v2-utils.hh>
-#include <scribbu/id3v2.hh>
-#include <scribbu/scribbu.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;

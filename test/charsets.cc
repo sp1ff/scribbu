@@ -7,6 +7,19 @@ BOOST_AUTO_TEST_CASE( test_charsets )
   using namespace std;
   using namespace scribbu;
 
+  istringstream istm("ISO-8859-1");
+  istream is(istm.rdbuf());
+  encoding e;
+  is >> e;
+  BOOST_CHECK(encoding::ISO_8859_1 == e);
+
+  stringstream os;
+  os << encoding::KOI8_R;
+  BOOST_CHECK(os.str() == "KOI8-R");
+
+  BOOST_CHECK(  scribbu::char_traits<char>::is_code_unit(encoding::ISO_8859_1));
+  BOOST_CHECK(! scribbu::char_traits<char>::is_code_unit(encoding::UCS_2));
+
   string s;
 
   // Let's test some edge cases, first...
@@ -371,3 +384,27 @@ BOOST_AUTO_TEST_CASE( test_utf32 )
 
 
 } // End test_charsets.
+
+BOOST_AUTO_TEST_CASE( test_iso_639 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  char c2[] = { 'e', 'n' };
+  language lang = language_from_iso_639_1(c2);
+  BOOST_CHECK(language::eng == lang);
+  
+  unsigned char c3[3];
+  language_to_iso_639_2(language::eng, c3);
+  BOOST_CHECK(c3[0] == 'e' && c3[1] == 'n' && c3[2] == 'g');
+  
+  istringstream istm("chi");
+  istream is(istm.rdbuf());
+  is >> lang;
+  BOOST_CHECK(language::chi == lang);
+
+  stringstream os;
+  os << language::chi;
+  BOOST_CHECK(os.str() == "chi");
+
+}

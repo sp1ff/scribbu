@@ -13,8 +13,7 @@
   #include <vector>
 
   #include <iostream>
-  // Un-comment to enable debugging
-  // #define YYDEBUG 1
+    // #define YYDEBUG 1  // Un-comment to enable debug output
 
 %}
 

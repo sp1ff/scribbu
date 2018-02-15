@@ -149,7 +149,6 @@ namespace scribbu {
 
     /// Construct with a frame ID et al.
     id3v2_3_plus_frame(const frame_id4        &id,
-                       std::size_t             size,
                        tag_alter_preservation  tap,
                        file_alter_preservation fap,
                        read_only               ro,
@@ -168,14 +167,14 @@ namespace scribbu {
 
     /// Construct with an array of four chars et al.
     id3v2_3_plus_frame(const char              id[4],
-                       std::size_t             size,
+                       // std::size_t             size,
                        tag_alter_preservation  tap,
                        file_alter_preservation fap,
                        read_only               ro,
                        bool                    cmp,
                        const id_type          &enc,
                        const id_type          &gid):
-      id3v2_3_plus_frame(frame_id4(id), size, tap, fap, ro, cmp, enc, gid)
+      id3v2_3_plus_frame(frame_id4(id), tap, fap, ro, cmp, enc, gid)
     { }
 
     /// Construct with four chars et al.
@@ -190,7 +189,7 @@ namespace scribbu {
                        bool                    cmp,
                        const id_type          &encmth,
                        const id_type          &gid):
-      id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), size, tap, fap, ro, cmp, encmth, gid)
+      id3v2_3_plus_frame(frame_id4(id0, id1, id2, id3), tap, fap, ro, cmp, encmth, gid)
     { }
 
     /// Copy construct
@@ -287,7 +286,6 @@ namespace scribbu {
     id_type                 enc_method_;
     id_type                 group_id_;
 
-    // TODO(sp1ff): Implment copy & move ctors and assignment operators
     mutable std::size_t num_false_syncs_;
     mutable std::vector<unsigned char> cache_[2];
 
@@ -304,40 +302,36 @@ namespace scribbu {
 
     /// Construct with a frame ID
     id3v2_3_frame(const frame_id4        &id,
-                  std::size_t             size,
                   tag_alter_preservation  tap,
                   file_alter_preservation fap,
                   read_only               ro,
                   const id_type          &encmth,
                   const id_type          &gid,
                   const opt_sz_type      &decsz):
-      id3v2_3_plus_frame(id, size, tap, fap, ro, (bool)decsz, encmth, gid),
-      decsz_(decsz)
+      id3v2_3_plus_frame(id, tap, fap, ro, (bool)decsz, encmth, gid)
     { }
 
     id3v2_3_frame(const char              id[4],
-                  std::size_t             size,
                   tag_alter_preservation  tap,
                   file_alter_preservation fap,
                   read_only               ro,
                   const id_type          &encmth,
                   const id_type          &gid,
                   const opt_sz_type      &decsz):
-      id3v2_3_frame(frame_id4(id), size, tap, fap, ro, encmth, gid, decsz)
+      id3v2_3_frame(frame_id4(id), tap, fap, ro, encmth, gid, decsz)
     { }
 
     id3v2_3_frame(unsigned char           id0,
                   unsigned char           id1,
                   unsigned char           id2,
                   unsigned char           id3,
-                  std::size_t             size,
                   tag_alter_preservation  tap,
                   file_alter_preservation fap,
                   read_only               ro,
                   const id_type          &encmth,
                   const id_type          &gid,
                   const opt_sz_type      &decsz):
-      id3v2_3_frame(frame_id4(id0, id1, id2, id3), size, tap, fap, ro, encmth, gid, decsz)
+      id3v2_3_frame(frame_id4(id0, id1, id2, id3), tap, fap, ro, encmth, gid, decsz)
     { }
     virtual id3v2_3_frame* clone() const = 0;
 
@@ -354,16 +348,10 @@ namespace scribbu {
                          boost::none);
 
   protected:
-    bool compressed() const
-    { return (bool)decsz_; }
-
     /// Serialize this tag's header to an output stream, including any special
     /// fields such as decompressed size, group id, &c
     virtual std::size_t write_header(std::ostream &os, std::size_t cb_payload,
                                      std::size_t dlind) const;
-
-  private:
-    opt_sz_type decsz_;
 
   }; // End class id3v2_3_frame.
 
@@ -381,7 +369,7 @@ namespace scribbu {
                           const opt_sz_type      &decsz,
                           forward_input_iterator  p0,
                           forward_input_iterator  p1):
-      id3v2_3_frame(id, p1 - p0, tap, fap, ro, encmth, gid, decsz),
+      id3v2_3_frame(id, tap, fap, ro, encmth, gid, decsz),
       data_(p0, p1)
     { }
 
@@ -449,7 +437,7 @@ namespace scribbu {
          const id_type          &encmth,
          const id_type          &gid,
          const opt_sz_type      &decsz):
-    id3v2_3_frame("UFID", p1 - p0, tap, fap, ro, encmth, gid, decsz),
+      id3v2_3_frame("UFID", tap, fap, ro, encmth, gid, decsz),
     unique_file_id(p0, p1)
     { }
 
@@ -505,7 +493,7 @@ namespace scribbu {
          const id_type           &encmth,
          const id_type           &gid,
          const opt_sz_type       &decsz):
-      id3v2_3_frame("ENCR", p1-p0, tap, fap, ro, encmth, gid, decsz),
+      id3v2_3_frame("ENCR", tap, fap, ro, encmth, gid, decsz),
       encryption_method(p0, p1)
     { }
 
@@ -604,7 +592,7 @@ namespace scribbu {
                        const id_type           &encmth,
                        const id_type           &gid,
                        const opt_sz_type       &decsz):
-      id3v2_3_frame(id, p1 - p0, tap, fap, ro, encmth, gid, decsz)
+      id3v2_3_frame(id, tap, fap, ro, encmth, gid, decsz)
     {
       unicode_ = *p0++;
       std::copy(p0, p1, std::back_inserter(text_));
@@ -698,7 +686,7 @@ namespace scribbu {
                        const id_type                    &encmth,
                        const id_type                    &grid,
                        const opt_sz_type                &decsz):
-      id3v2_3_frame(id, text.size() + 1, tap, fap, ro, encmth, grid, decsz),
+      id3v2_3_frame(id, tap, fap, ro, encmth, grid, decsz),
       unicode_(unicode),
       text_(text)
     { }
@@ -812,8 +800,21 @@ namespace scribbu {
          const id_type           &encmth,
          const id_type           &gid,
          const opt_sz_type       &decsz):
-      id3v2_3_frame("TXXX", p1 - p0, tap, fap, ro, encmth, gid, decsz),
-      user_defined_text(3, p0, p1)
+      id3v2_3_frame("TXXX", tap, fap, ro, encmth, gid, decsz),
+      user_defined_text(id3v2_version::v3, p0, p1)
+    { }
+
+    TXXX(const std::string      &text,
+         encoding                src,
+         use_unicode             unicode,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type          &encmth,
+         const id_type          &gid,
+         const std::string      &dsc = std::string()):
+      id3v2_3_frame("TXXX", tap, fap, ro, encmth, gid, boost::none),
+      user_defined_text(id3v2_version::v3, text, src, unicode, dsc)
     { }
 
     virtual id3v2_3_frame* clone() const
@@ -858,7 +859,7 @@ namespace scribbu {
     {
       using namespace std;
       vector<unsigned char> buf;
-      user_defined_text::descriptionb(back_inserter(buf));
+      user_defined_text::textb(back_inserter(buf));
       return id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
                                                 unicode(), dst, rsp, src);
     }
@@ -884,8 +885,22 @@ namespace scribbu {
          const id_type           &encmth,
          const id_type           &gid,
          const opt_sz_type       &decsz):
-      id3v2_3_frame("COMM", p1 - p0, tap, fap, ro, encmth, gid, decsz),
-      comments(3, p0, p1)
+      id3v2_3_frame("COMM", tap, fap, ro, encmth, gid, decsz),
+      comments(id3v2_version::v3, p0, p1)
+    { }
+
+    COMM(language                lang,
+         const std::string      &text,
+         encoding                src,
+         use_unicode             unicode,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type          &encmth,
+         const id_type          &gid,
+         const std::string      &dsc = std::string()):
+      id3v2_3_frame("COMM", tap, fap, ro, encmth, gid, boost::none),
+      comments(id3v2_version::v2, lang, text, src, unicode, dsc)
     { }
 
     virtual id3v2_3_frame* clone() const
@@ -952,7 +967,7 @@ namespace scribbu {
          const id_type           &encmth,
          const id_type           &gid,
          const opt_sz_type       &decsz):
-      id3v2_3_frame("PCNT", p1 - p0, tap, fap, ro, encmth, gid, decsz),
+      id3v2_3_frame("PCNT", tap, fap, ro, encmth, gid, decsz),
       play_count(p0, p1)
     { }
 
@@ -1001,7 +1016,7 @@ namespace scribbu {
          const id_type           &encmth,
          const id_type           &gid,
          const opt_sz_type       &decsz):
-      id3v2_3_frame("POPM", p1 - p0, tap, fap, ro, encmth, gid, decsz),
+      id3v2_3_frame("POPM", tap, fap, ro, encmth, gid, decsz),
       popularimeter(p0, p1)
     { }
 

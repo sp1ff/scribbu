@@ -22,13 +22,11 @@ namespace scribbu {
    *
    * \code
 
-     +----+---+
-     | ID | 3 |
-     +----+---+
-     |size| 3 |
-     +----+---+
-     |data|...|
-     +----+---+
+     | field      | representation | bytes      |
+     |------------+----------------+------------|
+     | frame ID   | [A-Z0-9]{3}    |         3  |
+     | frame size | 3*$xx          |         3  |
+     | data       | $xx...         | frame size |
 
    * \endcode
    *
@@ -483,9 +481,17 @@ namespace scribbu {
     TXX(forward_input_iterator p0,
         forward_input_iterator p1):
       id3v2_2_frame("TXX"),
-      user_defined_text(2, p0, p1)
+      user_defined_text(id3v2_version::v2, p0, p1)
     { }
 
+    TXX(const std::string &text,
+        encoding src,
+        use_unicode unicode,
+        const std::string &dsc = std::string()):
+      id3v2_2_frame("TXX"),
+      user_defined_text(id3v2_version::v2, text, src, unicode, dsc)
+    { }
+    
     virtual id3v2_2_frame* clone() const
     { return new TXX(*this); }
 
@@ -537,7 +543,16 @@ namespace scribbu {
     COM(forward_input_iterator p0,
         forward_input_iterator p1):
       id3v2_2_frame("COM"),
-      comments(2, p0, p1)
+      comments(id3v2_version::v2, p0, p1)
+    { }
+
+    COM(language lang,
+        const std::string &text,
+        encoding src,
+        use_unicode unicode,
+        const std::string &dsc = std::string()):
+      id3v2_2_frame("COM"),
+      comments(id3v2_version::v2, lang, text, src, unicode, dsc)
     { }
 
     virtual id3v2_2_frame* clone() const

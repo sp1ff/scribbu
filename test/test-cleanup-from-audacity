@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+cols=$(tput cols)
+eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-cleanup-from-audacity.scm ${srcdir}/data/exit.tag \
+        2> >(t_err=$(cat); typeset -p t_err) \
+         > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+echo "$t_std"
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-from-audacity.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+
+../src/scribbu dump test.tag > test-cleanup-from-audacity.out || exit 1
+diff test-cleanup-from-audacity.out ${srcdir}/data/golden-test-cleanup-from-audacity.out || exit 1
+
+exit $t_stat

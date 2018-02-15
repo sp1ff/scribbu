@@ -3,15 +3,14 @@ SCRIPT_FILE=/tmp/test-with-track-in.$$
 OUTPUT_FILE=/tmp/test-with-track-in.out.$$
 cat <<EOF > $SCRIPT_FILE
 (use-modules (ice-9 format))
-(use-modules (scribbu))
 
 (setlocale LC_ALL "")
 
-(scribbu/with-track-in 
+(scribbu/with-track-in
  "${srcdir}/data"
- (lambda (x) 
-   (if (scribbu/has-id3v1-tag x) 
-	   (let ((c (scribbu/get-id3v1-string x 'comment))
+ (lambda (x)
+   (if (scribbu/has-id3v1-tag x)
+	   (let ((c (scribbu/get-id3v1-string x 'scribbu/comment))
 			 (r (make-regexp "rip.*winamp" regexp/icase)))
 		 (if (regexp-exec r c)
 			 (format #t "~s: ~s\n" (scribbu/get-path x) c))))))

@@ -10,6 +10,34 @@
 
 namespace fs = boost::filesystem;
 
+BOOST_AUTO_TEST_CASE( test_from_sync_safe)
+{
+  using namespace std;
+  using namespace scribbu::detail;
+
+  size_t x = unsigned_from_sync_safe(0x7f, 0x7f, 0x7f);
+  BOOST_CHECK(2^22 - 1 == x);
+
+  x = unsigned_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f);
+  BOOST_CHECK(2^28 - 1 == x);
+
+  x = unsigned_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f, 0x7f);
+  BOOST_CHECK(2^35 - 1 == x);
+
+  uint32_t x32 = uint32_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f);
+  BOOST_CHECK(2^28 - 1 == x32);
+  
+  x32 = uint32_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f, 0x7f);
+  BOOST_CHECK(2^35 - 1 == x32);
+
+  x = unsigned_from_non_sync_safe(0xff, 0xff, 0xff);
+  BOOST_CHECK(2^24 - 1 == x);
+
+  x = unsigned_from_non_sync_safe(0xff, 0xff, 0xff, 0xff);
+  BOOST_CHECK(2^32 - 1 == x);
+
+}
+
 BOOST_AUTO_TEST_CASE( test_looking_at )
 {
   using namespace scribbu;

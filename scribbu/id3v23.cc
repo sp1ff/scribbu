@@ -374,11 +374,7 @@ scribbu::id3v2_3_tag::flags() const
  * Computing tag size becomes more complex with ID3v2.3.  Both the potential
  * presence of a checksum (in the extended header) and the possible encryption
  * and/or compression of individual frames makes the calculation much more
- * complex. Note that if the unsynchronisation scheme is begin applied, we are
- * not checking for the presence of false syncs, but merely 0xff values; since
- * the caller has already told us that the unsynchronisation scheme is being
- * applied, so all 0xff values have to have a zero byte written immediately
- * after.
+ * complex.
  *
  * This implemenentation proceeds as follows:
  *
@@ -393,16 +389,16 @@ scribbu::id3v2_3_tag::flags() const
  *   + if unsynchronisation \em is being applied:
  *
  *     * if there is no CRC checksum, it will still be 6 bytes (there is no chance
- *       of an 0xff in this case)
+ *       of a false sync in this case)
  *
  *     * otherwise, we have to compute the CRC checksum, then check it for
  *       false syncs
  *
- *       * ask each frame to serialize itself weithout the unsynchronisation
+ *       * ask each frame to serialize itself \em without the unsynchronisation
  *         scheme & update a CRC-32 checksum
  *
- *       * the extended header will contribute 10 plus the number of 0xff bytes
- *         in the checksum
+ *       * the extended header will contribute 10 plus the number of false
+ *         syncs or $ff 00 pairs in the checksum
  *
  * - ask each frame to compute its serialized size, incorporating the
  *   unsynchronisation scheme if requested:
@@ -411,10 +407,15 @@ scribbu::id3v2_3_tag::flags() const
  *
  *   + encrypted frames shall apply encyrption (in this order)
  *
- *   + if unsynchronisation is being applied, all frames will need to return their
- *     serialized sizes plus the number of 0xff bytes
+ *   + if unsynchronisation is being applied, all frames will need to return
+ *     their serialized size plus the number of false syncs and $ff 00 pairs
+ *     found in their serialization
  *
  * - add the padding, if any
+ *
+ *
+ * \todo If \a unsync is requested, and the last byte of the last frame is
+ * 0xff, we need to add one.
  *
  *
  */
@@ -441,9 +442,6 @@ scribbu::id3v2_3_tag::size(bool unsync) const
                    [unsync](size_t n, const id3v2_3_frame &f)
                    { return n + f.serialized_size(unsync); });
 
-  // TODO(sp1ff): If unsync, check the last byte of the last frame; if
-  // it's0xff, add one.
-  
   cb += padding();
 
   return cb;
@@ -457,7 +455,7 @@ scribbu::id3v2_3_tag::size(bool unsync) const
  *
  * With ID3v2.3, this calculation becomes slightly more complex, due to the
  * (potential) presence of an extended header, which may in turn contain a
- * checksum
+ * checksum.
  *
  * - the ID3v2 header is synch-safe, so that contributes zero false syncs
  *
@@ -468,13 +466,16 @@ scribbu::id3v2_3_tag::size(bool unsync) const
  *
  *   + the size & padding may contain false syncs
  *
- *   + if there is a CRC checksum present, we'll need to calculate it to check for
- *     false synchs; this will mean asking each frame to serialize itself without
- *     without the unsynchronisation scheme
+ *   + if there is a CRC checksum present, we'll need to calculate it to check
+ *     for false synchs; this will mean asking each frame to serialize itself
+ *     \em without the unsynchronisation scheme
  *
  *  - ask each frame to check itself for false syncs
  *
  *  - padding is synchsafe, so no need to count
+ *
+ *
+ * \todo If the last byte of the last frame is 0xff, that's a false sync
  *
  *
  */
@@ -494,8 +495,6 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
       return true;
     }
   }
-
-  // TODO(sp1ff): Check the last byte of the last frame...
 
   return any_of(begin(), end(), [](const id3v2_3_frame &F) { return F.needs_unsynchronisation(); });
 }
@@ -588,18 +587,48 @@ scribbu::id3v2_3_tag::play_count() const {
   }
 }
 
-// TODO(sp1ff): Needed?
-/// The CRC should be calculated before unsynchronisation on the data between
-/// the extended header and the padding, i.e. the frames and only the frames.
-// std::uint32_t
-// scribbu::id3v2_3_tag::crc() const
-// {
-//   using namespace std;
-//   uint32_t checksum = crc32(0L, Z_NULL, 0);
-//   for_each(frames_.begin(), frames_.end(), [&checksum](const id3v2_3_frame &F)
-//                                            { checksum = F.crc(checksum); });
-//   return checksum;
-// }
+/*virtual*/
+void
+scribbu::id3v2_3_tag::add_comment(const std::string &text,
+                                  language lang /*= language::from_locale*/,
+                                  encoding src /*= encoding::UTF_8*/,
+                                  use_unicode unicode /*= use_unicode::no*/,
+                                  const std::string &description /*= std::string()*/,
+                                  on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::unique_ptr<COMM> pnew = std::make_unique<COMM>(lang, text, src, unicode,
+                                                      tag_alter_preservation::preserve,
+                                                      file_alter_preservation::preserve,
+                                                      read_only::clear,
+                                                      boost::none,
+                                                      boost::none,
+                                                      description);
+  const COMM &F = *pnew;
+  std::size_t d = frames_.size();
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(F, d);
+}
+
+/*virtual*/
+void
+scribbu::id3v2_3_tag::add_user_defined_text(const std::string &text,
+                                            encoding src /*= encoding::UTF_8*/,
+                                            use_unicode unicode /*= use_unicode::no*/,
+                                            const std::string &description /*= std::string()*/,
+                                            on_no_encoding rsp /*= on_no_encoding::fail*/)
+{
+  std::unique_ptr<TXXX> pnew = std::make_unique<TXXX>(text, src, unicode,
+                                                      tag_alter_preservation::preserve,
+                                                      file_alter_preservation::preserve,
+                                                      read_only::clear,
+                                                      boost::none,
+                                                      boost::none,
+                                                      description);
+  const TXXX &F = *pnew;
+  std::size_t d = frames_.size();
+  frames_.emplace_back(std::move(pnew));
+  add_frame_to_lookups(F, d);
+}
 
 ///////////////////////////////////////////////////////////////////////////
 //                           tag as container                            //
@@ -746,6 +775,8 @@ scribbu::id3v2_3_tag::insert(const_iterator p, const id3v2_3_frame &frame)
   auto p1 = frames_.emplace(frames_.cbegin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(*frames_[d], d);
+
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_3_tag::iterator
@@ -756,12 +787,13 @@ scribbu::id3v2_3_tag::insert(const_iterator p, const id3v2_3_text_frame &frame)
   // 2. Avoids dynamic_cast
 
   std::unique_ptr<id3v2_3_text_frame> pnew = std::make_unique<id3v2_3_text_frame>(frame);
-  const id3v2_3_text_frame &F = *pnew;
+  id3v2_3_text_frame &F = *pnew;
 
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
 
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_3_tag::iterator
@@ -777,6 +809,8 @@ scribbu::id3v2_3_tag::insert(const_iterator p, const PCNT &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_3_tag::iterator
@@ -792,6 +826,7 @@ scribbu::id3v2_3_tag::insert(const_iterator p, const COMM &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+  return iterator(this, p1);
 }
 
 scribbu::id3v2_3_tag::iterator
@@ -807,6 +842,7 @@ scribbu::id3v2_3_tag::insert(const_iterator p, const POPM &frame)
   auto p1 = frames_.emplace(frames_.begin() + p.index(), std::move(pnew));
   std::ptrdiff_t d = p1 - frames_.begin();
   add_frame_to_lookups(F, d);
+  return iterator(this, p1);
 }
 
 void

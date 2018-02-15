@@ -1,10 +1,11 @@
 #include "scheme.hh"
-
-#include <scribbu/scribbu.hh>
-#include <scribbu/id3v1.hh>
-#include <scribbu/id3v2.hh>
-#include <scribbu/id3v23.hh>
-#include <scribbu/id3v2-utils.hh>
+#include "config.h"
+#include "scribbu.hh"
+#include "id3v1.hh"
+#include "id3v22.hh"
+#include "id3v23.hh"
+#include "id3v24.hh"
+#include "id3v2-utils.hh"
 
 #include <string>
 
@@ -19,29 +20,24 @@ namespace fs = boost::filesystem;
 //                              utility code                                 //
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace std {
+#define ADD_ID3V2_COMMENT     "scribbu/add-id3v2-comment"
+#define ADD_USER_DEFINED_TEXT "scribbu/add-user-defined-text"
+#define DELETE_ID3V2_TAG      "scribbu/delete-id3v2-tag"
+#define GET_FRAME             "scribbu/get-frame"
+#define GET_ID3V1_STRING      "scribbu/get-id3v1-string"
+#define GET_ID3V2_ATTRIBUTE   "scribbu/get-id3v2-attribute"
+#define GET_PATH              "scribbu/get-path"
+#define HAS_FRAME             "scribbu/has-frame"
+#define HAS_ID3V1_TAG         "scribbu/has-id3v1-tag"
+#define MAKE_ID3V2_TAG        "scribbu/make-id3v2-tag"
+#define MAKE_TRACK            "scribbu/make-track"
+#define NUM_ID3V2_TAGS        "scribbu/get-id3v2-tag-count"
+#define SET_FRAME             "scribbu/set-frame"
+#define WITH_TRACK_IN         "scribbu/with-track-in"
+#define WRITE_ID3V2_TAG       "scribbu/write-id3v2-tag"
+#define WRITE_TRACK           "scribbu/write-track"
 
-  template <>
-  struct hash<char*>
-  {
-    std::size_t operator()(char *p) const;
-  };
-
-}
-
-//template<>
-std::size_t std::hash<char*>::operator()(char *p) const
-{
-  // https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
-  std::size_t seed = 0x9e3779b9;
-
-  while (*p) {
-    boost::hash_combine(seed, *p++);
-  }
-
-  return seed;
-}
-
+/// Stack-based allocator for scm_dynwind_begin/end
 class dynwind_context
 {
 public:
@@ -50,6 +46,7 @@ public:
   { scm_dynwind_end(); }
   void free(void *p)
   { scm_dynwind_free(p); }
+  char* free_locale_string(SCM scm);
 
   dynwind_context(const dynwind_context&)            = delete;
   dynwind_context(dynwind_context&&)                 = delete;
@@ -64,35 +61,11 @@ dynwind_context::dynwind_context(bool rewindable /*= false*/)
     (scm_t_dynwind_flags) (rewindable ? SCM_F_DYNWIND_REWINDABLE : 0));
 }
 
-/**
- * \brief Enumerated set of defined symbols
- *
- *
- * This module defines a number of Scheme symbols, which are sometimes passed
- * to C functions as variables of type SCM. For reasons I can't identify, I
- * can't define the symbols here in C (via scm_string_to_symbol, e.g.) and then
- * compare the input parameters to those pre-defined variables. The only way
- * I've been able to reliably identify them is to convert the incoming SCM
- * variable to a string & examine that.
- *
- *
- */
-
-enum class symbol {
-  album, artist, comment, content_type, encoded_by, title, year
-};
-
-std::unordered_map<std::size_t, symbol> symbols_;
-
-symbol symbol_for_scm(SCM scm)
+char* dynwind_context::free_locale_string(SCM scm)
 {
-  dynwind_context ctx;
-
-  char *pscm = scm_to_utf8_string(scm_symbol_to_string(scm));
-  ctx.free(pscm);
-
-  return symbols_[std::hash<char*>()(pscm)];
-
+  char *p = scm_to_locale_string(scm);
+  scm_dynwind_free(p);
+  return p;
 }
 
 
@@ -100,45 +73,57 @@ symbol symbol_for_scm(SCM scm)
 //                        Scheme foreign type `track'                        //
 ///////////////////////////////////////////////////////////////////////////////
 
-// https://www.gnu.org/software/guile/manual/guile.html#Defining-Foreign-Object-Types
-
+/**
+ * \brief Foreign object type `track'
+ *
+ *
+ * Cf. https://www.gnu.org/software/guile/manual/guile.html#Defining-Foreign-Object-Types
+ *
+ *
+ */
 class scm_track
 {
 public:
   scm_track(const fs::path &pth);
 
 public:
-  fs::path path() const 
-  {
-    return pth_;
-  }
-  scribbu::id3v1_tag* id3v1_tag() const 
-  {
-    return pv1_.get();
-  }
-  std::size_t num_id3v2_tags() const 
-  {
-    return v2_.size();
-  }
+  fs::path path() const
+  { return pth_; }
+  scribbu::id3v1_tag* id3v1_tag() const
+  { return pv1_.get(); }
+  std::size_t num_id3v2_tags() const
+  { return v2_.size(); }
   const scribbu::id3v2_tag&
   get_id3v2_tag(unsigned int idx) const
   {
+    if (idx >= v2_.size()) {
+      // TODO(sp1ff): Improve this
+      throw std::range_error("index out of range in get_id3v2-tag");
+    }
     return *v2_[idx];
   }
   scribbu::id3v2_tag&
   get_id3v2_tag(unsigned int idx)
   {
+    if (idx >= v2_.size()) {
+      // TODO(sp1ff): Improve this
+      throw std::range_error("index out of range in get_id3v2-tag");
+    }
     return *v2_[idx];
   }
   void
   insert_id3v2_tag(std::unique_ptr<scribbu::id3v2_tag> &ptag, std::size_t idx)
-  {
-    v2_.insert(v2_.begin() + idx, std::move(ptag));
-  }
-  std::size_t write_id3v2(std::ostream &os, std::size_t idx) const
-  {
-    return v2_[idx]->write(os);
-  }
+  { v2_.insert(v2_.begin() + idx, std::move(ptag)); }
+  /// Write a single ID3v2 tag to disk
+  std::size_t write_id3v2_tag(std::ostream &os, std::size_t idx) const
+  { return v2_[idx]->write(os); }
+  void delete_id3v2_tag(std::size_t idx)
+  { v2_.erase(v2_.begin() + idx); }
+  // TODO(sp1ff): Document this, because it has some serious pre-conditions:
+  //   - pth_ still exists (for track data)
+  //   - os should \em not be built on pth_
+  std::ostream& write(std::ostream &os) const;
+
 
 private:
   fs::path pth_;
@@ -156,6 +141,46 @@ scm_track::scm_track(const fs::path &pth):
   scribbu::read_all_id3v2(ifs, back_inserter(v2_));
   ptd_.reset(new scribbu::track_data(ifs));
   pv1_ = scribbu::process_id3v1(ifs);
+}
+
+std::ostream&
+scm_track::write(std::ostream &os) const
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const ios::iostate EXC_MASK = ios::eofbit | ios::failbit | ios::badbit;
+
+  // Begin by writing the ID3v2 tags we have:
+  for_each(v2_.begin(), v2_.end(), [&os](const unique_ptr<id3v2_tag> &ptag) { ptag->write(os); });
+
+  // Now open our source file...
+  fs::ifstream ifs(pth_, fs::ifstream::binary);
+  ifs.exceptions(EXC_MASK);
+
+  // we're going to skip over any ID3v2 ...
+  scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
+  while (id3v2.present_) {
+    ifs.seekg(id3v2.size_, ios_base::cur);
+    // Another?
+    id3v2 = scribbu::looking_at_id3v2(ifs);
+  }
+
+  // We're now at the start of the track data:
+  id3v1_info I = ends_in_id3v1(ifs);
+  size_t cb = I.start_ - ifs.tellg();
+  std::unique_ptr<char[]> p(new char[cb]);
+  ifs.read(p.get(), cb);
+  os.write(p.get(), cb);
+
+  // Write our ID3v1 tag, if any
+  // TOOD(sp1ff): Write me!
+  // if (pv1_) {
+  //   pv1_->write(os);
+  // }
+
+  return os;
+
 }
 
 namespace {
@@ -178,8 +203,9 @@ namespace {
     }
   }
 
-  SCM
-  make_track(SCM pth)
+  SCM_DEFINE(make_track, MAKE_TRACK, 1, 0, 0,
+             (SCM pth),
+             "Create a new track instance from a file")
   {
     scm_dynwind_begin((scm_t_dynwind_flags)0);
 
@@ -199,7 +225,7 @@ namespace {
   {
     SCM name, slots;
     scm_t_struct_finalize finalizer;
-    
+
     name = scm_from_utf8_symbol("track");
     slots = scm_list_1(scm_from_utf8_symbol("data"));
     finalizer = finalize_track;
@@ -220,56 +246,288 @@ namespace {
   //                              Guile constants                            //
   /////////////////////////////////////////////////////////////////////////////
 
-  const char * const MODULE = "scribbu";
+  SCM_GLOBAL_KEYWORD(kw_crc, "checksum");
+  SCM_GLOBAL_KEYWORD(kw_description, "description");
+  SCM_GLOBAL_KEYWORD(kw_dst_encoding, "destination-encoding");
+  SCM_GLOBAL_KEYWORD(kw_experimental, "experimental");
+  SCM_GLOBAL_KEYWORD(kw_ext_header, "extended-header");
+  SCM_GLOBAL_KEYWORD(kw_language, "language");
+  SCM_GLOBAL_KEYWORD(kw_padding, "padding");
+  SCM_GLOBAL_KEYWORD(kw_src_encoding, "source-encoding");
+  SCM_GLOBAL_KEYWORD(kw_unicode, "unicode");
 
-  const char * const WITH_TRACK_IN    = "scribbu/with-track-in";
-  const char * const MAKE_TRACK       = "scribbu/make-track";
-  const char * const GET_PATH         = "scribbu/get-path";
-  const char * const HAS_ID3V1_TAG    = "scribbu/has-id3v1-tag";
-  const char * const GET_ID3V1_STRING = "scribbu/get-id3v1-string";
-  const char * const NUM_ID3V2_TAGS   = "scribbu/get-id3v2-tag-count";
-  const char * const HAS_ID3V2_ATTR   = "scribbu/has-id3v2-attribute";
-  const char * const HAS_FRAME        = "scribbu/has-frame";
-  const char * const GET_ID3V2_ATTR   = "scribbu/get-id3v2-attribute";
-  const char * const SET_ID3V2_ATTR   = "scribbu/set-id3v2-attribute";
-  const char * const MAKE_ID3V2_TAG   = "scribbu/make-id3v2-tag";
-  const char * const WRITE_ID3V2_TAG  = "scribbu/write-id3v2-tag";
-  
-  SCM kw_src_encoding;
-  SCM kw_dst_encoding;
-  SCM kw_padding;
-  SCM kw_experimental;
-  SCM kw_ext_header;
-  SCM kw_crc;
+  // SCM sym_album;
+  SCM_GLOBAL_SYMBOL(sym_album, "scribbu/album");
+  SCM_GLOBAL_SYMBOL(sym_artist, "scribbu/artist");
+  SCM_GLOBAL_SYMBOL(sym_comment, "scribbu/comment");
+  SCM_GLOBAL_SYMBOL(sym_content_type, "scribbu/content-type");
+  SCM_GLOBAL_SYMBOL(sym_encoded_by, "scribbu/encoded-by");
+  SCM_GLOBAL_SYMBOL(sym_id3v2_revision, "scribbu/id3v2-revision");
+  SCM_GLOBAL_SYMBOL(sym_id3v2_version, "scribbu/id3v2-version");
+  SCM_GLOBAL_SYMBOL(sym_title, "scribbu/title");
+  SCM_GLOBAL_SYMBOL(sym_track, "scribbu/track");
+  SCM_GLOBAL_SYMBOL(sym_year, "scribbu/year");
 
-  SCM sym_album;
-  SCM sym_artist;
-  SCM sym_comment;
-  SCM sym_content_type;
-  SCM sym_encoded_by;
-  SCM sym_title;
-  SCM sym_year;
+  SCM
+  frame_as_scm(const scribbu::id3v2_tag &tag, SCM attr)
+  {
+    using namespace std;
 
+    SCM result;
+    string text;
+    if (scm_is_symbol(attr)) {
+
+      if (scm_is_eq(attr, sym_album)) {
+        text = tag.album();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else if (scm_is_eq(attr, sym_artist)) {
+        text = tag.artist();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else if (scm_is_eq(attr, sym_content_type)) {
+        text = tag.content_type();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else if (scm_is_eq(attr, sym_encoded_by)) {
+        text = tag.encoded_by();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else if (scm_is_eq(attr, sym_title)) {
+        text = tag.title();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else if (scm_is_eq(attr, sym_track)) {
+        text = tag.track();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else if (scm_is_eq(attr, sym_year)) {
+        text = tag.year();
+        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      }
+      else {
+        // NB. Will *not* return or fire dtors!
+        scm_misc_error(GET_FRAME, "unrecognized symbol: ~s", attr);
+      }
+
+    }
+    else {
+      // TODO(sp1ff): Write me!
+      // NB. Will *not* return or fire dtors!
+      scm_misc_error(GET_FRAME, "unrecognized symbol: ~s", attr);
+    }
+
+    return result;
+  }
+
+  void
+  set_frame_as_scm(scribbu::id3v2_tag &tag, SCM attr, SCM value)
+  {
+    using namespace std;
+
+    // We're about to start unpacking strings-- open a dynamic wind context
+    dynwind_context ctx;
+
+    char* pvalue = scm_to_utf8_stringn(value, NULL);
+    ctx.free(pvalue);
+
+    if (scm_is_symbol(attr)) {
+
+      if (scm_is_eq(attr, sym_album)) {
+        tag.album(pvalue);
+      }
+      else if (scm_is_eq(attr, sym_artist)) {
+        tag.artist(pvalue);
+      }
+      else if (scm_is_eq(attr, sym_content_type)) {
+        tag.content_type(pvalue);
+      }
+      else if (scm_is_eq(attr, sym_encoded_by)) {
+        tag.encoded_by(pvalue);
+      }
+      else if (scm_is_eq(attr, sym_title)) {
+        tag.title(pvalue);
+      }
+      else if (scm_is_eq(attr, sym_track)) {
+        tag.track(pvalue);
+      }
+      else if (scm_is_eq(attr, sym_year)) {
+        tag.year(pvalue);
+      }
+      else {
+        // Will *not* return or file dtors!
+        scm_misc_error(HAS_FRAME, "unknown attribute ~s", attr);
+      }
+
+    }
+    else {
+      // TODO(sp1ff): Write me!
+      // NB. Will *not* return or fire dtors!
+      scm_misc_error(SET_FRAME, "unrecognized symbol: ~s", attr);
+    }
+
+  }
 }
 
 extern "C" {
 
-  SCM
-  get_path(SCM track)
+  SCM_DEFINE(add_id3v2_comment, ADD_ID3V2_COMMENT, 3, 0, 1,
+             (SCM track, SCM index, SCM scm_text, SCM rest),
+             "Add an ID3v2 comment to a tag")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    dynwind_context ctx;
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+    id3v2_tag& tag = ptrack->get_id3v2_tag(scm_to_uint(index));
+
+    SCM scm_lang    = SCM_UNDEFINED;
+    SCM scm_src     = SCM_UNDEFINED;
+    SCM scm_unicode = SCM_UNDEFINED;
+    SCM scm_dsc     = SCM_UNDEFINED;
+    scm_c_bind_keyword_arguments(ADD_ID3V2_COMMENT, rest,
+                                 (scm_t_keyword_arguments_flags)0,
+                                 kw_language, &scm_lang,
+                                 kw_description, &scm_dsc,
+                                 kw_unicode, &scm_unicode,
+                                 kw_src_encoding, &scm_src,
+                                 SCM_UNDEFINED);
+
+    // TODO(sp1ff): (locale-encoding)?
+
+    char *ptext = scm_to_utf8_stringn(scm_text, NULL);
+    ctx.free(ptext);
+    string text(ptext);
+
+    language lang = language::from_locale;
+    if (!SCM_UNBNDP(scm_lang)) {
+      char *p = scm_to_locale_string(scm_lang);
+      ctx.free(p);
+      stringstream stm(p);
+      stm >> lang;
+    }
+
+    scribbu::encoding src = scribbu::encoding::UTF_8;
+    if (!SCM_UNBNDP(scm_src)) {
+      char *p = scm_to_locale_string(scm_src);
+      ctx.free(p);
+      stringstream stm(p);
+      stm >> src;
+    }
+
+    use_unicode uni = use_unicode::no;
+    if (!SCM_UNBNDP(scm_unicode) && scm_is_true(scm_unicode)) {
+      uni = use_unicode::yes;
+    }
+
+    string dsc;
+    if (!SCM_UNBNDP(scm_dsc)) {
+      char *p = scm_to_locale_string(scm_dsc);
+      ctx.free(p);
+      dsc = p;
+    }
+
+    tag.add_comment(text, lang, src, uni, dsc);
+
+    return SCM_EOL;
+  }
+
+  SCM_DEFINE(add_user_defined_text, ADD_USER_DEFINED_TEXT, 3, 0, 1,
+             (SCM track, SCM index, SCM scm_text, SCM rest),
+             "Add a user-defined text frame to an ID3v2 tag")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    dynwind_context ctx;
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+    id3v2_tag& tag = ptrack->get_id3v2_tag(scm_to_uint(index));
+
+    SCM scm_src     = SCM_UNDEFINED;
+    SCM scm_unicode = SCM_UNDEFINED;
+    SCM scm_dsc     = SCM_UNDEFINED;
+    scm_c_bind_keyword_arguments(ADD_USER_DEFINED_TEXT, rest,
+                                 (scm_t_keyword_arguments_flags)0,
+                                 kw_description, &scm_dsc,
+                                 kw_unicode, &scm_unicode,
+                                 kw_src_encoding, &scm_src,
+                                 SCM_UNDEFINED);
+
+    // TODO(sp1ff): (locale-encoding)?
+
+    char *ptext = scm_to_utf8_stringn(scm_text, NULL);
+    ctx.free(ptext);
+    string text(ptext);
+
+    scribbu::encoding src = scribbu::encoding::UTF_8;
+    if (!SCM_UNBNDP(scm_src)) {
+      char *p = scm_to_locale_string(scm_src);
+      ctx.free(p);
+      stringstream stm(p);
+      stm >> src;
+    }
+
+    use_unicode uni = use_unicode::no;
+    if (!SCM_UNBNDP(scm_unicode) && scm_is_true(scm_unicode)) {
+      uni = use_unicode::yes;
+    }
+
+    string dsc;
+    if (!SCM_UNBNDP(scm_dsc)) {
+      char *p = scm_to_locale_string(scm_dsc);
+      ctx.free(p);
+      dsc = p;
+    }
+
+    tag.add_user_defined_text(text, src, uni, dsc);
+
+    return SCM_EOL;
+  }
+
+  SCM_DEFINE(delete_id3v2_tag, "scribbu/delete-id3v2-tag", 2, 0, 0,
+             (SCM track, SCM index),
+             "Delete an ID3v2 tag from a track")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    dynwind_context ctx;
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+    ptrack->delete_id3v2_tag(scm_to_uint(index));
+
+    return SCM_EOL;
+  }
+
+  SCM_DEFINE(get_path, GET_PATH, 1, 0, 0,
+             (SCM track),
+             "Return the path from which a track was created")
   {
     scm_track *p = (scm_track*) scm_foreign_object_ref(track, 0);
     return scm_from_locale_string(p->path().c_str());
   }
 
-  SCM
-  has_id3v1_tag(SCM track)
+  SCM_DEFINE(has_id3v1_tag, HAS_ID3V1_TAG, 1, 0, 0,
+             (SCM track),
+             "Return true iff the given track has an ID3v1 tag")
   {
     scm_track *p = (scm_track*) scm_foreign_object_ref(track, 0);
     return scm_from_bool(0 != p->id3v1_tag());
   }
 
-  SCM
-  get_id3v1_string(SCM track, SCM item, SCM rest)
+  SCM_DEFINE(get_id3v1_string, GET_ID3V1_STRING, 2, 0, 1,
+             (SCM track, SCM item, SCM rest),
+             "Retrieve the given string from the track's ID3v1 tag.")
   {
     using namespace std;
 
@@ -279,8 +537,8 @@ extern "C" {
 
     SCM src_encoding = SCM_UNDEFINED;
     SCM dst_encoding = SCM_UNDEFINED;
-    scm_c_bind_keyword_arguments("scribbu/get-id3v1-string", rest, 
-                                 (scm_t_keyword_arguments_flags)0,
+    scm_c_bind_keyword_arguments(GET_ID3V1_STRING, rest,
+                                  (scm_t_keyword_arguments_flags)0,
                                  kw_src_encoding, &src_encoding,
                                  kw_dst_encoding, &dst_encoding,
                                  SCM_UNDEFINED);
@@ -302,83 +560,46 @@ extern "C" {
 
     const scribbu::id3v1_tag *ptag = ptrack->id3v1_tag();
     if (!ptag) {
-      scm_misc_error("scribbu/get-id3v1-string", "no ID3v1 tag", SCM_ELISP_NIL);
+      scm_misc_error(GET_ID3V1_STRING, "no ID3v1 tag", SCM_ELISP_NIL);
     }
 
     string text;
-    switch (symbol_for_scm(item)) {
-    case symbol::album:
+
+    if (scm_is_eq(item, sym_album)) {
       text = ptag->album<string>(src, dst);
-      break;
-    case symbol::artist:
+    }
+    else if (scm_is_eq(item, sym_artist)) {
       text = ptag->artist<string>(src, dst);
-      break;
-    case symbol::comment:
+    }
+    else if (scm_is_eq(item, sym_comment)) {
       text = ptag->comment<string>(src, dst);
-      break;
-    case symbol::title:
+    }
+    else if (scm_is_eq(item, sym_title)) {
       text = ptag->title<string>(src, dst);
-      break;
-    case symbol::year:
+    }
+    else if (scm_is_eq(item, sym_year)) {
       text = ptag->year<string>(src, dst);
-      break;
-    default:
+    }
+    else {
       // Will *not* return or file dtors!
-      scm_misc_error("scribbu/get-id3v1-string", "unknown attribute ~s", item);
+      scm_misc_error(GET_ID3V1_STRING, "unknown attribute ~s", item);
     }
 
     return scm_from_stringn(text.c_str(), text.size(), "UTF-8",
                             SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
   }
 
-  SCM
-  num_id3v2_tags(SCM track)
+  SCM_DEFINE(num_id3v2_tags, NUM_ID3V2_TAGS, 1, 0, 0,
+             (SCM track),
+             "Return the number of ID3v2 tags present in a track")
   {
     scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
     return scm_from_int(ptrack->num_id3v2_tags());
   }
 
-
-  SCM
-  has_id3v2_attribute(SCM track, SCM tagidx, SCM attr)
-  {
-    using namespace std;
-    using namespace scribbu;
-
-    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
-    const id3v2_tag& tag = ptrack->get_id3v2_tag(scm_to_uint(tagidx));
-
-    bool ok;
-    switch (symbol_for_scm(attr)) {
-    case symbol::album:
-      ok = tag.has_album();
-      break;
-    case symbol::artist:
-      ok = tag.has_artist();
-      break;
-    case symbol::content_type:
-      ok = tag.has_content_type();
-      break;
-    case symbol::encoded_by:
-      ok = tag.has_encoded_by();
-      break;
-    case symbol::title:
-      ok = tag.has_title();
-      break;
-    case symbol::year:
-      ok = tag.has_year();
-      break;
-    default:
-      // Will *not* return or file dtors!
-      scm_misc_error(HAS_ID3V2_ATTR, "unknown attribute ~s", attr);
-    }
-    
-    return scm_from_bool(ok);      
-  }
-
-  /// Invoke a Scheme procedure for each entry in a directory tree
-  SCM
-  with_track_in(SCM dir, SCM fcn)
+  SCM_DEFINE(with_track_in, WITH_TRACK_IN, 2, 0, 0,
+             (SCM dir, SCM fcn),
+             "Invoke a Scheme procedure for each entry in a directory tree")
   {
     // TODO(sp1ff): I think this entire function is unsafe-- if `fcn' exits
     // non-locally, no dtors will fire.
@@ -417,137 +638,176 @@ extern "C" {
    *
    *
    */
-  
-  SCM
-  has_frame(SCM track,
-            SCM index,
-            SCM frameid)
-  {
-    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
-    // TODO(sp1ff): Replace this with a mnemonic constant
-    std::size_t idx = scm_to_uint32(index);
-    const scribbu::id3v2_tag &tag = ptrack->get_id3v2_tag(idx);
-    if (!scm_is_symbol(frameid)) {
-      // NB. Will *not* return or fire dtors!
-      scm_wrong_type_arg(HAS_FRAME, 3, frameid);
-    }
-    std::size_t result;
-    if  (scm_eq_p(sym_album, frameid)) {
-      result = tag.has_album();
-    }
-    else if (scm_eq_p(sym_artist, frameid)) {
-      result = tag.has_artist();
-    }
-    else if (scm_eq_p(sym_content_type, frameid)) {
-      result = tag.has_content_type();
-    }
-    else if (scm_eq_p(sym_encoded_by, frameid)) {
-      result = tag.has_encoded_by();
-    }
-    else if (scm_eq_p(sym_title, frameid)) {
-      result = tag.has_title();
-    }
-    else if (scm_eq_p(sym_year, frameid)) {
-      result = tag.has_year();
-    }
-    else {
-      // NB. Will *not* return or fire dtors!
-      scm_misc_error(HAS_FRAME, "unrecognized symbol: ~s", frameid);
-    }
 
-    return scm_from_unsigned_integer(result);
-  }
-
-  SCM
-  get_id3v2_attribute(SCM track, SCM tagidx, SCM attr)
+  SCM_DEFINE(has_frame, HAS_FRAME, 3, 0, 0,
+             (SCM track, SCM index, SCM frameid),
+             "Check to see whether an ID3v2 tag has a given frame")
   {
     using namespace std;
     using namespace scribbu;
 
-    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
-
-    size_t idx = scm_to_uint32(tagidx);
-
-    const id3v2_tag& tag = ptrack->get_id3v2_tag(idx);
-
-    string text;
-    switch (symbol_for_scm(attr)) {
-    case symbol::album:
-      text = tag.album();
-      break;
-    case symbol::artist:
-      text = tag.artist();
-      break;
-    case symbol::content_type:
-      text = tag.content_type();
-      break;
-    case symbol::encoded_by:
-      text = tag.encoded_by();
-      break;
-    case symbol::title:
-      text = tag.title();
-      break;
-    case symbol::year:
-      text = tag.year();
-      break;
-    default:
-      // Will *not* return or file dtors!
-      scm_misc_error(HAS_ID3V2_ATTR, "unknown attribute ~s", attr);
-    }
-
-    return scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                            SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-  }
-
-  /// Set an ID3v2 attribute
-  SCM
-  set_id3v2_attribute(SCM track,
-                      SCM index,
-                      SCM attr,
-                      SCM value)
-  {
-    using namespace std;
-    using namespace scribbu;
-
-    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
-
-    unsigned int idx = scm_to_uint32(index);
-
-    id3v2_tag &tag = ptrack->get_id3v2_tag(idx);
-
-    // We're about to start unpacking strings-- open a dynamic wind context
     dynwind_context ctx;
 
-    char* pvalue = scm_to_utf8_stringn(value, NULL);
-    ctx.free(pvalue);
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
 
-    switch (symbol_for_scm(attr)) {
-    case symbol::album:
-      tag.album(pvalue);
-      break;
-    case symbol::artist:
-      tag.artist(pvalue);
-      break;
-    case symbol::content_type:
-      tag.content_type(pvalue);
-      break;
-    case symbol::encoded_by:
-      tag.encoded_by(pvalue);
-      break;
-    case symbol::title:
-      tag.title(pvalue);
-      break;
-    case symbol::year:
-      tag.year(pvalue);
-      break;
-    default:
-      // Will *not* return or file dtors!
-      scm_misc_error(HAS_ID3V2_ATTR, "unknown attribute ~s", attr);
+    const id3v2_tag& tag = ptrack->get_id3v2_tag(scm_to_uint(index));
+
+    size_t fresult = 0;
+    if (scm_is_symbol(frameid)) {
+
+      if (scm_is_eq(frameid, sym_album)) {
+        fresult = tag.has_album();
+      }
+      else if (scm_is_eq(frameid, sym_artist)) {
+        fresult = tag.has_artist();
+      }
+      else if (scm_is_eq(frameid, sym_content_type)) {
+        fresult = tag.has_content_type();
+      }
+      else if (scm_is_eq(frameid, sym_encoded_by)) {
+        fresult = tag.has_encoded_by();
+      }
+      else if (scm_is_eq(frameid, sym_title)) {
+        fresult = tag.has_title();
+      }
+      else if (scm_is_eq(frameid, sym_track)) {
+        fresult = tag.has_track();
+      }
+      else if (scm_is_eq(frameid, sym_year)) {
+        fresult = tag.has_year();
+      }
+      else {
+        // NB. Will *not* return or fire dtors!
+        scm_misc_error(HAS_FRAME, "unrecognized symbol: ~s", frameid);
+      }
+
+    }
+    else {
+
+      char *pid = scm_to_locale_string(frameid);
+      ctx.free(pid);
+
+      if (2 == tag.version()) {
+        const id3v2_2_tag& tag22 = dynamic_cast<const id3v2_2_tag&>(tag);
+        fresult = tag22.has_frame(pid);
+      }
+      else if (3 == tag.version()) {
+        const id3v2_3_tag& tag23 = dynamic_cast<const id3v2_3_tag&>(tag);
+        fresult = tag23.has_frame(pid);
+      }
+      else {
+        const id3v2_4_tag& tag24 = dynamic_cast<const id3v2_4_tag&>(tag);
+        fresult = tag24.has_frame(pid);
+      }
+
     }
 
-    return SCM_UNDEFINED;
+    return scm_from_unsigned_integer(fresult);
   }
-  
+
+  /**
+   * \brief Return the values of one or more frames in an ID3v2 tag
+   *
+   *
+   * \param track [in] SCM referring to an instance of the track foreign type
+   *
+   * \param idx [in] SCM referring to an unisgned int referring to the ID3v2
+   * tag in which the caller is interested
+   *
+   * \param attr [in] either a scalar or a list; each scalar may be either a
+   * string naming the frame, or a predefined symbol
+   *
+   * \return either a scalar or a list; one scalar for each required frame
+   *
+   *
+   */
+
+  SCM_DEFINE(get_frame, GET_FRAME, 3, 0, 0,
+             (SCM track, SCM idx, SCM attr),
+             "Return the values of one or more frames in an ID3v2 tag")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+    const id3v2_tag &tag = ptrack->get_id3v2_tag(scm_to_uint(idx));
+
+    SCM result = SCM_UNDEFINED;
+
+    if (scm_is_true(scm_list_p(attr))) {
+      SCM len_as_scm = scm_length(attr);
+      result = scm_make_list(len_as_scm, SCM_UNDEFINED);
+      for (uint32_t i = 0, n = scm_to_uint32(len_as_scm); i < n; ++i) {
+        SCM scm = scm_list_ref(attr, scm_from_unsigned_integer(i));
+        scm_list_set_x(result, scm_from_unsigned_integer(i), frame_as_scm(tag, scm));
+      }
+    }
+    else {
+      result = frame_as_scm(tag, attr);
+    }
+
+    return result;
+
+  }
+
+  /**
+   * \brief Set an ID3v2 attribute
+   *
+   *
+   */
+
+  SCM_DEFINE(set_frame, SET_FRAME, 3, 1, 0,
+             (SCM track, SCM index, SCM attr, SCM value),
+             "Set an ID3v2 attribute")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    static const SCM ZERO = scm_from_uint32(0);
+    static const SCM ONE  = scm_from_uint32(1);
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+    id3v2_tag& tag = ptrack->get_id3v2_tag(scm_to_uint(index));
+
+    if (SCM_UNDEFINED == value) {
+      // `attr' should be a list of pairs of attribute/value pairs
+      for (unsigned i = 0, n = scm_to_uint32(scm_length(attr)); i < n; ++i) {
+        SCM pair = scm_list_ref(attr, scm_from_uint32(i));
+        set_frame_as_scm(tag, scm_list_ref(pair, ZERO), scm_list_ref(pair, ONE));
+      }
+    }
+    else {
+      set_frame_as_scm(tag, attr, value);
+    }
+
+    return SCM_EOL;
+  }
+
+  SCM_DEFINE(get_id3v2_attribute, GET_ID3V2_ATTRIBUTE, 3, 0, 0,
+             (SCM track, SCM index, SCM attr),
+             "Retrieve an attribute of an ID3v2 tag")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+    id3v2_tag& tag = ptrack->get_id3v2_tag(scm_to_uint(index));
+
+    SCM result;
+    if (scm_is_eq(attr, sym_id3v2_version)) {
+      result = scm_from_unsigned_integer(tag.version());
+    }
+    else if (scm_is_eq(attr, sym_id3v2_revision)) {
+      result = scm_from_unsigned_integer(tag.revision());
+    }
+    else {
+      // Will *not* return or file dtors!
+      scm_misc_error(HAS_FRAME, "unknown attribute ~s", attr);
+    }
+
+    return result;
+  }
+
   /**
    * \brief Create a new ID3v2 tag
    *
@@ -582,8 +842,9 @@ extern "C" {
    *
    */
 
-  SCM
-  make_id3v2_tag(SCM track, SCM index, SCM rest)
+  SCM_DEFINE(make_id3v2_tag, MAKE_ID3V2_TAG, 2, 0, 1,
+             (SCM track, SCM index, SCM rest),
+             "Create a new ID3v2 tag")
   {
     using namespace std;
     using namespace scribbu;
@@ -592,7 +853,7 @@ extern "C" {
     // function invocations)...
     SCM kwpad, kwexp, kwext, kwcrc;
     kwpad = kwexp = kwext = kwcrc = SCM_UNDEFINED;
-    scm_c_bind_keyword_arguments("scribbu/make_id3v2_tag", rest, 
+    scm_c_bind_keyword_arguments(MAKE_ID3V2_TAG, rest,
                                  (scm_t_keyword_arguments_flags)0,
                                  kw_padding, &kwpad,
                                  kw_experimental, &kwexp,
@@ -622,7 +883,7 @@ extern "C" {
     unique_ptr<id3v2_tag> ptag(new id3v2_3_tag(cbpad, fexp, ext));
     ptrack->insert_id3v2_tag(ptag, scm_to_uint(index));
 
-    return SCM_UNDEFINED;
+    return SCM_EOL;
 
   } // End free function make_id3v2_tag.
 
@@ -645,8 +906,9 @@ extern "C" {
    *
    */
 
-  SCM
-  write_id3v2_tag(SCM track, SCM index, SCM out)
+  SCM_DEFINE(write_id3v2_tag, WRITE_ID3V2_TAG, 3, 0, 0,
+             (SCM track, SCM index, SCM out),
+             "Write an ID3v2 tag to file")
   {
     using namespace std;
     using namespace scribbu;
@@ -656,93 +918,91 @@ extern "C" {
 
     dynwind_context ctx;
 
-    char *pth = scm_to_locale_string(out);    
+    char *pth = scm_to_locale_string(out);
     ctx.free(pth);
 
     fs::ofstream ofs(pth, fs::ofstream::binary);
-    size_t cb = ptrack->write_id3v2(ofs, idx);
+    size_t cb = ptrack->write_id3v2_tag(ofs, idx);
 
     return scm_from_uint(cb);
-    
+
   } // End free function write_id3v2_tag.
 
-  /// Register all scribbu-defined symbols
-  static
-  void
-  register_symbols()
+  SCM_DEFINE(write_track, WRITE_TRACK, 2, 0, 0,
+             (SCM track, SCM out),
+             "Write a track to file")
   {
-    kw_src_encoding = scm_from_utf8_keyword("source-encoding");
-    kw_dst_encoding = scm_from_utf8_keyword("destination-encoding");
-    kw_padding      = scm_from_utf8_keyword("padding");
-    kw_experimental = scm_from_utf8_keyword("experimental");
-    kw_ext_header   = scm_from_utf8_keyword("extended-header");
-    kw_crc          = scm_from_utf8_keyword("checksum");
+    using namespace std;
+    using namespace scribbu;
 
-    // TODO(sp1ff): This works, but smells; there's *something* I'm not getting
-    // about Guile symbols...
-#   define DEFINE_SYMBOL(var, sym, enm)                                 \
-    ( var ) = scm_string_to_symbol(scm_from_utf8_string(#sym));         \
-    symbols_[std::hash<char*>()((char*)#sym)] = symbol::enm             \
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
 
-    DEFINE_SYMBOL(sym_album,        album,        album);
-    DEFINE_SYMBOL(sym_artist,       artist,       artist);
-    DEFINE_SYMBOL(sym_comment,      comment,      comment);
-    DEFINE_SYMBOL(sym_content_type, content-type, content_type);
-    DEFINE_SYMBOL(sym_encoded_by,   encoded-by,   encoded_by);
-    DEFINE_SYMBOL(sym_title,        title,        title);
-    DEFINE_SYMBOL(sym_year,         year,         year);
+    dynwind_context ctx;
+    char *pth = ctx.free_locale_string(out);
 
+    fs::ofstream ofs(pth, fs::ofstream::binary);
+    ptrack->write(ofs);
+
+    return SCM_EOL;
   }
 
-  /// Regiser all scribbu-defined foreign functions
-  static
-  void
-  register_functions ()
+  SCM
+  get_version_variable(void*)
   {
-    scm_c_define_gsubr(WITH_TRACK_IN,    2, 0, 0, (void*)&with_track_in      );
-    scm_c_define_gsubr(MAKE_TRACK,       1, 0, 0, (void*)&make_track         );
-    scm_c_define_gsubr(GET_PATH,         1, 0, 0, (void*)&get_path           );
-    scm_c_define_gsubr(HAS_ID3V1_TAG,    1, 0, 0, (void*)&has_id3v1_tag      );
-    scm_c_define_gsubr(GET_ID3V1_STRING, 2, 0, 1, (void*)&get_id3v1_string   );
-    scm_c_define_gsubr(NUM_ID3V2_TAGS,   1, 0, 0, (void*)&num_id3v2_tags     );
-    scm_c_define_gsubr(HAS_ID3V2_ATTR,   3, 0, 0, (void*)&has_id3v2_attribute);
-    scm_c_define_gsubr(HAS_FRAME,        3, 0, 0, (void*)&has_frame          );
-    scm_c_define_gsubr(GET_ID3V2_ATTR,   3, 0, 0, (void*)&get_id3v2_attribute);
-    scm_c_define_gsubr(SET_ID3V2_ATTR,   4, 0, 0, (void*)&set_id3v2_attribute);
-    scm_c_define_gsubr(MAKE_ID3V2_TAG,   2, 0, 1, (void*)&make_id3v2_tag     );
-    scm_c_define_gsubr(WRITE_ID3V2_TAG,  3, 0, 0, (void*)&write_id3v2_tag    );
+    return scm_c_public_variable("system repl common", "*version*");
   }
 
-  /// Actual initialization routine-- meant to be called from within scm_c_define_module
-  static
-  void
-  define_in_module(void*)
+  SCM
+  get_version_variable_hand(void*, SCM, SCM)
   {
-    init_track_type();
-    register_symbols();
-    register_functions();
-
-    // export all procedures we want to be public:
-    scm_c_export(WITH_TRACK_IN,    0);
-    scm_c_export(MAKE_TRACK,       0);
-    scm_c_export(GET_PATH,         0);
-    scm_c_export(HAS_ID3V1_TAG,    0);
-    scm_c_export(GET_ID3V1_STRING, 0);
-    scm_c_export(NUM_ID3V2_TAGS,   0);
-    scm_c_export(HAS_ID3V2_ATTR,   0);
-    scm_c_export(HAS_FRAME,        0);
-    scm_c_export(GET_ID3V2_ATTR,   0);
-    scm_c_export(SET_ID3V2_ATTR,   0);
-    scm_c_export(MAKE_ID3V2_TAG,   0);
-    scm_c_export(WRITE_ID3V2_TAG,  0);
+    return SCM_EOL;
   }
+  
+  void
+  customize_welcome()
+  {
+    using namespace std;
+
+    // Attempt to lookup variable "*version*" in module
+    // `(system repl common)'...
+    SCM scm_version = scm_c_catch(SCM_BOOL_T,
+                                  get_version_variable, 0,
+                                  get_version_variable_hand, 0,
+                                  0, 0);
+    // and if we're not successful...
+    if (SCM_EOL == scm_version) {
+      // just silently give up & continue.
+      return;
+    }
+
+    SCM scm_value = scm_variable_ref(scm_version);
+
+    dynwind_context ctx;
+    char *ptext = ctx.free_locale_string(scm_value);
+
+    // TODO(sp1ff): Consider auto-generating this along with the other
+    // version & documentation boilerplate...
+    string welcome(PACKAGE_STRING "\nCopyright (C) 2018 Michael Herstine <sp1ff@pobox.com>\n\nYou are in the Guile REPL; in you shell, type `info scribbu' for documentation.\n\n");
+    welcome += ptext;
+
+    SCM scm_new = scm_from_stringn(welcome.c_str(), welcome.size(), "UTF-8",
+                                   SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+    scm_variable_set_x(scm_version, scm_new);      
+  }
+
 
   // Initializae the Guile interpreter
-  void* 
+  void*
   initialize_guile(void*)
   {
-    scm_c_define_module(MODULE, define_in_module, 0);
-    scm_c_use_module(MODULE);
+    init_track_type();
+
+#   ifndef SCM_MAGIC_SNARFER
+#   include "scheme.x"
+#   endif
+
+    customize_welcome();
+
     return 0;
   }
 

@@ -6,7 +6,7 @@
  * \section scribbu_id3v1_discuss Discussion
  *
  * The ID3v1 tag is attributed to NamkraD (AKA Eric Kemp), in the program
- * Studio3 in 1996 \ref scribbu_id3v1_refs_1 "[1]", and quickly became a de
+ * Studio3 in 1996 \ref scribbu_id3v1_refs_1 "[1]", and quickly became the de
  * facto standard for storing metadata in MP3s. It is a block of 128 bytes
  * appended to the audio data in the following format:
  *
@@ -44,7 +44,7 @@
   *
   * Here is an example ID3v1 tag:
   *
-  \code
+  \verbatim
    0000000 54 41 47 4c 6f 72 63 61 27 73 20 4e 6f 76 65 6e  >TAGLorca's Noven<
    0000020 61 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >a...............<
    0000040 00 54 68 65 20 50 6f 67 75 65 73 00 00 00 00 00  >.The Pogues.....<
@@ -54,11 +54,11 @@
    0000140 30 41 6d 61 7a 6f 6e 2e 63 6f 6d 20 53 6f 6e 67  >0Amazon.com Song<
    0000160 20 49 44 3a 20 32 30 33 35 35 38 32 35 00 05 ff  > ID: 20355825...<
    0000200
-  \endcode
+  \endverbatim
   *
   * Broken out:
   *
-  \code
+  \verbatim
    0000000 54 41 47                                         TAG
    0000003 4c 6f 72 63 61 27 73 20 4e 6f 76 65 6e 61 00 00  Lorca's Novena..
    0000013 00 00 00 00 00 00 00 00 00 00 00 00 00 00        ..............
@@ -71,7 +71,7 @@
    0000071 20 49 44 3a 20 32 30 33 35 35 38 32 35 00        ID: 20355825.
    000007f 05                                               Track #
    0000080 ff                                               no/unknown genre
-  \endcode
+  \endverbatim
   *
   * Notice that this is an ID3v1.1 tag.
   *
@@ -82,7 +82,7 @@
   * (so the entire tag is a block of 355 bytes appended to the audio data). The
   * additional 227 bytes are laid out as follows:
 
- \code
+ \verbatim
 
   offset length contents
 
@@ -95,7 +95,7 @@
     215   6     start time
     221   6     end time
 
-  \endcode
+  \endverbatim
   *
   * For title, artist, and album, the value is written to the ID3v1 tag first,
   * and any text beyond thirty characters is written to the extended tag
@@ -142,155 +142,97 @@
   * - if the caller passes boost::none, then the system locale will be used
   *
   *
-  * \section scribbu_id3v1_geners ID3v1 Genres
+  * \section scribbu_id3v1_genres ID3v1 Genres
   *
   * The original proposal defined 80 genres:
   *
-  * - 0 Blues
-  * - 1 Classic Rock
-  * - 2 Country
-  * - 3 Dance
-  * - 4 Disco
-  * - 5 Funk
-  * - 6 Grunge
-  * - 7 Hip-Hop
-  * - 8 Jazz
-  * - 9 Metal
-  * - 10 New Age
-  * - 11 Oldies
-  * - 12 Other
-  * - 13 Pop
-  * - 14 R&B
-  * - 15 Rap
-  * - 16 Reggae
-  * - 17 Rock
-  * - 18 Techno
-  * - 19 Industrial
-  * - 20 Alternative
-  * - 21 Ska
-  * - 22 Death Metal
-  * - 23 Pranks
-  * - 24 Soundtrack
-  * - 25 Euro-Techno
-  * - 26 Ambient
-  * - 27 Trip-Hop
-  * - 28 Vocal
-  * - 29 Jazz+Funk
-  * - 30 Fusion
-  * - 31 Trance
-  * - 32 Classical
-  * - 33 Instrumental
-  * - 34 Acid
-  * - 35 House
-  * - 36 Game
-  * - 37 Sound Clip
-  * - 38 Gospel
-  * - 39 Noise
-  * - 40 AlternRock
-  * - 41 Bass
-  * - 42 Soul
-  * - 43 Punk
-  * - 44 Space
-  * - 45 Meditative
-  * - 46 Instrumental Pop
-  * - 47 Instrumental Rock
-  * - 48 Ethnic
-  * - 49 Gothic
-  * - 50 Darkwave
-  * - 51 Techno-Industrial
-  * - 52 Electronic
-  * - 53 Pop-Folk
-  * - 54 Eurodance
-  * - 55 Dream
-  * - 56 Southern Rock
-  * - 57 Comedy
-  * - 58 Cult
-  * - 59 Gangsta
-  * - 60 Top 40
-  * - 61 Christian Rap
-  * - 62 Pop/Funk
-  * - 63 Jungle
-  * - 64 Native American
-  * - 65 Cabaret
-  * - 66 New Wave
-  * - 67 Psychadelic
-  * - 68 Rave
-  * - 69 Showtunes
-  * - 70 Trailer
-  * - 71 Lo-Fi
-  * - 72 Tribal
-  * - 73 Acid Punk
-  * - 74 Acid Jazz
-  * - 75 Polka
-  * - 76 Retro
-  * - 77 Musical
-  * - 78 Rock & Roll
-  * - 79 Hard Rock
+  * Genre           | Genre
+  * --------------- | -------------------
+  * 0 Blues         | 40 AlternRock         
+  * 1 Classic Rock  | 41 Bass               
+  * 2 Country       | 42 Soul               
+  * 3 Dance         | 43 Punk               
+  * 4 Disco         | 44 Space              
+  * 5 Funk          | 45 Meditative         
+  * 6 Grunge        | 46 Instrumental Pop   
+  * 7 Hip-Hop       | 47 Instrumental Rock  
+  * 8 Jazz          | 48 Ethnic             
+  * 9 Metal         | 49 Gothic             
+  * 10 New Age      | 50 Darkwave           
+  * 11 Oldies       | 51 Techno-Industrial  
+  * 12 Other        | 52 Electronic         
+  * 13 Pop          | 53 Pop-Folk           
+  * 14 R&B          | 54 Eurodance          
+  * 15 Rap          | 55 Dream              
+  * 16 Reggae       | 56 Southern Rock      
+  * 17 Rock         | 57 Comedy             
+  * 18 Techno       | 58 Cult               
+  * 19 Industrial   | 59 Gangsta            
+  * 20 Alternative  | 60 Top 40             
+  * 21 Ska          | 61 Christian Rap      
+  * 22 Death Metal  | 62 Pop/Funk           
+  * 23 Pranks       | 63 Jungle             
+  * 24 Soundtrack   | 64 Native American    
+  * 25 Euro-Techno  | 65 Cabaret            
+  * 26 Ambient      | 66 New Wave           
+  * 27 Trip-Hop     | 67 Psychadelic        
+  * 28 Vocal        | 68 Rave               
+  * 29 Jazz+Funk    | 69 Showtunes          
+  * 30 Fusion       | 70 Trailer            
+  * 31 Trance       | 71 Lo-Fi              
+  * 32 Classical    | 72 Tribal             
+  * 33 Instrumental | 73 Acid Punk          
+  * 34 Acid         | 74 Acid Jazz          
+  * 35 House        | 75 Polka              
+  * 36 Game         | 76 Retro              
+  * 37 Sound Clip   | 77 Musical            
+  * 38 Gospel       | 78 Rock & Roll        
+  * 39 Noise        | 79 Hard Rock
   *
-  * Winamp added the following:
+  * Winamp added the following additional genres:
   *
-  * - 80 Folk
-  * - 81 Folk-Rock
-  * - 82 National Folk
-  * - 83 Swing
-  * - 84 Fast Fusion
-  * - 85 Bebob
-  * - 86 Latin
-  * - 87 Revival
-  * - 88 Celtic
-  * - 89 Bluegrass
-  * - 90 Avantgarde
-  * - 91 Gothic Rock
-  * - 92 Progressive Rock
-  * - 93 Psychedelic Rock
-  * - 94 Symphonic Rock
-  * - 95 Slow Rock
-  * - 96 Big Band
-  * - 97 Chorus
-  * - 98 Easy Listening
-  * - 99 Acoustic
-  * - 100 Humour
-  * - 101 Speech
-  * - 102 Chanson
-  * - 103 Opera
-  * - 104 Chamber Music
-  * - 105 Sonata
-  * - 106 Symphony
-  * - 107 Booty Brass
-  * - 108 Primus
-  * - 109 Porn Groove
-  * - 110 Satire
-  * - 111 Slow Jam
-  * - 112 Club
-  * - 113 Tango
-  * - 114 Samba
-  * - 115 Folklore
-  * - 116 Ballad
-  * - 117 Power Ballad
-  * - 118 Rhytmic Soul
-  * - 119 Freestyle
-  * - 120 Duet
-  * - 121 Punk Rock
-  * - 122 Drum Solo
-  * - 123 A Capela
-  * - 124 Euro-House
-  * - 125 Dance Hall
+  * Genre               | Genre
+  * --------------------| -----------------
+  * 80 Folk             | 103 Opera          
+  * 81 Folk-Rock        | 104 Chamber Music  
+  * 82 National Folk    | 105 Sonata         
+  * 83 Swing            | 106 Symphony       
+  * 84 Fast Fusion      | 107 Booty Brass    
+  * 85 Bebob            | 108 Primus         
+  * 86 Latin            | 109 Porn Groove    
+  * 87 Revival          | 110 Satire         
+  * 88 Celtic           | 111 Slow Jam       
+  * 89 Bluegrass        | 112 Club           
+  * 90 Avantgarde       | 113 Tango          
+  * 91 Gothic Rock      | 114 Samba          
+  * 92 Progressive Rock | 115 Folklore       
+  * 93 Psychedelic Rock | 116 Ballad         
+  * 94 Symphonic Rock   | 117 Power Ballad   
+  * 95 Slow Rock        | 118 Rhytmic Soul   
+  * 96 Big Band         | 119 Freestyle      
+  * 97 Chorus           | 120 Duet           
+  * 98 Easy Listening   | 121 Punk Rock      
+  * 99 Acoustic         | 122 Drum Solo      
+  * 100 Humour          | 123 A Capela       
+  * 101 Speech          | 124 Euro-House     
+  * 102 Chanson         | 125 Dance Hall     
+  * 
   *
   * \section scribbu_id3v1_refs References
   *
-  * \anchor scribbu_id3v1_refs_1 Unknown, cited 2015: ID3v1. [Available online
+  * 1. \anchor scribbu_id3v1_refs_1 Unknown, cited 2015: ID3v1. [Available online
   * at http://id3.org/ID3v1.]
   *
-  * \anchor scribbu_id3v1_refs_2 Unknown, 1999: MPEG Audio Tag ID3v1 [Available
+  * 2. \anchor scribbu_id3v1_refs_2 Unknown, 1999: MPEG Audio Tag ID3v1 [Available
   * online at http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm#MPEGTAG.]
   *
-  * \anchor scribbu_id3v1_refs_3 Unknown, cited 2015: MP3 TAG &
+  * 3. \anchor scribbu_id3v1_refs_3 Unknown, cited 2015: MP3 TAG &
   * Enhanced TAG description (english) [Originally available online at
   * http://www.fortunecity.com/underworld/sonic/3/id3tag.html, now
   * cached at
   * https://web.archive.org/web/20120310015458/http://www.fortunecity.com/underworld/sonic/3/id3tag.html]
   *
-  * \anchor scribbu_id3v1_refs_4 Unknown, cited 2015: ID3v1 [Originally available online at
+  * 4. \anchor scribbu_id3v1_refs_4 Unknown, cited 2015: ID3v1 [Originally available online at
   * https://en.wikipedia.org/wiki/ID3#ID3v1]
   *
   *
@@ -338,6 +280,9 @@ namespace scribbu {
    *   indicating whether it's extended or not
    *
    *
+   * \todo Enhance this class to allow for mutability, like the ID3v2 tags.
+   *
+   *
    */
 
   class id3v1_tag {
@@ -364,9 +309,9 @@ namespace scribbu {
 
     static boost::optional<std::string> text_for_genre(unsigned char genre);
 
-	static const boost::optional<encoding> DEF_SRC_ENCODING;
-	static const encoding                  DEF_DST_ENCODING;
-	static const on_no_encoding            DEF_ON_NO_ENCODING;
+    static const boost::optional<encoding> DEF_SRC_ENCODING;
+    static const encoding                  DEF_DST_ENCODING;
+    static const on_no_encoding            DEF_ON_NO_ENCODING;
 
   public:
 
@@ -378,9 +323,9 @@ namespace scribbu {
     /// retrieve the 'album' field (encoded)
     template <typename string_type>
     string_type
-	album(const boost::optional<encoding> &src = DEF_SRC_ENCODING,
-		  encoding dst = DEF_DST_ENCODING,
-		  on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    album(const boost::optional<encoding> &src = DEF_SRC_ENCODING,
+          encoding dst = DEF_DST_ENCODING,
+          on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
     /// retrieve the 'artist' field (raw bytes)
     template <typename forward_output_iterator>
     forward_output_iterator artist(forward_output_iterator p) const {
@@ -401,8 +346,8 @@ namespace scribbu {
     template<typename string_type>
     string_type
     comment(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-			encoding dst = DEF_DST_ENCODING,
-			on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+                        encoding dst = DEF_DST_ENCODING,
+                        on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
     /// retrieve the one-byte genre field
     unsigned char genre() const {
       return genre_;
@@ -431,8 +376,8 @@ namespace scribbu {
     template<typename string_type>
     string_type
     start_time(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-			   encoding dst = DEF_DST_ENCODING,
-			   on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+                           encoding dst = DEF_DST_ENCODING,
+                           on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
 
     template <typename forward_output_iterator>
     forward_output_iterator end_time(forward_output_iterator p) const {
@@ -442,8 +387,8 @@ namespace scribbu {
     template<typename string_type>
     string_type
     end_time(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-			 encoding dst = DEF_DST_ENCODING,
-			 on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+                         encoding dst = DEF_DST_ENCODING,
+                         on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
 
     template <typename forward_output_iterator>
     forward_output_iterator title(forward_output_iterator p) const {
@@ -467,8 +412,8 @@ namespace scribbu {
 
     template<typename string_type>
     string_type year(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-					 encoding dst = DEF_DST_ENCODING,
-					 on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+                     encoding dst = DEF_DST_ENCODING,
+                     on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
 
     bool enhanced() const {
       return extended();

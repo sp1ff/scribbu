@@ -32,49 +32,6 @@ scribbu::ienc::insert(const ienc &manip, std::ios_base &ios)
   delete pold;
 }
 
-// Workaround for gcc bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56480
-// namespace scribbu {
-
-//   template <>
-//   /*static*/ ienc
-//   ienc::retrieve(std::basic_ios<char, std::char_traits<char>> &ios)
-//   {
-//     int idx = index();
-
-//     // Retrieve the current pword value...
-//     void *&p = ios.pword(idx);
-//     // if it's null, then this stream has not yet been imbued with an
-//     // internal encoding; register our callback.
-//     if (nullptr == p) {
-//       return ienc(encoding::UTF_8, on_no_encoding::fail);
-//     }
-//     else {
-//       return *(reinterpret_cast<ienc*>(p));
-//     }
-
-//   }
-
-//   template <>
-//   /*static*/ ienc
-//   ienc::retrieve(std::basic_ios<wchar_t> &ios)
-//   {
-//     int idx = index();
-
-//     // Retrieve the current pword value...
-//     void *&p = ios.pword(idx);
-//     // if it's null, then this stream has not yet been imbued with an
-//     // internal encoding; register our callback.
-//     if (nullptr == p) {
-//       return ienc(encoding::UTF_32LE, on_no_encoding::fail);
-//     }
-//     else {
-//       return *(reinterpret_cast<ienc*>(p));
-//     }
-
-//   }
-
-// }
-
 /*static*/ scribbu::ienc
 scribbu::ienc::retrieve(std::ios_base &ios)
 {

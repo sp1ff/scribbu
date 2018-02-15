@@ -1,19 +1,17 @@
-#include <scribbu/scribbu.hh>
-
 #include "unit.hh"
 
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
-#include <boost/test/unit_test.hpp>
-
-#include <openssl/evp.h>
-
-#include <boost/filesystem/fstream.hpp>
-
+#include <scribbu/scribbu.hh>
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
 #include <scribbu/id3v2-utils.hh>
+
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
+#include <boost/test/unit_test.hpp>
+#include <boost/filesystem/fstream.hpp>
+
+#include <openssl/evp.h>
 
 namespace fs   = boost::filesystem;
 namespace po   = boost::program_options;
@@ -42,6 +40,9 @@ namespace {
    * 4. the present working directory
    *
    *
+   * This routine is trying to guess the location of the test source code, and
+   * by extension the data.
+   *
    *
    */
   
@@ -69,7 +70,7 @@ namespace {
     
   }
   
-}
+} // End un-named namespace.
 
 fs::path
 get_source_directory()

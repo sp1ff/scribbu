@@ -1,4 +1,11 @@
 #include "config.h"
+#include "command-utilities.hh"
+
+#include <scribbu/csv-pprinter.hh>
+#include <scribbu/id3v1.hh>
+#include <scribbu/id3v2-utils.hh>
+#include <scribbu/id3v2.hh>
+#include <scribbu/scribbu.hh>
 
 #include <exception>
 
@@ -6,20 +13,11 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/regex.hpp>
 
-#include "command-utilities.hh"
-
-#include <scribbu/id3v1.hh>
-#include <scribbu/id3v2-utils.hh>
-#include <scribbu/id3v2.hh>
-#include <scribbu/scribbu.hh>
-#include <scribbu/csv-pprinter.hh>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-namespace {
-
-  const std::string USAGE(R"(scribbu dump -- dump ID3 tags from one or more files
+const std::string USAGE(R"(scribbu dump -- dump ID3 tags from one or more files
 to stdout
 
 USAGE:
@@ -30,7 +28,6 @@ For detailed help, say `scribbu dump --help'. To see the manual, say
 `info "scribbu (dump) "'.
 )");
 
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                      classes private to this module                       //

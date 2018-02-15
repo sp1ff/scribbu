@@ -1,13 +1,13 @@
-#include <scribbu/csv-pprinter.hh>
+#include "csv-pprinter.hh"
 
-#include <scribbu/ostream.hh>
-#include <scribbu/id3v22.hh>
-#include <scribbu/id3v23.hh>
-#include <scribbu/id3v24.hh>
-#include <scribbu/id3v1.hh>
+#include "ostream.hh"
+#include "id3v1.hh"
+#include "id3v22.hh"
+#include "id3v23.hh"
+#include "id3v24.hh"
 
-// TODO(sp1ff): Needed?
 namespace {
+
   unsigned int optional_to_uint(const boost::optional<bool> &x)
   {
     if (x) {
@@ -17,6 +17,7 @@ namespace {
       return ~0;
     }
   }
+
 }
 
 /*static*/
@@ -406,25 +407,4 @@ scribbu::csv_pprinter::escape(const std::string &s, char sep /*= ','*/)
 
   return r;
 
-  // // If there are no commas, return 's'. If there *are* commas, return "s'",
-  // // where s' is s with all occurrenecs of '"' doubled.
-  // std::size_t comma = s.find(',');
-  // if (std::string::npos == comma) {
-  //   return s;
-  // }
-
-  // std::string r("\"");
-  // for (std::size_t i = 0, n = s.length(); i < n; ) {
-  //   std::size_t dquote = s.find('"', i);
-  //   r.append(s.substr(i, dquote - i));
-  //   if (std::string::npos == dquote) {
-  //     break;
-  //   }
-  //   r += "\"\"";
-  //   i = dquote + 1;
-  // }
-  
-  // r += '"';
-
-  // return r;
 }

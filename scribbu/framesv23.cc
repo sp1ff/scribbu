@@ -311,8 +311,7 @@ scribbu::id3v2_3_frame::write_header(std::ostream &os,
 
   const std::size_t MAX_FRAME_SIZE = 0xffffffff;
   if (cb_payload > MAX_FRAME_SIZE) {
-    // TODO(sp1ff): Custom exception here!
-    throw std::logic_error("Invalid ID3v2.3 frame size");
+    throw std::runtime_error("Invalid ID3v2.3 frame size");
   }
   
   char szbuf[4];
@@ -468,7 +467,6 @@ scribbu::id3v2_3_text_frame::set(const std::string &text,
   // Attempt to convert to ISO-8859-1 first
   bool ok;
   std::vector<unsigned char> test;
-  // TODO(sp1ff): Implement a version that doesn't throw
   try {
     test = scribbu::convert_encoding(text, src, encoding::ISO_8859_1, add_bom, rsp);
     ok = true;

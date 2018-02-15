@@ -1,5 +1,6 @@
 #ifndef ID3V2_UTILS_HH_INCLUDED
 #define ID3V2_UTILS_HH_INCLUDED 1
+
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
@@ -10,7 +11,7 @@
 namespace scribbu {
 
   /**
-   * \brief Attempt to read an ID3v2 tag from is
+   * \brief Attempt to read an ID3v2 tag from \a is
    *
    *
    * \param is [in] An input stream from which the ID3v2 tag shall be read
@@ -31,7 +32,25 @@ namespace scribbu {
 
   std::unique_ptr<id3v2_tag> maybe_read_id3v2(std::istream &is);
 
-  std::unique_ptr<id3v2_tag> read_id3v2(std::istream &is, std::size_t idx);
+  /**
+   * \brief Read an ID3v2 tag from \a is
+   *
+   *
+   * \param is [in] A standard input stream from which the tag shall be read
+   *
+   * \param idx [in] Index of the frame to be read
+   *
+   * \return a unique_ptr to an id3v2_2_tag, id3v2_3_tag, or id3v_2_4 tag, depending
+   * on the ID3v2 version of the \a idx -th tag
+   *
+   *
+   * Unlike maybe_read_id3v2, this method will attempt the read the given tag
+   * from \a is, and throw should it fail to do so.
+   *
+   *
+   */
+
+  std::unique_ptr<id3v2_tag> read_id3v2(std::istream &is, std::size_t idx = 0);
   
   /**
    * \brief Read all ID3v2 tags from an input stream

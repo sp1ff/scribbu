@@ -24,7 +24,7 @@
 ;;; Commentary:
 
 ;; This file contains Scheme code useful for customizing & automating
-;; scribbu.  TODO: Figure out how to install this file.
+;; scribbu.
 
 (define-module (scribbu)
   #:export (scribbu/flat-file-system-tree scribbu/file-system-tree-generator))

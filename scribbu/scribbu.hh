@@ -37,6 +37,7 @@
 
 #include <openssl/err.h>
 
+/// All exported functions, types &c should be in namespace scribbu
 namespace scribbu {
 
   /// Library initialization
