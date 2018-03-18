@@ -1,3 +1,26 @@
+/**
+ * \file pprinter.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ * 
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/pprinter.hh>
 
 #include "unit.hh"
@@ -88,29 +111,29 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_3 )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v2.3.tag");
 
-  const string GOLDEN(R"(ID3v2.3(.0) Tag:
-452951 bytes, synchronised
-flags: 0x00
-The Pogues - Lorca's Novena
-Hell's Ditch [Expanded] (US Version) (track 5), 1990
-Content-type Pop
-TIT2: Lorca's Novena
-TPE1: The Pogues
-TALB: Hell's Ditch [Expanded] (US Version)
-TCON: Pop
-TCOM: 
-TPE3: 
-TRCK: 5
-TYER: 1990
-TPE2: The Pogues
-COMM (<no description>):
-Amazon.com Song ID: 203558254
-TCOP: 2004 Warner Music UK Ltd.
-TPOS: 1
-frame APIC (115554 bytes)
-frame PRIV (1122 bytes)
-335921 bytes of padding
-)");
+  const string GOLDEN("ID3v2.3(.0) Tag:\n"
+                      "452951 bytes, synchronised\n"
+                      "flags: 0x00\n"
+                      "The Pogues - Lorca's Novena\n"
+                      "Hell's Ditch [Expanded] (US Version) (track 5), 1990\n"
+                      "Content-type Pop\n"
+                      "TIT2: Lorca's Novena\n"
+                      "TPE1: The Pogues\n"
+                      "TALB: Hell's Ditch [Expanded] (US Version)\n"
+                      "TCON: Pop\n"
+                      "TCOM: \n"
+                      "TPE3: \n"
+                      "TRCK: 5\n"
+                      "TYER: 1990\n"
+                      "TPE2: The Pogues\n"
+                      "COMM (<no description>):\n"
+                      "Amazon.com Song ID: 203558254\n"
+                      "TCOP: 2004 Warner Music UK Ltd.\n"
+                      "TPOS: 1\n"
+                      "frame APIC (115554 bytes)\n"
+                      "frame PRIV (1122 bytes)\n"
+                      "335921 bytes of padding\n"
+                      "");
 
   fs::ifstream ifs_3(TEST_DATA, fs::ifstream::binary);
   id3v2_3_tag tag(ifs_3);

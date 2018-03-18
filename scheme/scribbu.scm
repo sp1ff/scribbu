@@ -1,25 +1,25 @@
 ;;;; scribbu.scm --- Scheme modules for scribbu
-     
-;;;;   Copyright (C) 2017 Michael Herstine <sp1ff@pobox.com>
 
-;;;; This library is free software; you can redistribute it and/or
-;;;; modify it under the terms of the GNU Lesser General Public
-;;;; License as published by the Free Software Foundation; either
-;;;; version 3 of the License, or (at your option) any later version.
-;;;; 
-;;;; This library is distributed in the hope that it will be useful,
+;;;; Copyright (C) 2018 Michael Herstine <sp1ff@pobox.com>
+
+;;;; Author: Michael Herstine <sp1ff@pobox.com>
+
+;;;; Homepage: https://www.github.com/sp1ff/scribbu
+
+;;;; This file is part of scribbu.
+;;;;
+;;;; scribbu is free software: you can redistribute it and/or modify
+;;;; it under the terms of the GNU General Public License as published by
+;;;; the Free Software Foundation, either version 3 of the License, or
+;;;; (at your option) any later version.
+;;;;
+;;;; scribbu is distributed in the hope that it will be useful,
 ;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;;;; Lesser General Public License for more details.
-;;;; 
-;;;; You should have received a copy of the GNU Lesser General Public
-;;;; License along with this library; if not, write to the Free Software
-;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-;;;; 
-
-;;; Author: Michael Herstine <sp1ff@pobox.com>
-
-;;; Homepage: https://www.github.com/sp1ff/scribbu
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;;
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with scribbu.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -57,8 +57,8 @@
   (match entry
     ((name stat) (string-append parent "/" name))
 	((name stat children ...)
-	 (map 
-	  (lambda (x) 
+	 (map
+	  (lambda (x)
 		(scribbu/strip-stat-from-file-system-tree (string-append parent "/" name) x))
 	  children))))
 
@@ -66,7 +66,7 @@
 ;; implementation will maintain the entire list in memory.
 (define (scribbu/flat-file-system-tree root)
   ;; make `root' absolute if it's not already...
-  (let* ((full-root 
+  (let* ((full-root
 		  (if (absolute-file-name? root) root
 			  (string-append (getcwd) "/" root)))
 		 (parent (dirname full-root)))
@@ -93,11 +93,11 @@
 						 (while (not (eof-object? entry))
 								(let* ((full (string-append pth "/" entry))
 									   (type (stat:type (stat full))))
-								  (if (and (not (string=? "." entry)) 
+								  (if (and (not (string=? "." entry))
 										   (not (string=? ".." entry)))
 									  (if (eqv? 'directory type)
 										  (let ((stm2 (opendir full)))
-											(set! dir-stack 
+											(set! dir-stack
 												(append dir-stack (list (list full stm2)))))
 										  (if (eqv? 'regular type)
 											  (break full)))

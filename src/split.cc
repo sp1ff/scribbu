@@ -1,3 +1,26 @@
+/**
+ * \file split.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "config.h"
 #include "command-utilities.hh"
 
@@ -10,23 +33,23 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-
+
 namespace {
 
-  const std::string USAGE(R"(scribbu split -- split a file into ID3v2, track data, and ID3v1 
+  const std::string USAGE(R"(scribbu split -- split a file into ID3v2, track data, and ID3v1
 tag
 
 scribbu split [OPTION...] INPUT
 
 Split a file into it's ID3v2 tag, track data, and\or ID3v1 tag. The input files
-will be named "id3v2NS", N=0,1,2,..., "trackS" & "id3v1S", where S is the 
+will be named "id3v2NS", N=0,1,2,..., "trackS" & "id3v1S", where S is the
 --suffix option, if given.)");
 
   void xfer_bytes(std::istream   &in,
                   const fs::path &pth,
                   std::size_t     cb)
   {
-    const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | 
+    const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit |
       std::ios::badbit;
 
     fs::ofstream ofs(pth, std::istream::binary);
@@ -97,7 +120,7 @@ will be named "id3v2NS", N=0,1,2,..., "trackS" & "id3v1S", where S is the
 
 }
 
-
+
 ////////////////////////////////////////////////////////////////////////////////
 //                             handler                                        //
 ////////////////////////////////////////////////////////////////////////////////

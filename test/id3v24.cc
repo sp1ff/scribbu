@@ -1,3 +1,26 @@
+/**
+ * \file id3v24.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/id3v24.hh>
 
 #include "unit.hh"
@@ -151,19 +174,19 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
  000000 49 44 33 04 00 00                                ID3v2.4, no flags
  000006                   00 00 07 65                    997 bytes [1]
  00000a                               43 4f 4d 4d        COMM comment frame
- 00000e                                           00 00  
+ 00000e                                           00 00
  000010 00 0e                                            14 bytes
  000012       00 00                                      no flags
  000014             00                                   ISO-8859-1
  000015                58 58 58                          Language "XXX"
  000018                         00                       nil description
  000019                            41 20 43 4f 4d 4d 45  "A COMMENT"
- 000020 4e 54 
+ 000020 4e 54
  000022       54 58 58 58 00 00 00 31 00 00              TXXX, 49 bytes, no flags
  00002c                                     00           ISO-8859-1
  00002d                                        75 73 65  "userTextDescription1"
- 000030 72 54 65 78 74 44 65 73 63 72 69 70 74 69 6f 6e  
- 000040 31 00 
+ 000030 72 54 65 78 74 44 65 73 63 72 69 70 74 69 6f 6e
+ 000040 31 00
  000042       75 73 65 72 54 65 78 74 44 61 74 61 31 00  "userTextData1.userTextData2"
  000050 75 73 65 72 54 65 78 74 44 61 74 61 32
  00005d                                        54 58 58  TXXX, 60 bytes, no flags
@@ -184,7 +207,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
  0000d4             57 58 58 58 00 00 00 2a 00 00        WXXXX, 42 bytes, no flags
  0000de                                           00 00  ISO-8859-1, ""
  0000e0 68 74 74 70 3a 2f 2f 61 2e 75 73 65 72 2e 75 72  http://a.user.url/with/empty/description
- 0000f0 6c 2f 77 69 74 68 2f 65 6d 70 74 79 2f 64 65 73  
+ 0000f0 6c 2f 77 69 74 68 2f 65 6d 70 74 79 2f 64 65 73
  000100 63 72 69 70 74 69 6f 6e
  000108                         55 46 49 44 00 00 00 19  UFID, 25 bytes, no flags
  000110 00 00
@@ -198,7 +221,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
  0003ef                                              ff  sync
  0003f0 fb ...
 
- 1. 0x0765 = b0000 0111 0110 0101 ->  000 0111  110 0101 = 
+ 1. 0x0765 = b0000 0111 0110 0101 ->  000 0111  110 0101 =
     0000 0011 1110 0101 = 0x03e5 = 997
 
  2. 0x3ef - 0x12b = 0x2c4 = 708
@@ -301,7 +324,7 @@ BOOST_AUTO_TEST_CASE( test_rare_frames )
 
 
       b  000 1010  100 0111  011 1101  010 0100  111 0001 =
-      b 0000 1010 1000 1110 1111 0101 0010 0111 0001 = 
+      b 0000 1010 1000 1110 1111 0101 0010 0111 0001 =
       0x   0    a    8    e    f    5    2    7    1 = 0x0a8ef5271
 
  \endcode
@@ -318,7 +341,7 @@ BOOST_AUTO_TEST_CASE( test_id3v24_ext_header )
 
   fs::ifstream ifs(DATA, fs::ifstream::binary);
   id3v2_4_tag tag(ifs);
-  
+
   BOOST_CHECK(4 == tag.version());
   BOOST_CHECK(0 == tag.revision());
   BOOST_CHECK(false == tag.unsynchronised());
@@ -342,7 +365,7 @@ BOOST_AUTO_TEST_CASE( test_id3v24_ext_header )
   BOOST_CHECK(0 == tag.has_languages());
   BOOST_CHECK(0 == tag.has_play_count());
   BOOST_CHECK(0 == tag.has_year());
-  
+
   BOOST_CHECK(false == tag.experimental());
   BOOST_CHECK(true  == tag.has_extended_header());
   BOOST_CHECK(false == tag.has_footer());

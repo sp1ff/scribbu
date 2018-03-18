@@ -1,3 +1,26 @@
+/**
+ * \file report.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "config.h"
 #include "command-utilities.hh"
 
@@ -16,7 +39,7 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-
+
 const std::string USAGE(R"(scribbu report -- generate a report
 
 scribbu report [option...] file-or-directory [file-or-directory...]
@@ -27,7 +50,7 @@ reporting.
 
 Only CSV output is currently supported.)");
 
-
+
 ////////////////////////////////////////////////////////////////////////////////
 struct reporter {
 
@@ -94,7 +117,7 @@ csv_reporter::csv_reporter(const fs::path &output,
   }
 
   ofs_ <<                         COMMA <<
-          "size (bytes)"       << COMMA << 
+          "size (bytes)"       << COMMA <<
           "MD5"                << COMMA <<
           "has ID3v1.1"        << COMMA <<
           "has ID3v1 extended" << COMMA <<
@@ -139,7 +162,7 @@ csv_reporter::make_entry(const scribbu::file_info                  &fi,
   ofs_ << endl;
 }
 
-
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class reporting_strategy: public std::unary_function<void, fs::path> {
@@ -226,7 +249,7 @@ void sequential_strategy::process_directory(const fs::path &pth) {
 
 }
 
-
+
 ////////////////////////////////////////////////////////////////////////////////
 //                             handler                                        //
 ////////////////////////////////////////////////////////////////////////////////
@@ -398,4 +421,4 @@ namespace {
 
 }
 
-  
+

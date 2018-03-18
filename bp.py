@@ -340,15 +340,19 @@ def update_source(filename, ver, author, make_backups, dry_run):
     doxy = '/**'
     termdoxy = '*/'
     filehdr = '^(\s+){}\s+\\\\file'.format(ecc)
+    closehdr = '*/'
     fileopen = '\\file {}'.format(basename)
+    def_indent = ' '
 
     if os.path.splitext(filename)[1] == '.scm':
         cc = ';;;;'
         ecc = ';;;;'
         doxy = ';;;;'
         termdoxy = 'Commentary'
-        filehdr = '^;;;; {} ---'.format(basename)
+        filehdr = '^;;;; {}'.format(basename)
+        closehdr = ''
         fileopen = basename
+        def_indent = ''
 
     # States:
     #  -2: done; parsed file header, found copyright but no license; line on which
@@ -365,10 +369,14 @@ def update_source(filename, ver, author, make_backups, dry_run):
     license = None
     state = 0
     with open(filename, 'r') as fh:
-        lines = fh.readlines()
+        orig_lines = fh.readlines()
+
+    # Be sure to rstrip 'em all, otherwise output wont' work (it
+    # assumes they're stripped)
+    lines = [x.rstrip() for x in orig_lines]
 
     for i in range(len(lines)):
-        line = lines[i].rstrip()
+        line = lines[i]
         if state == 0:
             m = re.search(filehdr, line)
             if m:
@@ -401,18 +409,19 @@ def update_source(filename, ver, author, make_backups, dry_run):
 
     if state == 0:
         # Never found header-- insert one before line 0
+        indent = def_indent
         hdr = """{4}
- {3} {0}
- {3}
- {3} Copyright (C) 2015-{1} {2}
- {3}
-""".format(fileopen, year, author, cc, doxy)
+{5}{3} {0}
+{5}{3}
+{5}{3} Copyright (C) 2015-{1} {2}
+{5}{3}
+""".format(fileopen, year, author, cc, doxy, indent)
         hdr += '\n'.join(map(lambda x: indent + cc + ' ' + x, LICENSE.split('\n')))
         hdr += """{0}{1}
 {0}{1}
 {0}{1}
-{0}{1}
-""".format(indent, cc)
+{0}{2}
+""".format(indent, cc, closehdr)
         lines[0:0] = hdr.split('\n')
     elif state == -2:
         # Insert license above line CLOSING

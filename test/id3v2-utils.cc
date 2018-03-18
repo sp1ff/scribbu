@@ -1,3 +1,26 @@
+/**
+ * \file id3v2-utils.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/id3v2-utils.hh>
 
 // TODO(sp1ff): Debugging only!!
@@ -172,7 +195,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  0000a0 65 63 74 72 6f 6e 69 63 00 00 00 00 00 00 00 00  >ectronic........<
  0000b0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
  *
- 000560 00 00 00 
+ 000560 00 00 00
  000563          49 44 33 04 00                          ID3 v2.4 tag
  000568                         00                       no flags
  000569                            00 03 74 66           64102 bytes
@@ -185,7 +208,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  000580 35 2e 30 2e 30 2e 33 35 00                       5.0.0.35.
  000589                            43 4f 4d 4d           COMM
  00058d                                        00 00 00  0x68 = 104 bytes
- 000590 68 
+ 000590 68
  000591    00 00                                         no flags
  000593          00                                      ISO-8859-1
  000594             65 6e 67                             eng
@@ -193,9 +216,9 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  0005a0 20 30 30 30 30 33 34 44 43 20 30 30 30 30 33 35   000034DC 000035
  0005b0 34 39 20 30 30 30 31 32 30 32 39 20 30 30 30 31  49 00012029 0001
  0005c0 35 44 44 30 20 30 30 30 31 31 38 31 41 20 30 30  5DD0 0001181A 00
- 0005d0 30 31 31 38 31 41 20 30 30 30 30 39 34 31 41 20  01181A 0000941A 
+ 0005d0 30 31 31 38 31 41 20 30 30 30 30 39 34 31 41 20  01181A 0000941A
  0005e0 30 30 30 30 39 39 30 38 20 30 30 30 32 41 45 44  00009908 0002AED
- 0005f0 36 20 30 30 30 32 41 45 44 36 00 
+ 0005f0 36 20 30 30 30 32 41 45 44 36 00
  0005fb                                  43 4f 4d 4d     COMM
  0005ff                                              00  2 bytes <== ERROR
  000600 00 00 82                                         (really 0x82=130)
@@ -284,9 +307,9 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
         = b0000 0101 0101 1001
         = 0x05 59
         = 1369
- 
+
  \endcode
- *          
+ *
  \code
  2.
 
@@ -298,7 +321,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
                 = 64102
 
  \endcode
- * 
+ *
  * The second comment tag *is* in fact 0x82 bytes in size, but whoever
  * wrote the tag forgot to make the value sync-safe:
  *
@@ -310,7 +333,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
   -> 0... 0102 = 0x00 00 01 02
  \endcode
  *
- * 
+ *
  * Test data 'duplicate_id3v2.mp3':
  *
  \code
@@ -607,7 +630,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  000f67                      49 44 33 04 00              ID3v2.4
  000f6c                                     00           no flags
  000f6d                                        00 00 20  0x1000 = 4096 bytes
- 000f70 00 
+ 000f70 00
  000f71    54 49 54 32 00 00 00 31 00 00                 TIT2 0x31 = 49 bytes, no flags
  000f7b                                  01              UTF-16 encoding
  000f7c                                     ff fe 4a 00  >..J.<
@@ -619,7 +642,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  000fb5                   01                             UTF-16 encoded
  000fb6                      ff fe 4c 00 65 00 66 00 74  >...'.....L.e.f.t<
  000fc0 00 20 00 57 00 69 00 6e 00 67 00 20 00 46 00 61  >. .W.i.n.g. .F.a<
- 000fd0 00 73 00 63 00 69 00 73 00 74 00 73 00 
+ 000fd0 00 73 00 63 00 69 00 73 00 74 00 73 00
  000fdd                                        54 52 43  TRCK, 0x05 bytes, no flags
  000fe0 4b 00 00 00 05 00 00
  000fe7                      00                          ISO-8859-1 encoding
@@ -644,9 +667,9 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  001070 20 00 4d 00 65 00 64 00 69 00 61 00
  00107c                                     54 58 58 58  TXXX, 0x1b = 27 bytes, no flags
  001086                   01 ff fe 53 00 43 00 52 00 49  >.........S.C.R.I<
- 001090 00 50 00 54 00 00 00 
+ 001090 00 50 00 54 00 00 00
  001090 00 50 00 54 00 00 00 ff fe 4c 00 61 00 74 00 6e  >.P.T.....L.a.t.n<
- 0010a0 00 
+ 0010a0 00
  0010a1    54 58 58 58 00 00 00 65 00 00                 TXXX, 0x65 = 101 bytes, no flags
  0010ab                                  01 ff fe 41 00  >...A.<
  0010b0 63 00 6f 00 75 00 73 00 74 00 69 00 64 00 20 00  >c.o.u.s.t.i.d. .<
@@ -682,7 +705,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  001250 00 35 00 63 00 31 00 61 00 63 00 38 00 33 00 31  >.5.c.1.a.c.8.3.1<
  001260 00 33 00 63 00 30 00 36 00                       >.3.c.0.6.
  001269                            54 44 4f 52 00 00 00  TDOR, 0x17 = 23 bytes, no flags
- 001270 17 00 00 
+ 001270 17 00 00
  001273          01 ff fe 31 00 39 00 39 00 31 00 2d 00  >......1.9.9.1.-.<
  001280 30 00 31 00 2d 00 30 00 31 00                    >0.1.-.0.1.<
  00128a                               54 53 4f 32 00 00  TSO2, 0x27 = 39 bytes, no flags
@@ -849,12 +872,12 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  001c10 66 34 2d 34 65 37 66 2d 39 63 66 37 2d 37 32 38  >f4-4e7f-9cf7-728<
  001c20 30 30 66 62 39 61 34 37 34                       >00fb9a474<
  001c29                            54 53 4f 50 00 00 00  TSOP, 0x27 = 39 bytes, no flags
- 001c30 27 00 00 
+ 001c30 27 00 00
  001c33          01 ff fe 4c 00 65 00 66 00 74 00 20 00  >...L.e.f.t. .<
  001c40 57 00 69 00 6e 00 67 00 20 00 46 00 61 00 73 00  >W.i.n.g. .F.a.s.<
  001c50 63 00 69 00 73 00 74 00 73 00                    >c.i.s.t.s.<
  001c5a                               54 58 58 58 00 00  TXXX, 0x77 = 119 bytes, no flags
- 001c60 00 77 00 00 
+ 001c60 00 77 00 00
  001c64             01 ff fe 4d 00 75 00 73 00 69 00 63  >.w.....M.u.s.i.c<
  001c70 00 42 00 72 00 61 00 69 00 6e 00 7a 00 20 00 41  >.B.r.a.i.n.z. .A<
  001c80 00 6c 00 62 00 75 00 6d 00 20 00 49 00 64 00 00  >.l.b.u.m. .I.d..<
@@ -863,7 +886,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  001cb0 00 37 00 39 00 35 00 2d 00 61 00 32 00 36 00 64  >.7.9.5.-.a.2.6.d<
  001cc0 00 2d 00 39 00 39 00 63 00 62 00 36 00 63 00 38  >.-.9.9.c.b.6.c.8<
  001cd0 00 34 00 39 00 37 00 65 00 37 00                 >.4.9.7.e.7.<
- 001cdb                                  54 50 55 42 00  TPUB, 0x1b = 27 bytes, no flags 
+ 001cdb                                  54 50 55 42 00  TPUB, 0x1b = 27 bytes, no flags
  001ce0 00 00 1b 00 00
  001ce5                01 ff fe 53 00 6b 00 79 00 72 00  >...S.k.y.r.<
  001cf0 61 00 74 00 20 00 4d 00 75 00 73 00 69 00 63 00  >a.t. .M.u.s.i.c.<
@@ -875,7 +898,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  001d40 00 43 00 6f 00 75 00 6e 00 74 00 72 00 79 00 00  >.C.o.u.n.t.r.y..<
  001d50 00 ff fe 55 00 53 00                             >...U.S.
  001d57                      54 58 58 58 00 00 00 47 00  TXXX, 0x47 = 71 bytes, no flags
- 001d60 00 
+ 001d60 00
  001d61    01 ff fe 4d 00 75 00 73 00 69 00 63 00 42 00  >....M.u.s.i.c.B.<
  001d70 72 00 61 00 69 00 6e 00 7a 00 20 00 41 00 6c 00  >r.a.i.n.z. .A.l.<
  001d80 62 00 75 00 6d 00 20 00 53 00 74 00 61 00 74 00  >b.u.m. .S.t.a.t.<
@@ -1004,7 +1027,7 @@ frame PRIV (41 bytes)
       p->serialized_size(false);
     }
   }
-  
+
 
   const string GOLDEN1(R"(ID3v2.4(.0) Tag:
 4096 bytes, synchronised

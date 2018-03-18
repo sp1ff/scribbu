@@ -1,3 +1,26 @@
+/**
+ * \file pprinter.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "scribbu/pprinter.hh"
 
 #include <typeindex>
@@ -15,7 +38,7 @@
 
 using scribbu::pprinter;
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              dual dispatcher                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,7 +223,7 @@ pprint_dispatcher::pprint_dispatcher()
 
 thread_local pprint_dispatcher D;
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                     class pprint_manipulator                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -315,7 +338,7 @@ namespace {
 
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                     class standard_pprinter                               //
 ///////////////////////////////////////////////////////////////////////////////
@@ -485,7 +508,7 @@ scribbu::standard_pprinter::pprint_id3v2_2_text_frame(
 scribbu::standard_pprinter::pprint_UFI(const UFI &frame, std::ostream &os)
 {
   using namespace std;
-  
+
   os << sin_ << frame.id() << ": " << frame.owner<string>() << "\n";
 
   vector<unsigned char> buf;
@@ -589,7 +612,7 @@ scribbu::standard_pprinter::pprint_id3v2_3_text_frame(
 scribbu::standard_pprinter::pprint_UFID(const UFID &frame, std::ostream &os)
 {
   using namespace std;
-  
+
   os << sin_ << frame.id() << ": " << frame.owner<string>() << "\n";
 
   vector<unsigned char> buf;
@@ -710,7 +733,7 @@ scribbu::standard_pprinter::pprint_id3v2_4_text_frame(
 scribbu::standard_pprinter::pprint_UFID_2_4(const UFID_2_4 &frame, std::ostream &os)
 {
   using namespace std;
-  
+
   os << sin_ << frame.id() << ": " << frame.owner<string>() << "\n";
 
   vector<unsigned char> buf;
@@ -852,7 +875,7 @@ scribbu::standard_pprinter::print_id3v2_tag(const id3v2_tag &tag,
 
 }
 
-
+
 std::ostream&
 scribbu::operator<<(std::ostream &os, const id3v2_tag &tag)
 {

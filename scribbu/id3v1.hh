@@ -1,3 +1,26 @@
+/**
+ * \file id3v1.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef ID3V1_HH_INCLUDED
 #define ID3V1_HH_INCLUDED 1
 /**
@@ -148,75 +171,75 @@
   *
   * Genre           | Genre
   * --------------- | -------------------
-  * 0 Blues         | 40 AlternRock         
-  * 1 Classic Rock  | 41 Bass               
-  * 2 Country       | 42 Soul               
-  * 3 Dance         | 43 Punk               
-  * 4 Disco         | 44 Space              
-  * 5 Funk          | 45 Meditative         
-  * 6 Grunge        | 46 Instrumental Pop   
-  * 7 Hip-Hop       | 47 Instrumental Rock  
-  * 8 Jazz          | 48 Ethnic             
-  * 9 Metal         | 49 Gothic             
-  * 10 New Age      | 50 Darkwave           
-  * 11 Oldies       | 51 Techno-Industrial  
-  * 12 Other        | 52 Electronic         
-  * 13 Pop          | 53 Pop-Folk           
-  * 14 R&B          | 54 Eurodance          
-  * 15 Rap          | 55 Dream              
-  * 16 Reggae       | 56 Southern Rock      
-  * 17 Rock         | 57 Comedy             
-  * 18 Techno       | 58 Cult               
-  * 19 Industrial   | 59 Gangsta            
-  * 20 Alternative  | 60 Top 40             
-  * 21 Ska          | 61 Christian Rap      
-  * 22 Death Metal  | 62 Pop/Funk           
-  * 23 Pranks       | 63 Jungle             
-  * 24 Soundtrack   | 64 Native American    
-  * 25 Euro-Techno  | 65 Cabaret            
-  * 26 Ambient      | 66 New Wave           
-  * 27 Trip-Hop     | 67 Psychadelic        
-  * 28 Vocal        | 68 Rave               
-  * 29 Jazz+Funk    | 69 Showtunes          
-  * 30 Fusion       | 70 Trailer            
-  * 31 Trance       | 71 Lo-Fi              
-  * 32 Classical    | 72 Tribal             
-  * 33 Instrumental | 73 Acid Punk          
-  * 34 Acid         | 74 Acid Jazz          
-  * 35 House        | 75 Polka              
-  * 36 Game         | 76 Retro              
-  * 37 Sound Clip   | 77 Musical            
-  * 38 Gospel       | 78 Rock & Roll        
+  * 0 Blues         | 40 AlternRock
+  * 1 Classic Rock  | 41 Bass
+  * 2 Country       | 42 Soul
+  * 3 Dance         | 43 Punk
+  * 4 Disco         | 44 Space
+  * 5 Funk          | 45 Meditative
+  * 6 Grunge        | 46 Instrumental Pop
+  * 7 Hip-Hop       | 47 Instrumental Rock
+  * 8 Jazz          | 48 Ethnic
+  * 9 Metal         | 49 Gothic
+  * 10 New Age      | 50 Darkwave
+  * 11 Oldies       | 51 Techno-Industrial
+  * 12 Other        | 52 Electronic
+  * 13 Pop          | 53 Pop-Folk
+  * 14 R&B          | 54 Eurodance
+  * 15 Rap          | 55 Dream
+  * 16 Reggae       | 56 Southern Rock
+  * 17 Rock         | 57 Comedy
+  * 18 Techno       | 58 Cult
+  * 19 Industrial   | 59 Gangsta
+  * 20 Alternative  | 60 Top 40
+  * 21 Ska          | 61 Christian Rap
+  * 22 Death Metal  | 62 Pop/Funk
+  * 23 Pranks       | 63 Jungle
+  * 24 Soundtrack   | 64 Native American
+  * 25 Euro-Techno  | 65 Cabaret
+  * 26 Ambient      | 66 New Wave
+  * 27 Trip-Hop     | 67 Psychadelic
+  * 28 Vocal        | 68 Rave
+  * 29 Jazz+Funk    | 69 Showtunes
+  * 30 Fusion       | 70 Trailer
+  * 31 Trance       | 71 Lo-Fi
+  * 32 Classical    | 72 Tribal
+  * 33 Instrumental | 73 Acid Punk
+  * 34 Acid         | 74 Acid Jazz
+  * 35 House        | 75 Polka
+  * 36 Game         | 76 Retro
+  * 37 Sound Clip   | 77 Musical
+  * 38 Gospel       | 78 Rock & Roll
   * 39 Noise        | 79 Hard Rock
   *
   * Winamp added the following additional genres:
   *
   * Genre               | Genre
   * --------------------| -----------------
-  * 80 Folk             | 103 Opera          
-  * 81 Folk-Rock        | 104 Chamber Music  
-  * 82 National Folk    | 105 Sonata         
-  * 83 Swing            | 106 Symphony       
-  * 84 Fast Fusion      | 107 Booty Brass    
-  * 85 Bebob            | 108 Primus         
-  * 86 Latin            | 109 Porn Groove    
-  * 87 Revival          | 110 Satire         
-  * 88 Celtic           | 111 Slow Jam       
-  * 89 Bluegrass        | 112 Club           
-  * 90 Avantgarde       | 113 Tango          
-  * 91 Gothic Rock      | 114 Samba          
-  * 92 Progressive Rock | 115 Folklore       
-  * 93 Psychedelic Rock | 116 Ballad         
-  * 94 Symphonic Rock   | 117 Power Ballad   
-  * 95 Slow Rock        | 118 Rhytmic Soul   
-  * 96 Big Band         | 119 Freestyle      
-  * 97 Chorus           | 120 Duet           
-  * 98 Easy Listening   | 121 Punk Rock      
-  * 99 Acoustic         | 122 Drum Solo      
-  * 100 Humour          | 123 A Capela       
-  * 101 Speech          | 124 Euro-House     
-  * 102 Chanson         | 125 Dance Hall     
-  * 
+  * 80 Folk             | 103 Opera
+  * 81 Folk-Rock        | 104 Chamber Music
+  * 82 National Folk    | 105 Sonata
+  * 83 Swing            | 106 Symphony
+  * 84 Fast Fusion      | 107 Booty Brass
+  * 85 Bebob            | 108 Primus
+  * 86 Latin            | 109 Porn Groove
+  * 87 Revival          | 110 Satire
+  * 88 Celtic           | 111 Slow Jam
+  * 89 Bluegrass        | 112 Club
+  * 90 Avantgarde       | 113 Tango
+  * 91 Gothic Rock      | 114 Samba
+  * 92 Progressive Rock | 115 Folklore
+  * 93 Psychedelic Rock | 116 Ballad
+  * 94 Symphonic Rock   | 117 Power Ballad
+  * 95 Slow Rock        | 118 Rhytmic Soul
+  * 96 Big Band         | 119 Freestyle
+  * 97 Chorus           | 120 Duet
+  * 98 Easy Listening   | 121 Punk Rock
+  * 99 Acoustic         | 122 Drum Solo
+  * 100 Humour          | 123 A Capela
+  * 101 Speech          | 124 Euro-House
+  * 102 Chanson         | 125 Dance Hall
+  *
   *
   * \section scribbu_id3v1_refs References
   *

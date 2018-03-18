@@ -1,3 +1,26 @@
+/**
+ * \file framesv22.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef FRAMESV22_HH_INCLUDED
 #define FRAMESV22_HH_INCLUDED 1
 #include <scribbu/framesv2.hh>
@@ -47,7 +70,7 @@ namespace scribbu {
     /// Index of the cached copy of this frame in serialized form with
     /// unsynchronisation applied
     static const unsigned char SERIALIZED_WITH_UNSYNC = 1;
-    
+
   public:
 
     id3v2_2_frame(const frame_id3 &id): id3v2_frame(id.experimental()), id_(id)
@@ -162,7 +185,7 @@ namespace scribbu {
     virtual std::size_t serialize(std::ostream &os) const = 0;
     /// Write a three-tuple while removing false syncs
     std::size_t unsynchronise_triplet(std::ostream &os, char buf[3]) const;
-    
+
   private:
     frame_id3 id_;
     mutable std::size_t num_false_syncs_;
@@ -221,7 +244,7 @@ namespace scribbu {
     std::vector<unsigned char> data_;
 
   }; // End class unknown_id3v2_2_frame.
-  
+
   /// Unique File Identifier (cf. 4.1 of the ID3v2.2 spec)
   class UFI: public id3v2_2_frame, public unique_file_id {
 
@@ -357,7 +380,7 @@ namespace scribbu {
                        bool add_bom = false,
                        on_no_encoding rsp = on_no_encoding::fail,
                        bool ucs2 = false) :
-      id3v2_2_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE : 
+      id3v2_2_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE :
                                                     encoding::ISO_8859_1, add_bom, rsp))
     { }
 
@@ -491,7 +514,7 @@ namespace scribbu {
       id3v2_2_frame("TXX"),
       user_defined_text(id3v2_version::v2, text, src, unicode, dsc)
     { }
-    
+
     virtual id3v2_2_frame* clone() const
     { return new TXX(*this); }
 
@@ -618,7 +641,7 @@ namespace scribbu {
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
 
   public:
-    
+
     std::size_t count() const
     { return play_count::count(); }
 

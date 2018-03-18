@@ -1,3 +1,26 @@
+/**
+ * \file rename.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "config.h"
 #include "command-utilities.hh"
 #include <scribbu/id3v1.hh>
@@ -13,7 +36,7 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-
+
 namespace {
 
   const std::string USAGE(R"(scribbu rename -- rename .mp3 files
@@ -78,7 +101,7 @@ Filename-based replacement parameters:
     - basename: b, basename
     - extension: E, extension (incl. dot)
 
-These take the same "The", capitalization & whitespace options as tag-based 
+These take the same "The", capitalization & whitespace options as tag-based
 replacements.
 
 Replacements based on the track data:
@@ -95,7 +118,7 @@ Both replacements take the following options:
 
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                          implementation                                   //
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,7 +223,7 @@ namespace {
 
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             handler                                       //
 ///////////////////////////////////////////////////////////////////////////////

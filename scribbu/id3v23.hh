@@ -1,3 +1,26 @@
+/**
+ * \file id3v23.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef ID3V23_HH_INCLUDED
 #define ID3V23_HH_INCLUDED 1
 
@@ -67,7 +90,7 @@ namespace scribbu {
    *
    *   - x (bit 7): unsynchornisation was applied (see \ref scribbu_id3v2_unsync "here")
    *   - y (bit 6): extended header is present (on which more below)
-   *   - z (bit 5): experimental ("This flag should always be set when 
+   *   - z (bit 5): experimental ("This flag should always be set when
    *     the tag is in an experimental stage.")
    *
    * The Optional Extended Header:
@@ -418,7 +441,7 @@ namespace scribbu {
      * \todo Implement functions on id3v2_3_tag::mutable_frame_proxy forwarding
      * to id3v_3_frame public methods
      *
-     * 
+     *
      */
 
     class mutable_frame_proxy

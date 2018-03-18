@@ -1,3 +1,26 @@
+/**
+ * \file id3v24.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <id3v24.hh>
 
 #include <framesv24.hh>
@@ -8,27 +31,27 @@
 #include <zlib.h>
 
 const char PAD[] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 const size_t CBPAD = sizeof(PAD);
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                         id3v2_4_tag nifty counter                         //
 ///////////////////////////////////////////////////////////////////////////////
@@ -146,7 +169,7 @@ scribbu::id3v2_4_tag::static_initializer::~static_initializer()
   }
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                            class id3v2_4 tag                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -333,7 +356,7 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
   if (restricted()) {
     flags |= 16;
   }
-  
+
   buf[5] = flags;
 
   os.write((char*)buf, 6);
@@ -365,7 +388,7 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
     // te = get<1>(T);
     // sz = get<2>(T);
     // is = get<3>(T);
-      
+
     unsigned char tagr = 0x00;
 
     switch (ts) {
@@ -399,7 +422,7 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
     if (ie) {
       tagr |= (1 << 2);
     }
-      
+
     switch (is) {
     case image_size::restricted:
       tagr |= 0x1;
@@ -415,12 +438,12 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
     os.write((char*)&tagr, 1);
     cb += 1;
   }
-  
-  return cb;  
+
+  return cb;
 }
 
 scribbu::id3v2_4_tag::id3v2_4_tag(std::istream &is): id3v2_tag(is), padding_(0)
-                                                     
+
 {
   get_default_generic_frame_parsers(std::inserter(
     generic_parsers_, generic_parsers_.begin()));
@@ -473,7 +496,7 @@ scribbu::id3v2_4_tag::flags() const
   return flags;
 }
 
-
+
 /////////////////////////////////////////////////////////////////////////////
 //                          ID3v2 Serialization                            //
 /////////////////////////////////////////////////////////////////////////////
@@ -522,7 +545,7 @@ scribbu::id3v2_4_tag::size(bool unsync) const
   if (has_footer()) {
     cb += 10;
   }
-  if (pext_header_) {    
+  if (pext_header_) {
     // TODO(sp1ff): Implement size()
     cb += pext_header_->size();
   }
@@ -541,14 +564,14 @@ scribbu::id3v2_4_tag::size(bool unsync) const
  * consequently, this method will return true if and only if all frames need
  * it.
  *
- * 
+ *
  */
 
 /*virtual*/
 bool
 scribbu::id3v2_4_tag::needs_unsynchronisation() const
 {
-  
+
   using namespace std;
   return all_of(begin(), end(), [](const id3v2_4_frame &f) { return f.needs_unsynchronisation(); });
 }
@@ -586,7 +609,7 @@ scribbu::id3v2_4_tag::needs_unsynchronisation() const
  *       make much sense to me *other* than in the same way as ID3v2.3-- the
  *       checksum should be carried out after all the frames have been
  *       re-synchronised ; this means asking frames to serialize themselves
- *       \em without unsynch 
+ *       \em without unsynch
  *
  * - write the frames
  *
@@ -929,7 +952,7 @@ scribbu::id3v2_4_tag::push_back(const id3v2_4_text_frame &frame)
   frames_.emplace_back(std::move(pnew));
   add_frame_to_lookups(F, frames_.size() - 1);
 }
-  
+
 void
 scribbu::id3v2_4_tag::push_back(const PCNT_2_4 &frame)
 {
@@ -939,7 +962,7 @@ scribbu::id3v2_4_tag::push_back(const PCNT_2_4 &frame)
   frames_.emplace_back(std::move(pnew));
   add_frame_to_lookups(F, frames_.size() - 1);
 }
-  
+
 void
 scribbu::id3v2_4_tag::push_back(const COMM_2_4 &frame)
 {
@@ -989,7 +1012,7 @@ scribbu::id3v2_4_tag::write_header(std::ostream &os,
   os.write((const char*)buf, sizeof(buf));
   detail::sync_safe_from_unsigned(cb, buf);
   os.write((const char*)buf, 4);
-  return os;  
+  return os;
 }
 
 std::ostream&
@@ -1001,7 +1024,7 @@ scribbu::id3v2_4_tag::write_footer(std::ostream &os,
   os.write((const char*)buf, sizeof(buf));
   detail::sync_safe_from_unsigned(cb, buf);
   os.write((const char*)buf, 4);
-  return os;  
+  return os;
 }
 
 void
@@ -1179,7 +1202,7 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extend
           break;
         }
 
-        cb_frame = unsigned_from_sync_safe(pcurr[4], pcurr[5], pcurr[6], 
+        cb_frame = unsigned_from_sync_safe(pcurr[4], pcurr[5], pcurr[6],
                                            pcurr[7]);
 
         if (ENCR != id) {

@@ -1,30 +1,53 @@
+/**
+ * \file id3v22.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <id3v22.hh>
 
 #include <algorithm>
 #include <numeric>
 
 const char PAD[] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 const size_t CBPAD = sizeof(PAD);
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                         id3v2_2_tag nifty counter                         //
 ///////////////////////////////////////////////////////////////////////////////
@@ -138,7 +161,7 @@ scribbu::id3v2_2_tag::static_initializer::~static_initializer()
   }
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             class id3v2_2_tag                             //
 ///////////////////////////////////////////////////////////////////////////////
@@ -229,7 +252,7 @@ scribbu::id3v2_2_tag::write(std::ostream &os, bool unsync) const
     cb += towrite;
     cbpad -= towrite;
   }
-  
+
   return cb;
 }
 
@@ -263,7 +286,7 @@ scribbu::id3v2_2_tag::add_comment(const std::string &text,
   std::ptrdiff_t d = frames_.size();
   frames_.emplace_back(std::move(pnew));
   add_frame_to_lookups(*pnew, d);
-  
+
 }
 
 /*virtual*/
@@ -279,10 +302,10 @@ scribbu::id3v2_2_tag::add_user_defined_text(const std::string &text,
   std::ptrdiff_t d = frames_.size();
   frames_.emplace_back(std::move(pnew));
   add_frame_to_lookups(*pnew, d);
-  
+
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             tag as container                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -518,7 +541,7 @@ scribbu::id3v2_2_tag::push_back(const id3v2_2_text_frame &frame)
   frames_.emplace_back(std::move(pnew));
   add_frame_to_lookups(F, frames_.size() - 1);
 }
-  
+
 void
 scribbu::id3v2_2_tag::push_back(const CNT &frame)
 {
@@ -528,7 +551,7 @@ scribbu::id3v2_2_tag::push_back(const CNT &frame)
   frames_.emplace_back(std::move(pnew));
   add_frame_to_lookups(F, frames_.size() - 1);
 }
-  
+
 void
 scribbu::id3v2_2_tag::push_back(const COM &frame)
 {
@@ -578,7 +601,7 @@ scribbu::id3v2_2_tag::write_header(std::ostream &os,
   os.write((const char*)buf, sizeof(buf));
   detail::sync_safe_from_unsigned(cb, buf);
   os.write((const char*)buf, 4);
-  return os;  
+  return os;
 }
 
 void
@@ -665,7 +688,7 @@ scribbu::id3v2_2_tag::add_frame_to_lookups(POP &frame, std::size_t idx)
   add_frame_to_lookups((const id3v2_2_frame&)frame, idx);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 
 /*static*/ bool

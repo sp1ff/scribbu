@@ -1,3 +1,26 @@
+/**
+ * \file framesv2.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef FRAMESV2_HH_INCLUDED
 #define FRAMESV2_HH_INCLUDED 1
 /**
@@ -72,7 +95,7 @@ namespace scribbu {
           if (0 == b0 && 0 == b1) {
             break;
           }
-        }          
+        }
       }
 
       return p0;
@@ -310,7 +333,7 @@ namespace scribbu {
     { return dirty_; }
     virtual void dirty(bool f) const
     { dirty_ = f; }
-    
+
   private:
     bool experimental_;
     mutable bool dirty_;

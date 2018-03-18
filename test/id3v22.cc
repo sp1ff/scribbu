@@ -1,3 +1,26 @@
+/**
+ * \file id3v22.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/id3v22.hh>
 
 #include "unit.hh"
@@ -284,7 +307,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 
  1. 0x0376 = b0000 0011 0111 0110 -> b000 0011 111 0110 -> b00 0001 1111 0110 = 0x01f6
 
- 2. 0x1d5 = 
+ 2. 0x1d5 =
 
  \endcode
  *

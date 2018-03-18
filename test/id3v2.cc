@@ -1,3 +1,26 @@
+/**
+ * \file id3v2.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/id3v2-utils.hh>
 
 #include "unit.hh"
@@ -26,7 +49,7 @@ BOOST_AUTO_TEST_CASE( test_from_sync_safe)
 
   uint32_t x32 = uint32_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f);
   BOOST_CHECK(2^28 - 1 == x32);
-  
+
   x32 = uint32_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f, 0x7f);
   BOOST_CHECK(2^35 - 1 == x32);
 
@@ -87,7 +110,7 @@ BOOST_AUTO_TEST_CASE( test_resync )
   // This is mostly testing corner cases; cf. test_unsync.
   unsigned char BUF0[] = { };
   BOOST_CHECK(0 == resynchronise(BUF0, sizeof(BUF0)));
-  
+
   unsigned char BUF1[] = { 0x01 };
   static const unsigned char GOLD1[] = { 0x01 };
   BOOST_CHECK(1 == resynchronise(BUF1, sizeof(BUF1)));
@@ -128,16 +151,16 @@ BOOST_AUTO_TEST_CASE( test_resync )
   BOOST_CHECK(6 == resynchronise(BUF8, sizeof(BUF8)));
   BOOST_CHECK(0 == memcmp(GOLD8, BUF8, sizeof(GOLD8)));
 
-  unsigned char BUF9[] = { 0xff, 0x00, 0x01, 0xff, 0x00, 0x02, 0x03, 
+  unsigned char BUF9[] = { 0xff, 0x00, 0x01, 0xff, 0x00, 0x02, 0x03,
                            0xff, 0x00, 0x04 };
-  static const unsigned char GOLD9[] = { 0xff, 0x01, 0xff, 0x02, 0x03, 
+  static const unsigned char GOLD9[] = { 0xff, 0x01, 0xff, 0x02, 0x03,
                                          0xff, 0x04 };
   BOOST_CHECK(7 == resynchronise(BUF9, sizeof(BUF9)));
   BOOST_CHECK(0 == memcmp(GOLD9, BUF9, sizeof(GOLD9)));
 
-  unsigned char BUFA[] = { 0x01, 0xff, 0x00, 0x02, 0x03, 0xff, 0x00, 
+  unsigned char BUFA[] = { 0x01, 0xff, 0x00, 0x02, 0x03, 0xff, 0x00,
                            0x04, 0xff, 0x00 };
-  static const unsigned char GOLDA[] = { 0x01, 0xff, 0x02, 0x03, 0xff, 
+  static const unsigned char GOLDA[] = { 0x01, 0xff, 0x02, 0x03, 0xff,
                                          0x04, 0xff };
   BOOST_CHECK(7 == resynchronise(BUFA, sizeof(BUFA)));
   BOOST_CHECK(0 == memcmp(GOLDA, BUFA, sizeof(GOLDA)));

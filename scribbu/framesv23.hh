@@ -1,3 +1,26 @@
+/**
+ * \file framesv23.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef FRAMESV23_HH_INCLUDED
 #define FRAMESV23_HH_INCLUDED 1
 #include <algorithm>
@@ -152,7 +175,7 @@ namespace scribbu {
                        tag_alter_preservation  tap,
                        file_alter_preservation fap,
                        read_only               ro,
-                       bool                    cmp,     
+                       bool                    cmp,
                        const id_type          &enc,
                        const id_type          &gid):
       id3v2_frame(id.experimental()),
@@ -180,7 +203,7 @@ namespace scribbu {
     /// Construct with four chars et al.
     id3v2_3_plus_frame(unsigned char           id0,
                        unsigned char           id1,
-                       unsigned char           id2,      
+                       unsigned char           id2,
                        unsigned char           id3,
                        std::size_t             size,
                        tag_alter_preservation  tap,
@@ -203,7 +226,7 @@ namespace scribbu {
       enc_method_(that.encrypted()),
       group_id_  (that.grouped())
     { }
-      
+
 
   public:
 
@@ -227,8 +250,8 @@ namespace scribbu {
     { return bool(group_id_); }
 
     /// Update a CRC-32 checksum using this frames serialized form
-    std::uint32_t crc(std::uint32_t crc) const; 
-    
+    std::uint32_t crc(std::uint32_t crc) const;
+
     /// Return the number of bytes this frame will occupy when serialized to
     /// disk, including the header
     virtual std::size_t serialized_size(bool unsync) const;
@@ -271,7 +294,7 @@ namespace scribbu {
     virtual std::size_t write_header(std::ostream &os,
                                      std::size_t cb_payload,
                                      std::size_t dlind) const = 0;
-    
+
   private:
 
     ///////////////////////////////////////////////////////////////////////////
@@ -419,7 +442,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   private:
     std::vector<unsigned char> data_;
 
@@ -478,7 +501,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   }; // End class UFID.
 
   class ENCR: public id3v2_3_frame, public encryption_method {
@@ -533,7 +556,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   }; // End class ENCR.
 
   /**
@@ -657,7 +680,7 @@ namespace scribbu {
                        const id_type &encmth = boost::none,
                        const id_type &grid = boost::none,
                        const opt_sz_type &decsz = boost::none):
-      id3v2_3_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE : 
+      id3v2_3_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE :
                                                     encoding::ISO_8859_1, add_bom, rsp),
                          tap, fap, ro, encmth, grid, decsz)
     { }
@@ -747,7 +770,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   private:
     unsigned char unicode_;
     std::vector<unsigned char> text_;
@@ -868,7 +891,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   }; // End class TXXX.
 
   // Comments
@@ -952,7 +975,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   }; // End class COMM.
 
   // play count
@@ -987,7 +1010,7 @@ namespace scribbu {
            const opt_sz_type       &decsz);
 
   public:
-    
+
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
@@ -999,12 +1022,12 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   }; // End class PCNT.
 
   /// Popularimeter; cf. sec 4.18
   class POPM: public id3v2_3_frame, public popularimeter {
-    
+
   public:
 
     template <typename forward_input_iterator>
@@ -1057,7 +1080,7 @@ namespace scribbu {
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
-    
+
   }; // End class POPM.
 
 } // End namespace scribbu.

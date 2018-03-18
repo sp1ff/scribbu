@@ -1,3 +1,26 @@
+/**
+ * \file charsets.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/charsets.hh>
 
 #include <boost/test/unit_test.hpp>
@@ -393,11 +416,11 @@ BOOST_AUTO_TEST_CASE( test_iso_639 )
   char c2[] = { 'e', 'n' };
   language lang = language_from_iso_639_1(c2);
   BOOST_CHECK(language::eng == lang);
-  
+
   unsigned char c3[3];
   language_to_iso_639_2(language::eng, c3);
   BOOST_CHECK(c3[0] == 'e' && c3[1] == 'n' && c3[2] == 'g');
-  
+
   istringstream istm("chi");
   istream is(istm.rdbuf());
   is >> lang;

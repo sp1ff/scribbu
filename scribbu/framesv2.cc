@@ -1,3 +1,26 @@
+/**
+ * \file framesv2.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "framesv2.hh"
 
 #include <boost/functional/hash.hpp>
@@ -32,7 +55,7 @@ scribbu::detail::count_false_syncs(std::size_t n)
   return count;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class frame_id3                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,7 +101,7 @@ std::size_t std::hash<scribbu::frame_id3>::operator()(const scribbu::frame_id3 &
   return seed;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class frame_id4                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,7 +149,7 @@ std::size_t std::hash<scribbu::frame_id4>::operator()(const scribbu::frame_id4 &
   return seed;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                           class unique_file_id                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,7 +199,7 @@ scribbu::unique_file_id::count_syncs(bool false_only) const
   return n;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                          class encryption_method                          //
 ///////////////////////////////////////////////////////////////////////////////
@@ -222,7 +245,7 @@ scribbu::encryption_method::count_syncs(bool false_only) const
 {
   using namespace std;
   using namespace scribbu::detail;
-  
+
   size_t count = detail::count_syncs(email_.begin(), email_.end(), false_only);
 
   if (!email_.empty()) {
@@ -247,7 +270,7 @@ scribbu::encryption_method::count_syncs(bool false_only) const
   return count;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                          class user_defined_text                          //
 ///////////////////////////////////////////////////////////////////////////////
@@ -309,7 +332,7 @@ scribbu::user_defined_text::user_defined_text(id3v2_version ver,
   if (!dsc.empty()) {
     description_ = convert_encoding(dsc, src, dst, add_bom);
   }
-  
+
 }
 
 std::size_t
@@ -375,14 +398,14 @@ scribbu::user_defined_text::count_syncs(bool false_only) const
            needs_unsync(unicode_, description_.front())) {
     ++cb;
   }
-  
+
   cb += detail::count_syncs(description_.begin(), description_.end(), false_only);
   cb += detail::count_syncs(text_.begin(), text_.end(), false_only);
 
   return cb;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class comments                               //
 ///////////////////////////////////////////////////////////////////////////////
@@ -451,7 +474,7 @@ scribbu::comments::comments(id3v2_version ver,
   if (!dsc.empty()) {
     description_ = convert_encoding(dsc, src, dst, add_bom);
   }
-  
+
 }
 
 std::size_t
@@ -510,7 +533,7 @@ scribbu::comments::count_syncs(bool false_only) const
   else if (!false_only && needs_unsync(unicode_, lang_[0])) {
     ++cb;
   }
-  
+
   cb += detail::count_syncs(lang_, lang_ + 3, false_only);
 
   if (false_only && description_.size() &&
@@ -532,13 +555,13 @@ scribbu::comments::count_syncs(bool false_only) const
            needs_unsync(description_.back(), text_.front())) {
     ++cb;
   }
-  
+
   cb += detail::count_syncs(text_.begin(), text_.end(), false_only);
-  
+
   return cb;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             class play_count                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -599,7 +622,7 @@ scribbu::play_count::count_syncs(bool false_only) const
   return detail::count_syncs(counter_.begin(), counter_.end(), false_only);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                            class popularimeter                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -654,6 +677,6 @@ scribbu::popularimeter::count_syncs(bool false_only) const
   }
 
   cb += detail::count_syncs(counter_.begin(), counter_.end(), false_only);
-  
+
   return cb;
 }

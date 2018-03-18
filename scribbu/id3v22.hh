@@ -1,3 +1,26 @@
+/**
+ * \file id3v22.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef ID3V22_HH_INCLUDED
 #define ID3V22_HH_INCLUDED 1
 
@@ -36,7 +59,7 @@ namespace scribbu {
   *
   \code
 
-     |                field | representation | bytes | 
+     |                field | representation | bytes |
      |----------------------+----------------+-------|
      |  ID3/file identifier |          "ID3" |     3 |
      |----------------------+----------------+-------|
@@ -53,7 +76,7 @@ namespace scribbu {
    *
    *   - x (bit 7): unsynchronisation was applied
    *   - y (bit 6); compression in use; according to the standard, the tag
-   *     shall be ignored if the compression bit is set, since there's no 
+   *     shall be ignored if the compression bit is set, since there's no
    *     scheme defined.
    *
    *
@@ -91,7 +114,7 @@ namespace scribbu {
 
     /// Compute the size of this tag (in bytes) exclusive of the ID3v2 header
     /// (i.e. return the total tag size, in bytes, less ten)
-    virtual std::size_t size(bool unsync = false) const; 
+    virtual std::size_t size(bool unsync = false) const;
     /// Return true if this the serialization of this tag would contain false
     /// syncs if serialized in its present state
     virtual bool needs_unsynchronisation() const;
@@ -118,31 +141,31 @@ namespace scribbu {
     virtual std::string
     album(encoding dst = encoding::UTF_8,
           on_no_encoding rsp = on_no_encoding::fail,
-          const boost::optional<encoding> &src = boost::none) const 
+          const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TAL", dst, rsp, src); }
 
     virtual std::string
     artist(encoding dst = encoding::UTF_8,
            on_no_encoding rsp = on_no_encoding::fail,
-           const boost::optional<encoding> &src = boost::none) const 
+           const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TP1", dst, rsp, src);}
 
     virtual std::string
     content_type(encoding dst = encoding::UTF_8,
                  on_no_encoding rsp = on_no_encoding::fail,
-                 const boost::optional<encoding> &src = boost::none) const 
+                 const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TCO", dst, rsp, src); }
 
     virtual std::string
     encoded_by(encoding dst = encoding::UTF_8,
                on_no_encoding rsp = on_no_encoding::fail,
-               const boost::optional<encoding> &src = boost::none) const 
+               const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TEN", dst, rsp, src); }
 
     virtual std::string
     languages(encoding dst = encoding::UTF_8,
               on_no_encoding rsp = on_no_encoding::fail,
-              const boost::optional<encoding> &src = boost::none) const 
+              const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TLA", dst, rsp, src); }
 
     virtual
@@ -150,38 +173,38 @@ namespace scribbu {
     virtual std::string
     title(encoding dst = encoding::UTF_8,
           on_no_encoding rsp = on_no_encoding::fail,
-          const boost::optional<encoding> &src = boost::none) const 
+          const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TT2", dst, rsp, src); }
 
     virtual std::string
     track(encoding dst = encoding::UTF_8,
           on_no_encoding rsp = on_no_encoding::fail,
-          const boost::optional<encoding> &src = boost::none) const 
+          const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TRK", dst, rsp, src); }
 
     virtual std::string
     year(encoding dst = encoding::UTF_8,
          on_no_encoding rsp = on_no_encoding::fail,
-         const boost::optional<encoding> &src = boost::none) const 
+         const boost::optional<encoding> &src = boost::none) const
     { return text_frame_as_str("TYE", dst, rsp, src); }
 
-    virtual std::size_t has_album() const 
+    virtual std::size_t has_album() const
     { return frame_map_.count("TAL"); }
-    virtual std::size_t has_artist() const 
+    virtual std::size_t has_artist() const
     { return frame_map_.count("TP1"); }
-    virtual std::size_t has_content_type() const 
+    virtual std::size_t has_content_type() const
     { return frame_map_.count("TCO"); }
-    virtual std::size_t has_encoded_by() const 
+    virtual std::size_t has_encoded_by() const
     { return frame_map_.count("TEN"); }
-    virtual std::size_t has_languages() const 
+    virtual std::size_t has_languages() const
     { return frame_map_.count("TLA"); }
-    virtual std::size_t has_play_count() const 
+    virtual std::size_t has_play_count() const
     { return frame_map_.count("CNT"); }
-    virtual std::size_t has_title() const 
+    virtual std::size_t has_title() const
     { return frame_map_.count("TT2"); }
-    virtual std::size_t has_track() const 
+    virtual std::size_t has_track() const
     { return frame_map_.count("TRK"); }
-    virtual std::size_t has_year() const 
+    virtual std::size_t has_year() const
     { return frame_map_.count("TYE"); }
 
     virtual void
@@ -256,7 +279,7 @@ namespace scribbu {
       return compression_;
     }
 
-    std::size_t has_frame(const frame_id3 &id) const 
+    std::size_t has_frame(const frame_id3 &id) const
     { return frame_map_.count(id); }
 
     const id3v2_2_frame& get_frame(const frame_id3 &id) const {
@@ -305,7 +328,7 @@ namespace scribbu {
 
 
   public:
-    
+
     /**
      * \class mutable_frame_proxy
      *
@@ -351,9 +374,9 @@ namespace scribbu {
      * \todo Implement functions on id3v2_2_tag::mutable_frame_proxy forwarding
      * to id3v_2_frame public methods
      *
-     * 
+     *
      */
-    
+
     class mutable_frame_proxy
     {
     public:
@@ -400,7 +423,7 @@ namespace scribbu {
 
   public:
 
-    /// id3v2_2_tag iterator    
+    /// id3v2_2_tag iterator
     typedef id3v2_tag::frame_iterator<id3v2_2_tag, id3v2_2_frame, mutable_frame_proxy,
                                       id3v2_2_tag::frames_type::iterator> iterator;
     /// id3v2_2_tag const_iterator

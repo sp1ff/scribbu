@@ -1,14 +1,37 @@
+/**
+ * \file framesv22.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/framesv22.hh>
 
 #include <scribbu/charsets.hh>
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                            class id3v2_2_frame                            //
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace scribbu {
-  
+
   template <>
   /*static*/
   std::string id3v2_2_frame::as_str(
@@ -16,7 +39,7 @@ namespace scribbu {
     std::size_t cbbuf,
     unsigned char unicode,
     scribbu::encoding dstenc,
-    scribbu::on_no_encoding rsp /*= 
+    scribbu::on_no_encoding rsp /*=
       scribbu::on_no_encoding::fail*/,
     const boost::optional<scribbu::encoding> &force /*=
       boost::none*/)
@@ -34,7 +57,7 @@ namespace scribbu {
       if (1 != unicode) {
         throw std::range_error("encoding should be zero or one");
       }
-      
+
       if (1 < cbbuf && 0xfe == pbuf[0] && 0xff == pbuf[1]) {
         src =  encoding::UCS_2BE;
       } else if (1 < cbbuf && 0xff == pbuf[0] && 0xfe == pbuf[1]) {
@@ -94,7 +117,7 @@ scribbu::id3v2_2_frame::serialized_header_size(bool unsync) const
   if (unsync) cb += header_needs_unsynchronisation();
 
   return cb;
-  
+
 } // End id3v2_2_frame::header_size.
 
 /// Return zero if this tag's header would not contain false syncs if
@@ -119,7 +142,7 @@ scribbu::id3v2_2_frame::header_needs_unsynchronisation() const
   if (255 == buf[2]) num_ffs++;
 
   return num_ffs;
-  
+
 } // End id3v2_2_frame::header_needs_unsynchronisation.
 
 std::size_t
@@ -138,7 +161,7 @@ scribbu::id3v2_2_frame::write_header(std::ostream &os,
   if (cb_payload > MAX_FRAME_SIZE) {
     throw std::runtime_error("Invalid ID3v2.2 frame size");
   }
-  
+
   szbuf[0] = (cb_payload & 0xff0000) >> 16;
   szbuf[1] = (cb_payload & 0x00ff00) >>  8;
   szbuf[2] =  cb_payload & 0x0000ff;
@@ -223,11 +246,11 @@ scribbu::id3v2_2_frame::unsynchronise_triplet(std::ostream &os, char buf[3]) con
   else {
     os.write(buf, 3);
   }
-  
+
   return num_ffs;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                           unknown_id3v2_2_frame                           //
 ///////////////////////////////////////////////////////////////////////////////
@@ -251,7 +274,7 @@ scribbu::unknown_id3v2_2_frame::serialize(std::ostream &os) const
   return data_.size();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 class UFI                                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -282,7 +305,7 @@ scribbu::UFI::serialize(std::ostream &os) const
   return unique_file_id::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                          class id3v2_text_frame                           //
 ///////////////////////////////////////////////////////////////////////////////
@@ -342,7 +365,7 @@ scribbu::id3v2_2_text_frame::serialize(std::ostream &os) const
   return 1 + text_.size();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 class TXX                                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -368,10 +391,10 @@ scribbu::TXX::size() const
 std::size_t
 scribbu::TXX::serialize(std::ostream &os) const
 {
-  return user_defined_text::write(os); 
+  return user_defined_text::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 class COM                                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -401,7 +424,7 @@ scribbu::COM::serialize(std::ostream &os) const
   return comments::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 class CNT                                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -430,7 +453,7 @@ scribbu::CNT::serialize(std::ostream &os) const
  return play_count::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 class POP                                 //
 ///////////////////////////////////////////////////////////////////////////////

@@ -1,3 +1,26 @@
+/**
+ * \file scribbu.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef SCRIBBU_H_INCLUDED
 #define SCRIBBU_H_INCLUDED 1
 /**
@@ -19,13 +42,13 @@
  * href="http://taglib.org/">TagLib</a> e.g., but nothing that did everything I
  * wanted. Necessity being the mother of invention, I started on my own
  * solution.
- * 
+ *
  *
  * \section scribbu_references References
  *
  *  1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design. Addison-Wesley, 323pp.
  *
- *  2. \anchor ref_02 Langer, Angelika and Kreft, Klaus, 1999: Standard C++ IOStrems and 
+ *  2. \anchor ref_02 Langer, Angelika and Kreft, Klaus, 1999: Standard C++ IOStrems and
  *     Locales. Addison-Wesley, 640pp.
  *
  *

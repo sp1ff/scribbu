@@ -1,3 +1,26 @@
+/**
+ * \file unit.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "unit.hh"
 
 #include <scribbu/scribbu.hh>
@@ -45,7 +68,7 @@ namespace {
    *
    *
    */
-  
+
   void
   initialize_source_directory(const fs::path &pth)
   {
@@ -67,9 +90,9 @@ namespace {
     }
 
     source_directory_ = fs::current_path();
-    
+
   }
-  
+
 } // End un-named namespace.
 
 fs::path
@@ -139,14 +162,14 @@ compute_md5(const boost::filesystem::path &pth, unsigned char md5[])
       EVP_MD_CTX_destroy(mdctx);
       throw new openssl_error();
     }
-    
+
     nleft -= nbytes;
 
   }
 
   unsigned int md_len;
   EVP_DigestFinal_ex(mdctx, md5, &md_len);
-  
+
   EVP_MD_CTX_destroy(mdctx);
 }
 

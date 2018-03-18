@@ -1,9 +1,32 @@
+/**
+ * \file tbt-support.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/tbt-support.hh>
 
 #include <numeric>
 #include <boost/algorithm/string.hpp>
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                    all_source_preference-related code                     //
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,7 +71,7 @@ scribbu::tbt_support::missing_source_text::what() const noexcept
   return pwhat_->c_str();
 }
 
-
+
 std::ostream&
 scribbu::tbt_support::operator<<(std::ostream &os, size_opt opt)
 {
@@ -149,7 +172,7 @@ scribbu::tbt_support::operator<<(std::ostream &os, aacet_opt opt)
   return os;
 }
 
-
+
 std::string
 scribbu::tbt_support::do_the_xform(const std::string &text,
                                    the_xform          the)
@@ -216,7 +239,7 @@ scribbu::tbt_support::do_ws_xform(const std::string &text,
   else {
     return join(splits, " ");
   }
-  
+
 }
 
 std::string
@@ -243,7 +266,7 @@ scribbu::tbt_support::encode(const std::string &text,
                                   text.size(), encoding::UTF_8, dst);
 }
 
-
+
 scribbu::tbt_support::duplicate_option::duplicate_option(scribbu::tbt_support::aacet_opt opt)
 {
   std::stringstream stm;
@@ -279,7 +302,7 @@ scribbu::tbt_support::duplicate_option::duplicate_option(scribbu::tbt_support::s
   pwhat_.reset(new std::string(stm.str()));
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                           class tab_based_term                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -357,7 +380,7 @@ scribbu::tbt_support::tag_based_term::v1_text_to_utf8(
 
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class subclause                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -400,7 +423,7 @@ scribbu::tbt_support::aacet_term::xform_and_encode(const std::string &text) cons
 }
 
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              tag-based terms                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -582,7 +605,7 @@ scribbu::tbt_support::year::evaluate(const file_info  & /*fi    */,
 
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             file-based terms                              //
 ///////////////////////////////////////////////////////////////////////////////

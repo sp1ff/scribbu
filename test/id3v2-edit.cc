@@ -1,3 +1,26 @@
+/**
+ * \file id3v2-edit.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 // #include <scribbu/id3v2-edit.hh>
 
 #include "unit.hh"
@@ -90,12 +113,12 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
 
   std::ptrdiff_t nframes = tag22.end() - tag22.begin();
   BOOST_CHECK(nframes == 9);
-  
+
   std::stringstream stm1;
   stm1 << tag22;
   BOOST_TEST_MESSAGE("Prior to remove_if:");
   BOOST_TEST_MESSAGE(stm1.str());
-  
+
   ppp = remove_if(tag22.begin(), tag22.end(),
                   [](const id3v2_2_frame &x) { return x.id() == "TEN"; });
   nframes = ppp - tag22.begin();
@@ -176,7 +199,7 @@ BOOST_AUTO_TEST_CASE( test_set_frame )
 
   id3v2_2_tag tag22(ifs);
   BOOST_TEST_MESSAGE("Start of test:\n" << tag22);
-  
+
   tag22.encoded_by(WINAMP);
   BOOST_CHECK(WINAMP == tag22.encoded_by());
 
@@ -217,4 +240,4 @@ BOOST_AUTO_TEST_CASE( test_write_frame )
 
 
 
-  
+

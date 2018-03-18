@@ -1,3 +1,26 @@
+/**
+ * \file id3v2.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef ID3V2_HH_INCLUDED
 #define ID3V2_HH_INCLUDED 1
 /**
@@ -230,7 +253,7 @@
  * As an aside, I \em did try boost::iterator_facade, but couldn't get it to
  * work with a proxy; that may be my own ignorance, but I enjoyed coding up my
  * own "from scratch" in any event.
- * 
+ *
  *
  * \subsection scribbu_impl_notes_serdes Serialization
  *
@@ -284,8 +307,8 @@
  * 4. \anchor scribbu_id3v2_refs_4 Martin Nilsson, cited 2015: ID3 tag
  * version 2.4.0 - Main Structure [Availbale online at
  * http://id3.org/id3v2.4.0-structure]
- * 
- * 5. \anchor scribbu_id3v2_refs_5 Herb Sutter, cited 2016: When Is a Container 
+ *
+ * 5. \anchor scribbu_id3v2_refs_5 Herb Sutter, cited 2016: When Is a Container
  * Not a Container? [Available online at http://www.gotw.ca/publications/mill09.htm]
  *
  * 6. \anchor scribbu_id3v2_refs_6 Eric Niebler, cited 2016: To Be or Not to Be
@@ -668,7 +691,7 @@ namespace scribbu {
     virtual std::size_t num_frames() const = 0;
     virtual std::size_t padding() const = 0;
     virtual void padding(std::size_t padding) = 0;
-    
+
     /////////////////////////////////////////////////////////////////////////////
     //                    Frames Common to all ID3v2 Tags                      //
     /////////////////////////////////////////////////////////////////////////////
@@ -800,7 +823,7 @@ namespace scribbu {
      *
      *
      */
-    
+
     virtual void
     add_comment(const std::string &text,
                 language lang = language::from_locale,
@@ -837,7 +860,7 @@ namespace scribbu {
      *
      *
      */
-    
+
     virtual void
     add_user_defined_text(const std::string &text,
                           encoding src = encoding::UTF_8,
@@ -943,7 +966,7 @@ namespace scribbu {
 
       frame_iterator()
       { }
-      
+
       explicit frame_iterator(tag_type *pown, const impl_type &p):
         base_type(pown->frames_.begin(), p), pown_(pown)
       { }
@@ -1029,7 +1052,7 @@ namespace scribbu {
 
       const_frame_iterator()
       { }
-      
+
       explicit const_frame_iterator(const impl_type &p0,
                                     const impl_type &p):
         frame_iterator_base<impl_type>(p0, p)
@@ -1104,7 +1127,7 @@ namespace scribbu {
     unsigned char revision_;
     /// Whether or not unsynchronisation was applied during
     /// serialization/deserialization for this tag; if this tag has never been
-    /// serdes, then this member will be boost::none 
+    /// serdes, then this member will be boost::none
     boost::optional<bool> unsync_;
 
   }; // End class id3v2_tag.

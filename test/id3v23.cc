@@ -1,3 +1,26 @@
+/**
+ * \file id3v23.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/id3v23.hh>
 
 #include "unit.hh"
@@ -653,7 +676,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 
   BOOST_CHECK( 1 == tag01.has_frame("UFID"));
   const id3v2_3_frame &rf = tag01.get_frame("UFID");
-  
+
   const UFID *pf = dynamic_cast<const UFID*>(&rf);
   BOOST_CHECK(nullptr != pf);
 
@@ -1092,18 +1115,18 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
   BOOST_CHECK(1 == popms.size());
 
   const POPM &p = popms.front();
-  
+
   string text = p.email<string>();
   BOOST_CHECK("rating@winamp.com" == text);
   BOOST_CHECK(255 == p.rating());
-  
+
 
 }
 
 /**
  * \brief Test unsynchronised data
  *
- * 
+ *
  * First file (unsynch.id3), raw data:
  *
  \code
@@ -1149,10 +1172,10 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
  000018                         00 4d 00 79 00 20 00 62  My babe just cares
  000020 00 61 00 62 00 65 00 20 00 6a 00 75 00 73 00 74  for me
  000030 00 20 00 63 00 61 00 72 00 65 00 73 00 20 00 66
- 000040 00 6f 00 72 00 20 00 6d 00 65 
+ 000040 00 6f 00 72 00 20 00 6d 00 65
  00004a                               54 50 45 31        TPE1 (artist)
  00004e                                           00 00  0x19 = 25 bytes
- 000050 00 19 
+ 000050 00 19
  000052       00 00                                      no flags
  000054             01                                   UCS-2
  000055                fe ff 00                          Big Endian (w/sync)
@@ -1271,9 +1294,9 @@ BOOST_AUTO_TEST_CASE( test_unsync )
  000080 42 69 6c 6c 20 4c 65 46 61 69 76 65 00 00        >Bill LeFaive..
  00008e                                           54 43  TCOM, 15 bytes
  000090 4f 4d 00 00 00 0f 00 00 00 42 69 6c 6c 20 4c 65  >OM.......Bill Le<
- 0000a0 46 61 69 76 65 00 00 
+ 0000a0 46 61 69 76 65 00 00
  0000a7                      57 4f 41 46 00 00 00 01 00  WOAF, 1 byte
- 0000b0 00 00 
+ 0000b0 00 00
  0000b2       57 50 55 42 00 00 00 1b 00 00 68 74 74 70  WPUB, 0x1b = 27 bytes
  0000c0 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f 61  >://music.downloa<
  0000d0 64 2e 63 6f 6d 2f 00
@@ -1281,7 +1304,7 @@ BOOST_AUTO_TEST_CASE( test_unsync )
  0000e0 00 00 68 74 74 70 3a 2f 2f 6d 75 73 69 63 2e 64  >..http://music.d<
  0000f0 6f 77 6e 6c 6f 61 64 2e 63 6f 6d 2f 00 68 74 74  >ownload.com/.htt<
  000100 70 3a 2f 2f 6d 75 73 69 63 2e 64 6f 77 6e 6c 6f  >p://music.downlo<
- 000110 61 64 2e 63 6f 6d 2f 
+ 000110 61 64 2e 63 6f 6d 2f
  000117                      54 52 43 4b 00 00 00 04 00  TRCK, 4 bytes
  000120 00 00 31 00 00
  000125                54 43 4f 50 00 00 00 14 00 00 00  TCOP, 0x14 = 20 bytes
@@ -1298,7 +1321,7 @@ BOOST_AUTO_TEST_CASE( test_unsync )
 
  1. 0x04 5f = 0b 0000 0100 0101 1111 -> 0b  000 0100  101 1111 =
     0b0000 0010 0101 1111 = 0x025f
-    
+
  \endcode
  *
  *
@@ -1378,7 +1401,7 @@ BOOST_AUTO_TEST_CASE( test_ext_header )
  001079                            00 00                 no flags
  00107b                                  50 4f 50 4d     POPM
  00107f                                              00  6 bytes
- 001080 00 00 06 
+ 001080 00 00 06
  001083          00 00                                   no flags
  001085                00                                nil e-mail
  001086                   00                             unknown rating
@@ -1470,7 +1493,7 @@ BOOST_AUTO_TEST_CASE( test_compressed )
   popm[0].counterb(back_inserter(counter));
   BOOST_CHECK(4 == counter.size());
   BOOST_CHECK(counter[0] == 0 && counter[1] == 0 && counter[2] == 0 && counter[3] == 0);
-  
+
   BOOST_CHECK(1 == tag1.has_title());
   BOOST_CHECK("Braveheart Theme (Techno remix" == tag1.title());
 }
@@ -1731,10 +1754,10 @@ BOOST_AUTO_TEST_CASE( test_compressed_2 )
  00001d                                        54 49 54  TIT1, 0x48 = 72 bytes, no flags
  000020 31 00 00 00 48 00 00
  000027                      00 53 68 6f 72 74 20 66 72  ISO-8859-1, "Short fraction of 'Carnival of the Animals: A Grand Zoological Fantasy'"
- 000030 61 63 74 69 6f 6e 20 6f 66 20 27 43 61 72 6e 69  
- 000040 76 61 6c 20 6f 66 20 74 68 65 20 41 6e 69 6d 61  
- 000050 6c 73 3a 20 41 20 47 72 61 6e 64 20 5a 6f 6f 6c  
- 000060 6f 67 69 63 61 6c 20 46 61 6e 74 61 73 79 27     
+ 000030 61 63 74 69 6f 6e 20 6f 66 20 27 43 61 72 6e 69
+ 000040 76 61 6c 20 6f 66 20 74 68 65 20 41 6e 69 6d 61
+ 000050 6c 73 3a 20 41 20 47 72 61 6e 64 20 5a 6f 6f 6c
+ 000060 6f 67 69 63 61 6c 20 46 61 6e 74 61 73 79 27
  00006f                                              54  TCOM, 0x14 = 20 bytes, no flags
  000070 43 4f 4d 00 00 00 14 00 00
  000079                            00 43 61 6d 69 6c 6c  IS-8859-1, "Camille Saint-Sas"
@@ -1749,10 +1772,10 @@ BOOST_AUTO_TEST_CASE( test_compressed_2 )
  0000c3          00 4f 6e 64 72 65 6a 20 4c 65 6e e1 72  ISO-8859-1, "Ondrej Lend"
  0000d0    54 43 4f 50 00 00 00 1c 00 00                 TCOP, 0x1c = 28 bytes, no flags
  0000db                                  00 31 39 39 36  ISO-8859-1, "1996 HNH international Ltd.
- 0000e0 20 48 4e 48 20 69 6e 74 65 72 6e 61 74 69 6f 6e  
- 0000f0 61 6c 20 4c 74 64 2e 
+ 0000e0 20 48 4e 48 20 69 6e 74 65 72 6e 61 74 69 6f 6e
+ 0000f0 61 6c 20 4c 74 64 2e
  0000f7                      54 43 4f 4e 00 00 00 05 00  TCON, 5 bytes, no flags
- 000100 00 
+ 000100 00
  000101    00 28 33 32 29                                ISO-8859-1, "(32)"
  000101                   49 50 4c 53 00 00 00 2d 00 00  IPLS, 0x2d = 45 bytes, no flags
  000110 00 50 72 6f 64 75 63 65 72 00 4d 61 72 74 69 6e  ISO-8859-1, Producer: Martin Sauer
@@ -1765,7 +1788,7 @@ BOOST_AUTO_TEST_CASE( test_compressed_2 )
  000153          0b                                      Picture Type: Composer
  000154             42 2f 57 20 70 69 63 74 75 72 65 20  "B/W picture of Saint-Sas"
  000160 6f 66 20 53 61 69 6e 74 2d 53 61 eb 6e 73 00
- 00016f                                              ff  
+ 00016f                                              ff
  000170 d8 ff 00 e0 00 10 4a 46 49 46 00 01 01 00 00 01  >..JFIF......<
  000180 00 01 00 00 ff db 00 43 00 08 06 06 07 06 05 08  >....C........<
  000190 07 07 07 09 09 08 0a 0c 14 0d 0c 0b 0b 0c 19 12  >................<
@@ -1803,7 +1826,7 @@ BOOST_AUTO_TEST_CASE( test_unsync_2 )
 
   BOOST_CHECK(3 == tag.version());
   BOOST_CHECK(0 == tag.revision());
-  
+
   size_t cb = tag.size(true);
   BOOST_CHECK(8573 == cb);
 

@@ -1,9 +1,32 @@
+/**
+ * \file framesv24.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/framesv24.hh>
 
 #include <scribbu/charsets.hh>
 #include <scribbu/id3v2.hh>
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                            class id3v2_4_frame                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -17,7 +40,7 @@ namespace scribbu {
     std::size_t cbbuf,
     unsigned char unicode,
     scribbu::encoding dstenc,
-    scribbu::on_no_encoding rsp /*= 
+    scribbu::on_no_encoding rsp /*=
       scribbu::on_no_encoding::fail*/,
     const boost::optional<scribbu::encoding> &force /*=
       boost::none*/)
@@ -122,12 +145,12 @@ scribbu::id3v2_4_frame::write_header(std::ostream &os,
 
   if (data_len_indicator_) {
     os.write((char*)&dlind, 4);
-  } 
- 
+  }
+
   return cb;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                        class unknown_id3v2_3_frame                        //
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,7 +172,7 @@ scribbu::unknown_id3v2_4_frame::serialize(std::ostream &os) const
   return data_.size();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class UFID_2_4                               //
 ///////////////////////////////////////////////////////////////////////////////
@@ -192,7 +215,7 @@ scribbu::UFID_2_4::serialize(std::ostream &os) const
 }
 
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class ENCR_2_4                               //
 ///////////////////////////////////////////////////////////////////////////////
@@ -234,7 +257,7 @@ scribbu::ENCR_2_4::serialize(std::ostream &os) const
   return encryption_method::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                         class id3v2_4_text_frame                          //
 ///////////////////////////////////////////////////////////////////////////////
@@ -367,7 +390,7 @@ scribbu::TXXX_2_4::serialize(std::ostream &os) const
   return user_defined_text::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class COMM_2_4                               //
 ///////////////////////////////////////////////////////////////////////////////
@@ -407,7 +430,7 @@ scribbu::COMM_2_4::serialize(std::ostream &os) const
   return comments::write(os);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class PCNT_2_4                               //
 ///////////////////////////////////////////////////////////////////////////////
@@ -446,8 +469,8 @@ scribbu::PCNT_2_4::serialize(std::ostream &os) const
 {
   return play_count::write(os);
 }
- 
-
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class POPM_2_4                               //
 ///////////////////////////////////////////////////////////////////////////////

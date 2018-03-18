@@ -1,9 +1,32 @@
+/**
+ * \file charsets.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "charsets.hh"
 
 #include <unordered_map>
 #include <unordered_set>
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 utilities                                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -331,21 +354,21 @@ namespace scribbu {
     using namespace std;
 
     static const unordered_set<encoding> OK{
-      encoding::UCS_2,    
-      encoding::UCS_2BE,  
-      encoding::UCS_2LE,  
-      encoding::UCS_4,    
-      encoding::UCS_4BE,  
-      encoding::UCS_4LE,  
-      encoding::UTF_16,   
-      encoding::UTF_16BE, 
-      encoding::UTF_16LE, 
-      encoding::UTF_32,   
-      encoding::UTF_32BE, 
-      encoding::UTF_32LE, 
-      encoding::UTF_7,    
-      encoding::C99,      
-      encoding::JAVA 
+      encoding::UCS_2,
+      encoding::UCS_2BE,
+      encoding::UCS_2LE,
+      encoding::UCS_4,
+      encoding::UCS_4BE,
+      encoding::UCS_4LE,
+      encoding::UTF_16,
+      encoding::UTF_16BE,
+      encoding::UTF_16LE,
+      encoding::UTF_32,
+      encoding::UTF_32BE,
+      encoding::UTF_32LE,
+      encoding::UTF_7,
+      encoding::C99,
+      encoding::JAVA
     };
 
     return OK.count(x) == 0;
@@ -357,12 +380,12 @@ namespace scribbu {
     using namespace std;
 
     static const unordered_set<encoding> OK{
-      encoding::UCS_4,    
-      encoding::UCS_4BE,  
-      encoding::UCS_4LE,  
-      encoding::UTF_32,   
-      encoding::UTF_32BE, 
-      encoding::UTF_32LE, 
+      encoding::UCS_4,
+      encoding::UCS_4BE,
+      encoding::UCS_4LE,
+      encoding::UTF_32,
+      encoding::UTF_32BE,
+      encoding::UTF_32LE,
     };
 
     return OK.count(x) != 0;
@@ -374,15 +397,15 @@ namespace scribbu {
     using namespace std;
 
     static const unordered_set<encoding> OK{
-      encoding::UCS_2,    
-      encoding::UCS_2BE,  
-      encoding::UCS_2LE,  
-      encoding::UCS_4,    
-      encoding::UCS_4BE,  
-      encoding::UCS_4LE,  
-      encoding::UTF_16,   
-      encoding::UTF_16BE, 
-      encoding::UTF_16LE, 
+      encoding::UCS_2,
+      encoding::UCS_2BE,
+      encoding::UCS_2LE,
+      encoding::UCS_4,
+      encoding::UCS_4BE,
+      encoding::UCS_4LE,
+      encoding::UTF_16,
+      encoding::UTF_16BE,
+      encoding::UTF_16LE,
     };
 
     return OK.count(x) != 0;
@@ -394,12 +417,12 @@ namespace scribbu {
     using namespace std;
 
     static const unordered_set<encoding> OK{
-      encoding::UCS_4,    
-      encoding::UCS_4BE,  
-      encoding::UCS_4LE,  
-      encoding::UTF_32,   
-      encoding::UTF_32BE, 
-      encoding::UTF_32LE, 
+      encoding::UCS_4,
+      encoding::UCS_4BE,
+      encoding::UCS_4LE,
+      encoding::UTF_32,
+      encoding::UTF_32BE,
+      encoding::UTF_32LE,
     };
 
     return OK.count(x) != 0;
@@ -411,7 +434,7 @@ scribbu::bad_code_unit::bad_code_unit(encoding enc, std::size_t cb):
   enc_(enc), cb_(cb)
 { }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             class iconv_error                             //
 ///////////////////////////////////////////////////////////////////////////////
@@ -717,12 +740,12 @@ namespace scribbu {
         cbbom = 2;
         pbom = UTF16BE;
         break;
-      case encoding::UCS_2LE: 
+      case encoding::UCS_2LE:
       case encoding::UTF_16LE:
         cbbom = 2;
         pbom = UTF16LE;
         break;
-      case encoding::UTF_8: 
+      case encoding::UTF_8:
         cbbom = 3;
         pbom = UTF8;
         break;
@@ -757,7 +780,7 @@ namespace scribbu {
       // (size_t)(−1)." Try again with a bigger buffer :P
       cbout <<= 2;
       out.resize(cbout);
-      
+
       inbuf = const_cast<char*>(text.c_str());
       inbytesleft = text.size();
       outbytesleft = cbout;
@@ -1013,7 +1036,7 @@ scribbu::language_from_locale()
   // non-empty will be used to derive a two-letter (ISO-869-1) code, which we
   // then attempt to map to a three-letter code (ISO-869-2).
   static const char * const ENVVARS[] = {"LANGUAGE", "LC_ALL", "LANG" };
-  
+
   char iso_869_1[2] = {0, 0};
   for (auto p: ENVVARS) {
     char *pv = getenv(p);
@@ -1023,7 +1046,7 @@ scribbu::language_from_locale()
       break;
     }
   }
-  
+
   if (0 == iso_869_1[0] && 0 == iso_869_1[1]) {
     // TODO(sp1ff): Custom exception?
     throw std::runtime_error("Unable to determine language fromlocale");
@@ -1556,7 +1579,7 @@ scribbu::language_to_iso_639_2(language lang, unsigned char code[3])
   }
 
 } // End scribbu::language_to_iso_639_2.
-  
+
 std::istream&
 scribbu::operator>>(std::istream &is, language &x)
 {

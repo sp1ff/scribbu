@@ -1,3 +1,26 @@
+/**
+ * \file dump.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "config.h"
 #include "command-utilities.hh"
 
@@ -28,7 +51,7 @@ For detailed help, say `scribbu dump --help'. To see the manual, say
 `info "scribbu (dump) "'.
 )");
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                      classes private to this module                       //
 ///////////////////////////////////////////////////////////////////////////////
@@ -216,7 +239,7 @@ namespace {
     return os;
   }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                       sub-command handler                                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -272,7 +295,7 @@ namespace {
       ("expression,e", po::value<string>(), "If specified, defines a regular "
        "expression filtering files (i.e. only filenames matching the regular "
        "expression will be considered)")
-      ("format,f", po::value<format>()-> default_value(format::standard), 
+      ("format,f", po::value<format>()-> default_value(format::standard),
        "Output format")
       ("v1-encoding,c", po::value<encoding>()->default_value(encoding::CP1252),
        "Encoding uses to interpret text in ID3v1 tags.");

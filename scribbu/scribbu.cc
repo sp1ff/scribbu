@@ -1,3 +1,26 @@
+/**
+ * \file scribbu.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/scribbu.hh>
 
 #include <type_traits>
@@ -14,7 +37,7 @@
 namespace fs  = boost::filesystem;
 namespace src = boost::log::sources;
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                     library initialization & teardown                     //
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,7 +54,7 @@ scribbu::static_cleanup()
   EVP_cleanup();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                              class file_info                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,7 +79,7 @@ scribbu::open_file(fs::path pth)
   return std::make_pair(std::move(pis), fi);
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                            class openssl_error                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,7 +94,7 @@ scribbu::openssl_error::what() const noexcept
   return pwhat_->c_str();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             class track_data                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,7 +134,7 @@ scribbu::track_data::track_data(std::istream &is)
     }
   }
   catch (const std::ios_base::failure &ex) {
-    // OK-- something went wrong. Clear the flag, set `tag' to EoS. 
+    // OK-- something went wrong. Clear the flag, set `tag' to EoS.
     // stream ptr at the same place.
     is.exceptions(std::ios_base::goodbit);
     is.clear();
@@ -136,7 +159,7 @@ scribbu::track_data::track_data(std::istream &is)
       }
     }
     catch (const std::ios_base::failure &ex) {
-      // OK-- something went wrong. Clear the flag, set `tag' to EoS. 
+      // OK-- something went wrong. Clear the flag, set `tag' to EoS.
       // stream ptr at the same place.
       is.exceptions(std::ios_base::goodbit);
       is.clear();
@@ -171,7 +194,7 @@ scribbu::track_data::track_data(std::istream &is)
       EVP_MD_CTX_destroy(mdctx);
       throw new openssl_error();
     }
-    
+
     nleft -= nbytes;
 
   }
@@ -179,7 +202,7 @@ scribbu::track_data::track_data(std::istream &is)
   unsigned int  md_len;
   // unsigned char md_value[EVP_MAX_MD_SIZE];
   EVP_DigestFinal_ex(mdctx, _md5.begin(), &md_len);
-  
+
   EVP_MD_CTX_destroy(mdctx);
 
 }

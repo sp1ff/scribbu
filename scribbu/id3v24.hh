@@ -1,3 +1,26 @@
+/**
+ * \file id3v24.hh
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #ifndef ID3V24_HH_INCLUDED
 #define ID3V24_HH_INCLUDED 1
 
@@ -53,7 +76,7 @@ namespace scribbu {
    *
    *   - a (bit 7): unsynchronisation
    *   - b (bit 6): extended header present
-   *   - c (bit 5): experimental indicator ("This flag SHALL always be set when the tag is 
+   *   - c (bit 5): experimental indicator ("This flag SHALL always be set when the tag is
    *     in an experimental stage."
    *   - d (bit 4): footer present
    *
@@ -318,7 +341,7 @@ namespace scribbu {
     virtual std::size_t has_year() const
     { return frame_map_.count("TYER"); }
 
-    const id3v2_4_text_frame::frame_encoding DST = 
+    const id3v2_4_text_frame::frame_encoding DST =
       id3v2_4_text_frame::frame_encoding::UTF_8;
 
     virtual void
@@ -377,7 +400,7 @@ namespace scribbu {
                 use_unicode unicode = use_unicode::no,
                 const std::string &description = std::string(),
                 on_no_encoding rsp = on_no_encoding::fail);
-    
+
     virtual void
     add_user_defined_text(const std::string &text,
                           encoding src = encoding::UTF_8,
@@ -441,7 +464,7 @@ namespace scribbu {
     ///////////////////////////////////////////////////////////////////////////
 
   private:
-    
+
     typedef std::vector<std::unique_ptr<id3v2_4_frame>> frames_type;
     friend class mutable_frame_proxy;
 
@@ -457,7 +480,7 @@ namespace scribbu {
      * \todo Implement functions on id3v2_3_tag::mutable_frame_proxy forwarding
      * to id3v_3_frame public methods
      *
-     * 
+     *
      */
 
     class mutable_frame_proxy

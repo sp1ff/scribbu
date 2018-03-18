@@ -1,3 +1,26 @@
+/**
+ * \file id3v2.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include <scribbu/id3v2.hh>
 
 #include <arpa/inet.h>
@@ -9,7 +32,7 @@
 #include <boost/optional.hpp>
 #include <boost/shared_array.hpp>
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                   free functions private to this module                   //
 ///////////////////////////////////////////////////////////////////////////////
@@ -127,7 +150,7 @@ scribbu::detail::sync_safe_from_unsigned(std::size_t x, unsigned char b[])
   b[0] = ( x >> 21 ) & 127;
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                free functions exported from this function                 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -268,7 +291,7 @@ std::size_t scribbu::resynchronise(unsigned char *p, std::size_t cb)
 
 } // End free function resynchronise.
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             class zlib_error                              //
 ///////////////////////////////////////////////////////////////////////////////
@@ -277,7 +300,7 @@ scribbu::zlib_error::zlib_error(int status):
   std::runtime_error(zError(status))
 { }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                           id3v2_tag exceptions                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -319,13 +342,13 @@ scribbu::id3v2_tag::unknown_frame_error::what() const noexcept(true)
   return pwhat_->c_str();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                        class reserved_frame_error                         //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*virtual*/ 
-const char * 
+/*virtual*/
+const char *
 scribbu::id3v2_tag::reserved_frame_error::what() const noexcept(true)
 {
   if (!pwhat_) {
@@ -351,7 +374,7 @@ scribbu::id3v2_tag::invalid_tag::what() const noexcept(true)
   return "invalid tag";
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                               class no_tag                                //
 ///////////////////////////////////////////////////////////////////////////////
@@ -362,7 +385,7 @@ scribbu::id3v2_tag::no_tag::what() const noexcept
   return "no tag";
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                           class unknown_version                           //
 ///////////////////////////////////////////////////////////////////////////////
@@ -378,7 +401,7 @@ scribbu::id3v2_tag::unknown_version::what() const noexcept
   return pwhat_->c_str();
 }
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                             class id3v2_tag                               //
 ///////////////////////////////////////////////////////////////////////////////

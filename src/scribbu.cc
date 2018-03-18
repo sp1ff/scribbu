@@ -1,3 +1,26 @@
+/**
+ * \file scribbu.cc
+ *
+ * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ *
+ * This file is part of scribbu.
+ *
+ * scribbu is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * scribbu is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with scribbu.  If not, see <http://www.gnu.org/licenses/>. *
+ *
+ *
+ */
+
 #include "config.h"
 #include "command-utilities.hh"
 #include <scribbu/scribbu.hh>
@@ -19,7 +42,7 @@ namespace {
   /**
    * \brief Evaluate a Scheme expression
    *
-   * 
+   *
    * \param p [in] Address of a std::string containing the Scheme expression
    * to be evaluated
    *
@@ -46,7 +69,7 @@ namespace {
   /**
    * \brief Evaluate a Scheme file
    *
-   * 
+   *
    * \param p [in] Address of an fs::path containing the Scheme file to be
    * evaluated
    *
@@ -85,7 +108,7 @@ Usage:
 
 For detailed help, say `scribbu --help'. To see the scribbu manual, say `info scribbu'.
 )");
-  
+
   const fs::path DEFCFG("~/.scribbu");
 
   /////////////////////////////////////////////////////////////////////////////
@@ -98,7 +121,7 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
   // https://www.gnu.org/software/libc/manual/html_mono/libc.html#Termination-in-Handler
   void sig_handler(int signum)
   {
-    // Since a handler can be established for more than one kind of signal, 
+    // Since a handler can be established for more than one kind of signal,
     // it might still get invoked recursively by delivery of some other kind
     // of signal. Use a static variable to keep track of that
     if (fatal_error_in_progress) {
@@ -144,7 +167,7 @@ main(int argc, char * argv[])
   sigaltstack(&ss, 0);
 
 # ifdef SCRIBBU_ALWAYS_DUMP_CORE
-  // In general, one needs to run ulimit (e.g. 'ulimit -c unlimited') 
+  // In general, one needs to run ulimit (e.g. 'ulimit -c unlimited')
   // *before* running the program that's SEGV'ing (or whatever). However,
   // during development, it can be handy to have the program dump core
   // regardless.
@@ -239,7 +262,7 @@ main(int argc, char * argv[])
     } else if (!vm["config"].defaulted() && !opts.size()) {
       throw po::error("configuration specified, but nothing asked");
     } else {
-      
+
       // If we're here, we going to do *something*, albeit as little
       // as printing help; how much help was requested (if any)?
       help_level help = help_level::none;
@@ -257,7 +280,7 @@ main(int argc, char * argv[])
       } else if (!vm["config"].defaulted()) {
         // If it was explicitly given, and it doesn't exist, that's an error.
         throw po::error(pth.native() + " does not exist");
-      } 
+      }
 
       if (opts.size() && has_sub_command(opts.front())) {
 
@@ -288,7 +311,7 @@ main(int argc, char * argv[])
             // it is:
             string exp = vm["expression"].as<string>();
             status = (intptr_t) scm_with_guile(evaluate_expression, &exp);
-          } 
+          }
           else if (vm.count("file")) { // Will it be a file?
             // It is:
             fs::path pth(vm["file"].as<string>());
@@ -306,7 +329,7 @@ main(int argc, char * argv[])
       } // End if on 'opts' size.
     } // End if on '--version' &c.
   } catch (const po::error &ex) {
-    cerr << ex.what() << endl; 
+    cerr << ex.what() << endl;
     print_usage(cerr, gopts, USAGE);
     status = EXIT_INCORRECT_USAGE;
   } catch (const std::exception &ex) {
