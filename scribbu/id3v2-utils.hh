@@ -45,7 +45,7 @@ namespace scribbu {
    * This function shall:
    *
    * - read the first ten bytes from \a is; if it's not an ID3v2 tag, restore
-   *   the get ptr & so indicate to the caller (by throwing)
+   *   the get ptr & so indicate to the caller (by returning a nil pointer)
    *
    * - if it *is*, construct an instance of the appropriate type and return it
    *   as a ptr to id3v2_tag.

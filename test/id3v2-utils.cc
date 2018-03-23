@@ -21,12 +21,9 @@
  *
  */
 
-#include <scribbu/id3v2-utils.hh>
-
-// TODO(sp1ff): Debugging only!!
-#include <scribbu/id3v24.hh>
-
 #include "unit.hh"
+
+#include <scribbu/id3v2-utils.hh>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
@@ -621,9 +618,6 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
  00279a
  \endcode
  *
- *
- * TODO(sp1ff): First tag, broken out
- *
  * Second tag, broken out:
  *
  \code
@@ -1017,17 +1011,6 @@ frame PRIV (41 bytes)
   stm1 << *(tags[1]);
   text = stm1.str();
   BOOST_TEST_MESSAGE(text);
-
-
-  // TODO(sp1ff): Debugging only!
-  id3v2_4_tag &tag = dynamic_cast<id3v2_4_tag&>(*(tags[1]));
-  for (auto p: tag) {
-    BOOST_TEST_MESSAGE(p->id() << ": " << p->serialized_size(false));
-    if (frame_id4("TDRC") == p->id()) {
-      p->serialized_size(false);
-    }
-  }
-
 
   const string GOLDEN1(R"(ID3v2.4(.0) Tag:
 4096 bytes, synchronised

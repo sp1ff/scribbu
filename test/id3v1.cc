@@ -36,6 +36,34 @@
 
 namespace fs = boost::filesystem;
 
+namespace {
+
+  // Comparison done in-memory-- do *not* use on large files
+  bool files_differ(const fs::path &a, const fs::path &b)
+  {
+    using namespace std;
+    
+    uintmax_t sza = fs::file_size(a);
+    uintmax_t szb = fs::file_size(b);
+    if (sza != szb) {
+      return false;
+    }
+
+    fs::ifstream ifsa(a, fs::ifstream::binary);
+    fs::ifstream ifsb(b, fs::ifstream::binary);
+
+    std::unique_ptr<char[]> pa(new char[sza]);
+    std::unique_ptr<char[]> pb(new char[szb]);
+
+    ifsa.read(pa.get(), sza);
+    ifsb.read(pb.get(), szb);
+
+    return 0 != memcmp(pa.get(), pb.get(), sza);
+    
+  }
+  
+}
+
 // Test cases:
 
 // 1. "A"/test_id3v1_a/id3v1.2.3.tag-- ID3v1.1 tag from 'Pogues, The - Lorca's Novena.mp3'
@@ -129,6 +157,16 @@ BOOST_AUTO_TEST_CASE( test_id3v1_a )
 
   s = tag.year<string>();
   BOOST_CHECK(s == string{"1990"});
+
+  // Test serialization
+  fs::path tmp = fs::unique_path();
+  fs::ofstream ofs(tmp, fs::ofstream::binary);
+  tag.write(ofs);
+  ofs.close();
+
+  BOOST_CHECK(! files_differ(TEST_DATA, tmp));
+
+  fs::remove(tmp);
 }
 
 BOOST_AUTO_TEST_CASE( test_id3v1_b )
@@ -199,6 +237,16 @@ BOOST_AUTO_TEST_CASE( test_id3v1_b )
   tag1.year(year);
   BOOST_CHECK(0 == year[0] && 0 == year[1] &&
               0 == year[2] && 0 == year[3]);
+
+  // Test serialization
+  fs::path tmp = fs::unique_path();
+  fs::ofstream ofs(tmp, fs::ofstream::binary);
+  tag1.write(ofs);
+  ofs.close();
+
+  BOOST_CHECK(! files_differ(TEST_DATA, tmp));
+
+  fs::remove(tmp);
 }
 
 BOOST_AUTO_TEST_CASE( test_id3v1_c )
@@ -299,6 +347,16 @@ BOOST_AUTO_TEST_CASE( test_id3v1_c )
   tag1.year(year);
   BOOST_CHECK('1' == year[0] && '9' == year[1] &&
               '6' == year[2] && '0' == year[3]);
+
+  // Test serialization
+  fs::path tmp = fs::unique_path();
+  fs::ofstream ofs(tmp, fs::ofstream::binary);
+  tag1.write(ofs);
+  ofs.close();
+
+  BOOST_CHECK(! files_differ(TEST_DATA, tmp));
+
+  fs::remove(tmp);
 }
 
 BOOST_AUTO_TEST_CASE( test_jing_jing_1 )

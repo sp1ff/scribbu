@@ -546,7 +546,6 @@ scribbu::id3v2_4_tag::size(bool unsync) const
     cb += 10;
   }
   if (pext_header_) {
-    // TODO(sp1ff): Implement size()
     cb += pext_header_->size();
   }
   return accumulate(begin(), end(), cb,
@@ -631,12 +630,10 @@ scribbu::id3v2_4_tag::write(std::ostream &os, bool unsync) const
   using namespace std;
 
   // Write the header...
-  // TODO(sp1ff): Check this
   write_header(os, flags(), size(unsync));
   size_t cb = 10;
 
   if (pext_header_) {
-    // TODO(sp1ff): Implement id3v2_4_tag::ext_header::write
     cb += pext_header_->write(os, *this);
   }
 
@@ -652,7 +649,6 @@ scribbu::id3v2_4_tag::write(std::ostream &os, bool unsync) const
     cbpad -= towrite;
   }
 
-  // TODO(sp1ff): Implement id3v2_4_tag::write_footer
   if (has_footer()) {
     cb += 10;
     write_footer(os, flags(), size(unsync));
@@ -1054,8 +1050,6 @@ scribbu::id3v2_4_tag::remove_frame_from_lookups(const frame_id4 &id, std::size_t
     popms_.erase(p);
   }
   else if (id.text_frame()) {
-    // TODO(sp1ff): This is awful-- better to store the index in text_map_, but
-    // I want to get this working, first.
     const id3v2_4_frame *pf = frames_[idx].get();
     text_frame_lookup_type::iterator p =
       std::find_if(text_map_.begin(), text_map_.end(),

@@ -124,6 +124,10 @@ namespace scribbu {
    * the extended header & the padding (i.e. just the frames).
    *
    *
+   * \todo Implement insert overloads for id3v2_3_frame&&,
+   * initializer_list<id3v2_3_frame> & ranges (i.e. two iterators).
+   *
+   *
    */
 
   class id3v2_3_tag: public id3v2_tag {
@@ -530,11 +534,6 @@ namespace scribbu {
 
     iterator
     insert(const_iterator p, const id3v2_3_frame &frame);
-
-    // TODO(sp1ff): Implement overloads for
-    //   - id3v2_3_frame&&
-    //   - initializer_list<id3v2_3_frame>
-    //   - range (i.e. two iterators)
 
     iterator
     insert(const_iterator p, const id3v2_3_text_frame &frame);

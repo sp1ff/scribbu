@@ -411,7 +411,6 @@ scribbu::COM::create(const frame_id3& id,
 std::size_t
 scribbu::COM::size() const
 {
-  // TODO(sp1ff): Implement comments::size()
   return comments::size();
 }
 

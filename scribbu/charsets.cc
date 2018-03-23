@@ -813,7 +813,6 @@ namespace scribbu {
 scribbu::language
 scribbu::language_from_iso_639_1(char code[2])
 {
-  // TODO(sp1ff): Make static init thread-safe
   static bool init = false;
   static std::unordered_map<uint16_t, language> lookup;
   if (!init) {
@@ -1048,8 +1047,7 @@ scribbu::language_from_locale()
   }
 
   if (0 == iso_869_1[0] && 0 == iso_869_1[1]) {
-    // TODO(sp1ff): Custom exception?
-    throw std::runtime_error("Unable to determine language fromlocale");
+    throw std::runtime_error("Unable to determine language from locale");
   }
 
   return language_from_iso_639_1(iso_869_1);

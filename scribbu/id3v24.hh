@@ -136,6 +136,11 @@ namespace scribbu {
    * footer. The CRC-32 is stored as an 35 bit synchsafe integer,
    * leaving the upper four bits always zeroed.
    *
+   *
+   * \todo Implement insert overloads for id3v2_4_frame&&,
+   * initializer_list<id3v2_4_frame> & range (i.e. two iterators)
+   *
+   *
    */
 
   class id3v2_4_tag: public id3v2_tag {
@@ -570,11 +575,6 @@ namespace scribbu {
 
     iterator
     insert(const_iterator p, const id3v2_4_frame &frame);
-
-    // TODO(sp1ff): Implement overloads for
-    //   - id3v2_3_frame&&
-    //   - initializer_list<id3v2_3_frame>
-    //   - range (i.e. two iterators)
 
     iterator
     insert(const_iterator p, const id3v2_4_text_frame &frame);

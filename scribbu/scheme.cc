@@ -38,13 +38,14 @@
 
 namespace fs = boost::filesystem;
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                              utility code                                 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #define ADD_ID3V2_COMMENT     "scribbu/add-id3v2-comment"
 #define ADD_USER_DEFINED_TEXT "scribbu/add-user-defined-text"
+#define AUTHOR                "Michael Herstine <sp1ff@pobox.com>"
+#define COPYRIGHT             "Copyright (C) 2017-2018"
 #define DELETE_ID3V2_TAG      "scribbu/delete-id3v2-tag"
 #define GET_FRAME             "scribbu/get-frame"
 #define GET_ID3V1_STRING      "scribbu/get-id3v1-string"
@@ -55,10 +56,42 @@ namespace fs = boost::filesystem;
 #define MAKE_ID3V2_TAG        "scribbu/make-id3v2-tag"
 #define MAKE_TRACK            "scribbu/make-track"
 #define NUM_ID3V2_TAGS        "scribbu/get-id3v2-tag-count"
+#define REPLACE_TAGS          "scribbu/replace-tags"
 #define SET_FRAME             "scribbu/set-frame"
 #define WITH_TRACK_IN         "scribbu/with-track-in"
 #define WRITE_ID3V2_TAG       "scribbu/write-id3v2-tag"
 #define WRITE_TRACK           "scribbu/write-track"
+
+namespace {
+  
+  /////////////////////////////////////////////////////////////////////////////
+  //                              Guile constants                            //
+  /////////////////////////////////////////////////////////////////////////////
+
+  SCM_GLOBAL_KEYWORD(kw_crc, "checksum");
+  SCM_GLOBAL_KEYWORD(kw_description, "description");
+  SCM_GLOBAL_KEYWORD(kw_dst_encoding, "destination-encoding");
+  SCM_GLOBAL_KEYWORD(kw_experimental, "experimental");
+  SCM_GLOBAL_KEYWORD(kw_ext_header, "extended-header");
+  SCM_GLOBAL_KEYWORD(kw_language, "language");
+  SCM_GLOBAL_KEYWORD(kw_load_data, "load-data");
+  SCM_GLOBAL_KEYWORD(kw_padding, "padding");
+  SCM_GLOBAL_KEYWORD(kw_src_encoding, "source-encoding");
+  SCM_GLOBAL_KEYWORD(kw_unicode, "unicode");
+
+  // SCM sym_album;
+  SCM_GLOBAL_SYMBOL(sym_album, "scribbu/album");
+  SCM_GLOBAL_SYMBOL(sym_artist, "scribbu/artist");
+  SCM_GLOBAL_SYMBOL(sym_comment, "scribbu/comment");
+  SCM_GLOBAL_SYMBOL(sym_content_type, "scribbu/content-type");
+  SCM_GLOBAL_SYMBOL(sym_encoded_by, "scribbu/encoded-by");
+  SCM_GLOBAL_SYMBOL(sym_id3v2_revision, "scribbu/id3v2-revision");
+  SCM_GLOBAL_SYMBOL(sym_id3v2_version, "scribbu/id3v2-version");
+  SCM_GLOBAL_SYMBOL(sym_title, "scribbu/title");
+  SCM_GLOBAL_SYMBOL(sym_track, "scribbu/track");
+  SCM_GLOBAL_SYMBOL(sym_year, "scribbu/year");
+
+}
 
 /// Stack-based allocator for scm_dynwind_begin/end
 class dynwind_context
@@ -80,8 +113,7 @@ public:
 
 dynwind_context::dynwind_context(bool rewindable /*= false*/)
 {
-  scm_dynwind_begin(
-    (scm_t_dynwind_flags) (rewindable ? SCM_F_DYNWIND_REWINDABLE : 0));
+  scm_dynwind_begin((scm_t_dynwind_flags) (rewindable ? SCM_F_DYNWIND_REWINDABLE : 0));
 }
 
 char* dynwind_context::free_locale_string(SCM scm)
@@ -100,14 +132,23 @@ char* dynwind_context::free_locale_string(SCM scm)
  * \brief Foreign object type `track'
  *
  *
+ * Class scm_track represents zero or more ID3v2 tags, track data, and
+ * optionally a ID3v1. tag.  The track data may be the actual track data, or it
+ * may be abbreviated by a track_data instance. The former is obviously more
+ * heavyweight, but allows loading the .mp3 file, editing the tags, and writing
+ * the result to disk regardless of whether the underlying file is present. The
+ * latter is more lightweight while still allowing replacing the tagset on an
+ * extant file.
+ *
  * Cf. https://www.gnu.org/software/guile/manual/guile.html#Defining-Foreign-Object-Types
  *
  *
  */
+
 class scm_track
 {
 public:
-  scm_track(const fs::path &pth);
+  scm_track(const fs::path &pth, bool load_data = false);
 
 public:
   fs::path path() const
@@ -117,23 +158,9 @@ public:
   std::size_t num_id3v2_tags() const
   { return v2_.size(); }
   const scribbu::id3v2_tag&
-  get_id3v2_tag(unsigned int idx) const
-  {
-    if (idx >= v2_.size()) {
-      // TODO(sp1ff): Improve this
-      throw std::range_error("index out of range in get_id3v2-tag");
-    }
-    return *v2_[idx];
-  }
+  get_id3v2_tag(unsigned int idx) const;
   scribbu::id3v2_tag&
-  get_id3v2_tag(unsigned int idx)
-  {
-    if (idx >= v2_.size()) {
-      // TODO(sp1ff): Improve this
-      throw std::range_error("index out of range in get_id3v2-tag");
-    }
-    return *v2_[idx];
-  }
+  get_id3v2_tag(unsigned int idx);
   void
   insert_id3v2_tag(std::unique_ptr<scribbu::id3v2_tag> &ptag, std::size_t idx)
   { v2_.insert(v2_.begin() + idx, std::move(ptag)); }
@@ -142,46 +169,127 @@ public:
   { return v2_[idx]->write(os); }
   void delete_id3v2_tag(std::size_t idx)
   { v2_.erase(v2_.begin() + idx); }
-  // TODO(sp1ff): Document this, because it has some serious pre-conditions:
-  //   - pth_ still exists (for track data)
-  //   - os should \em not be built on pth_
-  std::ostream& write(std::ostream &os) const;
+  /// Write tagset & data to \a pth; will throw if "load data" wasn't specified
+  /// on construction
+  void write(const fs::path &pth) const;
+  /// Just replace the tagset on \a pth; leave the track data unchanged
+  void replace_tags(const fs::path &pth) const;
 
 
 private:
   fs::path pth_;
   std::vector<std::unique_ptr<scribbu::id3v2_tag>> v2_;
   std::unique_ptr<scribbu::track_data> ptd_;
+  bool data_loaded_;
+  std::vector<unsigned char> data_;
   std::unique_ptr<scribbu::id3v1_tag> pv1_;
 
 };
 
-scm_track::scm_track(const fs::path &pth):
-  pth_(pth)
+scm_track::scm_track(const fs::path &pth, bool load_data /*= false*/): pth_(pth), data_loaded_(false)
 {
   fs::ifstream ifs(pth_, fs::ifstream::binary);
 
+  // Read all ID3v2 tags into v2_...
   scribbu::read_all_id3v2(ifs, back_inserter(v2_));
+  // `ifs' get pointer is now at the beginning of the audio date,
+  fs::ifstream::pos_type begin = ifs.tellg();
+  // and this call will consume everything up tot he ID3v1 tag, or the end of
+  // the file...
   ptd_.reset(new scribbu::track_data(ifs));
+  if (load_data) {
+    // move the get ptr back tot he beginning of the track,
+    ifs.seekg(begin);
+    // compute the size of the track...
+    scribbu::id3v1_info I = scribbu::ends_in_id3v1(ifs);
+    std::size_t cb = I.start_ - begin;
+    data_.resize(cb);
+    // and copy it.
+    ifs.read((char*)&(data_[0]), cb);
+    data_loaded_ = true;
+  }
+
   pv1_ = scribbu::process_id3v1(ifs);
 }
 
-std::ostream&
-scm_track::write(std::ostream &os) const
+const scribbu::id3v2_tag&
+scm_track::get_id3v2_tag(unsigned int idx) const
+{
+  if (idx >= v2_.size()) {
+    std::stringstream stm;
+    if (v2_.empty()) {
+      stm << "no ID3v2 tags";
+    }
+    else {
+      stm << "index " << idx << " is out-of-range ([0-" << v2_.size() - 1 << "])";
+    }
+    throw std::range_error(stm.str());
+  }
+  return *v2_[idx];
+}
+
+scribbu::id3v2_tag&
+scm_track::get_id3v2_tag(unsigned int idx)
+{
+  if (idx >= v2_.size()) {
+    std::stringstream stm;
+    if (v2_.empty()) {
+      stm << "no ID3v2 tags";
+    }
+    else {
+      stm << "index " << idx << " is out-of-range ([0-" << v2_.size() - 1 << "])";
+    }
+    throw std::range_error(stm.str());
+  }
+  return *v2_[idx];
+}
+
+void
+scm_track::write(const fs::path &pth) const
+{
+  using namespace std;
+  using namespace scribbu;
+
+  if (! data_loaded_) {
+    throw std::logic_error("Cannot write a track that wasn't created with load-data");
+  }
+
+  fs::ofstream os(pth, fs::ofstream::binary);
+
+  // Begin by writing the ID3v2 tags we have:
+  for_each(v2_.begin(), v2_.end(), [&os](const unique_ptr<id3v2_tag> &ptag) { ptag->write(os); });
+
+  // We're now at the start of the track data:
+  os.write((char*)&(data_[0]), data_.size());
+
+  // Write our ID3v1 tag, if any
+  if (pv1_) {
+    pv1_->write(os);
+  }
+
+}
+
+/// Just replace the tagset on \a pth; leave the track data unchanged
+void
+scm_track::replace_tags(const fs::path &pth) const
 {
   using namespace std;
   using namespace scribbu;
 
   const ios::iostate EXC_MASK = ios::eofbit | ios::failbit | ios::badbit;
 
-  // Begin by writing the ID3v2 tags we have:
-  for_each(v2_.begin(), v2_.end(), [&os](const unique_ptr<id3v2_tag> &ptag) { ptag->write(os); });
-
-  // Now open our source file...
+  // Open our source file...
   fs::ifstream ifs(pth_, fs::ifstream::binary);
   ifs.exceptions(EXC_MASK);
 
-  // we're going to skip over any ID3v2 ...
+  // as well as a temporary output file...
+  fs::path tmp = fs::unique_path();
+  fs::ofstream ofs(tmp, fs::ifstream::binary);
+
+  // Begin by writing the ID3v2 tags we have to `tmp':
+  for_each(v2_.begin(), v2_.end(), [&ofs](const unique_ptr<id3v2_tag> &ptag) { ptag->write(ofs); });
+
+  // Now skip over any ID3v2 tags in the input file...
   scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
   while (id3v2.present_) {
     ifs.seekg(id3v2.size_, ios_base::cur);
@@ -189,21 +297,22 @@ scm_track::write(std::ostream &os) const
     id3v2 = scribbu::looking_at_id3v2(ifs);
   }
 
-  // We're now at the start of the track data:
   id3v1_info I = ends_in_id3v1(ifs);
   size_t cb = I.start_ - ifs.tellg();
   std::unique_ptr<char[]> p(new char[cb]);
   ifs.read(p.get(), cb);
-  os.write(p.get(), cb);
+  ofs.write(p.get(), cb);
 
   // Write our ID3v1 tag, if any
-  // TOOD(sp1ff): Write me!
-  // if (pv1_) {
-  //   pv1_->write(os);
-  // }
+  if (pv1_) {
+    pv1_->write(ofs);
+  }
 
-  return os;
+  ifs.close();
+  ofs.close();
 
+  // Finally, move the temporary file over our input file:
+  fs::rename(tmp, pth);
 }
 
 namespace {
@@ -211,9 +320,9 @@ namespace {
   SCM track_type; // initialized in init_track_type
 
   SCM
-  track_for_path(const fs::path &pth)
+  track_for_path(const fs::path &pth, bool load_data=false)
   {
-    return scm_make_foreign_object_1(track_type, new scm_track(pth));
+    return scm_make_foreign_object_1(track_type, new scm_track(pth, load_data));
   }
 
   void
@@ -226,18 +335,24 @@ namespace {
     }
   }
 
-  SCM_DEFINE(make_track, MAKE_TRACK, 1, 0, 0,
-             (SCM pth),
+  SCM_DEFINE(make_track, MAKE_TRACK, 1, 0, 1,
+             (SCM pth, SCM rest),
              "Create a new track instance from a file")
   {
-    scm_dynwind_begin((scm_t_dynwind_flags)0);
+    dynwind_context ctx;
 
-    char *ppth = scm_to_locale_string(pth);
-    scm_dynwind_free(ppth);
+    char *ppth = ctx.free_locale_string(pth);
 
-    SCM scm = track_for_path(fs::path(ppth));
+    SCM scm_load_data = SCM_UNDEFINED;
+    scm_c_bind_keyword_arguments(MAKE_TRACK, rest, (scm_t_keyword_arguments_flags)0,
+                                 kw_load_data, &scm_load_data, SCM_UNDEFINED);
 
-    scm_dynwind_end();
+    bool load_data = false;
+    if (!SCM_UNBNDP(scm_load_data)) {
+      load_data = scm_to_bool(scm_load_data);
+    }
+
+    SCM scm = track_for_path(fs::path(ppth), load_data);
 
     return scm;
   }
@@ -265,32 +380,6 @@ namespace {
 
 namespace {
 
-  /////////////////////////////////////////////////////////////////////////////
-  //                              Guile constants                            //
-  /////////////////////////////////////////////////////////////////////////////
-
-  SCM_GLOBAL_KEYWORD(kw_crc, "checksum");
-  SCM_GLOBAL_KEYWORD(kw_description, "description");
-  SCM_GLOBAL_KEYWORD(kw_dst_encoding, "destination-encoding");
-  SCM_GLOBAL_KEYWORD(kw_experimental, "experimental");
-  SCM_GLOBAL_KEYWORD(kw_ext_header, "extended-header");
-  SCM_GLOBAL_KEYWORD(kw_language, "language");
-  SCM_GLOBAL_KEYWORD(kw_padding, "padding");
-  SCM_GLOBAL_KEYWORD(kw_src_encoding, "source-encoding");
-  SCM_GLOBAL_KEYWORD(kw_unicode, "unicode");
-
-  // SCM sym_album;
-  SCM_GLOBAL_SYMBOL(sym_album, "scribbu/album");
-  SCM_GLOBAL_SYMBOL(sym_artist, "scribbu/artist");
-  SCM_GLOBAL_SYMBOL(sym_comment, "scribbu/comment");
-  SCM_GLOBAL_SYMBOL(sym_content_type, "scribbu/content-type");
-  SCM_GLOBAL_SYMBOL(sym_encoded_by, "scribbu/encoded-by");
-  SCM_GLOBAL_SYMBOL(sym_id3v2_revision, "scribbu/id3v2-revision");
-  SCM_GLOBAL_SYMBOL(sym_id3v2_version, "scribbu/id3v2-version");
-  SCM_GLOBAL_SYMBOL(sym_title, "scribbu/title");
-  SCM_GLOBAL_SYMBOL(sym_track, "scribbu/track");
-  SCM_GLOBAL_SYMBOL(sym_year, "scribbu/year");
-
   SCM
   frame_as_scm(const scribbu::id3v2_tag &tag, SCM attr)
   {
@@ -302,47 +391,34 @@ namespace {
 
       if (scm_is_eq(attr, sym_album)) {
         text = tag.album();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else if (scm_is_eq(attr, sym_artist)) {
         text = tag.artist();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else if (scm_is_eq(attr, sym_content_type)) {
         text = tag.content_type();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else if (scm_is_eq(attr, sym_encoded_by)) {
         text = tag.encoded_by();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else if (scm_is_eq(attr, sym_title)) {
         text = tag.title();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else if (scm_is_eq(attr, sym_track)) {
         text = tag.track();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else if (scm_is_eq(attr, sym_year)) {
         text = tag.year();
-        result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
-                                  SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
       }
       else {
         // NB. Will *not* return or fire dtors!
         scm_misc_error(GET_FRAME, "unrecognized symbol: ~s", attr);
       }
 
+      result = scm_from_stringn(text.c_str(), text.size(), "UTF-8",
+                                SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
     }
     else {
-      // TODO(sp1ff): Write me!
       // NB. Will *not* return or fire dtors!
       scm_misc_error(GET_FRAME, "unrecognized symbol: ~s", attr);
     }
@@ -391,7 +467,6 @@ namespace {
 
     }
     else {
-      // TODO(sp1ff): Write me!
       // NB. Will *not* return or fire dtors!
       scm_misc_error(SET_FRAME, "unrecognized symbol: ~s", attr);
     }
@@ -424,8 +499,6 @@ extern "C" {
                                  kw_unicode, &scm_unicode,
                                  kw_src_encoding, &scm_src,
                                  SCM_UNDEFINED);
-
-    // TODO(sp1ff): (locale-encoding)?
 
     char *ptext = scm_to_utf8_stringn(scm_text, NULL);
     ctx.free(ptext);
@@ -485,8 +558,6 @@ extern "C" {
                                  kw_unicode, &scm_unicode,
                                  kw_src_encoding, &scm_src,
                                  SCM_UNDEFINED);
-
-    // TODO(sp1ff): (locale-encoding)?
 
     char *ptext = scm_to_utf8_stringn(scm_text, NULL);
     ctx.free(ptext);
@@ -624,10 +695,11 @@ extern "C" {
              (SCM dir, SCM fcn),
              "Invoke a Scheme procedure for each entry in a directory tree")
   {
-    // TODO(sp1ff): I think this entire function is unsafe-- if `fcn' exits
-    // non-locally, no dtors will fire.
+    dynwind_context ctx;
+
     std::size_t len = 0;
     char * data = scm_to_stringn(dir, &len, "UTF-8", SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+    ctx.free(data);
 
     std::string s(data, data + len);
     for (fs::recursive_directory_iterator p0(s), p1; p0 != p1; ++p0) {
@@ -635,8 +707,6 @@ extern "C" {
         scm_call_1(fcn, track_for_path(*p0));
       }
     }
-
-    free(data);
 
     return SCM_EOF_VAL;
   }
@@ -872,8 +942,6 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
-    // TODO(sp1ff): Abstract this, somehow (mapping SCM keywords to C++
-    // function invocations)...
     SCM kwpad, kwexp, kwext, kwcrc;
     kwpad = kwexp = kwext = kwcrc = SCM_UNDEFINED;
     scm_c_bind_keyword_arguments(MAKE_ID3V2_TAG, rest,
@@ -951,6 +1019,23 @@ extern "C" {
 
   } // End free function write_id3v2_tag.
 
+  SCM_DEFINE(replace_tags, REPLACE_TAGS, 2, 0, 0,
+             (SCM track, SCM out),
+             "Replace the tags in a file")
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    scm_track *ptrack = (scm_track*) scm_foreign_object_ref(track, 0);
+
+    dynwind_context ctx;
+    char *pth = ctx.free_locale_string(out);
+
+    ptrack->replace_tags(pth);
+
+    return SCM_EOL;
+  }
+  
   SCM_DEFINE(write_track, WRITE_TRACK, 2, 0, 0,
              (SCM track, SCM out),
              "Write a track to file")
@@ -963,8 +1048,7 @@ extern "C" {
     dynwind_context ctx;
     char *pth = ctx.free_locale_string(out);
 
-    fs::ofstream ofs(pth, fs::ofstream::binary);
-    ptrack->write(ofs);
+    ptrack->write(pth);
 
     return SCM_EOL;
   }
@@ -1003,9 +1087,7 @@ extern "C" {
     dynwind_context ctx;
     char *ptext = ctx.free_locale_string(scm_value);
 
-    // TODO(sp1ff): Consider auto-generating this along with the other
-    // version & documentation boilerplate...
-    string welcome(PACKAGE_STRING "\nCopyright (C) 2018 Michael Herstine <sp1ff@pobox.com>\n\nYou are in the Guile REPL; in you shell, type `info scribbu' for documentation.\n\n");
+    string welcome(PACKAGE_STRING "\n" COPYRIGHT " " AUTHOR "\n\nYou are in the Guile REPL; in your shell, type `info scribbu' for documentation.\n\n");
     welcome += ptext;
 
     SCM scm_new = scm_from_stringn(welcome.c_str(), welcome.size(), "UTF-8",

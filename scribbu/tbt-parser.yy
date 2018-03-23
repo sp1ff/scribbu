@@ -24,6 +24,10 @@
    * You should have received a copy of the GNU General Public License
    * along with scribbu.  If not, see <http://www.gnu.org/licenses/>.
    *
+   *
+   * \todo Improve the tbterror implementation
+   *
+   *
    */
 
   #include <scribbu/tbt-lexer.hh>
@@ -618,7 +622,6 @@ hex_case: HEX_CASE EQUAL LOWER {
 
 static void tbterror(std::vector<scribbu::tbt_support::term*>**,
                      const char *s) {
-  // TODO: Replace this!
   using namespace std;
   cerr << s << endl;
 }

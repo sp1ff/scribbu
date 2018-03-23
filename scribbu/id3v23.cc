@@ -977,8 +977,6 @@ scribbu::id3v2_3_tag::remove_frame_from_lookups(const frame_id4 &id, std::size_t
     popms_.erase(p);
   }
   else if (id.text_frame()) {
-    // TODO(sp1ff): This is awful-- better to store the index in text_map_, but
-    // I want to get this working, first.
     const id3v2_3_frame *pf = frames_[idx].get();
     text_frame_lookup_type::iterator p =
       std::find_if(text_map_.begin(), text_map_.end(),

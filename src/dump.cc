@@ -324,10 +324,11 @@ namespace {
       if (help_level::regular == help) {
         print_usage(cout, docopts, USAGE);
       } else if (help_level::verbose == help) {
-        // TODO(sp1ff): Might be nice to support other man page readeres
-        // (woman, e.g.)
         execlp("man", "man", "scribbu-dump", (char *)NULL);
-        throw runtime_error("failed to exec"); // TODO(sp1ff): grab errno
+        // If we're here, `execlp' failed.
+        stringstream stm;
+        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+        throw runtime_error(stm.str());
       } else {
 
         po::variables_map vm;

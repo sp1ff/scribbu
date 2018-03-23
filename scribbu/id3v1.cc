@@ -421,6 +421,44 @@ scribbu::id3v1_tag::text_for_genre(unsigned char genre)
   return boost::optional<string>(GENRES[genre]);
 }
 
+std::ostream&
+scribbu::id3v1_tag::write(std::ostream &os) const
+{
+  static const char TAG [3] = { 'T', 'A', 'G' };
+  static const char TAGP[4] = { 'T', 'A', 'G', '+' };
+  static const char NIL [1] = { 0 };
+
+  if (extended_) {
+    os.write(TAGP, 4);
+    os.write((const char*)&(title_[30]), 60);
+    os.write((const char*)&(artist_[30]), 60);
+    os.write((const char*)&(album_[30]), 60);
+    os.write((const char*)&speed_, 1);
+    os.write((const char*)&(ext_genre_[0]), 30);
+    os.write((const char*)&(start_time_[0]), 6);
+    os.write((const char*)&(end_time_[0]), 6);
+  }
+
+  os.write(TAG, 3);
+  os.write((const char*)&(title_ [0]), 30);
+  os.write((const char*)&(artist_[0]), 30);
+  os.write((const char*)&(album_ [0]), 30);
+  os.write((const char*)&(year_  [0]),  4);
+
+  if (v1_1()) {
+    os.write((const char *)&(comment_[0]), 28);
+    os.write(NIL, 1);
+    os.write((const char*)&track_number_, 1);
+  }
+  else {
+    os.write((const char *)&(comment_[0]), 30);
+  }
+
+  os.write((const char*)&genre_, 1);
+
+  return os;
+}
+
 void
 scribbu::id3v1_tag::init_standard(unsigned char *p)
 {

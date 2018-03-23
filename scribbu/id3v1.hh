@@ -450,6 +450,8 @@ namespace scribbu {
       return v1_1_;
     }
 
+    std::ostream& write(std::ostream &os) const;
+
   private:
 
     static const std::size_t ID3V1_TAG_SIZE = 128U;

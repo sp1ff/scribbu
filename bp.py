@@ -441,6 +441,16 @@ def update_source(filename, ver, author, make_backups, dry_run):
 
     log.info('Updating {}...done.'.format(filename))
 
+def update_scheme_cc(author, root, make_backups, dry_run):
+    year = datetime.datetime.today().strftime('%Y')
+    re1 = re.compile('#define AUTHOR(\s-+).*')
+    rp1 = '#define AUTHOR\\1"{}"'.format(author)
+    re2 = re.compile('#define COPYRIGHT(\s-+).*')
+    rp2 = '#define COPYRIGHT\\1"Copyright (C) 2017-{}"'.format(year)
+    scm = os.path.join(root, 'scribbu/scheme.cc')
+    out, _ = process_file_via_regexes(scm, [(re1, rp1), (re2, rp2)])
+    replace_file_contents(scm, out, make_backups, dry_run)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Fill out scribbu boilerplate')
@@ -480,6 +490,7 @@ def main():
                    args.dry_run)
     update_source_code(R['VERSION'], R['AUTHOR'], root, args.make_backups,
                        args.dry_run)
+    update_scheme_cc(R['AUTHOR'], root, args.make_backups, args.dry_run)
 
 
 if __name__ == '__main__':

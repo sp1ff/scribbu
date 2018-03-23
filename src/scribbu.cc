@@ -295,10 +295,11 @@ main(int argc, char * argv[])
       } else {
 
         if (help_level::verbose == help) {
-          // TODO(sp1ff): Might be nice to support other man page readers
-          // (woman, e.g.)
           execlp("man", "man", "scribbu", (char *)NULL);
-          throw runtime_error("failed to exec"); // TODO(sp1ff): grab errno
+          // If we're here, `execlp' failed.
+          stringstream stm;
+          stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+          throw runtime_error(stm.str());
         }
         else if (help_level::regular == help) {
           print_usage(cout, gopts, USAGE);

@@ -29,7 +29,7 @@
 
 (define (main file)
   "Cleanup a file output by Audacity"
-  (let ((track (scribbu/make-track file)))
+  (let ((track (scribbu/make-track file #:load-data #true)))
     (let ((frames (scribbu/get-frame track 0 (list 'scribbu/track 'scribbu/title))))
       (scribbu/make-id3v2-tag track 0 #:padding 1024)
       (scribbu/set-frame track 0 (list  (list 'scribbu/artist "Rock the Joint")
