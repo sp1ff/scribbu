@@ -18,4 +18,4 @@ DISTCLEANFILES = tbt-lexer.cc tbt-lexer.hh scheme.x
 
 SUFFIXES = .x
 .cc.x:
-	guile-snarf -o $@ $< $(AM_CPPFLAGS) -I$(builddir)/..
+	guile-snarf -o $@ $< $(AM_CPPFLAGS) $(AM_CXXFLAGS) -I$(builddir)/..

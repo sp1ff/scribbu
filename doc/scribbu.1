@@ -20,12 +20,12 @@ scribbu \- The extensible tool for tagging your music collection
 .SH DESCRIPTION
 .BR scribbu
 is a C++ library & associated command-line tool for working with
-ID3-tagged files (presumably music). In addition to making the library
-available to C++ programmers, the scribbu command embeds
+ID3-tagged files (presumably music). In addition to assorted
+sub-commands, the scribbu command embeds
 .B Guile,
 allowing it to be scripted using
 .B Scheme
-(a LISP dialect).
+.
 
 .B scribbu
 can be invoked in a few ways:
@@ -117,7 +117,32 @@ which should be available via:
 
 .SS Scripting scribbu with Scheme
 
-.B TODO(sp1ff) Write me!
+While
+.B scribbu
+provides a few sub-commands for carrying out various
+tasks the author has found useful, this approach is limited in the
+scope of operations it can realistically support. Much more flexible
+would be to provide a Turing-complete programming language that
+provides built-in operations implemented in terms of the
+.B scribbu
+library, which is exactly what Guile provides.
+
+.B scribbu
+embeds a Scheme interpreter, which users can invoke with
+the
+.IR -e " or " -f
+flags, passing a Scheme expression or a Scheme file,
+respectively. Simply typing
+.B scribbu
+will drop the user into an interactive Scheme shell.
+
+See the
+.BR scribbu " Texinfo manual, "
+which should be available via:
+.IR "info scribbu" ", "
+for complete documentation of the methods & types
+.B scribbu
+exports to Scheme.
 
 .SH OPTIONS
 .PP
@@ -165,10 +190,20 @@ below).
 
 .SS ~/.scribbu
 
-.B TOOD(sp1ff):
-Describe configuration file format in the
 .B scribbu
-man page!
+uses the boost Program Options library to parse both the command line and
+the configuration file. The file uses a very simple format:
+
+.IP
+The '#' character introduces a comment that extends to the end of the line.
+
+.IP
+Options are specified as
+.SB name=value
+
+.IP
+.B scribbu
+does not use configuration file sections
 
 .SH AUTHOR
 

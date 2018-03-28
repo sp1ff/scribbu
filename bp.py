@@ -269,7 +269,7 @@ def update_texinfo(ver, author, root, make_backups, dry_run):
             yrs = what.group(1)
         else:
             yrs = '{0}-{1}'.format(what.group(1), year)
-        return 'Copyright @copyright{{}} {0} {1}'.format(yrs, author)
+        return 'Copyright @copyright{{}} {0} {1}'.format(yrs, author.replace('@', '@@'))
 
     rp1 = _repl_year
 

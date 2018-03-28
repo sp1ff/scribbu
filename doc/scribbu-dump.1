@@ -108,12 +108,41 @@ each file to
 with one attribute (artist, title &c) per row.
 .IP
 "csv", which will print one line in CSV format per file.
+
+The precise columns output will depend on the other options, but for
+ID3v2 tags include:
+
+version, revision, size, flags, unsynchronised, artist, title,
+album, genre, encoded by, year, languages, play count, comments
+
+for track data: size & MD5 checksum
+
+for ID3v1 tags: v1.1, extended, artist, title, album, year, comment & genre.
+
 .RE
 .PP
 \-c, \-\-v1\-encoding arg
 .RS4
-Specify an encoding for text in ID3v1 tags (CP1252 by default).
->RE
+Specify an encoding for text in ID3v1 tags (CP1252 by default). Permissible
+values are:
+
+ASCII, ISO_8859_1, ISO_8859_2, ISO_8859_3, ISO_8859_4, ISO_8859_5, ISO_8859_7,
+ISO_8859_9, ISO_8859_10, ISO_8859_13, ISO_8859_14, ISO_8859_15, ISO_8859_16,
+KOI8_R, KOI8_U, KOI8_RU, CP1250, CP1251, CP1252, CP1253, CP1254, CP1257,
+CP850, CP866, CP1131, MacRoman, MacCentralEurope, MacIceland, MacCroatian,
+MacRomania, MacCyrillic, MacUkraine, MacGreek, MacTurkish, Macintosh,
+ISO_8859_6, ISO_8859_8, CP1255, CP1256, CP862, MacHebrew, MacArabic,
+EUC_JP, SHIFT_JIS, CP932, ISO_2022_JP, ISO_2022_JP_2, ISO_2022_JP_1,
+ISO_2022_JP_MS, EUC_CN, HZ, GBK, CP936, GB18030, EUC_TW, BIG5, CP950,
+BIG5_HKSCS, BIG5_HKSCS_2004, BIG5_HKSCS_2001, BIG5_HKSCS_1999, ISO_2022_CN,
+ISO_2022_CN_EXT, EUC_KR, CP949, ISO_2022_KR, JOHAB, ARMSCII_8,
+Georgian_Academy, Georgian_PS, KOI8_T, PT154, RK1048, TIS_620, CP874, MacThai,
+MuleLao_1, CP1133, VISCII, TCVN, CP1258, HP_ROMAN8, NEXTSTEP,
+UTF_8, UCS_2, UCS_2BE, UCS_2LE, UCS_4, UCS_4BE, UCS_4LE,
+UTF_16, UTF_16BE, UTF_16LE, UTF_32, UTF_32BE, UTF_32LE,
+UTF_7, C99, JAVA
+
+.RE
 
 .SH AUTHOR
 
