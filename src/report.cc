@@ -42,13 +42,17 @@ namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu report -- generate a report
 
-scribbu report [option...] file-or-directory [file-or-directory...]
+scribbu report [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
 Generate a report on one or more files. The idea is to have scribbu generate
 the data & export it to some other format more convenient for querying &
 reporting.
 
-Only CSV output is currently supported.)");
+Only CSV output is currently supported.
+
+For detailed help, say `scribbu report --help'. To see the manual, say
+`info "scribbu (report) "'.
+)");
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -327,7 +331,11 @@ namespace {
       if (help_level::regular == help) {
         print_usage(cout, docopts, USAGE);
       } else if (help_level::verbose == help) {
-        print_usage(cout, all, USAGE);
+        execlp("man", "man", "scribbu-report", (char *)NULL);
+        // If we're here, `execlp' failed.
+        stringstream stm;
+        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+        throw runtime_error(stm.str());
       } else {
 
         po::variables_map vm;

@@ -43,7 +43,11 @@ scribbu split [OPTION...] INPUT
 
 Split a file into it's ID3v2 tag, track data, and\or ID3v1 tag. The input files
 will be named "id3v2NS", N=0,1,2,..., "trackS" & "id3v1S", where S is the
---suffix option, if given.)");
+--suffix option, if given.
+
+For detailed help, say `scribbu split --help'. To see the manual, say
+`info "scribbu (split) "'.
+)");
 
   void xfer_bytes(std::istream   &in,
                   const fs::path &pth,
@@ -189,7 +193,11 @@ namespace {
       if (help_level::regular == help) {
         print_usage(cout, docopts, USAGE);
       } else if (help_level::verbose == help) {
-        print_usage(cout, all, USAGE);
+        execlp("man", "man", "scribbu-split", (char *)NULL);
+        // If we're here, `execlp' failed.
+        stringstream stm;
+        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+        throw runtime_error(stm.str());
       } else {
 
         po::variables_map vm;

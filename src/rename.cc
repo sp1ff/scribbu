@@ -41,79 +41,11 @@ namespace {
 
   const std::string USAGE(R"(scribbu rename -- rename .mp3 files
 
-scribbu rename [option...] file-or-directory [file-or-directory...]
+scribbu rename [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
 Rename one or more files, and/or the files in one or more directories,
-according to their ID3 tags.
-
-The command will, by default, rename each file as:
-
-    "<artist> - <title>.<extension>"
-
-The caller can customize this, however, using the --template option. This
-option accepts a string that mixes text with replacement parameters (such as
-title, artist, album &c).
-
-The replacement parameters begin with a % (escape % signs that do *not* start a
-replacement with a backslash). Each parameter has a one-characer short form as
-well as a long-form name. For example, artist can be represented as either 'A'
-or"artist". The short form would be %A, the long %(artist).
-
-If the long form is used, the action of the replacement paramter may,
-optionally, be modified by giving options after a colon. The options take the
-form: opt0&opt1&opt2&..., where opti is of the form name=value or just name. To
-continue the example, if we wanted the artist to always be taken from the ID3v1
-tag, and that field is encoded as ISO-8859-1, we could say:
-%(artist:v1-only&v1-encoding=iso-8859-1).
-
-Full list of replacement parameters & their options
-
-Tag-based replacements:
-
-replacement name, short form, long form(s)
-
-    - album: L, album
-    - artist: A, artist
-    - content type: G, {content-type,genre}
-    - encoded by: e, encoded-by
-    - title: T, title
-    - year: Y, year
-
-Tag-based replacements take the following options:
-
-    - source of the replacement text: prefer-v2, prefer-v1, v2-only, v1-only
-    - character encoding when the ID3v1 tag is used: v1-encoding={auto,
-      iso-8859-1,ascii,cp1252,utf-8,utf-16-be,utf-16,le,utf-32}
-    - handling "The ...": the(suffix),the=suffix,the=prefix
-    - capitalizing words: capitalization,capitalization={all-upper,all-lower}
-    - whitespace: compress, ws="TEXT"
-    - output character set: output=iso-8859-1,ascii,...
-
-e.g. %(artist:prefer-v2&v1-encoding=cp1252&the=suffixcompress) applied to
-a file whose ID3v2 tag had an artist frame of "The  Pogues" would produce
-"Pogues, The".
-
-In addition to the above, the year can be formatted as two digits or four
-by giving "yy" or "yyyy" in the options for that replacement.
-
-Filename-based replacement parameters:
-
-    - basename: b, basename
-    - extension: E, extension (incl. dot)
-
-These take the same "The", capitalization & whitespace options as tag-based
-replacements.
-
-Replacements based on the track data:
-
-    - MD5 checksum: 5, md5
-    - size: S, size (bytes)
-
-Both replacements take the following options:
-
-    - base: base={decimal,hex}
-    - case for hexadecimal digits: hex-case={U,L}
-
+according to their ID3 tags. For detailed help, say `scribbu rename --help'.
+To see the manual, say `info "scribbu (rename) "'.
 )");
 
 }
@@ -306,7 +238,11 @@ namespace {
       if (help_level::regular == help) {
         print_usage(cout, docopts, USAGE);
       } else if (help_level::verbose == help) {
-        print_usage(cout, all, USAGE);
+        execlp("man", "man", "scribbu-rename", (char *)NULL);
+        // If we're here, `execlp' failed.
+        stringstream stm;
+        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+        throw runtime_error(stm.str());
       } else {
 
         po::variables_map vm;

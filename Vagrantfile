@@ -54,6 +54,7 @@ sudo apt-get -y install autoconf
 sudo apt-get -y install automake
 sudo apt-get -y install libtool
 sudo apt-get -y install texinfo
+sudo apt-get -y install texlive
 sudo apt-get -y install libssl-dev
 sudo apt-get -y install flex
 sudo apt-get -y install bison
