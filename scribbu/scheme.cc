@@ -63,7 +63,7 @@ namespace fs = boost::filesystem;
 #define WRITE_TRACK           "scribbu/write-track"
 
 namespace {
-  
+
   /////////////////////////////////////////////////////////////////////////////
   //                              Guile constants                            //
   /////////////////////////////////////////////////////////////////////////////
@@ -1035,7 +1035,7 @@ extern "C" {
 
     return SCM_EOL;
   }
-  
+
   SCM_DEFINE(write_track, WRITE_TRACK, 2, 0, 0,
              (SCM track, SCM out),
              "Write a track to file")

@@ -1,5 +1,17 @@
 scribbu News
 
+CHANGES IN SCRIBBU 0.4
+
+  SIGNIFICANT USER-VISIBLE CHANGES:
+
+    made ID3v2 tags mutable
+
+  NEW FEATURES
+
+    embedded Guile
+
+    added man pages & Texinfo manual
+
 CHANGES IN SCRIBBU 0.2
 
   SIGNIFICANT USER-VISIBLE CHANGES: 'dump' sub-command

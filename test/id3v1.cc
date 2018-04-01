@@ -42,7 +42,7 @@ namespace {
   bool files_differ(const fs::path &a, const fs::path &b)
   {
     using namespace std;
-    
+
     uintmax_t sza = fs::file_size(a);
     uintmax_t szb = fs::file_size(b);
     if (sza != szb) {
@@ -59,9 +59,9 @@ namespace {
     ifsb.read(pb.get(), szb);
 
     return 0 != memcmp(pa.get(), pb.get(), sza);
-    
+
   }
-  
+
 }
 
 // Test cases:

@@ -1,3 +1,13 @@
+2018-04-01  Michael Herstine  <sp1ff@pobox.com>
+
+	* : Version 0.4
+
+	* : made ID3v2 tags mutable
+
+	* : embedded Guile
+
+	* : added man pages & Texinfo manual
+
 2017-06-02  Michael Herstine  <sp1ff@pobox.com>
 
 	* : Version 0.2

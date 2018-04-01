@@ -11,7 +11,7 @@ your operating system.
 For general building and installation instructions, see the file [INSTALL]().
 
 scribbu is free software.  See the file COPYING for copying
-conditions.  scribbu is copyright by Michael Herstine.  Copyright
+conditions.  scribbu is copyrighted by Michael Herstine.  Copyright
 notices condense sequential years into a range; e.g. "1987-1994" means
 all years from 1987 to 1994 inclusive.
 
@@ -20,8 +20,9 @@ What is it?
 
 scribbu is a C++ library & associated command-line tool for working
 with ID3-tagged files (music, presumably). In addition to assorted
-sub-commands, the scribbu command embeds Guile, allowing it to be
-scripted in Scheme.
+sub-commands, the scribbu command
+embeds [Guile](https://www.gnu.org/software/guile/ "Guile"), allowing
+it to be scripted in Scheme.
 
 Downloading
 -----------
@@ -35,14 +36,14 @@ Documentation
 scribbu was born when I retired my last Windows machine & could no
 longer use Winamp to manage my library of digital music. While
 everyone else is streaming their music, I still manage my own library
-(harumph).  The project is still somewhat crude; I'm building it out
-as I discover features I want.
+(harumph).  The project is still crude; I'm building it out as I
+discover features I want.
 
 scribbu can be invoked in a few ways:
 
   - with a Scheme expression (`-e`, `--expression`) or Scheme file
     (`-f`, `--file`).  In this case, scribbu will evaluate the given
-    Scheme expression(s) & exit.
+    code & exit.
 
   - with no arguments at all. In this case, scribbu will drop into a
     Scheme shell in which the user can evaluate arbitrary Scheme
@@ -60,9 +61,11 @@ scribbu can be invoked in a few ways:
       <artist>-<title>.mp3 where "artist" and "title" are derived from
       their ID3 tags (if any).
 
-    + `scribbu report will generate a report listing ID3 attributes on
-      one or more files on stdout.  Only CSV format is supported
-      currently.
+    + `scribbu report` will generate a report listing ID3 attributes
+      on one or more files on stdout.  Only CSV format is supported
+      currently (on the basis that there are better querying/reporting
+      tools out there already; they can just import the .csv & do
+      better than scribbu would)
 
     + `scribbu split` will split one file into many; with each new
       file corresponding to some component of the input file: ID3v1
@@ -76,15 +79,17 @@ I got the project name from this cool project name
 
 ### Scripting Examples
 
-Suppose, for example, that we have a directory
-ful of .mp3 files ripped by Winamp some time ago & that we noted that fact by
-setting their ID3v1 comment to "Ripped by Winamp".
+Let's illustrate the power of scripting scribbu
+using [Guile](https://www.gnu.org/software/guile/ "Guile") using a
+worked example.  Suppose that we have a directory full of .mp3 files
+ripped by Winamp some time ago & that we noted that fact by setting
+their ID3v1 comment to "Ripped by Winamp".
 
 We would like to update these files by ensuring that:
 
   - They have an ID3v2 tag
 
-  - That tag has a @code{TENC} frame set to ``Winamp''
+  - That tag has a @code{TENC} frame set to "Winamp"
 
 We begin experimenting:
 
@@ -99,7 +104,7 @@ $7 = 0
 ```
 
 So this track has an ID3v1 tag with the comment we wrote when we
-ripped it using Winamp, but no ID3v2 tags.
+ripped it using Winamp, but no ID3v2 tags. Let's fix that:
 
 ``` common-lisp
 scheme@@(guile-user)> (scribbu/make-id3v2-tag t 0)
@@ -110,7 +115,7 @@ scheme@@(guile-user)> (scribbu/write-id3v2-tag t 0 "test.out")
 $3 = 27
 ```
 
-In a shell, we see that an ID3v2 tag has been written:
+In a shell, we see that an ID3v2 tag has been written to "test.out":
 
 ``` shell
 vagrant@@vagrant:~/build$ od -Ax -t x1z test.out
@@ -165,7 +170,6 @@ vagrant@@vagrant:~/build$ od -Ax -t x1z test.mp3
 
 Refer to the unit test `test-cleanup-encoded-by` for a Scheme program
 that will do this for all files in a given directory.
-
 
 Development
 -----------
