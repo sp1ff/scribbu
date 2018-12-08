@@ -5,6 +5,8 @@ $provision = <<SCRIPT
 echo "Provisioning..."
 date > /etc/vagrant.provision_begin
 
+set -e
+
 head -n2 /etc/resolv.conf > /tmp/resolv.conf
 echo nameserver 8.8.8.8 >> /tmp/resolv.conf
 echo nameserver 8.8.4.4 >> /tmp/resolv.conf
@@ -13,8 +15,8 @@ sudo mv -v /tmp/resolv.conf /etc/resolv.conf
 
 sudo apt-get update
 
-sudo apt-get -y install 'g++-6'
-sudo ln -s /usr/bin/g++-6 /usr/bin/g++
+sudo apt-get -y install 'g++-5'
+test -s /usr/bin/g++ || sudo ln -s /usr/bin/g++-5 /usr/bin/g++
 sudo apt-get -y install doxygen
 sudo apt-get -y install graphviz
 sudo apt-get -y install gdb
@@ -33,7 +35,7 @@ sudo apt-get -y install libunistring-dev
 sudo apt-get -y install libffi-dev
 sudo apt-get -y install python-dev
 sudo apt-get -y install guile-2.0-dev
-sudo apt-get -y install libboost1.61-all-dev
+sudo apt-get -y install libboost-all-dev
 
 # From source...
 # wget http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
@@ -82,7 +84,7 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can
   # search for boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "bento/ubuntu-16.10"
+  config.vm.box = "ubuntu/xenial64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs `vagrant
