@@ -169,7 +169,7 @@ scribbu::looking_at_id3v2(std::istream &is,
 
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   unsigned char buf[ID3V2_HEADER_SIZE];
 
@@ -419,7 +419,7 @@ scribbu::id3v2_tag::id3v2_tag(std::istream &is)
 
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   unsigned char buf[HALF_ID3V2_HEADER_SIZE];
 
@@ -476,7 +476,7 @@ scribbu::id3v2_tag::parse_flags_and_size(std::istream &is)
 
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   unsigned char buf[HALF_ID3V2_HEADER_SIZE];
 

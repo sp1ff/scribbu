@@ -149,6 +149,8 @@ namespace scribbu
                                    const id3v2_tag  *pid3v2,
                                    const track_data &ti,
                                    const id3v1_tag  *pid3v1) const = 0;
+      virtual ~term()
+      { }
     };
 
     class process_and_concatenate:

@@ -85,11 +85,17 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
   /////////////////////////////////////////////////////////////////////////////
 
   id3v2_2_tag::iterator p0, p1;
-  p0 = tag22.begin();
 
   /////////////////////////////////////////////////////////////////////////////
   // What can we do with a normal (mutable) iterator?
   /////////////////////////////////////////////////////////////////////////////
+
+  id3v2_2_tag::iterator pe =
+    std::find_if(tag22.begin(), tag22.end(),
+                 [](const id3v2_2_frame &x) { return x.id() == "TEN"; });
+  tag22.erase(pe);
+
+  p0 = tag22.begin();
 
   // dereference to an lvalue then assign
   *p0++ = F22; // takes a copy of `F22'
@@ -112,7 +118,7 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
   BOOST_CHECK(ppp != tag22.end());
 
   std::ptrdiff_t nframes = tag22.end() - tag22.begin();
-  BOOST_CHECK(nframes == 9);
+  BOOST_CHECK(nframes == 8);
 
   std::stringstream stm1;
   stm1 << tag22;

@@ -1,8 +1,8 @@
 bin_PROGRAMS = scribbu
 scribbu_SOURCES = scribbu.cc command-utilities.hh command-utilities.cc	\
 	       	  rename.cc report.cc split.cc dump.cc
-# AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS) -DSCRIBBU_ALWAYS_DUMP_CORE
-AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS)
+AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS) -DSCRIBBU_ALWAYS_DUMP_CORE
+# AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS)
 AM_CXXFLAGS = -std=c++17 $(GUILE_CFLAGS)
 AM_LDFLAGS  = -static $(BOOST_LDFLAGS) $(GUILE_LIBS) $(LIBUNISTRING)
 scribbu_LDADD = ../scribbu/libscribbu.la \

@@ -721,7 +721,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   BOOST_CHECK("Ripped by Winamp on Pimpernel" == s);
 
   fs::ifstream ifs02(TEST_FILE_02, fs::ifstream::binary);
-  id3v2_3_tag tag02(ifs02);
+  id3v2_3_tag tag02(ifs02); // <=========== fails here
 
   BOOST_CHECK("The Unforgettable Fire" == tag02.album());
   BOOST_CHECK("U2" == tag02.artist());

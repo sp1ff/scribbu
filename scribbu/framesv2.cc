@@ -569,22 +569,24 @@ scribbu::comments::count_syncs(bool false_only) const
 std::size_t
 scribbu::play_count::count() const
 {
+  uint32_t x;
   if (1 == counter_.size()) {
-    uint8_t x = counter_[0];
+    x = counter_[0];
   }
   else if (2 == counter_.size()) {
-   uint16_t x = ( counter_[0] << 8 ) | counter_[1];
+   x = ( counter_[0] << 8 ) | counter_[1];
   }
   else if (3 == counter_.size()) {
-    uint32_t x = ( counter_[0] << 16 ) | ( counter_[1] << 8 ) | counter_[2];
+    x = ( counter_[0] << 16 ) | ( counter_[1] << 8 ) | counter_[2];
   }
   else if (4 == counter_.size()) {
-    uint32_t x = ( counter_[0] << 24 ) | ( counter_[1] << 16 ) |
+    x = ( counter_[0] << 24 ) | ( counter_[1] << 16 ) |
       ( counter_[2] << 8 )  | counter_[3];
   }
   else if (4 < counter_.size()) {
     throw std::domain_error("CNT overflow");
   }
+  return x;
 }
 
 std::size_t

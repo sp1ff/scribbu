@@ -39,25 +39,31 @@ BOOST_AUTO_TEST_CASE( test_from_sync_safe)
   using namespace scribbu::detail;
 
   size_t x = unsigned_from_sync_safe(0x7f, 0x7f, 0x7f);
-  BOOST_CHECK(2^22 - 1 == x);
+  BOOST_CHECK( ((1 << 21) - 1) == x);
 
   x = unsigned_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f);
-  BOOST_CHECK(2^28 - 1 == x);
+  BOOST_CHECK(((1 << 28) - 1) == x);
 
+  // TODO(sp1ff): (MERGE): this overload only takes into account the first 32
+  // bits!
   x = unsigned_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f, 0x7f);
-  BOOST_CHECK(2^35 - 1 == x);
+  BOOST_CHECK((((size_t)1 << 32) - 1) == x);
 
   uint32_t x32 = uint32_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f);
-  BOOST_CHECK(2^28 - 1 == x32);
+  BOOST_TEST_MESSAGE( "x32 is " << x32 );
+  BOOST_CHECK( ((1 << 28) - 1) == x32);
 
+  // TODO(sp1ff): (MERGE): this overload only takes into account the first 32
+  // bits!
   x32 = uint32_from_sync_safe(0x7f, 0x7f, 0x7f, 0x7f, 0x7f);
-  BOOST_CHECK(2^35 - 1 == x32);
+  BOOST_CHECK(~0 == x32);
 
   x = unsigned_from_non_sync_safe(0xff, 0xff, 0xff);
-  BOOST_CHECK(2^24 - 1 == x);
+  BOOST_CHECK(((1 << 24) - 1) == x);
 
   x = unsigned_from_non_sync_safe(0xff, 0xff, 0xff, 0xff);
-  BOOST_CHECK(2^32 - 1 == x);
+  BOOST_TEST_MESSAGE("x ix " << x );
+  BOOST_CHECK(0xffffffff == x);
 
 }
 

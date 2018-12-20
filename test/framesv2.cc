@@ -88,3 +88,587 @@ BOOST_AUTO_TEST_CASE( test_frame_id4 )
   BOOST_CHECK( ! fid1.experimental() );
 
 } // End test_frame_id4.
+
+BOOST_AUTO_TEST_CASE( test_unique_file_id )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const char EMAIL[] = "sp1ff@pobox.com";
+  const size_t NEMAIL = strlen(EMAIL);
+
+  vector<unsigned char> outbuf;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // happy case
+  //////////////////////////////////////////////////////////////////////////////
+  vector<unsigned char> B1 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d, 0x00, // "sp1ff@pobox.com"
+      0x01, 0x02, 0x03, 0x04 };                       // ID: 0x01020304
+
+  unique_file_id id1(B1.begin(), B1.end());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  id1.ownerb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+    
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  id1.idb(back_inserter(outbuf));
+  const vector<unsigned char> ID = { 0x01, 0x02, 0x03, 0x04 };
+  BOOST_CHECK_EQUAL_COLLECTIONS(ID.begin(), ID.end(),
+                                outbuf.begin(), outbuf.end());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case-- trailing NULL, no ID
+  //////////////////////////////////////////////////////////////////////////////
+  vector<unsigned char> D2 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d, 0x00 };
+  unique_file_id id2(D2.begin(), D2.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  id2.ownerb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  id2.idb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case-- no trailing NULL, no ID
+  //////////////////////////////////////////////////////////////////////////////
+  vector<unsigned char> D3 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d };
+  unique_file_id id3(D3.begin(), D3.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  id3.ownerb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  id2.idb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  // TODO(sp1ff): test the following
+  // - size()
+  // - serialized_size()
+  // - needs_unsynchronisation()
+  // - write()
+
+} // End test_unique_file_id.
+
+BOOST_AUTO_TEST_CASE( test_encryption_method )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const char EMAIL[] = "sp1ff@pobox.com";
+  const size_t NEMAIL = strlen(EMAIL);
+
+  vector<unsigned char> outbuf;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // happy case
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B1 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d, 0x00, // "sp1ff@pobox.com"
+      0x0b,                                           // method
+      0x01, 0x02, 0x03, 0x04 };                       // key
+
+  encryption_method M1(B1.begin(), B1.end());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M1.emailb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+  BOOST_CHECK(0x0b == M1.method_symbol());
+
+  const unsigned char KEY1[] = { 0x01, 0x02, 0x03,0x04 };
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M1.datab(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(KEY1, KEY1 + sizeof(KEY1),
+                                outbuf.begin(), outbuf.end());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: no binary data
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B2 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d, 0x00, // "sp1ff@pobox.com"
+      0x0b };                                         // method
+
+  encryption_method M2(B2.begin(), B2.end());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M2.emailb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+  BOOST_CHECK(0x0b == M2.method_symbol());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M2.datab(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: no method symbol & no binary data
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B3 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d, 0x00 }; // "sp1ff@pobox.com"
+
+  encryption_method M3(B3.begin(), B3.end());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M3.emailb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+
+  // Can't check  M3.method_symbol()-- undefined in this case.
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M3.datab(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: no trailing nul, no method symbol & no binary data
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B4 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d }; // "sp1ff@pobox.com"
+
+  encryption_method M4(B4.begin(), B4.end());
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M4.emailb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
+                                outbuf.begin(), outbuf.end());
+
+  // Can't check  M4.method_symbol()-- undefined in this case.
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  M4.datab(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  // TODO(sp1ff): test the following
+  // - size()
+  // - serialized_size()
+  // - needs_unsynchronisation()
+  // - write()
+
+} // End test_encryption_method.
+
+BOOST_AUTO_TEST_CASE( test_user_defined_text )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const char DSC[] = "dsc";
+  const size_t NDSC = strlen(DSC);
+  const char VAL[] = "val";
+  const size_t NVAL = strlen(VAL);
+  const unsigned char UDSC[] =
+    { 0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63 };
+  const size_t NUDSC = sizeof(UDSC);
+  const unsigned char UVAL[] =
+    { 0xfe, 0xff, 0x00, 0x76, 0x00, 0x61, 0x00, 0x6c };
+  const size_t NUVAL = sizeof(UVAL);
+
+  vector<unsigned char> outbuf;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // happy case-- ASCII
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B1 =
+    { 0x00, // ISO-8859-1
+      0x64, 0x73, 0x63, 0x00, // "dsc"
+      0x76, 0x61, 0x6c, // "val"
+    };
+
+  user_defined_text T1(id3v2_version::v3, B1.begin(), B1.end());
+  BOOST_CHECK(0 == T1.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T1.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T1.textb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(VAL, VAL + NVAL,
+                                outbuf.begin(), outbuf.end());
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // happy case-- UCS2
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B2 =
+    { 0x01, // UCS-2
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, 0x00, 0x00, // "dsc"
+      0xfe, 0xff, 0x00, 0x76, 0x00, 0x61, 0x00, 0x6c, // "val"
+    };
+
+  user_defined_text T2(id3v2_version::v3, B2.begin(), B2.end());
+  BOOST_CHECK(1 == T2.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T2.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T2.textb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(UVAL, UVAL + NUVAL,
+                                outbuf.begin(), outbuf.end());
+  
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no value
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B3 =
+    { 0x00, // ISO-8859-1
+      0x64, 0x73, 0x63, 0x00, // "dsc"
+    };
+
+  user_defined_text T3(id3v2_version::v3, B3.begin(), B3.end());
+  BOOST_CHECK(0 == T3.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T3.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T3.textb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no trailing null, no value
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B4 =
+    { 0x00, // ISO-8859-1
+      0x64, 0x73, 0x63, // "dsc"
+    };
+
+  user_defined_text T4(id3v2_version::v3, B4.begin(), B4.end());
+  BOOST_CHECK(0 == T4.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T4.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T4.textb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no description, no value
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B5 =
+    { 0x00, // ISO-8859-1
+    };
+
+  user_defined_text T5(id3v2_version::v3, B5.begin(), B5.end());
+  BOOST_CHECK(0 == T5.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T5.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T5.textb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no value
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B6 =
+    { 0x01, // UCS-2
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, 0x00, 0x00, // "dsc"
+    };
+
+  user_defined_text T6(id3v2_version::v3, B6.begin(), B6.end());
+  BOOST_CHECK(1 == T6.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T6.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T6.textb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no trailing null, no value
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B7 =
+    { 0x01, // UCS-2
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, // "dsc"
+    };
+
+  user_defined_text T7(id3v2_version::v3, B7.begin(), B7.end());
+  BOOST_CHECK(1 == T7.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T7.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T7.textb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no description, no value
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B8 =
+    { 0x01, // UCS-2
+    };
+
+  user_defined_text T8(id3v2_version::v3, B8.begin(), B8.end());
+  BOOST_CHECK(1 == T8.unicode());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T8.descriptionb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  T8.textb(back_inserter(outbuf));  
+  BOOST_CHECK(outbuf.empty());
+
+} // End test_user_defined_text.
+
+BOOST_AUTO_TEST_CASE( test_comments )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const char DSC[] = "dsc";
+  const size_t NDSC = strlen(DSC);
+  const char VAL[] = "val";
+  const size_t NVAL = strlen(VAL);
+  const unsigned char UDSC[] =
+    { 0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63 };
+  const size_t NUDSC = sizeof(UDSC);
+  const unsigned char UVAL[] =
+    { 0xfe, 0xff, 0x00, 0x76, 0x00, 0x61, 0x00, 0x6c };
+  const size_t NUVAL = sizeof(UVAL);
+
+  vector<unsigned char> outbuf;
+  unsigned char lang[3];
+
+  //////////////////////////////////////////////////////////////////////////////
+  // happy case-- ASCII
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B1 =
+    { 0x00, // ISO-8859-1
+      0x65, 0x6e, 0x67, // eng
+      0x64, 0x73, 0x63, 0x00, // "dsc"
+      0x76, 0x61, 0x6c, // "val"
+    };
+
+  comments C1(id3v2_version::v3, B1.begin(), B1.end());
+  BOOST_CHECK(0 == C1.unicode());
+  C1.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C1.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C1.textb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(VAL, VAL + NVAL,
+                                outbuf.begin(), outbuf.end());
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // happy case-- UCS2
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B2 =
+    { 0x01, // UCS-2
+      0x65, 0x6e, 0x67, // eng
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, 0x00, 0x00, // "dsc"
+      0xfe, 0xff, 0x00, 0x76, 0x00, 0x61, 0x00, 0x6c, // "val"
+    };
+
+  comments C2(id3v2_version::v3, B2.begin(), B2.end());
+  BOOST_CHECK(1 == C2.unicode());
+  C2.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C2.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C2.textb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(UVAL, UVAL + NUVAL,
+                                outbuf.begin(), outbuf.end());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no text
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B3 =
+    { 0x00, // ISO-8859-1
+      0x65, 0x6e, 0x67, // eng
+      0x64, 0x73, 0x63, 0x00, // "dsc"
+    };
+
+  comments C3(id3v2_version::v3, B3.begin(), B3.end());
+  BOOST_CHECK(0 == C3.unicode());
+  C3.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C3.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C3.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no text, no trailing null
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B4 =
+    { 0x00, // ISO-8859-1
+      0x65, 0x6e, 0x67, // eng
+      0x64, 0x73, 0x63, // "dsc"
+    };
+
+  comments C4(id3v2_version::v3, B4.begin(), B4.end());
+  BOOST_CHECK(0 == C4.unicode());
+  C4.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C4.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C4.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no text, no description
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B5 =
+    { 0x00, // ISO-8859-1
+      0x65, 0x6e, 0x67, // eng
+    };
+
+  comments C5(id3v2_version::v3, B5.begin(), B5.end());
+  BOOST_CHECK(0 == C5.unicode());
+  C5.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C5.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C5.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: ASCII, no text, no description, partial language
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B6 =
+    { 0x00, // ISO-8859-1
+      0x65, // 'e'
+    };
+
+  comments C6(id3v2_version::v3, B6.begin(), B6.end());
+  BOOST_CHECK(0 == C6.unicode());
+  // No test for `lang'
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C6.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C6.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no text
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B7 =
+    { 0x01, // UCS-2
+      0x65, 0x6e, 0x67, // eng
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, 0x00, 0x00, // "dsc"
+    };
+
+  comments C7(id3v2_version::v3, B7.begin(), B7.end());
+  BOOST_CHECK(1 == C7.unicode());
+  C7.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C7.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C7.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no text, no trailing null
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B8 =
+    { 0x01, // UCS-2
+      0x65, 0x6e, 0x67, // eng
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, // "dsc"
+    };
+
+  comments C8(id3v2_version::v3, B8.begin(), B8.end());
+  BOOST_CHECK(1 == C8.unicode());
+  C8.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C8.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
+                                outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C8.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no text, no description
+  //////////////////////////////////////////////////////////////////////////////
+
+  vector<unsigned char> B9 =
+    { 0x01, // UCS-2
+      0x65, 0x6e, 0x67, // eng
+    };
+
+  comments C9(id3v2_version::v3, B9.begin(), B9.end());
+  BOOST_CHECK(1 == C9.unicode());
+  C9.lang(lang);
+  BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C9.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C9.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: UCS-2, no text, no description, partial language
+  //////////////////////////////////////////////////////////////////////////////
+  
+  vector<unsigned char> B10 =
+    { 0x01, // UCS-2
+      0x65, 0x6e, // eng
+    };
+
+  comments C10(id3v2_version::v3, B10.begin(), B10.end());
+  BOOST_CHECK(1 == C10.unicode());
+  // no check possible
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C10.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C10.textb(back_inserter(outbuf));
+  BOOST_CHECK(outbuf.empty());
+
+}
+

@@ -409,7 +409,8 @@ namespace scribbu {
                           const opt_sz_type      &decsz,
                           forward_input_iterator  p0,
                           forward_input_iterator  p1):
-      unknown_id3v2_3_frame(frame_id4(id0, id1, id2), tap, fap, ro, encmth, gid, decsz, p0, p1)
+      unknown_id3v2_3_frame(frame_id4(id0, id1, id2, id3), tap, fap, ro, encmth,
+                            gid, decsz, p0, p1)
     { }
 
     template <typename forward_input_iterator>
@@ -422,7 +423,8 @@ namespace scribbu {
                           const opt_sz_type      &decsz,
                           forward_input_iterator  p0,
                           forward_input_iterator  p1):
-      unknown_id3v2_3_frame(frame_id4(id), tap, fap, ro, encmth, gid, decsz, p0, p1)
+      unknown_id3v2_3_frame(frame_id4(id), tap, fap, ro, encmth, gid,
+                            decsz, p0, p1)
     { }
 
     virtual id3v2_3_frame* clone() const

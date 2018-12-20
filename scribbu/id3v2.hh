@@ -646,6 +646,8 @@ namespace scribbu {
     id3v2_tag(unsigned char ver, unsigned char rev):
       version_(ver), revision_(rev), unsync_(boost::none)
     { }
+    virtual ~id3v2_tag()
+    { }
 
   public:
     /////////////////////////////////////////////////////////////////////////////

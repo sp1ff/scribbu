@@ -333,7 +333,8 @@ scribbu::id3v2_4_tag::ext_header::get_restrictions() const
 }
 
 std::size_t
-scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag) const
+scribbu::id3v2_4_tag::ext_header::write(std::ostream &os,
+                                        const id3v2_4_tag &tag) const
 {
   using namespace std;
 
@@ -383,15 +384,13 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
     bool ie;
     image_size is;
     tie(ts, te, sz, ie, is) = get_restrictions();
-    // tuple<tag_size, bool, text_size, bool, image_size> T = get_restrictions();
-    // ts = get<0>(T);
-    // te = get<1>(T);
-    // sz = get<2>(T);
-    // is = get<3>(T);
 
     unsigned char tagr = 0x00;
 
     switch (ts) {
+    case tag_size::restricted:
+      // -Wswitch
+      break;
     case tag_size::more_restricted:
       tagr |= (0x1 << 6);
       break;
@@ -408,6 +407,9 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
     }
 
     switch (sz) {
+    case text_size::unrestricted:
+      // -Wswitch
+      break;
     case text_size::restricted:
       tagr |= (1 << 3);
       break;
@@ -424,6 +426,9 @@ scribbu::id3v2_4_tag::ext_header::write(std::ostream &os, const id3v2_4_tag &tag
     }
 
     switch (is) {
+    case image_size::unrestricted:
+      // -Wswitch
+      break;
     case image_size::restricted:
       tagr |= 0x1;
       break;
@@ -984,7 +989,7 @@ scribbu::id3v2_4_tag::erase(const_iterator p)
 {
   std::size_t idx = p - begin();
   remove_frame_from_lookups(p->id(), idx);
-  frames_.erase(frames_.begin() + idx);
+  return iterator(this, frames_.erase(frames_.begin() + idx));
 }
 
 scribbu::id3v2_4_tag::iterator
@@ -995,8 +1000,8 @@ scribbu::id3v2_4_tag::erase(const_iterator p0, const_iterator p1)
     remove_frame_from_lookups(p2->id(), i);
   }
 
-  frames_.erase(frames_.begin() + p0.index(),
-                frames_.begin() + p1.index());
+  return iterator(this, frames_.erase(frames_.begin() + p0.index(),
+                                      frames_.begin() + p1.index()));
 }
 
 std::ostream&
@@ -1140,7 +1145,7 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extend
 
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   try {
 
@@ -1209,13 +1214,13 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extend
 
         unsigned char f0 = p0[8];
 
-        id3v2_4_frame::tag_alter_preservation tap = (0 != f0 & 0x40) ?
+        id3v2_4_frame::tag_alter_preservation tap = (0 != (f0 & 0x40)) ?
           id3v2_4_frame::tag_alter_preservation::discard :
           id3v2_4_frame::tag_alter_preservation::preserve;
-        id3v2_4_frame::file_alter_preservation fap = (0 != f0 & 0x20) ?
+        id3v2_4_frame::file_alter_preservation fap = (0 != (f0 & 0x20)) ?
           id3v2_4_frame::file_alter_preservation::discard :
           id3v2_4_frame::file_alter_preservation::preserve;
-        id3v2_4_frame::read_only ro = (0 != f0 & 0x10) ?
+        id3v2_4_frame::read_only ro = (0 != (f0 & 0x10)) ?
           id3v2_4_frame::read_only::set :
           id3v2_4_frame::read_only::clear;
 
@@ -1315,13 +1320,13 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extend
 
       unsigned char f0 = p0[8];
 
-      id3v2_4_frame::tag_alter_preservation tap = (0 != f0 & 0x40) ?
+      id3v2_4_frame::tag_alter_preservation tap = (0 != (f0 & 0x40)) ?
         id3v2_4_frame::tag_alter_preservation::discard :
         id3v2_4_frame::tag_alter_preservation::preserve;
-      id3v2_4_frame::file_alter_preservation fap = (0 != f0 & 0x20) ?
+      id3v2_4_frame::file_alter_preservation fap = (0 != (f0 & 0x20)) ?
         id3v2_4_frame::file_alter_preservation::discard :
         id3v2_4_frame::file_alter_preservation::preserve;
-      id3v2_4_frame::read_only ro = (0 != f0 & 0x10) ?
+      id3v2_4_frame::read_only ro = (0 != (f0 & 0x10)) ?
         id3v2_4_frame::read_only::set :
         id3v2_4_frame::read_only::clear;
 

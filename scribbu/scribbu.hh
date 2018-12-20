@@ -46,7 +46,8 @@
  *
  * \section scribbu_references References
  *
- *  1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design. Addison-Wesley, 323pp.
+ *  1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design. Addison-Wesley, 
+ *     323pp.
  *
  *  2. \anchor ref_02 Langer, Angelika and Kreft, Klaus, 1999: Standard C++ IOStrems and
  *     Locales. Addison-Wesley, 640pp.
@@ -54,6 +55,7 @@
  *
  */
 
+#include <array>
 #include <iostream>
 
 #include <boost/filesystem.hpp>

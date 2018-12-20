@@ -74,12 +74,12 @@ scribbu::id3v1_tag::id3v1_tag(std::istream &is)
 
   // Also, save this so we can restore the stream to its original
   // state on error.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   try {
 
     is.seekg(0, std::ios_base::end); // failbit or badbit
-    std::istream::streampos there = is.tellg();
+    std::streampos there = is.tellg();
     is.seekg(here, std::ios_base::beg); // failbit or badbit
 
     unsigned char buf[ID3V1_EXT_TAG_SIZE];
@@ -117,7 +117,7 @@ scribbu::id3v1_tag::id3v1_tag(std::istream &is,
 
   // Also, save this so we can restore the stream to its original
   // state on error.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   unsigned char buf[ID3V1_EXT_TAG_SIZE];
 
@@ -583,7 +583,7 @@ scribbu::id3v1_info scribbu::ends_in_id3v1(std::istream &is)
 
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   // The ID3v1 tag is 128 bytes long & begins with the sequence "TAG",
   // and the extended tag is 227 bytes & begins with the sequence

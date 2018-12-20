@@ -363,5 +363,4 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag_as_container )
 
   tag.erase(p);
   BOOST_CHECK( 10 == tag.num_frames() );
-
 }
