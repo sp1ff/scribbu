@@ -128,7 +128,7 @@ scribbu::id3v2_2_frame::header_needs_unsynchronisation() const
 {
   std::size_t num_ffs = 0;
 
-  char buf[3]; id().copy(buf);
+  unsigned char buf[3]; id().copy(buf);
   if (255 == buf[0]) num_ffs++;
   if (255 == buf[1]) num_ffs++;
   if (255 == buf[2]) num_ffs++;
@@ -231,17 +231,17 @@ scribbu::id3v2_2_frame::unsynchronise_triplet(std::ostream &os, char buf[3]) con
   static const char zed = 0;
 
   std::size_t num_ffs = 0;
-  if (255 == buf[0]) num_ffs++;
-  if (255 == buf[1]) num_ffs++;
-  if (255 == buf[2]) num_ffs++;
+  if (255 == (unsigned)buf[0]) num_ffs++;
+  if (255 == (unsigned)buf[1]) num_ffs++;
+  if (255 == (unsigned)buf[2]) num_ffs++;
 
   if (num_ffs) {
     os.write(buf, 1);
-    if (255 == buf[0]) os.write(&zed, 1);
+    if (255 == (unsigned)buf[0]) os.write(&zed, 1);
     os.write(buf + 1, 1);
-    if (255 == buf[1]) os.write(&zed, 1);
+    if (255 == (unsigned)buf[1]) os.write(&zed, 1);
     os.write(buf + 2, 1);
-    if (255 == buf[2]) os.write(&zed, 1);
+    if (255 == (unsigned)buf[2]) os.write(&zed, 1);
   }
   else {
     os.write(buf, 3);

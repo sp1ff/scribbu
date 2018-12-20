@@ -2,7 +2,7 @@
 ../src/scribbu report -o report.csv ${srcdir}/data
 cp -v report.csv report.last.csv
 head -n1 report.csv > report.$$.csv
-tail -n+2 report.csv | sort >> report.$$.csv
+tail -n+2 report.csv | sort -g >> report.$$.csv
 # This is irritating, but we need to strip out the paths above
 # "data" since we do a dumb diff, below.
 sed -e 's_,".*/data",_,"data",_' report.$$.csv > report.csv

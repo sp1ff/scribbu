@@ -379,7 +379,9 @@ namespace scribbu {
 
       // "The 'Owner identifier' is then followed by the actual identifier,
       // which may be up to 64 bytes", Sec 4.1 of id3v2-00.txt.
-      std::copy(p + 1, p1, std::back_inserter(id_));
+      if (p != p1) {
+        std::copy(p + 1, p1, std::back_inserter(id_));
+      }
     }
 
   public:
@@ -431,9 +433,15 @@ namespace scribbu {
                       forward_input_iterator p1) {
       forward_input_iterator p = std::find(p0, p1, 0);
       std::copy(p0, p, std::back_inserter(email_));
-      ++p;
-      method_symbol_ = *p++;
-      std::copy(p, p1, std::back_inserter(data_));
+      if (p != p1) {
+        ++p;
+        if (p != p1)  {
+          method_symbol_ = *p++;
+          if (p != p1) {
+            std::copy(p, p1, std::back_inserter(data_));
+          }
+        }
+      }
     }
 
   public:
@@ -511,8 +519,10 @@ namespace scribbu {
       // [p0, p) has description (including the terminating null), [p, p1)
       // contains the string.
       std::copy(p0, p, std::back_inserter(description_));
-      p += cbnil_;
-      std::copy(p, p1, std::back_inserter(text_));
+      if (std::distance(p, p1) >= cbnil_) {
+        p += cbnil_;
+        std::copy(p, p1, std::back_inserter(text_));
+      }
     }
 
     user_defined_text(id3v2_version ver,
@@ -587,23 +597,35 @@ namespace scribbu {
              forward_input_iterator p1):
       cbnil_(1)
     {
-      unicode_ = *p0++;
+      if (p0 != p1) {
 
-      if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
-        cbnil_ = unicode_ ? 2 : 1;
+        unicode_ = *p0++;
+
+        if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
+          cbnil_ = unicode_ ? 2 : 1;
+        }
+        else {
+          cbnil_ = (0 == unicode_ || 3 == unicode_) ? 1 : 2;
+        }
+
+        if (std::distance(p0, p1) >= 3) {
+
+          std::copy(p0, p0 + 3, lang_);
+          p0 += 3;
+
+          if (p0 != p1) {
+
+            forward_input_iterator p =
+              detail::find_trailing_null(cbnil_, p0, p1);
+            std::copy(p0, p, std::back_inserter(description_));
+
+            if (std::distance(p, p1) >= cbnil_) {
+              p += cbnil_;
+              std::copy(p, p1, std::back_inserter(text_));
+            }
+          }
+        }
       }
-      else {
-        cbnil_ = (0 == unicode_ || 3 == unicode_) ? 1 : 2;
-      }
-
-      std::copy(p0, p0 + 3, lang_);
-      p0 += 3;
-
-      forward_input_iterator p = detail::find_trailing_null(cbnil_, p0, p1);
-      std::copy(p0, p, std::back_inserter(description_));
-
-      p += cbnil_;
-      std::copy(p, p1, std::back_inserter(text_));
     }
 
     /// Construct from arbitrary text
@@ -704,12 +726,12 @@ namespace scribbu {
 
     template <typename forward_output_iterator>
     forward_output_iterator counterb(forward_output_iterator p) const {
-      std::copy(counter_.begin(), counter_.end(), p);
+      return std::copy(counter_.begin(), counter_.end(), p);
     }
 
     template <typename forward_output_iterator>
     forward_output_iterator emailb(forward_output_iterator p) const {
-      std::copy(email_.begin(), email_.end(), p);
+      return std::copy(email_.begin(), email_.end(), p);
     }
 
     unsigned char rating() const {

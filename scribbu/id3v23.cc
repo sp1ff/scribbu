@@ -923,7 +923,7 @@ scribbu::id3v2_3_tag::erase(const_iterator p)
 {
   std::size_t idx = p - begin();
   remove_frame_from_lookups(p->id(), idx);
-  frames_.erase(frames_.begin() + idx);
+  return iterator(this, frames_.erase(frames_.begin() + idx));
 }
 
 scribbu::id3v2_3_tag::iterator
@@ -934,8 +934,8 @@ scribbu::id3v2_3_tag::erase(const_iterator p0, const_iterator p1)
     remove_frame_from_lookups(p2->id(), i);
   }
 
-  frames_.erase(frames_.begin() + p0.index(),
-                frames_.begin() + p1.index());
+  return iterator(this, frames_.erase(frames_.begin() + p0.index(),
+                                      frames_.begin() + p1.index()));
 }
 
 std::ostream&
@@ -1039,7 +1039,7 @@ scribbu::id3v2_3_tag::register_generic_frame_parser(
   if (parsing_is_reserved(id)) {
     throw reserved_frame_error(id);
   }
-  generic_parsers_.insert(std::make_pair(id, F)).first;
+  return generic_parsers_.insert(std::make_pair(id, F)).second;
 }
 
 bool
@@ -1048,7 +1048,7 @@ scribbu::id3v2_3_tag::register_text_frame_parser(const frame_id4 &id,
   if (parsing_is_reserved(id)) {
     throw reserved_frame_error(id);
   }
-  text_parsers_.insert(std::make_pair(id, F)).first;
+  return text_parsers_.insert(std::make_pair(id, F)).second;
 }
 
 
@@ -1087,7 +1087,7 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, std::size_t size, bool extend
                 std::ios_base::badbit);
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   try {
 
@@ -1177,13 +1177,13 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, std::size_t size, bool extend
 
         unsigned char f0 = pcurr[8];
 
-        id3v2_3_frame::tag_alter_preservation tap = (0 != f0 & 0x80) ?
+        id3v2_3_frame::tag_alter_preservation tap = (0 != (f0 & 0x80)) ?
           id3v2_3_frame::tag_alter_preservation::discard :
           id3v2_3_frame::tag_alter_preservation::preserve;
-        id3v2_3_frame::file_alter_preservation fap = (0 != f0 & 0x40) ?
+        id3v2_3_frame::file_alter_preservation fap = (0 != (f0 & 0x40)) ?
           id3v2_3_frame::file_alter_preservation::discard :
           id3v2_3_frame::file_alter_preservation::preserve;
-        id3v2_3_frame::read_only ro = (0 != f0 & 0x40) ?
+        id3v2_3_frame::read_only ro = (0 != (f0 & 0x40)) ?
           id3v2_3_frame::read_only::set :
           id3v2_3_frame::read_only::clear;
 
@@ -1297,13 +1297,13 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, std::size_t size, bool extend
 
       unsigned char f0 = p0[8];
 
-      id3v2_3_frame::tag_alter_preservation tap = (0 != f0 & 0x80) ?
+      id3v2_3_frame::tag_alter_preservation tap = (0 != (f0 & 0x80)) ?
         id3v2_3_frame::tag_alter_preservation::discard :
         id3v2_3_frame::tag_alter_preservation::preserve;
-      id3v2_3_frame::file_alter_preservation fap = (0 != f0 & 0x40) ?
+      id3v2_3_frame::file_alter_preservation fap = (0 != (f0 & 0x40)) ?
         id3v2_3_frame::file_alter_preservation::discard :
         id3v2_3_frame::file_alter_preservation::preserve;
-      id3v2_3_frame::read_only ro = (0 != f0 & 0x20) ?
+      id3v2_3_frame::read_only ro = (0 != (f0 & 0x20)) ?
         id3v2_3_frame::read_only::set :
         id3v2_3_frame::read_only::clear;
 

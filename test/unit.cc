@@ -31,6 +31,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
+#define BOOST_TEST_MODULE scribbu unit tests
 #include <boost/test/unit_test.hpp>
 #include <boost/filesystem/fstream.hpp>
 
@@ -74,25 +75,27 @@ namespace {
   {
     if (!pth.empty()) {
       source_directory_ = pth;
-      return;
-    }
+    } else {
+  
+      char *p = getenv("srcdir");
+      if (p) {
+        source_directory_ = fs::path(p);
+      } else {
 
-    char *p = getenv("srcdir");
-    if (p) {
-      source_directory_ = fs::path(p);
-      return;
-    }
+        p = getenv("HOSTNAME");
+        if (p && 0 == strcmp(p, "vagrant")) {
+          source_directory_ = fs::path("/vagrant");
+        } else {
+          source_directory_ = fs::current_path();
+        }
 
-    p = getenv("HOSTNAME");
-    if (p && 0 == strcmp(p, "vagrant")) {
-      source_directory_ = fs::path("/vagrant");
-      return;
+      }
     }
-
-    source_directory_ = fs::current_path();
+    
+    BOOST_TEST_MESSAGE("unit test source directory := " << source_directory_);
 
   }
-
+  
 } // End un-named namespace.
 
 fs::path
@@ -107,17 +110,25 @@ get_data_directory()
   return get_source_directory() / "data";
 }
 
-test::test_suite*
-init_unit_test_suite(int   argc,
-                     char *argv[])
+// Cf. https://www.boost.org/doc/libs/1_60_0/libs/test/doc/html/boost_test/adv_scenarios/obsolete_init_func.html
+struct InitUnitTestSuite {
+  InitUnitTestSuite();
+};
+
+InitUnitTestSuite::InitUnitTestSuite()
 {
+  namespace utf  = boost::unit_test::framework;
+
   scribbu::static_initialize();
 
   po::options_description opts("Extra options");
   opts.add_options()
     ("srcdir,s", po::value<fs::path>(), "scribbu test source directory");
 
-  po::parsed_options parsed = po::command_line_parser(argc, argv).options(opts).run();
+  po::parsed_options parsed =
+    po::command_line_parser(utf::master_test_suite().argc,
+                            utf::master_test_suite().argv).
+    options(opts).run();
 
   po::variables_map vm;
   po::store(parsed, vm);
@@ -128,9 +139,9 @@ init_unit_test_suite(int   argc,
   }
 
   initialize_source_directory(srcdir);
-
-  return 0;
 }
+
+BOOST_GLOBAL_FIXTURE(InitUnitTestSuite);
 
 void
 compute_md5(const boost::filesystem::path &pth, unsigned char md5[])
@@ -261,3 +272,4 @@ BOOST_AUTO_TEST_CASE( test_file_processing )
   BOOST_CHECK(pid3v1);
 
 }
+

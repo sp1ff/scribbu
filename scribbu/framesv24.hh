@@ -189,7 +189,7 @@ namespace scribbu {
                           const boost::optional<std::size_t> &dli,
                           forward_input_iterator p0,
                           forward_input_iterator p1):
-      unknown_id3v2_4_frame(frame_id4(id0, id1, id2), tap, fap, ro, enc,
+      unknown_id3v2_4_frame(frame_id4(id0, id1, id2, id3), tap, fap, ro, enc,
                             gid, cmprsd, unsynch, dli, p0, p1)
     { }
 

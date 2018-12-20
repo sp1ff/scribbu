@@ -577,7 +577,7 @@ scribbu::id3v2_2_tag::erase(const_iterator p)
 {
   std::size_t idx = p - begin();
   remove_frame_from_lookups(p->id(), idx);
-  frames_.erase(frames_.begin() + idx);
+  return iterator(this, frames_.erase(frames_.begin() + idx));
 }
 
 scribbu::id3v2_2_tag::iterator
@@ -588,8 +588,8 @@ scribbu::id3v2_2_tag::erase(const_iterator p0, const_iterator p1)
     remove_frame_from_lookups(p2->id(), i);
   }
 
-  frames_.erase(frames_.begin() + p0.index(),
-                frames_.begin() + p1.index());
+  return iterator(this, frames_.erase(frames_.begin() + p0.index(),
+                                      frames_.begin() + p1.index()));
 }
 
 std::ostream&
@@ -772,7 +772,7 @@ void scribbu::id3v2_2_tag::parse(std::istream &is, std::size_t size)
                 std::ios_base::badbit);
   // Also, save this so we can restore the stream to its original
   // state.
-  std::istream::streampos here = is.tellg();
+  std::streampos here = is.tellg();
 
   try {
 

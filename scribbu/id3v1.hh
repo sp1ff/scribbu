@@ -482,9 +482,9 @@ namespace scribbu {
   enum class id3_v1_tag_type { none, v_1, v_1_extended };
 
   struct id3v1_info {
-    id3_v1_tag_type          type_;
-    std::ios_base::streampos start_;
-    std::ios_base::streampos end_;
+    id3_v1_tag_type type_;
+    std::streampos  start_;
+    std::streampos  end_;
   };
 
   /**

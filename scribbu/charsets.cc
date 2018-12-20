@@ -713,11 +713,12 @@ namespace scribbu {
 
   /// Convert encodings from std strings to buffers of char
   template <>
-  std::vector<unsigned char> convert_encoding(const std::string &text,
-                                              encoding srcenc,
-                                              encoding dstenc,
-                                              bool add_bom /*= false*/,
-                                              on_no_encoding rsp /*= on_no_encoding::fail*/)
+  std::vector<unsigned char>
+  convert_encoding(const std::string &text,
+                   encoding srcenc,
+                   encoding dstenc,
+                   bool add_bom /*= false*/,
+                   on_no_encoding rsp /*= on_no_encoding::fail*/)
   {
     const unsigned char UTF16LE[] = { 0xff, 0xfe };
     const unsigned char UTF16BE[] = { 0xfe, 0xff };
@@ -758,6 +759,9 @@ namespace scribbu {
       case encoding::UTF_32LE:
         cbbom = 4;
         pbom = UTF32LE;
+        break;
+      default:
+        // Fall-through intentionally: -Wswitch
         break;
       }
     }
@@ -1057,6 +1061,10 @@ scribbu::language_from_locale()
 void
 scribbu::language_to_iso_639_2(language lang, unsigned char code[3])
 {
+  if (language::from_locale == lang) {
+    lang = language_from_locale();
+  }
+  
   switch (lang) {
 #   define G(x) code[0]=x[0];code[1]=x[1];code[2]=x[2]
 #   define F(x) \
@@ -1574,6 +1582,9 @@ scribbu::language_to_iso_639_2(language lang, unsigned char code[3])
 
 # undef F
 # undef G
+  case language::from_locale:
+    // Should never be here
+    throw std::logic_error("language_to_iso_639_2 invoked with from_locale");
   }
 
 } // End scribbu::language_to_iso_639_2.

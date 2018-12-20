@@ -138,7 +138,7 @@ namespace scribbu {
    *
    \code
 
-      /*
+       ...
        *  @name Inserters
        *
        *  All the @c operator<< functions (aka <em>formatted output

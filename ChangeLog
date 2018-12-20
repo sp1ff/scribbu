@@ -1,3 +1,9 @@
+2018-12-28  Michael Herstine <s1pff@pobox.com>
+
+	* : Version 0.5
+
+	* : Now supported on MacOS using native toolchain
+
 2018-04-01  Michael Herstine  <sp1ff@pobox.com>
 
 	* : Version 0.4

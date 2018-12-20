@@ -16,14 +16,15 @@ unit_SOURCES = unit.cc charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc scribbu.cc \
 	id3v2-edit.cc
 include_HEADERS = unit.hh
-AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = -DBOOST_TEST_DYN_LINK -I$(srcdir)/.. $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = -std=c++17
-AM_LDFLAGS  = -all-static -static $(BOOST_LDFLAGS)
+AM_LDFLAGS  = $(BOOST_LDFLAGS)
 unit_LDADD = ../scribbu/libscribbu.la    \
-	$(BOOST_FILESYSTEM_LIB)          \
+	$(GUILE_LIBS)                    \
 	$(OPENSSL_LIBS)                  \
 	-ldl                             \
+	$(BOOST_FILESYSTEM_LIB)          \
 	$(BOOST_PROGRAM_OPTIONS_LIB)     \
 	$(BOOST_UNIT_TEST_FRAMEWORK_LIB) \
 	$(BOOST_SYSTEM_LIB)              \
-	-lpthread 
+	-lpthread

@@ -174,6 +174,8 @@ class reporting_strategy: public std::unary_function<void, fs::path> {
 public:
 
   void operator()(const fs::path &pth);
+  virtual ~reporting_strategy()
+  { }
 
 protected:
 

@@ -590,7 +590,7 @@ namespace scribbu {
       if (parsing_is_reserved(id)) {
         throw reserved_frame_error(id);
       }
-      generic_parsers_.insert(std::make_pair(id, F)).first;
+      return generic_parsers_.insert(std::make_pair(id, F)).second;
     }
 
     /// Not thread-safe
@@ -606,7 +606,7 @@ namespace scribbu {
       if (parsing_is_reserved(id)) {
         throw reserved_frame_error(id);
       }
-      text_parsers_.insert(std::make_pair(id, F)).first;
+      return text_parsers_.insert(std::make_pair(id, F)).second;
     }
 
     // Give every translation unit a static initializer; see below.

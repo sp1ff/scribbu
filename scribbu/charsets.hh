@@ -27,14 +27,16 @@
 #include <locale>
 #include <string>
 #include <vector>
-#include <iconv.h>
 
 #include <boost/exception/all.hpp>
+
+#include <iconv.h>
 
 #include <scribbu/errors.hh>
 
 namespace scribbu {
 
+  /// Represents a libiconv error as a C++ exception
   class iconv_error: public virtual boost::exception,
                      public virtual std::runtime_error
   {
@@ -74,22 +76,31 @@ namespace scribbu {
 
     // Korean
     EUC_KR, CP949, ISO_2022_KR, JOHAB,
+
     // Armenian
     ARMSCII_8,
+
     // Georgian
     Georgian_Academy, Georgian_PS,
+
     // Tajik
     KOI8_T,
+
     // Kazakh
     PT154, RK1048,
+
     // Thai
     TIS_620, CP874, MacThai,
+
     // Laotian
     MuleLao_1, CP1133,
+
     // Vietnamese
     VISCII, TCVN, CP1258,
+
     // Platform specifics
     HP_ROMAN8, NEXTSTEP,
+
     // Full Unicode
     UTF_8, UCS_2, UCS_2BE, UCS_2LE, UCS_4, UCS_4BE, UCS_4LE,
     UTF_16, UTF_16BE, UTF_16LE, UTF_32, UTF_32BE, UTF_32LE,
@@ -232,15 +243,16 @@ namespace scribbu {
    */
 
   template <typename string_type>
-  std::vector<unsigned char> convert_encoding(const string_type &text,
-                                              encoding srcenc,
-                                              encoding dstenc,
-                                              bool add_bom = false,
-                                              on_no_encoding rsp = on_no_encoding::fail);
+  std::vector<unsigned char>
+  convert_encoding(const string_type &text,
+                   encoding srcenc,
+                   encoding dstenc,
+                   bool add_bom = false,
+                   on_no_encoding rsp = on_no_encoding::fail);
 
-  // ISO-639-2 language codes; a few of these are (incongruously) in
-  /// all caps-- that's to keep them from colliding with assorted macros
-  /// or reserved keywrods
+  /// ISO-639-2 language codes; a few of these are (incongruously) in all caps--
+  /// that's to keep them from colliding with assorted macros or reserved
+  /// keywrods
   enum class language {
     /// deduce language from the program locale
     from_locale,
