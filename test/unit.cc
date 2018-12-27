@@ -1,7 +1,7 @@
 /**
  * \file unit.cc
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -76,7 +76,7 @@ namespace {
     if (!pth.empty()) {
       source_directory_ = pth;
     } else {
-  
+
       char *p = getenv("srcdir");
       if (p) {
         source_directory_ = fs::path(p);
@@ -91,11 +91,11 @@ namespace {
 
       }
     }
-    
+
     BOOST_TEST_MESSAGE("unit test source directory := " << source_directory_);
 
   }
-  
+
 } // End un-named namespace.
 
 fs::path

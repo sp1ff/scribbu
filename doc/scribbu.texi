@@ -5,7 +5,7 @@
 @c %**end of header
 @copying
 
-Copyright @copyright{} 2018 Michael Herstine <sp1ff@@pobox.com>
+Copyright @copyright{} 2018-2019 Michael Herstine <sp1ff@@pobox.com>
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -43,7 +43,7 @@ This document was typeset with
 
 The extensible tool for tagging your music collection.
 
-This manual corresponds to scribbu version 0.4.
+This manual corresponds to scribbu version 0.5.
 
 @insertcopying
 
@@ -111,7 +111,7 @@ ID3 tags (if any).
 @item
 @command{scribbu report} @xref{scribbu report}. will generate a report
 listing ID3 attributes on one or more files on stdout.  Only CSV
-format is supported currently.
+& TDF formats are supported currently.
 
 @item
 @command{scribbu split} @xref{scribbu split}. will split one file into
@@ -230,8 +230,8 @@ including the complete list of replacement parameters.
 ID3 tags. The idea is to use scribbu to do the work of scanning the
 tags in combination with some other tool better suited to querying &
 reporting. Consequently, filtering mechanisms are minimal, and the
-output format (CSV) is chosen to facilitate transformation to other
-formats as well as import by other tools.
+output formats (CSV or TDF) are chosen to facilitate transformation to
+other formats as well as import by other tools.
 
 @node scribbu split
 @section scribbu split

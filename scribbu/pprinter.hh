@@ -1,7 +1,7 @@
 /**
  * \file pprinter.hh
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -71,25 +71,26 @@
  * \subsection scribbu_pprinter_discuss_visitor Visitor
  *
  * My next attempt was to implement Visitor \ref scribbu_pprinter_ref_01 "[1]",
- * which is of course tailor-made for this: I had a set of types which was
- * unlikely to change, and a set of operations that was much more fluid. Each
+ * which is of course tailor-made for this: I had a set of types (the ID3 tag &
+ * frame classes) which was unlikely to change, and a set of operations (print
+ * in standard fashion, in compact, CSV, &c) that was much more fluid. Each
  * style of pretty-printing would be implemented as a distinct class,
- * eliminating the problem described above. The cost would be adding an
- * "accept" virtual to each type, which would then invoke the relevant visitor
- * method, for two virtual function lookups. There was one wrinkle where frames
- * were involved; employing Visitor in this way would mean:
+ * eliminating the problems described above. The cost would be adding an
+ * "accept" virtual to each tag & frame type, which would then invoke the
+ * relevant visitor method (for two virtual function lookups). There was one
+ * wrinkle where frames were involved; employing Visitor in this way would mean:
  *
  *    1. operator<< constructing a Visitor of the appropriate type and invoking
  *       accept on the tag, passing the Visitor as an argument (one virtual
  *       lookup)
  *
- *    2. in the implementation, we would now have resolved the tag type, and so
- *       we could call the appropriate Visitor virtual, passing \c *this as an
- *       argument (a second virtual lookup)
+ *    2. in the implementation, we would now have resolved the tag type (since
+ *       accept would be virtual), and so we could call the appropriate Visitor
+ *       virtual, passing \c *this as an argument (a second virtual lookup)
  *
  *    3. at this point, we're in the Visitor, and we've resolved both types; we
- *       can pretty-print the tag, but that tag has a polymorphic collection of
- *       frames- we call accept on each tag (virtual lookup for each frame)
+ *       can pretty-print the tag, _but_ that tag has a polymorphic collection
+ *       of frames- we call accept on each tag (virtual lookup for each frame)
  *
  *    4. in the frame's accept implementation, we now have the frame
  *       type, so we can call the appropriate Visitor virtual, passing
@@ -100,50 +101,110 @@
  *       virtual invocation seemed superfluous to me, since we had already
  *       figured out the Visitor type in step 2.
  *
- * Of course, Visitor also introduced the usual dependency problems; moving to
- * Acyclic Visitor \ref scribbu_pprinter_ref_02 "[2]" would remove that, in the
- * process substituting the virtual function invocation in 2 for a dynamic
- * cast. It did nothing for the superfluous virtual invocation for each frame.
+ * Of course, Visitor also introduced the usual dependency problems: id3v_2_tag
+ * depended on \c visitor, each concrete \c visitor subclass dependended
+ * on all of id3v2_2_tag, id3v2_3_tag and id3v2_4_tag, each of which
+ * in turn depended on id3v2_tag.
+ *
+ * Moving to Acyclic Visitor \ref scribbu_pprinter_ref_02 "[2]" would remove
+ * that, in the process substituting the virtual function invocation in 2 for a
+ * dynamic cast. It did nothing for the superfluous virtual invocation for each
+ * frame.
  *
  * \subsection scribbu_pprinter_discuss_ddispatch Dual Dispatch
  *
  * I decided to look for something a little cleaner; something that would
  * preserve the benefits of Acyclic Visitor (easily adding new styles of
  * pretty-printing without having to touch extant code) while eliminating some
- * of the drawbacks (2n virtual function invocations for each frame plus one
- * virtual invocation & one dynamic cast; adding special-purpose members like
- * "accept").
+ * of the drawbacks (\em 2*nframes virtual function invocations for each frame
+ * plus one virtual invocation & one dynamic cast; adding special-purpose
+ * members like "accept" & most of all the circular dependencies).
  *
  * It occurred to me that Visitor was really just a solution to the
  * dual-dispatch problem; the two virtual function calls are just resolving the
- * two types in serial. So I dusted off \ref ref_01 "Alexandrescu", who
- * sketches out a dual dispatcher using local structs. As I started laying out
- * the implementation, however, I realized I could simplify it significantly by
- * maping tag type to a pointer-to-virtual-member on the base pretty-printer
- * (imaginatively named \c pprinter). This allowed me to:
+ * two types in serial. So I dusted off \ref ref_01 "Alexandrescu", who sketches
+ * out a general-purpose dual dispatch facility based on a map of \c type_info
+ * pairs (i.e. the types on which we would like to dispatch) to function
+ * pointers (the corresponding implementations).
  *
- *   - do the registration in-library; eliminating the need for any kind of
- *     registration or "glue" code between new pretty-print implementations &
- *     the extant framework
+ * As I started laying out my implementation, however, I realized I could
+ * simplify it significantly for my particular case. I adapted Alexandrescu's
+ * implementation by mapping tag/frame type to a pointer-to-virtual-member on
+ * the *base* pretty-printer (imaginatively named pprinter). Class
+ * pprint_dispatcher maintains four hash tables:
  *
- *   - capture (and check at compile-time) the contract a new pretty-print
- *     implementation will have to satisfy (rather than simply writing them
- *     down in documentation & finding out at runtime that the author forgot
- *     one
+ \code
+
+  typedef std::ostream&
+  (*tag_dispatch_type)(pprinter*, const scribbu::id3v2_tag&, std::ostream&);
+
+  typedef std::ostream&
+  (*frame_v22_dispatch_type)(pprinter*, const scribbu::id3v2_2_frame&, std::ostream&);
+
+  typedef std::ostream&
+  (*frame_v23_dispatch_type)(pprinter*, const scribbu::id3v2_3_frame&, std::ostream&);
+
+  typedef std::ostream&
+  (*frame_v24_dispatch_type)(pprinter*, const scribbu::id3v2_4_frame&, std::ostream&);
+
+  std::unordered_map<std::type_index, tag_dispatch_type> tags_;
+  std::unordered_map<std::type_index, frame_v22_dispatch_type> v22_frames_;
+  std::unordered_map<std::type_index, frame_v23_dispatch_type> v23_frames_;
+  std::unordered_map<std::type_index, frame_v24_dispatch_type> v24_frames_;
+
+ \endcode
  *
- * This preservese the attribute of satisfying the open/closed principal that
- * Visitor offered, while cutting in half the number of virtual function
- * invocations.
+ * \c tags_ maps id3v2_tag concrete sub-class types to pointers to trampoline
+ * functions (see \ref ref_01 "Alexandrescu") which dynamic cast their second
+ * parameters to the correct type, and invoke the virutal through their first
+ * parameter. So if I have an id3v2_tag that I want to pretty-print to an output
+ * stream, I just do this:
  *
+ \code
+
+ ostream& operator<<(ostream &os, const id3v2_tag &tag)
+ {
+    pprinter *pp = // get my pretty printer, somehow
+    const pprint_dispatcher &D = // ...
+    return D.tag_impl(typeid(tag))(pp, tag, os);
+  }
+
+ \endcode
+ *
+ * Similarly for the other three hash tables.
+ *
+ * There are no efficiency gains here, since the trampoline still needs to carry
+ * out a dynamic cast & a virtual function invocation (I suppose I've traded one
+ * virtual function invocation for a dynamic cast, but I see no clear
+ * advantage to that).  However, this approach accomplishes the following:
+ *
+ *   1. it preserves the \ref ref_03 "Open/Closed Principle", unlike my first,
+ *      naive implementation (but like both Visitor variants)
+ *
+ *   2. it breakes up the dependency cycle that Visitor entails
+ *
+ *   3. it captures (and checks at compile-time) the contract a new pretty-print
+ *      implementation will have to satisfy (rather than simply writing them
+ *      down in documentation & finding out at runtime that the author forgot
+ *      one, as in Acyclic Visitor)
+ *
+ *   4. basing the implementation on pprinter virtuals allows me to populate the
+ *      hash tables completely in-library, eliminating the need for any kind of
+ *      registration or "glue" code between new pretty-print implementations &
+ *      the extant framework
  *
  * \section scribbu_pprinter_refs References
  *
  * 1. \anchor scribbu_pprinter_ref_01 Unknown, cited 2015: Visitor pattern
- * [Available online at https://en.wikipedia.org/wiki/Visitor_pattern]
+ *    [Available online at https://en.wikipedia.org/wiki/Visitor_pattern]
  *
  * 2. \anchor scribbu_pprinter_ref_02 Robert C. Martin: Acyclic Visitor
- * [Available online at
- * http://condor.depaul.edu/dmumaugh/OOT/Design-Principles/acv.pdf]
+ *    [Available online at
+ *    http://condor.depaul.edu/dmumaugh/OOT/Design-Principles/acv.pdf]
+ *
+ * 3. \anchor scribbu_pprinter_ref_03 Erich Gamma, Richard Helm, Ralph
+ *    Johnson, John Vlissides, 1994: Design Patterns: Elements of Reusable
+ *    Object-Oriented Software, Addison Wesley, Boston.
  *
  *
  */
@@ -156,6 +217,7 @@
 
 namespace scribbu {
 
+  // All the things that can be pretty-printed
   class id3v2_tag;
   class id3v2_2_tag;
   class id3v2_3_tag;
@@ -189,6 +251,7 @@ namespace scribbu {
   class PCNT_2_4;
   class POPM_2_4;
 
+  /// The interface to which pretty-printers shall conform
   struct pprinter
   {
     virtual std::ostream&
@@ -252,6 +315,13 @@ namespace scribbu {
     { }
     virtual pprinter* clone() = 0;
 
+    static
+    std::tuple<scribbu::encoding, scribbu::on_no_encoding>
+    encoding_from_stream(std::ostream &os);
+
+    static
+    unsigned int
+    optional_to_uint(const boost::optional<bool> &x);
   };
 
   /**

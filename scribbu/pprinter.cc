@@ -1,7 +1,7 @@
 /**
  * \file pprinter.cc
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -909,4 +909,27 @@ std::ostream& scribbu::operator<<(std::ostream &os, const id3v2_4_frame &frame)
 {
   pprinter *pp = get_pretty_printer(os);
   return D.frame_v24_impl(typeid(frame))(pp, frame, os);
+}
+
+/*static*/
+std::tuple<scribbu::encoding, scribbu::on_no_encoding>
+scribbu::pprinter::encoding_from_stream(std::ostream &os)
+{
+  ienc e = ienc::retrieve(os);
+  scribbu::encoding enc = e.get_encoding();
+  if (!scribbu::char_traits<char>::is_code_unit(enc)) {
+    throw bad_code_unit(enc, 1);
+  }
+  return std::make_tuple(enc, e.get_on_no_encoding());
+}
+
+unsigned int
+scribbu::pprinter::optional_to_uint(const boost::optional<bool> &x)
+{
+  if (x) {
+    return *x ? 1 : 0;
+  }
+  else {
+    return ~0;
+  }
 }

@@ -1,31 +1,308 @@
-2018-12-28  Michael Herstine <s1pff@pobox.com>
+2019-01-06  Michael Herstine  <sp1ff@pobox.com>
 
-	* : Version 0.5
+	Initial commit of accessioning features.
+	This commit:
 
-	* : Now supported on MacOS using native toolchain
+	  0. updates all copyright statements &c for 2019
+
+	  1. updates all code & docs to release 0.5
+
+	  2. brings CSV pretty-printing in line with RFC 4180
+
+	  3. adds TDF and ASCII-delimited text pretty-printing
+
+	  4. adds the filename, directory & size to `report' output
+
+2018-12-28  Michael Herstine  <sp1ff@pobox.com>
+
+	Support scribbu on MacOS.
+	scribbu is now buulding on MacOS (Darwin 18.20.0) using clang (i.e.
+	the native toolchain; *not* GNU gcc).
+
+2018-12-07  Michael Herstine  <sp1ff@pobox.com>
+
+	Initial commit of scribbu 0.5.
+	This commit adds a few minor updates.
 
 2018-04-01  Michael Herstine  <sp1ff@pobox.com>
 
-	* : Version 0.4
+	Final 0.4 commit on the `find' feature branch.
+	This will be the final commit on the `find' feature branch. It
+	includes boilerplate updates, updates to NEWS, ChangeLog &c.
 
-	* : made ID3v2 tags mutable
+	Corrected the behavior of --help on a few sub-commands.
 
-	* : embedded Guile
+2018-03-28  Michael Herstine  <sp1ff@pobox.com>
 
-	* : added man pages & Texinfo manual
+	Documentation update.
+
+2018-03-24  Michael Herstine  <sp1ff@pobox.com>
+
+	Scheme support update.
+	Cleared out a number of TODOs in scheme.cc; revamped write-tag
+	& added replace-tags.
+
+	Also cleared out TODOs in the codebase altogether preparatory
+	to merging this branch.
+
+2018-03-17  Michael Herstine  <sp1ff@pobox.com>
+
+	Boilerplate update.
+	This commit looks large, but other than whitespace the changes are
+	all to comments/boilerplate. My first run of `bp.py' resulted in:
+
+	  - stripping trailing whitespace in all files
+
+	  - adding standard headers to nearly all project files
+
+	  - standardizing the version, author name & e-mail throughout
+	    configure.ac, documentation & file headers
+
+2018-03-17  Michael Herstine  <sp1ff@pobox.com>
+
+	Finally split up 'RockTheJoint'.
+	I used scribbu to cut up a large file I'd ripped from a stream;
+	this involved a number of changes:
+
+	1. adding a few external functions
+
+	2. modifying classes comment & user_defined_text to have ctors
+	   for use other than when deserializing
+
+	3. added a unit test for all this new logic
+
+	4. Fixed an error where Guile warning about source being newer
+	   than compiled would erroneously cause tests to be marked as
+	   failed.
+
+	5. Customized the welcome message when running the REPL.
+
+	6. Standardized boilerplate such as version & license terms.
+
+2018-01-21  Michael Herstine  <sp1ff@pobox.com>
+
+	Documentation updates & minor autoconf changes.
+	Moved man pages to `doc' sub-directory; added Info, as well (skeletal).
+	Changed the Guile macros I use in `configure.ac' while trying
+	(unsuccessfully) to get scribbu to build on MacOS.
+
+2018-01-18  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix parsing ID3v2.4 tags with extended headers.
+	Audacity exports tracks with ID3v2.4 tags containing extended
+	headers. Since this is the first example I've come across of
+	this particular ID3v2 tag, it was the first time I was able to
+	exercise that code path in scribbu. Unsurprisingly, there were
+	mutliple issues. This commit fixes them.
+
+2018-01-15  Michael Herstine  <sp1ff@pobox.com>
+
+	Improve scribbu documentation preparatory to an update.
+	This commit includes several improvements to scribbu's documentation:
+
+	1. man pages for scribbu and all sub-commands
+
+2018-01-01  Michael Herstine  <sp1ff@pobox.com>
+
+	Corrected some assumptions regarding endianness & sizeof(size_t).
+
+2017-12-29  Michael Herstine  <sp1ff@pobox.com>
+
+	`test-cleanup-encoded-by' passing.
+	Now scripting scribbu from Scheme to update tags!
+
+2017-12-28  Michael Herstine  <sp1ff@pobox.com>
+
+	Mutability complete.
+	Re-implemented serialization. Tests for compression & unsynchronisation
+	added. Unit tests passing. `make distcheck' passes.
+
+2017-12-25  Michael Herstine  <sp1ff@pobox.com>
+
+	Miscellaneous bug fixes.
+
+2017-12-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Yet more ID3v2 mutability.
+	This commit completely revamps ID3v2.{2,3,4} size computation,
+	serialization & unsynchronisation. Honestly, it's been so long since
+	I've committed that I've forgotten everything that went into this
+	commit.
+
+	There is more work to be done on adding mutability, but the unit
+	test suite, at least, passes.
+
+2017-08-24  Michael Herstine  <sp1ff@pobox.com>
+
+	More ID3v2 mutability.
+	This commit completes my first use case for tag mutability-- I can
+	now, in Scheme, walk a directory of tagged files, find those with
+	an ID3v1 comment of 'Ripped by Winamp...' and update the encoded-by
+	ID3v2 frame.
+
+	It is also my first commit integrating Guile into my autotools
+	setup.
+
+	There is still more work to be done, esp. in implementing mutability
+	in all ID3v2 tags.
+
+2017-08-02  Michael Herstine  <sp1ff@pobox.com>
+
+	Making ID3v2 tags mutable.
+	This commit marks the successful completion of what began as an
+	experiment to make id3v2_2_tag mutable, primarily through a
+	container-liker interface to its frames. I say container-like because
+	its mutable iterator dereferences to a proxy object (like bit_vector)
+	that can handle assignments & moves while keeping the tag's ancillary
+	datastructures consistent.
+
+	After this commit, I will merge this branch back into the 'find'
+	feature branch, extend mutability to the other tags & resume implementing
+	Scheme support for editing tags.
+
+2017-07-22  Michael Herstine  <sp1ff@pobox.com>
+
+	Mutable tags work-in-progress.
+	This is an intermediate check-in for my work on making ID3v2 tags
+	mutable. It contains:
+
+	    1. A first, very crude implementation of mutable iterators for
+		   ID3v2.2 tags
+
+	    2. Skeletal implementations for new size(), needs_unsync() &
+		   serialization support.
+
+	    3. Working unit tests.
+
+2017-07-04  Michael Herstine  <sp1ff@pobox.com>
+
+	First implementations of foreign types & functions.
+	This commit contains my first, tentative, foreign functions & types
+	in Guile. I'm committing preparatory to pulling an experimental branch
+	for modifying tags (as opposed from simply reading them, as scribbu
+	has done until now).
+
+2017-06-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Integrated with Guile.
+	This commit integrates Guile into scribbu. Running just 'scribbu'
+	will start up the Scheme interpreter. 'scribbu -e' & 'scribbu -f'
+	invokes stub functions.
+
+2017-06-08  Michael Herstine  <sp1ff@pobox.com>
+
+	Update compiler & Vagrant box.
+	This commit upgrades the Vagrant box to Ubuntu 16, g++ to
+	version 6, and boost to version 1.61. This involved a lot of
+	code tweaks, especially around operator<< & operator>>.
+
+2017-06-07  Michael Herstine  <sp1ff@pobox.com>
+
+	Minor housekeeping.
+	Moved README :=> README.md, added autogen.sh.
 
 2017-06-02  Michael Herstine  <sp1ff@pobox.com>
 
-	* : Version 0.2
+	Pre-merge commit.
+	Updated README, NEWS & ChangeLog. Turned off automatic core dumps.
+	Ready to merge.
 
-	* : Added a new sub-command 'dump'
+2017-06-01  Michael Herstine  <sp1ff@pobox.com>
 
-	* : Repaired 'make distcheck'
+	Doc updates.
+	(Very) minor updates to scribbu documentation.
 
-2016-06-11  Michael Herstine  <sp1ff@pobox.com>
+2017-05-29  Michael Herstine  <sp1ff@pobox.com>
 
-	* : First commit
+	More testing...
+	This commit adds more unit tests; especially some lifted
+	from the taglib test suite.
 
-2015-06-13  Michael Herstine <sp1ff@pobox.com>
+2017-05-27  Michael Herstine  <sp1ff@pobox.com>
 
-	* : Initial project setup
+	Added unit tests.
+	Small commit adding a few more unit tests.
+
+2017-05-26  Michael Herstine  <sp1ff@pobox.com>
+
+	Continued test improvement.
+	Added tests, fixed:
+
+	    1. multiple ID3v2 tags in a file
+	    2. corrupt/incorrectly written ID3v2 tag
+	    3. multiple bugs in the 'dump' sub-command
+	    4. POPM bug-- had ID PCNT
+
+2017-05-24  Michael Herstine  <sp1ff@pobox.com>
+
+	More code cleanup.
+	This commit does two things:
+
+	    1. Cleared up most of the TODO comments (exceptions & test-
+	       related stuff excepted)
+	    2. Fixed bugs in reading track data & ID3v1 tags where the
+	       stream state wasn't being checked.
+
+2017-05-23  sp1ff  <sp1ff@pobox.com>
+
+	Ongoing improvements to the 'dump' branch.
+	This commit does a few things:
+
+	    1. Improves the 'dump' sub-command to handle directory trees
+
+	    2. Fixes a few bugs I found trying to dump my entire .mp3 collection
+
+	    3. Finished implementing the pretty printer
+
+	    4. Cleaned up a slew of "TODO" comments throughout the codebase
+
+	Unfortunately, I'm on battery in a plane over the middle of the Pacific
+	ocean right now, so I'm committing without going through my entire
+	C/L. Specifically, I didn't run 'make distcheck' & I didn't generate
+	docs (I *did* run 'make check').
+
+2017-05-21  sp1ff  <sp1ff@pobox.com>
+
+	Fixed a few bugs & added doxygen.
+	This commit fixes a few bugs that came up:
+
+	    1. Permitted multiple copies of text frames in ID3v2 tags
+
+	    2. Trimmed trailing spaces in convert_encoding
+
+	It also adds doxygen support to my autotools configuration.
+
+2017-05-19  sp1ff  <sp1ff@pobox.com>
+
+	Committing the 'dump' sub-command.
+	This commit adds the 'dump' sub-command, which turned out to be
+	considerably more complex than I'd anticipated. There are still a
+	lot of "TODO" comments in the code, and the code base needs to be
+	more thoroughly tested overall.
+
+2017-04-16  Michael Herstine  <sp1ff@pobox.com>
+
+	Tweak the sub-command structure & get 'distcheck' working.
+	This commit does two things:
+
+	1. Replaced the 'command' enum with a static auto-register approach,
+	which allowed me to remove some code.
+
+	2. Got "make distcheck" working; I had to:
+
+	  a) use BUILT_SOURCES to tell automake that the lexer header file
+	     was required & tell it how to make it
+	  b) include all my test data in the distribution tarball
+	  c) rename several files therein to remove spaces, which automake
+	     can't handle
+
+2016-06-12  Michael Herstine  <mgh@Saramac.local>
+
+	Merge branch 'master' of github.com:sp1ff/scribbu
+	Initial fetch of project prior to my initial push.
+
+	Initial commit
+
+2016-03-07  sp1ff  <sp1ff@pobox.com>
+
+	Initial commit

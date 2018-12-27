@@ -1,7 +1,7 @@
 /**
  * \file scribbu.hh
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -46,11 +46,14 @@
  *
  * \section scribbu_references References
  *
- *  1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design. Addison-Wesley, 
- *     323pp.
+ * 1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design.
+ *   Addison-Wesley, Boston.
  *
- *  2. \anchor ref_02 Langer, Angelika and Kreft, Klaus, 1999: Standard C++ IOStrems and
- *     Locales. Addison-Wesley, 640pp.
+ * 2. \anchor ref_02 Langer, Angelika and Kreft, Klaus, 1999: Standard C++
+ *    IOStrems and Locales. Addison-Wesley, Boston.
+ *
+ * 3. \anchor ref_03 Meyer, Bertrand, 1997: Object Oriented Software
+ *    Construction, Prentice Hall.
  *
  *
  */

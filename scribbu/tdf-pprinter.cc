@@ -1,7 +1,7 @@
 /**
- * \file csv-pprinter.cc
+ * \file tdf-pprinter.hh
  *
- * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -21,7 +21,7 @@
  *
  */
 
-#include "csv-pprinter.hh"
+#include "tdf-pprinter.hh"
 
 #include "ostream.hh"
 #include "id3v1.hh"
@@ -31,56 +31,22 @@
 
 /*static*/
 const boost::optional<scribbu::encoding>
-scribbu::csv_pprinter::DEFAULT_V1ENC = boost::none;
+scribbu::tdf_pprinter::DEFAULT_V1ENC = boost::none;
 
 /*static*/
 const boost::optional<scribbu::encoding>
-scribbu::csv_pprinter::DEFAULT_V2ENC = boost::none;
+scribbu::tdf_pprinter::DEFAULT_V2ENC = boost::none;
 
-/*static*/ std::string
-scribbu::csv_pprinter::escape(const std::string &s, char sep, char esc /*= '"'*/)
-{
-  const char NEEDS_ESC[] = { sep, '\n', 0 };
-  std::size_t comma = s.find_first_of(NEEDS_ESC);
-  if (std::string::npos == comma) {
-    return s;
-  }
-
-  std::string r(1, esc);
-  for (std::size_t i = 0, n = s.length(); i < n; ) {
-    std::size_t dquote = s.find(esc, i);
-    r.append(s.substr(i, dquote - i));
-    if (std::string::npos == dquote) {
-      break;
-    }
-    r += esc; r += esc;
-    i = dquote + 1;
-  }
-
-  r += esc;
-
-  return r;
-
-}
-
-scribbu::csv_pprinter::csv_pprinter(
+scribbu::tdf_pprinter::tdf_pprinter(
   std::size_t                      ncomm /*= DEFAULT_NCOMMENTS*/,
   const boost::optional<encoding> &v1enc /*= DEFAULT_V1ENC    */,
   const boost::optional<encoding> &v2enc /*= DEFAULT_V2ENC    */,
-  char                             sep   /*= DEFAULT_SEP      */):
-  ncomm_(ncomm), v1enc_(v1enc), v2enc_(v2enc), sep_(sep)
-{
-  if (sep_ != 0x09 &&
-      (sep_ < 0x21 || sep_ > 0x2F) &&
-      (sep_ < 0x3A || sep_ > 0x40) &&
-      (sep_ < 0x5B || sep_ > 0x60) &&
-      (sep_ < 0x7B || sep_ > 0x7E)) {
-    throw bad_separator(sep_);
-  }
-}
+  bool                             ascii /*= DEFAULT_USE_ASCII*/):
+  ncomm_(ncomm), v1enc_(v1enc), v2enc_(v2enc), sep_(ascii ? 0x1f : 0x09)
+{ }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_v2_2_tag(const id3v2_2_tag &tag,
+scribbu::tdf_pprinter::pprint_v2_2_tag(const id3v2_2_tag &tag,
                                        std::ostream &os)
 {
   using namespace std;
@@ -121,7 +87,7 @@ scribbu::csv_pprinter::pprint_v2_2_tag(const id3v2_2_tag &tag,
   tag.get_comments(back_inserter(comments));
   for (size_t i = 0; i < ncomm_; ++i) {
     if (i < comments.size()) {
-      os << escape(comments[i].text<string>(dst, rsp, v2enc_), sep_, ESC);
+      os << comments[i].text<string>(dst, rsp, v2enc_);
     }
     if (i != ncomm_ - 1) {
       os << sep_;
@@ -132,7 +98,7 @@ scribbu::csv_pprinter::pprint_v2_2_tag(const id3v2_2_tag &tag,
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_v2_3_tag(const id3v2_3_tag &tag,
+scribbu::tdf_pprinter::pprint_v2_3_tag(const id3v2_3_tag &tag,
                                        std::ostream &os)
 {
   using namespace std;
@@ -173,7 +139,7 @@ scribbu::csv_pprinter::pprint_v2_3_tag(const id3v2_3_tag &tag,
   tag.get_comments(back_inserter(comments));
   for (size_t i = 0; i < ncomm_; ++i) {
     if (i < comments.size()) {
-      os << escape(comments[i].text<string>(dst, rsp, v2enc_), sep_, ESC);
+      os << comments[i].text<string>(dst, rsp, v2enc_);
     }
     if (i != ncomm_ - 1) {
       os << sep_;
@@ -184,7 +150,7 @@ scribbu::csv_pprinter::pprint_v2_3_tag(const id3v2_3_tag &tag,
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_v2_4_tag(const id3v2_4_tag &tag,
+scribbu::tdf_pprinter::pprint_v2_4_tag(const id3v2_4_tag &tag,
                                        std::ostream &os)
 {
   using namespace std;
@@ -225,7 +191,7 @@ scribbu::csv_pprinter::pprint_v2_4_tag(const id3v2_4_tag &tag,
   tag.get_comments(back_inserter(comments));
   for (size_t i = 0; i < ncomm_; ++i) {
     if (i < comments.size()) {
-      os << escape(comments[i].text<string>(dst, rsp, v2enc_), sep_, ESC);
+      os << comments[i].text<string>(dst, rsp, v2enc_);
     }
     if (i != ncomm_ - 1) {
       os << sep_;
@@ -236,7 +202,7 @@ scribbu::csv_pprinter::pprint_v2_4_tag(const id3v2_4_tag &tag,
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_track_data(const track_data &data,
+scribbu::tdf_pprinter::pprint_track_data(const track_data &data,
                                          std::ostream &os)
 {
   using namespace std;
@@ -254,7 +220,7 @@ scribbu::csv_pprinter::pprint_track_data(const track_data &data,
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_v1_tag(const id3v1_tag &tag, std::ostream &os)
+scribbu::tdf_pprinter::pprint_v1_tag(const id3v1_tag &tag, std::ostream &os)
 {
   using namespace std;
 
@@ -263,25 +229,25 @@ scribbu::csv_pprinter::pprint_v1_tag(const id3v1_tag &tag, std::ostream &os)
   tie(dst, rsp) = encoding_from_stream(os);
 
   os << tag.v1_1() << sep_ << tag.extended() << sep_ <<
-    escape(tag.artist<string>(v1enc_, dst, rsp), sep_, ESC) << sep_ <<
-    escape(tag.title<string>(v1enc_, dst, rsp), sep_, ESC) << sep_ <<
-    escape(tag.album<string>(v1enc_, dst, rsp), sep_, ESC) << sep_ <<
-    escape(tag.year<string>(v1enc_, dst, rsp), sep_, ESC) << sep_ <<
-    escape(tag.comment<string>(v1enc_, dst, rsp), sep_, ESC) << sep_ <<
+    tag.artist<string>(v1enc_, dst, rsp) << sep_ <<
+    tag.title<string>(v1enc_, dst, rsp) << sep_ <<
+    tag.album<string>(v1enc_, dst, rsp) << sep_ <<
+    tag.year<string>(v1enc_, dst, rsp) << sep_ <<
+    tag.comment<string>(v1enc_, dst, rsp) << sep_ <<
     dec << (unsigned)tag.genre();
 
   return os;
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_unk_id3v2_2_frame(const unknown_id3v2_2_frame &f,
+scribbu::tdf_pprinter::pprint_unk_id3v2_2_frame(const unknown_id3v2_2_frame &f,
                                                 std::ostream &os)
 {
   return os << f.id();
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_id3v2_2_text_frame(
+scribbu::tdf_pprinter::pprint_id3v2_2_text_frame(
   const id3v2_2_text_frame &frame,
   std::ostream &os)
 {
@@ -289,11 +255,11 @@ scribbu::csv_pprinter::pprint_id3v2_2_text_frame(
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
 
-  return os << escape(frame.as_str<std::string>(dst, rsp, v2enc_), sep_, ESC);
+  return os << frame.as_str<std::string>(dst, rsp, v2enc_);
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
 {
   using namespace std;
 
@@ -306,7 +272,7 @@ scribbu::csv_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
     src = *v2enc_;
   }
 
-  os << escape(f.owner<string>(dst, rsp, src)) << sep_;
+  os << f.owner<string>(dst, rsp, src) << sep_;
 
   vector<unsigned char> buf;
   f.idb(back_inserter(buf));
@@ -318,17 +284,17 @@ scribbu::csv_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_TXX(const TXX &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_TXX(const TXX &f, std::ostream &os)
 {
   using std::string;
 
   string dsc = f.description<string>();
   string txt = f.text<string>();
-  return os << (unsigned)f.unicode() << sep_ << escape(dsc) << sep_ << escape(txt);
+  return os << (unsigned)f.unicode() << sep_ << dsc << sep_ << txt;
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_COM(const COM &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_COM(const COM &f, std::ostream &os)
 {
   using namespace std;
 
@@ -340,18 +306,18 @@ scribbu::csv_pprinter::pprint_COM(const COM &f, std::ostream &os)
   f.lang(lang);
 
   return os << lang[0] << lang[1] << lang[2] << sep_ <<
-    escape(f.description<string>(dst, rsp, v2enc_)) << sep_ <<
-    escape(f.text<string>(dst, rsp, v2enc_));
+    f.description<string>(dst, rsp, v2enc_) << sep_ <<
+    f.text<string>(dst, rsp, v2enc_);
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_CNT(const CNT &f, std::ostream&os)
+scribbu::tdf_pprinter::pprint_CNT(const CNT &f, std::ostream&os)
 {
   return os << (unsigned) f.count();
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_POP(const POP &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_POP(const POP &f, std::ostream &os)
 {
   using namespace std;
 
@@ -363,7 +329,7 @@ scribbu::csv_pprinter::pprint_POP(const POP &f, std::ostream &os)
   if (v2enc_) {
     src = *v2enc_;
   }
-  os << escape(f.email<string>(dst, rsp, src)) << sep_ <<
+  os << f.email<string>(dst, rsp, src) << sep_ <<
     dec << (unsigned)f.rating() << sep_;
 
   vector<unsigned char> counter;
@@ -378,13 +344,13 @@ scribbu::csv_pprinter::pprint_POP(const POP &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_unk_id3v2_3_frame(const unknown_id3v2_3_frame &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_unk_id3v2_3_frame(const unknown_id3v2_3_frame &f, std::ostream &os)
 {
   return os << f.id();
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_id3v2_3_text_frame(
+scribbu::tdf_pprinter::pprint_id3v2_3_text_frame(
   const id3v2_3_text_frame &frame,
   std::ostream &os)
 {
@@ -392,11 +358,11 @@ scribbu::csv_pprinter::pprint_id3v2_3_text_frame(
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
 
-  return os << escape(frame.as_str<std::string>(dst, rsp, v2enc_), sep_, ESC);
+  return os << frame.as_str<std::string>(dst, rsp, v2enc_);
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
 {
   using namespace std;
 
@@ -409,7 +375,7 @@ scribbu::csv_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
     src = *v2enc_;
   }
 
-  os << escape(f.owner<string>(dst, rsp, src)) << sep_;
+  os << f.owner<string>(dst, rsp, src) << sep_;
 
   vector<unsigned char> buf;
   f.idb(back_inserter(buf));
@@ -421,7 +387,7 @@ scribbu::csv_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_ENCR(const ENCR &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_ENCR(const ENCR &f, std::ostream &os)
 {
   using namespace std;
 
@@ -437,7 +403,7 @@ scribbu::csv_pprinter::pprint_ENCR(const ENCR &f, std::ostream &os)
   vector<unsigned char> buf;
   f.datab(back_inserter(buf));
 
-  os << escape(f.email<string>(dst, rsp, src)) << sep_ <<
+  os << f.email<string>(dst, rsp, src) << sep_ <<
     (unsigned) f.method_symbol() << sep_ << "0x";
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
@@ -447,17 +413,17 @@ scribbu::csv_pprinter::pprint_ENCR(const ENCR &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_TXXX(const TXXX &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_TXXX(const TXXX &f, std::ostream &os)
 {
   using std::string;
 
   string dsc = f.description<string>();
   string txt = f.text<string>();
-  return os << (unsigned)f.unicode() << sep_ << escape(dsc) << sep_ << escape(txt);
+  return os << (unsigned)f.unicode() << sep_ << dsc << sep_ << txt;
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_COMM(const COMM &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_COMM(const COMM &f, std::ostream &os)
 {
   using namespace std;
 
@@ -469,18 +435,18 @@ scribbu::csv_pprinter::pprint_COMM(const COMM &f, std::ostream &os)
   f.lang(lang);
 
   return os << lang[0] << lang[1] << lang[2] << sep_ <<
-    escape(f.description<string>(dst, rsp, v2enc_)) << sep_ <<
-    escape(f.text<string>(dst, rsp, v2enc_));
+    f.description<string>(dst, rsp, v2enc_) << sep_ <<
+    f.text<string>(dst, rsp, v2enc_);
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_PCNT(const PCNT &f, std::ostream&os)
+scribbu::tdf_pprinter::pprint_PCNT(const PCNT &f, std::ostream&os)
 {
   return os << (unsigned) f.count();
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_POPM(const POPM &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_POPM(const POPM &f, std::ostream &os)
 {
   using namespace std;
 
@@ -493,7 +459,7 @@ scribbu::csv_pprinter::pprint_POPM(const POPM &f, std::ostream &os)
     src = *v2enc_;
   }
 
-  os << escape(f.email<string>(dst, rsp, src)) << sep_ <<
+  os << f.email<string>(dst, rsp, src) << sep_ <<
     dec << (unsigned)f.rating() << sep_;
 
   vector<unsigned char> counter;
@@ -508,14 +474,14 @@ scribbu::csv_pprinter::pprint_POPM(const POPM &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame &f,
+scribbu::tdf_pprinter::pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame &f,
                                                 std::ostream &os)
 {
   return os << f.id();
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_id3v2_4_text_frame(
+scribbu::tdf_pprinter::pprint_id3v2_4_text_frame(
   const id3v2_4_text_frame &frame,
   std::ostream &os)
 {
@@ -523,11 +489,11 @@ scribbu::csv_pprinter::pprint_id3v2_4_text_frame(
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
 
-  return os << escape(frame.as_str<std::string>(dst, rsp, v2enc_), sep_, ESC);
+  return os << frame.as_str<std::string>(dst, rsp, v2enc_);
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
 {
   using namespace std;
 
@@ -540,7 +506,7 @@ scribbu::csv_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
     src = *v2enc_;
   }
 
-  os << escape(f.owner<string>(dst, rsp, src)) << sep_;
+  os << f.owner<string>(dst, rsp, src) << sep_;
 
   vector<unsigned char> buf;
   f.idb(back_inserter(buf));
@@ -552,7 +518,7 @@ scribbu::csv_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_ENCR_2_4(const ENCR_2_4 &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_ENCR_2_4(const ENCR_2_4 &f, std::ostream &os)
 {
   using namespace std;
 
@@ -568,7 +534,7 @@ scribbu::csv_pprinter::pprint_ENCR_2_4(const ENCR_2_4 &f, std::ostream &os)
   vector<unsigned char> buf;
   f.datab(back_inserter(buf));
 
-  os << escape(f.email<string>(dst, rsp, src)) << sep_ <<
+  os << f.email<string>(dst, rsp, src) << sep_ <<
     (unsigned) f.method_symbol() << sep_ << "0x";
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
@@ -578,18 +544,18 @@ scribbu::csv_pprinter::pprint_ENCR_2_4(const ENCR_2_4 &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_TXXX_2_4(const TXXX_2_4 &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_TXXX_2_4(const TXXX_2_4 &f, std::ostream &os)
 {
   using std::string;
 
   string dsc = f.description<string>();
   string txt = f.text<string>();
-  return os << (unsigned)f.unicode() << sep_ << escape(dsc) << sep_ << escape(txt);
+  return os << (unsigned)f.unicode() << sep_ << dsc << sep_ << txt;
   return os;
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_COMM_2_4(const COMM_2_4 &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_COMM_2_4(const COMM_2_4 &f, std::ostream &os)
 {
   using namespace std;
 
@@ -601,18 +567,18 @@ scribbu::csv_pprinter::pprint_COMM_2_4(const COMM_2_4 &f, std::ostream &os)
   f.lang(lang);
 
   return os << lang[0] << lang[1] << lang[2] << sep_ <<
-    escape(f.description<string>(dst, rsp, v2enc_)) << sep_ <<
-    escape(f.text<string>(dst, rsp, v2enc_));
+    f.description<string>(dst, rsp, v2enc_) << sep_ <<
+    f.text<string>(dst, rsp, v2enc_);
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_PCNT_2_4(const PCNT_2_4 &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_PCNT_2_4(const PCNT_2_4 &f, std::ostream &os)
 {
   return os << (unsigned) f.count();
 }
 
 /*virtual*/ std::ostream&
-scribbu::csv_pprinter::pprint_POPM_2_4(const POPM_2_4 &f, std::ostream &os)
+scribbu::tdf_pprinter::pprint_POPM_2_4(const POPM_2_4 &f, std::ostream &os)
 {
   using namespace std;
 
@@ -625,7 +591,7 @@ scribbu::csv_pprinter::pprint_POPM_2_4(const POPM_2_4 &f, std::ostream &os)
     src = *v2enc_;
   }
 
-  os << escape(f.email<string>(dst, rsp, src)) << sep_ <<
+  os << f.email<string>(dst, rsp, src) << sep_ <<
     dec << (unsigned)f.rating() << sep_;
 
   vector<unsigned char> counter;

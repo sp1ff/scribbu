@@ -1,7 +1,7 @@
 /**
  * \file charsets.cc
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -1064,7 +1064,7 @@ scribbu::language_to_iso_639_2(language lang, unsigned char code[3])
   if (language::from_locale == lang) {
     lang = language_from_locale();
   }
-  
+
   switch (lang) {
 #   define G(x) code[0]=x[0];code[1]=x[1];code[2]=x[2]
 #   define F(x) \

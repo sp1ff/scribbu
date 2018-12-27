@@ -1,7 +1,7 @@
 /**
  * \file report.cc
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -25,6 +25,7 @@
 #include "command-utilities.hh"
 
 #include <scribbu/csv-pprinter.hh>
+#include <scribbu/tdf-pprinter.hh>
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/id3v2.hh>
@@ -40,67 +41,89 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 
-const std::string USAGE(R"(scribbu report -- generate a report
+const std::string USAGE(R"(scribbu report -- generate a report on one or more
+ID3-tagged files
 
 scribbu report [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
-Generate a report on one or more files. The idea is to have scribbu generate
-the data & export it to some other format more convenient for querying &
-reporting.
+Where OPTION is:
 
-Only CSV output is currently supported.
+    -c, --num-comments=INT: maximum # of comments to report
+    -o, --output=FILE:      output file name
+    -t, --tsv-format:       select tab-separated values as the output format
+    -1, --v1-encoding=ENC:  character encoding to be assumed for ID3v1 fields
+    -a, --ascii-delimited:  used with TDF (tab-delimited format) to produce
+                            ASCII-delimited text (ASCII 0x31 instead of TABs)
+
+Generate a report on one or more ID3-tagged files. Only comma-separated value
+or tab-separated value formats are supported, on the assumption that scribbu's
+output will be exported to some other tool more convenient for querying &
+reporting.
 
 For detailed help, say `scribbu report --help'. To see the manual, say
 `info "scribbu (report) "'.
 )");
 
-
 ////////////////////////////////////////////////////////////////////////////////
+//                            A thing that reports                            //
+////////////////////////////////////////////////////////////////////////////////
+
 struct reporter {
-
-  virtual
-  void
-  make_entry(const scribbu::file_info &fi,
+  virtual void
+  make_entry(const scribbu::file_info                  &fi,
              const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
-             const scribbu::track_data &info,
+             const scribbu::track_data                 &info,
              const std::unique_ptr<scribbu::id3v1_tag> &pid3v1) = 0;
-
 };
 
+////////////////////////////////////////////////////////////////////////////////
+//                          reporting in CSV format                           //
+////////////////////////////////////////////////////////////////////////////////
+
+/// A thing that reports in CSV format
 class csv_reporter: public reporter {
 
 public:
-
-  csv_reporter(const fs::path &output,
-               std::size_t ncomm,
-               scribbu::encoding v1enc);
-
-  virtual void make_entry(const scribbu::file_info &fi,
+  csv_reporter(const fs::path   &output,
+               std::size_t       ncomm,
+               scribbu::encoding v1enc,
+               bool              no_dir);
+  virtual void make_entry(const scribbu::file_info                  &fi,
                           const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
-                          const scribbu::track_data &info,
+                          const scribbu::track_data                 &info,
                           const std::unique_ptr<scribbu::id3v1_tag> &pid3v1);
 
 private:
-
   static const std::string COMMA;
-
-  fs::ofstream ofs_;
-  std::size_t ncomm_;
+  fs::ofstream      ofs_;
+  std::size_t       ncomm_;
   scribbu::encoding v1enc_;
+  bool              no_dir_;
 
 };
 
 /*static*/ const std::string csv_reporter::COMMA(",");
 
-csv_reporter::csv_reporter(const fs::path &output,
-                           std::size_t ncomm,
-                           scribbu::encoding v1enc):
-  ofs_(output), ncomm_(ncomm), v1enc_(v1enc)
+csv_reporter::csv_reporter(const fs::path   &output,
+                           std::size_t       ncomm,
+                           scribbu::encoding v1enc,
+                           bool              no_dir):
+  ofs_(output), ncomm_(ncomm), v1enc_(v1enc), no_dir_(no_dir)
 {
   using namespace std;
   using namespace scribbu;
 
-  ofs_ << "ID3v2 version"             << COMMA <<
+  ////////////////////////////////////////////////////////////////////////////////
+  //                                 header row                                 //
+  ////////////////////////////////////////////////////////////////////////////////
+
+  if (!no_dir_) {
+    ofs_ << "directory" << COMMA;
+  }
+
+  ofs_ << "file"                      << COMMA <<
+          "file size(MB)"             << COMMA <<
+          "ID3v2 version"             << COMMA <<
           "ID3v2 revision"            << COMMA <<
           "ID3v2 size(bytes)"         << COMMA <<
           "ID3v2 flags"               << COMMA <<
@@ -130,8 +153,10 @@ csv_reporter::csv_reporter(const fs::path &output,
           "ID3v1 Album"        << COMMA <<
           "ID3v1 Year"         << COMMA <<
           "ID3v1 Comment"      << COMMA <<
-          "ID3v1 Genrre"       << COMMA << endl;
+          "ID3v1 Genrre"       << endl;
 
+  // Imbue our output stream with a manipulator that will cause all subsequently
+  // inserted tags &c to be printed in CSV format.
   ofs_ << print_as_csv(ncomm_, v1enc_);
 }
 
@@ -145,40 +170,175 @@ csv_reporter::make_entry(const scribbu::file_info                  &fi,
   using namespace std;
   using namespace scribbu;
 
+  const double ONE_MEG = 1048576;
+
+  if (!no_dir_) {
+    ofs_ << fi.parent() << COMMA;
+  }
+
+  double mb = double(fi.size()) / ONE_MEG;
+
+  ofs_ << fi.filename() << COMMA << setprecision(3) << fixed << mb << COMMA;
+
   if (pid3v2) {
     ofs_ << *pid3v2;
   }
   else {
-    ofs_ << ",,,,,,,,,,,,,,,";
+    ofs_ << ",,,,,,,,,,,,,,";
     ostream_iterator<char> oi(ofs_);
     fill_n(oi, ncomm_, ',');
   }
 
-  ofs_ << info;
+  ofs_ << "," << info << ",";
 
   if (pid3v1) {
     ofs_ << *pid3v1;
   }
   else {
-    ofs_ << ",,,,,,,,";
+    ofs_ << ",,,,,,,";
   }
 
   ofs_ << endl;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//                          reporting in TDF format                           //
+////////////////////////////////////////////////////////////////////////////////
+
+/// A thing that reports in TDF format
+class tdf_reporter: public reporter {
+
+public:
+  tdf_reporter(const fs::path   &output,
+               std::size_t       ncomm,
+               scribbu::encoding v1enc,
+               bool              no_dir,
+               bool              ascii);
+  virtual void make_entry(const scribbu::file_info                  &fi,
+                          const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
+                          const scribbu::track_data                 &info,
+                          const std::unique_ptr<scribbu::id3v1_tag> &pid3v1);
+
+private:
+  fs::ofstream      ofs_;
+  std::size_t       ncomm_;
+  scribbu::encoding v1enc_;
+  bool              no_dir_;
+  char              sep_;
+
+};
+
+tdf_reporter::tdf_reporter(const fs::path   &output,
+                           std::size_t       ncomm,
+                           scribbu::encoding v1enc,
+                           bool              no_dir,
+                           bool              ascii):
+  ofs_(output), ncomm_(ncomm), v1enc_(v1enc), no_dir_(no_dir),
+  sep_(ascii ? 0x1f : '\t')
+{
+  using namespace std;
+  using namespace scribbu;
+
+  ////////////////////////////////////////////////////////////////////////////////
+  //                                 header row                                 //
+  ////////////////////////////////////////////////////////////////////////////////
+
+  if (!no_dir_) {
+    ofs_ << "directory" << sep_;
+  }
+
+  ofs_ << "file"                      << sep_ <<
+          "file size(MB)"             << sep_ <<
+          "ID3v2 version"             << sep_ <<
+          "ID3v2 revision"            << sep_ <<
+          "ID3v2 size(bytes)"         << sep_ <<
+          "ID3v2 flags"               << sep_ <<
+          "ID3v2 unsync"              << sep_ <<
+          "ID3v2 Artist"              << sep_ <<
+          "ID3v2 Title"               << sep_ <<
+          "ID3v2 Album"               << sep_ <<
+          "ID3v2 Content Type"        << sep_ <<
+          "ID3v2 Encoded By"          << sep_ <<
+          "ID3v2 Year"                << sep_ <<
+          "ID3v2 Langauges"           << sep_ <<
+          "# ID3v2 play count frames" << sep_ <<
+          "Play Count"                << sep_ <<
+          "# ID3v2 comment frames";
+
+  for (std::size_t i = 0; i < ncomm_; ++i) {
+    ofs_ << sep_ << "comment #" << i << " text";
+  }
+
+  ofs_ <<                         sep_ <<
+          "size (bytes)"       << sep_ <<
+          "MD5"                << sep_ <<
+          "has ID3v1.1"        << sep_ <<
+          "has ID3v1 extended" << sep_ <<
+          "ID3v1 Artist"       << sep_ <<
+          "ID3v1 Title"        << sep_ <<
+          "ID3v1 Album"        << sep_ <<
+          "ID3v1 Year"         << sep_ <<
+          "ID3v1 Comment"      << sep_ <<
+          "ID3v1 Genrre"       << endl;
+
+  // Imbue our output stream with a manipulator that will cause all subsequently
+  // inserted tags &c to be printed in CSV format.
+  ofs_ << print_as_tdf(ncomm_, v1enc_, boost::none, ascii);
+}
+
+/*virtual*/
+void
+tdf_reporter::make_entry(const scribbu::file_info                  &fi,
+                         const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
+                         const scribbu::track_data                 &info,
+                         const std::unique_ptr<scribbu::id3v1_tag> &pid3v1)
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const double ONE_MEG = 1048576;
+
+  if (!no_dir_) {
+    ofs_ << fi.parent() << sep_;
+  }
+
+  double mb = double(fi.size()) / ONE_MEG;
+
+  ofs_ << fi.filename() << sep_ << setprecision(3) << fixed << mb << sep_;
+
+  if (pid3v2) {
+    ofs_ << *pid3v2;
+  }
+  else {
+    ostream_iterator<char> oi(ofs_);
+    fill_n(oi, 14 + ncomm_, sep_);
+  }
+
+  ofs_ << "sep_" << info << "sep_";
+
+  if (pid3v1) {
+    ofs_ << *pid3v1;
+  }
+  else {
+    ostream_iterator<char> oi(ofs_);
+    fill_n(oi, 7, sep_);
+  }
+
+  ofs_ << endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// A thing that knows how to report on a directory tree full of
+/// ID3v2-tagged files
 class reporting_strategy: public std::unary_function<void, fs::path> {
 
 public:
-
   void operator()(const fs::path &pth);
   virtual ~reporting_strategy()
   { }
 
 protected:
-
   virtual void process_file(const fs::path &pth) = 0;
   virtual void process_directory(const fs::path &pth) = 0;
 
@@ -198,23 +358,23 @@ void reporting_strategy::operator()(const fs::path &pth) {
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// A thing that reports on a directory tree full of ID3v2-tagged
+/// files sequentually
+////////////////////////////////////////////////////////////////////////////////
+
 class sequential_strategy: public reporting_strategy {
 
 public:
-
-  sequential_strategy(const std::shared_ptr<reporter> &pr):
-    _pr(pr)
+  sequential_strategy(const std::shared_ptr<reporter> &pr): _pr(pr)
   { }
 
 protected:
-
   virtual void process_file(const fs::path &pth);
   virtual void process_directory(const fs::path &pth);
 
 private:
-
   static const boost::regex REGEX;
-
   std::shared_ptr<reporter> _pr;
 
 };
@@ -303,11 +463,17 @@ namespace {
     opts.add_options()
       ("num-comments,c", po::value<size_t>()->default_value(6),
        "Number of comment tags to be printed (their # will always be reported")
-      ("output,o", po::value<fs::path>()->required(), ".csv file to which the "
+      ("output,o", po::value<fs::path>()->required(), "output file to which the "
        "results will be written")
+      ("tsv,t", po::bool_switch(), "select tab-separated values instead of "
+       "comma-separated values")
       ("v1-encoding,1", po::value<encoding>()->
        default_value(encoding::CP1252), "Encoding to be used for text "
-       "in ID3v1 tags.");
+       "in ID3v1 tags.")
+      ("no-directory,d", po::bool_switch(), "Do not output the directory column")
+      ("ascii-delimited,a", po::bool_switch(), "Produce ASCII-delimited text "
+       "instead of tab-delimited text (may be used only with --tdf");
+
 
     po::options_description xopts("hidden options");
     xopts.add_options()
@@ -400,13 +566,19 @@ namespace {
         // - the crawler will handle each file by processing it &
         //   sending the results to the reporter
 
-        // TOOD: Implement the multi-threaded option
+        // LATER(sp1ff): Implement the multi-threaded option
 
         size_t ncomm = vm["num-comments"].as<size_t>();
         fs::path out = vm["output"].as<fs::path>();
         encoding v1enc = vm["v1-encoding"].as<encoding>();
+        bool no_dir = vm["no-directory"].as<bool>();
+        bool tdf = vm["tsv"].as<bool>();
+        bool ascii = vm["ascii-delimited"].as<bool>();
 
-        std::shared_ptr<reporter> pr(new csv_reporter(out, ncomm, v1enc));
+        std::shared_ptr<reporter> pr(
+          tdf ?
+            (reporter*) new tdf_reporter(out, ncomm, v1enc, no_dir, ascii) :
+            (reporter*) new csv_reporter(out, ncomm, v1enc, no_dir));
 
         std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
 
@@ -430,5 +602,3 @@ namespace {
   register_command r("report", handle_report);
 
 }
-
-

@@ -1,14 +1,14 @@
-.\" Copyright (C) 2018 Michael Herstine <sp1ff@pobox.com>
+.\" Copyright (C) 2018-2019 Michael Herstine <sp1ff@pobox.com>
 .\" You may distribute this file under the terms of the GNU Free
 .\" Documentation License.
-.TH scribbu 1 2018-04-01 "scribbu 0.4" "scribbu Manual"
+.TH scribbu 1 2019-01-06 "scribbu 0.5" "scribbu Manual"
 .SH NAME
 scribbu-report \- generate a report on one or more files' ID3 tags
 .SH SYNOPSIS
 .B scribbu " [(-c|--config) config-file] " report " [-h] [--help] [--info]"
 .RS 8
 [(-c|--num-comments) arg] [(-o|--output) output] [(-1|--v1-encoding) arg]
-<file-or-directory> <file-or-directory...>
+[-t|--tsv-format [-a|--ascii-delimited]] <file-or-directory> <file-or-directory...>
 .RE
 
 .SH DESCRIPTION
@@ -18,7 +18,7 @@ assumed workflow is to have
 .B scribbu
 do the work of extracting ID3 data from the input files, and to use
 some other tool better suited to querying & reporting.  Consequently,
-filtering mechanisms are minimal, and the output format (CSV) is
+filtering mechanisms are minimal, and the output formats (CSV or TDF) are
 chosen to facilitate transformation to other formats as well as import
 by other tools.
 
@@ -38,6 +38,17 @@ reported). Defaults to six.
 \-1, \-\-v1\-encoding arg
 .RS 4
 Encoding to be used for text in ID3v1 tags (defaults to (CP1252).
+.RE
+.PP
+\-t, \-\-tsv\-format
+.RS 4
+Select tab-delimited format instead of comma-separated values (the default)
+.RE
+.PP
+\-a, \-\-ascii\-delimited
+.RS 4
+If using tab-delimited format, output ASCII-delimited text by using 0x1f
+(ASCII unit separator) to delimit fields rather than TABs.
 .RE
 
 .SH AUTHOR

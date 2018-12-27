@@ -1,7 +1,7 @@
 scribbu - The extensible tool for tagging your music collection
 ===============================================================
 
-This directory contains the 0.4 release of scribbu.
+This directory contains the 0.5 release of scribbu.
 
 See the file NEWS for the user-visible changes from previous releases.
 
@@ -221,4 +221,4 @@ Ports
 None.
 
 -------------------------------------------------------------------------------
-Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>

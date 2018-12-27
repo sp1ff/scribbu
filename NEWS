@@ -1,28 +1,31 @@
-scribbu News
+scribbu News -- history of user-visible changes -*- outline -*-
 
-CHANGES IN SCRIBBU 0.4
+* Changes in scribbu 0.5
 
-  SIGNIFICANT USER-VISIBLE CHANGES:
+** Bug Fixes
 
-    made ID3v2 tags mutable
+*** CSV pretty-printing is now RFC 4180-compliant
 
-  NEW FEATURES
+** New Features
 
-    embedded Guile
+*** scribbu now builds on MacOS using the native toolchain
 
-    added man pages & Texinfo manual
+*** `scribbu report' now offers {tab,ascii}-delimited output
 
-CHANGES IN SCRIBBU 0.2
+*** `scribbu report' now includes the filename, directory & overall size
 
-  SIGNIFICANT USER-VISIBLE CHANGES: 'dump' sub-command
+* Changes in scribbu 0.4
 
+** New Features
 
-CHANGES IN SCRIBBU 0.1
+*** made ID3v2 tags mutable
 
-  SIGNIFICANT USER-VISIBLE CHANGES: Initial commit
+*** embedded Guile
 
-  NEW FEATURES: 'rename', 'report' & 'split' commands
+*** added man pages & Texinfo manual
 
-  INSTALLATION and INCLUDED SOFTWARE: See INSTALL
+* Changes in scribbu 0.2
 
-  BUG FIXES: N/A
+** New Features
+
+*** 'dump' sub-command

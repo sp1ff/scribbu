@@ -1,7 +1,7 @@
 /**
  * \file framesv2.cc
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE( test_unique_file_id )
   id1.ownerb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
                                 outbuf.begin(), outbuf.end());
-    
+
   outbuf.erase(outbuf.begin(), outbuf.end());
   id1.idb(back_inserter(outbuf));
   const vector<unsigned char> ID = { 0x01, 0x02, 0x03, 0x04 };
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE( test_encryption_method )
   outbuf.erase(outbuf.begin(), outbuf.end());
   M2.datab(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // pathological case: no method symbol & no binary data
   //////////////////////////////////////////////////////////////////////////////
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE( test_encryption_method )
   outbuf.erase(outbuf.begin(), outbuf.end());
   M3.datab(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // pathological case: no trailing nul, no method symbol & no binary data
   //////////////////////////////////////////////////////////////////////////////
@@ -295,14 +295,14 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T1(id3v2_version::v3, B1.begin(), B1.end());
   BOOST_CHECK(0 == T1.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T1.descriptionb(back_inserter(outbuf));  
+  T1.descriptionb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T1.textb(back_inserter(outbuf));  
+  T1.textb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(VAL, VAL + NVAL,
                                 outbuf.begin(), outbuf.end());
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // happy case-- UCS2
   //////////////////////////////////////////////////////////////////////////////
@@ -316,14 +316,14 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T2(id3v2_version::v3, B2.begin(), B2.end());
   BOOST_CHECK(1 == T2.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T2.descriptionb(back_inserter(outbuf));  
+  T2.descriptionb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T2.textb(back_inserter(outbuf));  
+  T2.textb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(UVAL, UVAL + NUVAL,
                                 outbuf.begin(), outbuf.end());
-  
+
 
   //////////////////////////////////////////////////////////////////////////////
   // pathological case: ASCII, no value
@@ -337,13 +337,13 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T3(id3v2_version::v3, B3.begin(), B3.end());
   BOOST_CHECK(0 == T3.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T3.descriptionb(back_inserter(outbuf));  
+  T3.descriptionb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T3.textb(back_inserter(outbuf));  
+  T3.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // pathological case: ASCII, no trailing null, no value
   //////////////////////////////////////////////////////////////////////////////
@@ -356,11 +356,11 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T4(id3v2_version::v3, B4.begin(), B4.end());
   BOOST_CHECK(0 == T4.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T4.descriptionb(back_inserter(outbuf));  
+  T4.descriptionb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T4.textb(back_inserter(outbuf));  
+  T4.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
   //////////////////////////////////////////////////////////////////////////////
@@ -374,12 +374,12 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T5(id3v2_version::v3, B5.begin(), B5.end());
   BOOST_CHECK(0 == T5.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T5.descriptionb(back_inserter(outbuf));  
+  T5.descriptionb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T5.textb(back_inserter(outbuf));  
+  T5.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // pathological case: UCS-2, no value
   //////////////////////////////////////////////////////////////////////////////
@@ -392,11 +392,11 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T6(id3v2_version::v3, B6.begin(), B6.end());
   BOOST_CHECK(1 == T6.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T6.descriptionb(back_inserter(outbuf));  
+  T6.descriptionb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T6.textb(back_inserter(outbuf));  
+  T6.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
   //////////////////////////////////////////////////////////////////////////////
@@ -411,11 +411,11 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T7(id3v2_version::v3, B7.begin(), B7.end());
   BOOST_CHECK(1 == T7.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T7.descriptionb(back_inserter(outbuf));  
+  T7.descriptionb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(UDSC, UDSC + NUDSC,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T7.textb(back_inserter(outbuf));  
+  T7.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
   //////////////////////////////////////////////////////////////////////////////
@@ -429,10 +429,10 @@ BOOST_AUTO_TEST_CASE( test_user_defined_text )
   user_defined_text T8(id3v2_version::v3, B8.begin(), B8.end());
   BOOST_CHECK(1 == T8.unicode());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T8.descriptionb(back_inserter(outbuf));  
+  T8.descriptionb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  T8.textb(back_inserter(outbuf));  
+  T8.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
 } // End test_user_defined_text.
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
   C1.textb(back_inserter(outbuf));
   BOOST_CHECK_EQUAL_COLLECTIONS(VAL, VAL + NVAL,
                                 outbuf.begin(), outbuf.end());
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // happy case-- UCS2
   //////////////////////////////////////////////////////////////////////////////
@@ -654,7 +654,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
   //////////////////////////////////////////////////////////////////////////////
   // pathological case: UCS-2, no text, no description, partial language
   //////////////////////////////////////////////////////////////////////////////
-  
+
   vector<unsigned char> B10 =
     { 0x01, // UCS-2
       0x65, 0x6e, // eng

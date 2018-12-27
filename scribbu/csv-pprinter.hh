@@ -1,7 +1,7 @@
 /**
  * \file csv-pprinter.hh
  *
- * Copyright (C) 2015-2018 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -28,6 +28,90 @@
 
 namespace scribbu {
 
+  /**
+   * \class csv_pprinter
+   *
+   * \brief A pretty-printer that produces comma-separated values
+   *
+   *
+   * csv_pprinter is a pprinter implementation that produces output that
+   * attempts to comply with \ref csv_pprinter_ref_1 "RFC 4180". I say
+   * "attempts" due to the fact that CSV has not been standardized (see \ref
+   * csv_pprinter_ref_2 "[2]" or below for for some of the problems).
+   *
+   *
+   * More specifically, this implementation shall produce output according
+   * to the grammar:
+   *
+   \code
+
+   record = field *(SEPARATOR field)
+
+   field = (escaped|non-escaped)
+
+   escaped = ESCAPE *(TEXTDATA | SEPARATOR | CR | LF | 2ESCAPE) ESCAPE
+
+   non-escaped = *TEXTDATA
+
+   CR = 0x0D ;as per section 6.1 of RFC 2234 [2]
+
+   LF = 0x0A ;as per section 6.1 of RFC 2234 [2]
+
+   CRLF = CR LF ;as per section 6.1 of RFC 2234 [2]
+
+   TEXTDATA = (0x09|0x20|0x21|0x23-0xFF) - {SEPARATOR}
+
+   SEPARATOR = (0x09|0x21-0x2F|0x5B-0x60|0x7B-0x7E) (0x2C = ',' by default)
+
+   ESCAPE = 0x22 = '"'
+
+   \endcode
+   *
+   * Note that tabs are explicitly included here, so one \em could use this
+   * implementation to produce tab-delimited values, with any tabs within a
+   * field escaped. Note that this is different than TSV format, which generally
+   * doesn't escape tabs within fields (it simply forbids them).
+   *
+   * csv_pprinter instances shall use the text encoding with which the output
+   * streams provided are imbued (UTF-8, by default). If char is not a code unit
+   * for that encoding a bad_code_unit exception shall be thrown.
+   *
+   *
+   * <a href="https://tools.ietf.org/html/rfc4180">RFC 4180</a> \em implies that
+   * the character ecnoding for CSV output shall be ASCII (it \em specifies that
+   * the fields shall be comprised of characters encoded as single bytes in the
+   * range "%x20-21 / %x23-2B / %x2D-7E"). That seems un-necessarily restrictive
+   * to me, however. There are any number of character encodings that match
+   * ASCII below 128 (the most important of which being UTF-8); using such an
+   * encoding we could retain the use of the comma as a separator and the
+   * double-quote character to escape commas or line breaks (UTF-8 always sets
+   * the high bit in second & later bytes, so there's no chance of confusing
+   * them with ASCII).
+   *
+   * In addition, there are locales where the comma is used as a decimal point
+   * (AKA radix character); \ref csv_pprinter_ref_2 "some" implementations will
+   * switch to the ';' character in such locales. It seems prudent to allow the
+   * column marker to be configurable (so long as it is a valid ASCII value).
+   *
+   * Allowing the column separator to be any ASCII character, however, turns
+   * out to be inconvenient in the implementation (any column now has to be
+   * checked for escaping, regardless if it's something we "know" can't have
+   * a comma). Therefore, I've made the column separator and quote characters
+   * configurable, but limited the permissible range to non-alphanumeric
+   * characters.
+   *
+   *
+   * 1. \anchor csv_pprinter_ref_1 Shafranovich, 2005: RFC 4180 Common Format
+   * and MIME Type for Comma-Separated Values (CSV)
+   * Files. https://tools.ietf.org/html/rfc4180 (Accessed Deceber 29, 2018).
+   *
+   * 2. \anchor csv_pprinter_ref_2 Warrick, Chris, 2017: CSV is not a standard.
+   * https://chriswarrick.com/blog/2017/04/07/csv-is-not-a-standard/ (Accessed
+   * December 30, 2018).
+   *
+   *
+   */
+
   class csv_pprinter: public pprinter {
 
   public:
@@ -35,13 +119,47 @@ namespace scribbu {
     static const std::size_t DEFAULT_NCOMMENTS = 4;
     static const boost::optional<encoding> DEFAULT_V1ENC;
     static const boost::optional<encoding> DEFAULT_V2ENC;
+    static const char DEFAULT_SEP = ',';
+    static const char ESC = '"';
+
+    /**
+     * \brief Escape a string for CSV output per RFC 4180
+     *
+     *
+     * \param s [in] the text to be escaped
+     *
+     * \param sep [in] the delimiter to be used; must be valid ASCII
+     *
+     * \param esc [in] the escape character to be used; must be valid ASCII
+     *
+     * \return \a s if \a sep does not appear in \a s, otherwise, \a esc
+     * \a s \esc with all occurences of \a esc in \a s repeated twice
+     *
+     * \pre \a s uses an encoding that is ASCII-compatible
+     *
+     *
+     * Take some text & escape it for output in CSV format, if needed.
+     *
+     *
+     */
+
+    static std::string escape(const std::string &s, char sep, char esc = ESC);
+
+    class bad_separator: public error
+    {
+    public:
+      bad_separator(char sep): sep_(sep)
+      { }
+
+    private:
+      char sep_;
+    };
 
   public:
     csv_pprinter(std::size_t                      ncomm = DEFAULT_NCOMMENTS,
                  const boost::optional<encoding> &v1enc = DEFAULT_V1ENC,
-                 const boost::optional<encoding> &v2enc = DEFAULT_V2ENC):
-      ncomm_(ncomm), v1enc_(v1enc), v2enc_(v2enc)
-    { }
+                 const boost::optional<encoding> &v2enc = DEFAULT_V2ENC,
+                 char                             sep   = DEFAULT_SEP);
 
   public:
     virtual std::ostream&
@@ -108,32 +226,14 @@ namespace scribbu {
     }
 
   private:
-
-    /**
-     * \brief Escape a string for CSV output
-     *
-     *
-     * \param s [in] the text to be escaped
-     *
-     * \param sep [in] the delimiter to be used
-     *
-     * \return \a s if \a sep does not appear in \a s, otherwise, "s" with all
-     * occurences of '"' in \a s doubled
-     *
-     *
-     * Take some text & escape it for output in CSV format. It is assumed that
-     * the input & output text are UTF-8 encoded.
-     *
-     *
-     */
-
-    static std::string escape(const std::string &s, char sep = ',');
-
+    std::string escape(const std::string &s)
+    { return escape(s, sep_, ESC); }
 
   private:
     std::size_t ncomm_;
     boost::optional<encoding> v1enc_;
     boost::optional<encoding> v2enc_;
+    char sep_;
 
   };
 
@@ -143,14 +243,15 @@ namespace scribbu {
                  const boost::optional<encoding> &v1enc =
                    csv_pprinter::DEFAULT_V1ENC,
                  const boost::optional<encoding> &v2enc =
-                   csv_pprinter::DEFAULT_V2ENC):
-      pprint_manipulator(new csv_pprinter(ncomm, v1enc, v2enc))
+                 csv_pprinter::DEFAULT_V2ENC,
+                 char sep = csv_pprinter::DEFAULT_SEP):
+      pprint_manipulator(new csv_pprinter(ncomm, v1enc, v2enc, sep))
     { }
     print_as_csv(const csv_pprinter &that):
       pprint_manipulator(new csv_pprinter(that))
     { }
   };
 
-}
+} // End namespace scribbu.
 
 #endif // not CSV_PPRINTER_INCLUDED_HH

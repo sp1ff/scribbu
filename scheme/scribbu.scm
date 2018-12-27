@@ -1,6 +1,6 @@
 ;;;; scribbu.scm --- Scheme modules for scribbu
 
-;;;; Copyright (C) 2018 Michael Herstine <sp1ff@pobox.com>
+;;;; Copyright (C) 2019 Michael Herstine <sp1ff@pobox.com>
 
 ;;;; Author: Michael Herstine <sp1ff@pobox.com>
 
