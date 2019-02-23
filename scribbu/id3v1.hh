@@ -47,10 +47,10 @@
 
   \endcode
   *
-  * ID3v1 defined a set of genres denoted by numerical codes (see \ref
-  * scribbu_id3v1_genres "below"). Winamp extended that list, but support for
-  * the extended Winamp list is not universal. In some cases, only the first 80
-  * genres are supported.
+  * ID3v1 defined a set of genres denoted by numerical codes (see 
+  * \ref scribbu_id3v1_genres "below"). Winamp extended that list, but support
+  * for the extended Winamp list is not universal. In some cases, only the first
+  * 80 genres are supported.
   *
   * AFAICT, ID3v1 is very loosely specified, being more a collection of
   * conventions. For instance, according to \ref scribbu_id3v1_refs_2 "[2]",
@@ -62,12 +62,13 @@
   * fields with zero bytes, it's a good bet that readers will stop when they
   * encounter any NULL value. Therefore, if the second-to-last byte of a field
   * is zero, a value may be stored in the last byte. He specifically proposed
-  * adding the album track in this way to the comment field \ref
-  * scribbu_id3v1_refs_1 "[1]". This modification is known as ID3 v1.1.
+  * adding the album track in this way to the comment field 
+  * \ref scribbu_id3v1_refs_1 "[1]". This modification is known as ID3 v1.1.
   *
   * Here is an example ID3v1 tag:
   *
   \verbatim
+
    0000000 54 41 47 4c 6f 72 63 61 27 73 20 4e 6f 76 65 6e  >TAGLorca's Noven<
    0000020 61 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >a...............<
    0000040 00 54 68 65 20 50 6f 67 75 65 73 00 00 00 00 00  >.The Pogues.....<
@@ -77,11 +78,13 @@
    0000140 30 41 6d 61 7a 6f 6e 2e 63 6f 6d 20 53 6f 6e 67  >0Amazon.com Song<
    0000160 20 49 44 3a 20 32 30 33 35 35 38 32 35 00 05 ff  > ID: 20355825...<
    0000200
+
   \endverbatim
   *
   * Broken out:
   *
   \verbatim
+
    0000000 54 41 47                                         TAG
    0000003 4c 6f 72 63 61 27 73 20 4e 6f 76 65 6e 61 00 00  Lorca's Novena..
    0000013 00 00 00 00 00 00 00 00 00 00 00 00 00 00        ..............
@@ -91,21 +94,23 @@
    000004f 70 61 6e 64 65 64 5d 20 28 55 53 20 56 65        panded] (US Ve
    000005d 31 39 39 30                                      1990
    0000061 41 6d 61 7a 6f 6e 2e 63 6f 6d 20 53 6f 6e 67 20  Amazon.com Song
-   0000071 20 49 44 3a 20 32 30 33 35 35 38 32 35 00        ID: 20355825.
-   000007f 05                                               Track #
+   0000071 20 49 44 3a 20 32 30 33 35 35 38 32 35 00        ID: 20355825
+   000007f 05                                               Track #5
    0000080 ff                                               no/unknown genre
+
   \endverbatim
   *
-  * Notice that this is an ID3v1.1 tag.
+  * Notice that this is an ID3v1.1 tag, and that the implementation that wrote
+  * this tag padded out each field with NULLs.
   *
   * The thirty byte limitation in the ID3v1 fields soon became apparent,
-  * leading to the Enhanced, or Extended (ID3v1) Tag \ref scribbu_id3v1_refs_3
-  * "[3]". The ID3v1 Enhanced tag is even more loosely specified than the
-  * ID3v1; it is formed by prepending an additional 227 bytes to the ID3v1 tag
-  * (so the entire tag is a block of 355 bytes appended to the audio data). The
-  * additional 227 bytes are laid out as follows:
-
- \verbatim
+  * leading to the Enhanced, or Extended (ID3v1) Tag 
+  * \ref scribbu_id3v1_refs_3 "[3]". The ID3v1 Enhanced tag is even more loosely
+  * specified than the ID3v1; it is formed by prepending an additional 227 bytes
+  * to the ID3v1 tag (so the entire tag is a block of 355 bytes \em appended to
+  * the audio data). The additional 227 bytes are laid out as follows:
+  *
+  \verbatim
 
   offset length contents
 
@@ -140,16 +145,17 @@
   * \section scribbu_id3v1_charsets ID3v1 Character Encodings
   *
   * The ID3v1 \ref scribbu_id3v1_refs_1 "specification" makes no mention of
-  * character encoding; the various fields are defined as fixed-length arrays
-  * of characters, which to me suggests ASCII. However, as arrays of char, they
-  * are in prinicple capable of containing text in any encoding, and there are
-  * certainly other character encodings to be found in the wild (generally the
-  * ANSI code page in use on the computer on which the tags were written).
+  * character encoding; the various fields are defined as fixed-length arrays of
+  * characters, which to me suggests ASCII. However, as arrays of char, they are
+  * in principle capable of containing text in any encoding whose code unit is
+  * one octet, and there are certainly other character encodings to be found in
+  * the wild (generally the Windowx ANSI code page in use on the computer on
+  * which the tags were written).
   *
-  * Furthermore, it is impossible to detect the encoding reliably. The presence
-  * of a BOM is suggestive, but not dispositive, and in the case of the
-  * European ISO-8859 code pages, a given byte sequence will likely have many
-  * valid interpretations.
+  * Furthermore, it is impossible to detect the encoding reliably. A BOM, when
+  * present, is suggestive, but not dispositive, and in the case of the European
+  * ISO-8859 code pages, a given byte sequence will likely have many valid
+  * interpretations.
   *
   * Consequently, this class provides two accessors for each such field; one
   * which simply copies the constituent bytes into a buffer, and a second that
@@ -163,6 +169,10 @@
   *   value will be used
   *
   * - if the caller passes boost::none, then the system locale will be used
+  *
+  * When writing text we use the identical hierarchy for the \em destination
+  * encoding (i.e. if the caller says nothing, then we'll attempt to write
+  * ASCII, if the caller passes a member of the encoding enum...).
   *
   *
   * \section scribbu_id3v1_genres ID3v1 Genres
@@ -214,31 +224,64 @@
   *
   * Winamp added the following additional genres:
   *
-  * Genre               | Genre
-  * --------------------| -----------------
-  * 80 Folk             | 103 Opera
-  * 81 Folk-Rock        | 104 Chamber Music
-  * 82 National Folk    | 105 Sonata
-  * 83 Swing            | 106 Symphony
-  * 84 Fast Fusion      | 107 Booty Brass
-  * 85 Bebob            | 108 Primus
-  * 86 Latin            | 109 Porn Groove
-  * 87 Revival          | 110 Satire
-  * 88 Celtic           | 111 Slow Jam
-  * 89 Bluegrass        | 112 Club
-  * 90 Avantgarde       | 113 Tango
-  * 91 Gothic Rock      | 114 Samba
-  * 92 Progressive Rock | 115 Folklore
-  * 93 Psychedelic Rock | 116 Ballad
-  * 94 Symphonic Rock   | 117 Power Ballad
-  * 95 Slow Rock        | 118 Rhytmic Soul
-  * 96 Big Band         | 119 Freestyle
-  * 97 Chorus           | 120 Duet
-  * 98 Easy Listening   | 121 Punk Rock
-  * 99 Acoustic         | 122 Drum Solo
-  * 100 Humour          | 123 A Capela
-  * 101 Speech          | 124 Euro-House
-  * 102 Chanson         | 125 Dance Hall
+  * Genre                     | Genre
+  * ------------------------- | -----------------
+  * 80 Folk                   | 136 Christian Gangsta Rap
+  * 81 Folk-Rock              | 137 Heavy Metal              
+  * 82 National Folk          | 138 Black Metal              
+  * 83 Swing                  | 139 Crossover                
+  * 84 Fast Fusion            | 140 Contemporary Christian   
+  * 85 Bebob                  | 141 Christian rock           
+  * 86 Latin                  | 142 Merengue                 
+  * 87 Revival                | 143 Salsa                    
+  * 88 Celtic                 | 144 Thrash Metal             
+  * 89 Bluegrass              | 145 Anime                    
+  * 90 Avantgarde             | 146 Jpop                     
+  * 91 Gothic Rock            | 147 Synthpop                 
+  * 92 Progressive Rock       | 148 Abstract                 
+  * 93 Psychedelic Rock       | 149 Art Rock                 
+  * 94 Symphonic Rock         | 150 Baroque                  
+  * 95 Slow Rock              | 151 Bhangra                  
+  * 96 Big Band               | 152 Big beat                 
+  * 97 Chorus                 | 153 Breakbeat                
+  * 98 Easy Listening         | 154 Chillout                 
+  * 99 Acoustic               | 155 Downtempo                
+  * 100 Humour                | 156 Dub                      
+  * 101 Speech                | 157 EBM                      
+  * 102 Chanson               | 158 Eclectic                      
+  * 103 Opera                 | 159 Electro                  
+  * 104 Chamber Musice        | 160 Electroclash             
+  * 105 Sonata                | 161 Emo                      
+  * 106 Symphony              | 162 Experimental             
+  * 107 Booty Brass           | 163 Garage                   
+  * 108 Primus                | 164 Global                   
+  * 109 Porn Groove           | 165 IDM                      
+  * 110 Satire                | 166 Illbient                 
+  * 111 Slow Jam              | 167 Industro-Goth            
+  * 112 Club                  | 168 Jam Band                 
+  * 113 Tango                 | 169 Krautrock                
+  * 114 Samba                 | 170 Leftfield                
+  * 115 Folklore              | 171 Lounge                   
+  * 116 Ballad                | 172 Math Rock                
+  * 117 Power Ballad          | 173 New Romantic             
+  * 118 Rhytmic Soul          | 174 Nu-Breakz                
+  * 119 Freestyle             | 175 Post-Punk                
+  * 120 Duet                  | 176 Post-Rock                
+  * 121 Punk Rock             | 177 Psytrance                
+  * 122 Drum Solo             | 178 Shoegaze                 
+  * 123 A Capela              | 179 Space Rock               
+  * 124 Euro-House            | 180 Trop Rock                
+  * 125 Dance Hall            | 181 World Music              
+  * 126 Goa                   | 182 Neoclassical             
+  * 127 Drum & Bass           | 183 Audiobook                
+  * 128 Club-House            | 184 Audio theatre            
+  * 129 Hardcore Techno       | 185 Neue Deutsche Welle      
+  * 130 Terror                | 186 Podcast                  
+  * 131 Indie                 | 187 Indie-Rock               
+  * 132 BritPop               | 188 G-Funk                   
+  * 133 Negerpunk             | 189 Dubstep                  
+  * 134 Polsk Punk            | 190 Garage Rock              
+  * 135 Beat                  | 191 Psybient
   *
   *
   * \section scribbu_id3v1_refs References
@@ -246,17 +289,17 @@
   * 1. \anchor scribbu_id3v1_refs_1 Unknown, cited 2015: ID3v1. [Available online
   * at http://id3.org/ID3v1.]
   *
-  * 2. \anchor scribbu_id3v1_refs_2 Unknown, 1999: MPEG Audio Tag ID3v1 [Available
-  * online at http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm#MPEGTAG.]
+  * 2. \anchor scribbu_id3v1_refs_2 Unknown, 1999: MPEG Audio Tag ID3v1
+  * [Available online at
+  * http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm#MPEGTAG.]
   *
-  * 3. \anchor scribbu_id3v1_refs_3 Unknown, cited 2015: MP3 TAG &
-  * Enhanced TAG description (english) [Originally available online at
-  * http://www.fortunecity.com/underworld/sonic/3/id3tag.html, now
-  * cached at
+  * 3. \anchor scribbu_id3v1_refs_3 Unknown, cited 2015: MP3 TAG & Enhanced TAG
+  * description (english) [Originally available online at
+  * http://www.fortunecity.com/underworld/sonic/3/id3tag.html, now cached at
   * https://web.archive.org/web/20120310015458/http://www.fortunecity.com/underworld/sonic/3/id3tag.html]
   *
-  * 4. \anchor scribbu_id3v1_refs_4 Unknown, cited 2015: ID3v1 [Originally available online at
-  * https://en.wikipedia.org/wiki/ID3#ID3v1]
+  * 4. \anchor scribbu_id3v1_refs_4 Unknown, cited 2015: ID3v1 [Originally
+  * available online at https://en.wikipedia.org/wiki/ID3#ID3v1]
   *
   *
   */
@@ -276,14 +319,14 @@ namespace scribbu {
    *
    * \class id3v1_tag
    *
-   * \brief An immutable class whose instances represent ID3v1 & ID3v1.1 tags
-   * (enhanced or not)
+   * \brief A class whose instances represent ID3v1 & ID3v1(.1) tags (enhanced
+   * or not)
    *
    *
    * Class id3v1_tag doesn't attempt any interpretation of "artist", "comment",
-   * and so forth. Instances are immutable copies of what's in the tag, broken
-   * out by field. So, for instance, "artist" is not represented as a string,
-   * but as a block of 30 or 90 bytes. It is up to the caller to interpret it.
+   * and so forth. Instances are copies of what's in the tag, broken out by
+   * field. So, for instance, "artist" is not represented as a string, but as a
+   * block of 30 or 90 bytes. It is up to the caller to interpret it.
    *
    *
    * I can see a few situations when instantiating id3v1_tag:
@@ -303,9 +346,6 @@ namespace scribbu {
    *   indicating whether it's extended or not
    *
    *
-   * \todo Enhance this class to allow for mutability, like the ID3v2 tags.
-   *
-   *
    */
 
   class id3v1_tag {
@@ -317,6 +357,7 @@ namespace scribbu {
     public:
       invalid_tag()
       { }
+      virtual const char * what() const noexcept(true);
     };
 
   public:
@@ -329,18 +370,44 @@ namespace scribbu {
     /// ID3V1 tag which is known a priori to be extended (or not); the
     /// implementation will determine whether the tag is V1 or V1.1.
     id3v1_tag(std::istream &is, bool enhanced);
+    /// Construct "from scratch"-- all fields wil be zeroed
+    id3v1_tag(bool v11, bool enh):
+      extended_(enh), v1_1_(v11), 
+      album_(enh ? 90 : 30),
+      artist_(enh ? 90 : 30),
+      genre_(0),
+      ext_genre_(enh ? 30 : 0),
+      title_(enh ? 90 : 30)
+    {
+      if (v11) {
+        comment_.resize(28);
+      } else {
+        comment_.resize(30);
+      }
+      
+      std::fill(start_time_.data(), start_time_.data() + 6, 0);
+      std::fill(end_time_.data(), end_time_.data() + 6, 0);
+      std::fill(year_.data(), year_.data() + 4, 0);
+    }
 
     static boost::optional<std::string> text_for_genre(unsigned char genre);
 
     static const boost::optional<encoding> DEF_SRC_ENCODING;
     static const encoding                  DEF_DST_ENCODING;
     static const on_no_encoding            DEF_ON_NO_ENCODING;
+    static const size_t                    TEXT_SZ     = 30;
+    static const size_t                    TEXT_SZ_ENH = 90;
 
   public:
 
+    ////////////////////////////////////////////////////////////////////////////
+    //                                 album                                  //
+    ////////////////////////////////////////////////////////////////////////////
+
     /// retrieve the 'album' field (raw bytes)
     template <typename forward_output_iterator>
-    forward_output_iterator album(forward_output_iterator p) const {
+    forward_output_iterator album(forward_output_iterator p) const 
+    {
       return std::copy(album_.begin(), album_.end(), p);
     }
     /// retrieve the 'album' field (encoded)
@@ -349,9 +416,30 @@ namespace scribbu {
     album(const boost::optional<encoding> &src = DEF_SRC_ENCODING,
           encoding dst = DEF_DST_ENCODING,
           on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+
+    // NB. I'm assumiing the caller is working in UTF-8 & that the tag's text is
+    // in ASCII; had to call this set_ to avoid the above template from
+    // shadowing it
+    template <typename string_type>
+    void set_album(const string_type &text,
+                   encoding srcenc = DEF_DST_ENCODING,
+                   boost::optional<encoding> dstenc = DEF_SRC_ENCODING,
+                   bool add_bom = false,
+                   on_no_encoding rsp = on_no_encoding::fail)
+    {
+      encoding dst = dstenc ? dstenc.get() : encoding_from_system_locale();
+      album_ = convert_encoding<string_type>(text, srcenc, dst, add_bom, rsp);
+      album_.resize(enhanced() ? TEXT_SZ_ENH : TEXT_SZ, 0);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                                 artist                                 //
+    ////////////////////////////////////////////////////////////////////////////
+
     /// retrieve the 'artist' field (raw bytes)
     template <typename forward_output_iterator>
-    forward_output_iterator artist(forward_output_iterator p) const {
+    forward_output_iterator artist(forward_output_iterator p) const 
+    {
       return std::copy(artist_.begin(), artist_.end(), p);
     }
     /// retrieve the 'artist' field (encoded)
@@ -360,61 +448,179 @@ namespace scribbu {
     artist(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
            encoding dst = DEF_DST_ENCODING,
            on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // NB. I'm assumiing the caller is working in UTF-8 & that the tag's text is
+    // in ASCII; had to call this set_ to avoid the above template from
+    // shadowing it
+    template <typename string_type>
+    void set_artist(const string_type &text,
+                    encoding srcenc = DEF_DST_ENCODING,
+                    boost::optional<encoding> dstenc = DEF_SRC_ENCODING,
+                    bool add_bom = false,
+                    on_no_encoding rsp = on_no_encoding::fail)
+    {
+      encoding dst = dstenc ? dstenc.get() : encoding_from_system_locale();
+      artist_ = convert_encoding<string_type>(text, srcenc, dst, add_bom, rsp);
+      artist_.resize(enhanced() ? TEXT_SZ_ENH : TEXT_SZ, 0);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                                comment                                 //
+    ////////////////////////////////////////////////////////////////////////////
+
     /// retrieve the 'comment' field (raw bytes)
     template <typename forward_output_iterator>
-    forward_output_iterator comment(forward_output_iterator p) const {
+    forward_output_iterator comment(forward_output_iterator p) const 
+    {
       return std::copy(comment_.begin(), comment_.end(), p);
     }
     /// retrieve the 'comment' field (encoded)
     template<typename string_type>
     string_type
     comment(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-                        encoding dst = DEF_DST_ENCODING,
-                        on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+            encoding dst = DEF_DST_ENCODING,
+            on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // NB. I'm assumiing the caller is working in UTF-8 & that the tag's text is
+    // in ASCII; had to call this set_ to avoid the above template from
+    // shadowing it
+    template <typename string_type>
+    void set_comment(const string_type &text,
+                     encoding srcenc = DEF_DST_ENCODING,
+                     boost::optional<encoding> dstenc = DEF_SRC_ENCODING,
+                     bool add_bom = false,
+                     on_no_encoding rsp = on_no_encoding::fail)
+    {
+      encoding dst = dstenc ? dstenc.get() : encoding_from_system_locale();
+      comment_ = convert_encoding<string_type>(text, srcenc, dst, add_bom, rsp);
+      comment_.resize(enhanced() ? TEXT_SZ_ENH : TEXT_SZ, 0);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                               genre                                    //
+    ////////////////////////////////////////////////////////////////////////////
+
     /// retrieve the one-byte genre field
-    unsigned char genre() const {
+    unsigned char genre() const 
+    {
       return genre_;
     }
+    // set the one-byte genre field; named it set_ for consistency with other
+    // setters
+    void set_genre(unsigned char genre) 
+    {
+      genre_ = genre;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //                             enhanced genre                             //
+    ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator enh_genre(forward_output_iterator p) const {
+    forward_output_iterator enh_genre(forward_output_iterator p) const 
+    {
       return std::copy(ext_genre_.begin(), ext_genre_.end(), p);
     }
-
     template<typename string_type>
     string_type
-    enh_genre(const boost::optional<encoding> & src,
+    enh_genre(const boost::optional<encoding> &src = DEF_SRC_ENCODING,
               encoding dst = DEF_DST_ENCODING,
               on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // NB. I'm assumiing the caller is working in UTF-8 & that the tag's text is
+    // in ASCII; had to call this set_ to avoid the above template from
+    // shadowing it
+    template <typename string_type>
+    void set_enh_genre(const string_type &text,
+                       encoding srcenc = DEF_DST_ENCODING,
+                       boost::optional<encoding> dstenc = DEF_SRC_ENCODING,
+                       bool add_bom = false,
+                       on_no_encoding rsp = on_no_encoding::fail)
+    {
+      encoding dst = dstenc ? dstenc.get() : encoding_from_system_locale();
+      ext_genre_ = convert_encoding<string_type>(text, srcenc, dst, add_bom,
+                                                 rsp);
+      ext_genre_.resize(TEXT_SZ, 0);
+      extended_ = true;
+    }
 
-    std::pair<bool, unsigned char> speed() const {
+    ////////////////////////////////////////////////////////////////////////////
+    //                                 speed                                  //
+    ////////////////////////////////////////////////////////////////////////////
+
+    std::pair<bool, unsigned char> speed() const 
+    {
       return std::make_pair(extended(), speed_);
     }
+    void set_speed(unsigned char speed)
+    {
+      speed_ = speed;
+      extended_ = true;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //                               start time                               //
+    ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator start_time(forward_output_iterator p) const {
+    forward_output_iterator start_time(forward_output_iterator p) const 
+    {
       return std::copy(start_time_.begin(), start_time_.end(), p);
     }
-
     template<typename string_type>
     string_type
     start_time(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-                           encoding dst = DEF_DST_ENCODING,
-                           on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+               encoding dst = DEF_DST_ENCODING,
+               on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // start & end times are six ASCII characters; they are supposed to be
+    // in the form "mmm:ss", but beyond length we perform no validation
+    void set_start_time(const char *text)
+    {
+      size_t i = 0, ntext = strlen(text);
+      while (i < ntext && i < 7) {
+        start_time_[i] = (char)text[i];
+        ++i;
+      }
+      while (i < 7) {
+        start_time_[i++] = 0;
+      }
+      extended_ = true;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                                end time                                //
+    ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator end_time(forward_output_iterator p) const {
+    forward_output_iterator end_time(forward_output_iterator p) const 
+    {
       return std::copy(end_time_.begin(), end_time_.end(), p);
     }
 
     template<typename string_type>
     string_type
     end_time(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
-                         encoding dst = DEF_DST_ENCODING,
-                         on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+             encoding dst = DEF_DST_ENCODING,
+             on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // start & end times are six ASCII characters; they are supposed to be
+    // in the form "mmm:ss", but beyond length we perform no validation
+    void set_end_time(const char *text)
+    {
+      size_t i = 0, ntext = strlen(text);
+      while (i < ntext && i < 7) {
+        end_time_[i] = (char)text[i];
+        ++i;
+      }
+      while (i < 7) {
+        end_time_[i++] = 0;
+      }
+      extended_ = true;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //                                 title                                  //
+    ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator title(forward_output_iterator p) const {
+    forward_output_iterator title(forward_output_iterator p) const 
+    {
       return std::copy(title_.begin(), title_.end(), p);
     }
 
@@ -423,30 +629,84 @@ namespace scribbu {
     title(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
           encoding dst = DEF_DST_ENCODING,
           on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // NB. I'm assumiing the caller is working in UTF-8 & that the tag's text is
+    // in ASCII; had to call this set_ to avoid the above template from
+    // shadowing it
+    template <typename string_type>
+    void set_title(const string_type &text,
+                   encoding srcenc = DEF_DST_ENCODING,
+                   boost::optional<encoding> dstenc = DEF_SRC_ENCODING,
+                   bool add_bom = false,
+                   on_no_encoding rsp = on_no_encoding::fail)
+    {
+      encoding dst = dstenc ? dstenc.get() : encoding_from_system_locale();
+      title_ = convert_encoding<string_type>(text, srcenc, dst, add_bom, rsp);
+      title_.resize(enhanced() ? TEXT_SZ_ENH : TEXT_SZ, 0);
+    }
 
-    std::pair<bool, unsigned char> track_number() const {
+    ////////////////////////////////////////////////////////////////////////////
+    //                            track number                                //
+    ////////////////////////////////////////////////////////////////////////////
+
+    std::pair<bool, unsigned char> track_number() const 
+    {
       return std::make_pair(v1_1(), track_number_);
     }
+    void set_track_number(unsigned char track) 
+    {
+      track_number_ = track;
+      v1_1_ = true;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //                                  year                                  //
+    ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator year(forward_output_iterator p) const {
+    forward_output_iterator year(forward_output_iterator p) const 
+    {
       return std::copy(year_.begin(), year_.end(), p);
     }
-
     template<typename string_type>
     string_type year(const boost::optional<encoding> & src = DEF_SRC_ENCODING,
                      encoding dst = DEF_DST_ENCODING,
                      on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
+    // year is four ASCII characters; they are supposed to be in the form
+    // "YYYY", but beyond length we perform no validation
+    void set_year(const char* text)
+    {
+      size_t i = 0, ntext = strlen(text);
+      while (i < ntext && i < 4) {
+        year_[i] = (char)text[i];
+        ++i;
+      }
+      while (i < 4) {
+        year_[i++] = 0;
+      }
+      // extended_ = true;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //                             miscellaneous                              //
+    ////////////////////////////////////////////////////////////////////////////
 
-    bool enhanced() const {
+    bool enhanced() const 
+    {
       return extended();
     }
 
-    bool extended() const {
+    bool extended() const 
+    {
       return extended_;
     }
+    
+    size_t size() const 
+    {
+      return extended() ? ID3V1_EXT_TAG_SIZE : ID3V1_TAG_SIZE;
+    }
 
-    bool v1_1() const {
+    bool v1_1() const 
+    {
       return v1_1_;
     }
 
@@ -519,7 +779,8 @@ namespace scribbu {
    *
    * \param is [in,out] An input stream which may or may not have an ID3v1 tag
    * appended to other content; the read pointer will always be restored on
-   * exit, regardless of the result
+   * exit, regardless of the result. Note that this stream's get ptr may be
+   * positioned anywhere on entry.
    *
    * \return a (possibly nil) unique_ptr to an id3v1_tag indicating that the
    * caller now owns the memory associated with it
@@ -528,6 +789,37 @@ namespace scribbu {
    */
 
   std::unique_ptr<id3v1_tag> process_id3v1(std::istream &is);
+
+  /**
+   * \brief Remove the ID3v1 tag, if present
+   *
+   *
+   * \param pth [in] path naming the file of interest
+   *
+   *
+   * Summary says it all-- if \a pth ends in an ID3v1 tag, remove it.
+   *
+   *
+   */
+
+  void maybe_remove_id3v1(const boost::filesystem::path &pth);
+  
+/**
+ * \brief Replace any ID3v1 tag that may be present
+ *
+ *
+ * \param pth [in] path naming the file of interest
+ *
+ * \param tag [in] ID3v1 tag to be written
+ *
+ *
+ * This method will replace theID3v1 tag at the end of \a pth (if any), and
+ * replace it with \a tag.
+ *
+ *
+ */
+
+  void replace_id3v1(const boost::filesystem::path &pth, const id3v1_tag &tag);
 
 } // End namespace scribbu.
 

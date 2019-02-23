@@ -43,17 +43,27 @@ scribbu::detail::needs_unsync(unsigned char x, unsigned char y)
 }
 
 std::size_t
-scribbu::detail::count_false_syncs(std::size_t n)
+scribbu::detail::count_syncs(std::uint32_t n, bool false_only)
 {
-  std::size_t count = 0;
+  using namespace std;
+
+  size_t count = 0;
   const unsigned char *p = (const unsigned char*)&n;
-  for (std::ptrdiff_t i = 0; i < sizeof(std::size_t) - 1; ++i) {
-    if (is_false_sync(p[i], p[i+1])) {
-      ++count;
+  for (ptrdiff_t i = 0; i < 3; ++i) {
+    if (false_only) {
+      if (is_false_sync(p[i], p[i+1])) {
+        ++count;
+      }
+    } else {
+      if (needs_unsync(p[i], p[i+1])) {
+        ++count;
+      }
     }
   }
+  
   return count;
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -624,10 +634,55 @@ scribbu::play_count::count_syncs(bool false_only) const
   return detail::count_syncs(counter_.begin(), counter_.end(), false_only);
 }
 
+void
+scribbu::play_count::reset_counter(std::size_t n)
+{
+  static const std::size_t FF = std::size_t( 0xff );
+
+  counter_.erase(counter_.begin(), counter_.end());
+
+  // Walk `n' from the MSB, looking for the first non-zero byte.
+  std::size_t msb;
+  for (msb = sizeof(size_t) - 1; msb > 0; --msb) {
+    if ( (n & ( FF << (msb*8))) != 0 ) {
+      break;
+    }
+  }
+  
+  while (msb > 0) {
+    counter_.push_back( (0xff << msb) & n );
+  }
+  
+  counter_.push_back( 0xff & n );  
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                            class popularimeter                            //
 ///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::popularimeter::count() const
+{
+  uint32_t x;
+  if (1 == counter_.size()) {
+    x = counter_[0];
+  }
+  else if (2 == counter_.size()) {
+   x = ( counter_[0] << 8 ) | counter_[1];
+  }
+  else if (3 == counter_.size()) {
+    x = ( counter_[0] << 16 ) | ( counter_[1] << 8 ) | counter_[2];
+  }
+  else if (4 == counter_.size()) {
+    x = ( counter_[0] << 24 ) | ( counter_[1] << 16 ) |
+      ( counter_[2] << 8 )  | counter_[3];
+  }
+  else if (4 < counter_.size()) {
+    throw std::domain_error("CNT overflow");
+  }
+  return x;
+}
 
 std::size_t
 scribbu::popularimeter::size() const
@@ -682,3 +737,330 @@ scribbu::popularimeter::count_syncs(bool false_only) const
 
   return cb;
 }
+
+void
+scribbu::popularimeter::reset_counter(std::size_t n)
+{
+  static const std::size_t FF = std::size_t( 0xff );
+
+  counter_.erase(counter_.begin(), counter_.end());
+
+  // Walk `n' from the MSB, looking for the first non-zero byte.
+  std::size_t msb;
+  for (msb = sizeof(size_t) - 1; msb > 0; --msb) {
+    if ( (n & ( FF << (msb*8))) != 0 ) {
+      break;
+    }
+  }
+  
+  while (msb > 0) {
+    counter_.push_back( (0xff << msb) & n );
+  }
+  
+  counter_.push_back( 0xff & n );  
+}
+
+////////////////////////////////////////////////////////////////////////////
+//                              class tag_cloud
+////////////////////////////////////////////////////////////////////////////
+
+/// Construct "from scratch"-- text shall be a query-string style representation
+/// of the tag cloud (i.e. that which is returned from urlencoded())
+scribbu::tag_cloud::tag_cloud(const std::string &owner, 
+                              const std::string &text):
+  own_(owner)
+{
+  parse_to_map(text, tags_);
+}
+
+/// Does a given value exist for a given key?
+bool scribbu::tag_cloud::has_value(const std::string &key, 
+                                   const std::string &val) const
+{
+  if (!tags_.count(key)) {
+    return false;
+  }
+  return tags_.at(key).count(val);
+
+}
+
+/// Add key with no values; if the key exists this will be a NOP-- a return
+/// value of false means the key already existed
+bool scribbu::tag_cloud::add_key(const std::string &key)
+{
+  if (tags_.count(key)) {
+    return false;
+  }
+  tags_[key] = std::set<std::string>();
+  return true;
+}
+
+/// Add a value to an existent key-- a false return value means the key and
+/// value already existed
+bool scribbu::tag_cloud::add_value(const std::string &key, 
+                                   const std::string &val)
+{
+  if (!tags_.count(key)) {
+    tags_[key] = std::set<std::string>();
+    tags_[key].insert(val);
+    return true;
+  }
+  
+  if (tags_[key].count(val)) {
+    return false;
+  }
+  
+  tags_[key].insert(val);
+  return true;
+}
+
+/// Return an URL-encoded representation of the tag cloud
+std::string 
+scribbu::tag_cloud::urlencoded() const
+{
+  using namespace std;
+  
+  using scribbu::urlencode;
+  
+  string out;
+  bool first = true;
+  for (auto kv: tags_) {
+    
+    if (first) {
+      first = false;
+    } else {
+      out += '&';
+    }
+
+    out += urlencode(kv.first);
+
+    if (!kv.second.empty()) {
+      
+      out += '=';
+      bool infirst = true;
+      for (auto val: kv.second) {
+        
+        if (infirst) {
+          infirst = false;
+        } else {
+          out += ',';
+        }
+        
+        out += urlencode(val);        
+      }
+    }
+  }
+  
+  return out;
+}
+
+/// Merge an URL-coded representation of some tags into the cloud
+void 
+scribbu::tag_cloud::merge(const std::string &tags)
+{
+  using namespace std;
+
+  map_type M;
+  parse_to_map(tags, M);
+  for (auto p: M) {
+    const string key = p.first;
+    set<string> value = p.second;
+    // tie(key, value) = p;
+    
+    if (tags_.count(key)) {
+      tags_[key].insert(value.begin(), value.end());
+    } else {
+      tags_[key] = value;
+    }
+  }
+}
+
+/// Update the tag cloud
+void 
+scribbu::tag_cloud::update(const std::string &tags)
+{
+  tags_.clear();
+  parse_to_map(tags, tags_);
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+std::size_t 
+scribbu::tag_cloud::size() const
+{
+  std::size_t cb = 1 + own_.length() + 1;
+  
+  for (auto kv: tags_) {
+    
+    const std::string &key = kv.first;
+    cb += key.length() + 1 + 4;
+    for (auto v: kv.second) {
+      cb += v.length() + 1;
+    }
+  }
+  
+  return cb;
+}
+
+/// Return the number of bytes this frame will occupy when serialized to
+/// disk, including the header
+std::size_t 
+scribbu::tag_cloud::serialized_size(bool unsync) const
+{
+  std::size_t cb = size();
+  if (unsync) {
+    cb += count_syncs(false);
+  }
+  return cb;
+}
+
+/// Return zero if this frame would not contain false syncs if serialized in
+/// its present state; else return the number of false sync it would contain
+std::size_t 
+scribbu::tag_cloud::needs_unsynchronisation() const
+{
+  return count_syncs(true);
+}
+
+/// Serialize this frame to an output stream, perhaps applying the
+/// unsynchronisation scheme if the caller so chooses ("unsynchronised" will
+/// be updated accordingly)
+std::size_t 
+scribbu::tag_cloud::write(std::ostream &os) const
+{
+  const char ver[1] = { 0x01 };
+
+  std::size_t cb  = 0;
+  
+  os.write(ver, 1); cb++;
+
+  std::size_t cbw = own_.length() + 1;
+  os.write(own_.c_str(), cbw); cb += cbw;
+  
+  for (auto kv: tags_) {
+
+    // `kv' is a pair<const string, set<string>>
+    const std::string &key = kv.first;
+    cbw = key.length() + 1;
+    os.write(key.c_str(), cbw); cb += cbw;
+    
+    uint32_t nval = 0;
+    for (auto v: kv.second) {
+      nval += v.length() + 1;
+    }
+    
+    nval = htonl(nval);
+    os.write((const char*)&nval, 4); cb += 4;
+    
+    for (auto v: kv.second) {
+      cbw = v.length() + 1;
+      os.write(v.c_str(), cbw); cb += cbw;
+    }
+
+  }
+  
+  return cb;
+}
+
+std::size_t 
+scribbu::tag_cloud::count_syncs(bool false_only) const
+{
+  using namespace std;
+  using namespace scribbu::detail;
+  
+  size_t nsync = 0;
+  
+  // The current version is 1, so no false sync.
+  nsync += detail::count_syncs(own_.begin(), own_.end(), false_only);
+  
+  // Owner is null-terminated, so no false sync between owner & the first key.
+  for (auto kv: tags_) {
+
+    // `kv' is a pair<const string, set<string>>
+    const string &key = kv.first;
+    nsync += detail::count_syncs(key.begin(), key.end(), false_only);
+    // Keys are null-terminated, so no false sync between owner & the first key.
+    // Next up will be the combined length of all values (including trailing
+    // nulls).
+    uint32_t nval = 0;
+    for (auto v: kv.second) {
+      nval += v.length() + 1;
+      nsync += detail::count_syncs(v.begin(), v.end(), false_only);
+    }
+    // `nval' itself may contain false syncs:
+    nsync += detail::count_syncs(nval, false_only);
+    
+    // Now, if the last octet of `nval' happens to be 0xff _and_ false_only
+    // is true, we _could_ have a false sync between the value byte count &
+    // the first string.
+    if (false_only) {
+      unsigned char y = (unsigned char)(kv.second.begin()->front());
+      if ((0xff == (0xff & nval)) && is_false_sync(0xff, y)) {
+        ++nsync;
+      }
+    }
+  }
+  
+  return nsync;
+}
+
+void 
+scribbu::tag_cloud::parse_to_map(const std::string &text, 
+                                 map_type &M)
+{
+  using namespace std;
+
+  // Parse using a simple FSM:
+  bool parsing_key = true;
+  
+  string token, key;
+  for (size_t i = 0, n = text.size(); i < n; ++i) {
+
+    char c = text[i];
+    
+    if (parsing_key) {
+      if ('=' == c) {
+        key = urldecode(token);
+        token.clear();
+        parsing_key = false;
+      } else if ('&' == c) {
+        token = urldecode(token);
+        if (M.count(token)) {
+          throw invalid_argument("duplicate tag " + token);
+        }
+        M[token] = set<string>();
+        token.clear();
+      } else {
+        token += c;
+      }
+    } else {
+      if (',' == c) {
+        M[key].insert(urldecode(token));
+        token.clear();
+      } else if ('&' == c) {
+        M[key].insert(urldecode(token));
+        token.clear();
+        key.clear();
+        parsing_key = true;        
+      } else {
+        token += c;
+      }
+    }
+    
+  }
+  
+  // tidy up whatever's left in `token' & `key'
+  if (parsing_key) {
+    token = urldecode(token);
+    if (M.count(token)) {
+      throw invalid_argument("duplicate tag " + token);
+    }
+    M[token] = set<string>();
+  } else {
+    M[key].insert(urldecode(token));
+  }
+  
+}
+
+
+

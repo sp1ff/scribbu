@@ -99,10 +99,12 @@ scribbu::openssl_error::what() const noexcept
 //                             class track_data                              //
 ///////////////////////////////////////////////////////////////////////////////
 
-scribbu::track_data::track_data(std::istream &is)
+scribbu::track_data::track_data(std::istream &is) : size_(0)
 {
   const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
     std::ios_base::failbit|std::ios_base::badbit;
+
+  memset(md5_.data(), 0, DIGEST_SIZE);
 
   // Copy off the stream's exception mask, in case the caller is
   // counting on it...
@@ -154,7 +156,7 @@ scribbu::track_data::track_data(std::istream &is)
         tag_type = id3_v1_tag_type::v_1;
       } else {
         // No ID3v1 tag-- set `tag' to the EoS; stream ptr at same place.
-        is.seekg(std::ios_base::end);
+        is.seekg(0, std::ios_base::end);
         tag = is.tellg();
       }
     }
@@ -201,8 +203,111 @@ scribbu::track_data::track_data(std::istream &is)
 
   unsigned int  md_len;
   // unsigned char md_value[EVP_MAX_MD_SIZE];
-  EVP_DigestFinal_ex(mdctx, _md5.begin(), &md_len);
+  EVP_DigestFinal_ex(mdctx, md5_.begin(), &md_len);
 
   EVP_MD_CTX_destroy(mdctx);
 
 }
+
+
+std::string 
+scribbu::urlencode(const std::string &text)
+{
+  using namespace std;
+  
+
+  string out;
+  for (auto c: text) {
+    
+    if ('%' == c) {
+      // % needs to be escaped
+      out += "%25";
+    } else if (('A' <= c && 'Z' >= c) ||
+               ('a' <= c && 'z' >= c) ||
+               ('0' <= c && '9' >= c) ||
+               '-' == c || '_' == c || '.' == c || '~' == c) { 	      
+      // un-reserved characters never need to be escaped
+      out += c;
+    } else {
+      // otherwise, escape
+      stringstream stm;
+      // Getting a char to print as a hex is surprisingly difficult:
+      // https://stackoverflow.com/questions/673240/how-do-i-print-an-unsigned-char-as-hex-in-c-using-ostream
+      stm << "%" << hex << setfill('0') << setw(2) << 
+        ( ((unsigned short) c) & 0xff );
+      out += stm.str();
+    }
+    
+  }
+
+  return out;
+}
+
+char
+strtochar(const char *p)
+{
+  char out = 0;
+  if ('0' <= p[0] && '9' >= p[0]) {
+    out += 16 * (p[0] - '0');
+  } else if ('a' <= p[0] && 'f' >= p[0]) {
+    out += 16 * (p[0] - 'a' + 10);
+  } else if ('A' <= p[0] && 'F' >= p[0]) {
+    out += 16 * (p[0] - 'A' + 10);
+  } else {
+    throw std::invalid_argument("expected hex character");
+  }
+
+  if ('0' <= p[1] && '9' >= p[1]) {
+    out += (p[1] - '0');
+  } else if ('a' <= p[1] && 'f' >= p[1]) {
+    out += (p[1] - 'a' + 10);
+  } else if ('A' <= p[1] && 'F' >= p[1]) {
+    out += (p[1] - 'A' + 10);
+  } else {
+    throw std::invalid_argument("expected hex character");
+  }
+  
+  return out;
+}
+
+std::string 
+scribbu::urldecode(const std::string &text)
+{
+  using namespace std;
+  
+  string out;
+
+  bool saw_pct = false;
+  for (size_t i = 0, n = text.size(); i < n; ++i) {
+    
+    char c = text[i];
+    if (saw_pct) {
+
+      if ('%' == c) {
+        out += c;
+      } else if (i+2 > n) {
+        throw std::invalid_argument("incomplete % sequence");
+      } else {
+        // we expect two hex digits
+        out += strtochar(text.c_str() + i);
+        i += 1;
+      }
+      
+      saw_pct = false;
+
+    } else {
+
+      if ('%' == c) {
+        saw_pct = true;
+      } else {
+        out += c;
+      }
+
+    }
+    
+  }
+
+  return out;
+}
+
+

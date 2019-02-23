@@ -154,6 +154,7 @@ scribbu::id3v2_3_tag::static_initializer::static_initializer()
     REGG("TXXX", TXXX);
     REGG("PCNT", PCNT);
     REGG("POPM", POPM);
+    REGG("XTAG", XTAG);
     // NB "COMM" intentionally omitted
 
 #   undef REGT
@@ -258,7 +259,7 @@ void
 scribbu::id3v2_3_tag::ext_header::ensure_cached_data_is_fresh() const
 {
   using namespace std;
-  using scribbu::detail::count_false_syncs;
+  using scribbu::detail::count_syncs;
   using scribbu::detail::unsynchronise;
 
   if ( !dirty_ ) {
@@ -296,8 +297,9 @@ scribbu::id3v2_3_tag::ext_header::ensure_cached_data_is_fresh() const
 
   string sbuf = stm.str();
   copy(sbuf.begin(), sbuf.end(), back_inserter(cache_[SERIALIZED]));
-  num_false_syncs_ = count_false_syncs(cache_[SERIALIZED].begin(),
-                                       cache_[SERIALIZED].end());
+  num_false_syncs_ = count_syncs(cache_[SERIALIZED].begin(),
+                                 cache_[SERIALIZED].end(),
+                                 true);
   unsynchronise(back_inserter(cache_[SERIALIZED_WITH_UNSYNC]),
                 cache_[SERIALIZED].begin(),
                 cache_[SERIALIZED].end());
@@ -341,6 +343,54 @@ scribbu::id3v2_3_tag::id3v2_3_tag(std::istream     &is,
   get_default_text_frame_parsers(
     std::inserter(text_parsers_, text_parsers_.begin()));
   parse(is, H.size_, H.flags_ & 0x40);
+}
+
+scribbu::id3v2_3_tag::id3v2_3_tag(const id3v2_3_tag &that):
+  id3v2_tag(*this),
+  experimental_(that.experimental_),
+  generic_parsers_(that.generic_parsers_),
+  text_parsers_(that.text_parsers_),
+  padding_(that.padding_)
+{
+  if (that.pext_header_) {
+    pext_header_.reset(new ext_header(*that.pext_header_));
+  }
+  for (auto &p: that.frames_) {
+    frames_.push_back(std::unique_ptr<id3v2_3_frame>(p->clone()));
+    add_frame_to_lookups( *frames_.back(), frames_.size() );
+    if (frames_.back()->id() == frame_id4("ENCR")) {
+      register_encryption_method(dynamic_cast<const ENCR&>(*frames_.back()));
+    }
+  }
+}
+
+scribbu::id3v2_3_tag& scribbu::id3v2_3_tag::operator=(const id3v2_3_tag &that)
+{
+  if (this != &that) {
+    id3v2_tag::operator=(*this);
+    experimental_ = that.experimental_;
+    generic_parsers_ = that.generic_parsers_;
+    text_parsers_ = that.text_parsers_;
+    pext_header_.reset(new ext_header(*that.pext_header_));
+    padding_ = that.padding_;
+
+    comms_.clear();
+    pcnts_.clear();
+    popms_.clear();
+    encryption_methods_.clear();
+    frames_.clear();
+    frame_map_.clear();
+    text_map_.clear();
+
+    for (auto &p: that.frames_) {
+      frames_.push_back(std::unique_ptr<id3v2_3_frame>(p->clone()));
+      add_frame_to_lookups( *frames_.back(), frames_.size() );
+      if (frames_.back()->id() == frame_id4("ENCR")) {
+        register_encryption_method(dynamic_cast<const ENCR&>(*frames_.back()));
+      }
+    }
+  }
+  return *this;
 }
 
 scribbu::id3v2_3_tag::id3v2_3_tag(std::size_t cbpad /*= 0*/,
@@ -519,7 +569,11 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
     }
   }
 
-  return any_of(begin(), end(), [](const id3v2_3_frame &F) { return F.needs_unsynchronisation(); });
+  // return any_of(begin(), end(), [](const id3v2_3_frame &F) { return F.needs_unsynchronisation(); });
+  return any_of(begin(), end(), [](const id3v2_3_frame &F) { 
+                                  bool f = F.needs_unsynchronisation();
+                                  return f;
+                                });
 }
 
 /**
@@ -569,7 +623,9 @@ scribbu::id3v2_3_tag::write(std::ostream &os, bool unsync) const
 {
   using namespace std;
 
-  write_header(os, flags(), size(unsync));
+  unsigned char f = flags();
+  if (unsync) f |= 0x80;
+  write_header(os, f, size(unsync));
   size_t cb = 10;
 
   if (pext_header_) {
@@ -1353,10 +1409,14 @@ void scribbu::id3v2_3_tag::parse(std::istream &is, std::size_t size, bool extend
 
     } // End iteration over frames.
 
+  } catch (const scribbu::error &ex) {
+    is.seekg(here, std::ios_base::beg);
+    is.exceptions(exc_mask);
+    throw;
   } catch (const std::exception &ex) {
     is.seekg(here, std::ios_base::beg);
     is.exceptions(exc_mask);
-    throw ex;
+    throw;
   }
 
   is.exceptions(exc_mask);

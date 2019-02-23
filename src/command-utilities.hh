@@ -34,16 +34,17 @@
 /// calling with incorrect parameters shall exit with status code 2
 const int EXIT_INCORRECT_USAGE = 2;
 
-
 enum class help_level {
   none, regular, verbose
 };
 
+/// Extract help_level from a set of parsed_options
+help_level
+help_level_for_parsed_opts(const boost::program_options::parsed_options &opts);
+
 /// Convenience typedef for a sub-command implementation
 typedef
-std::function<int(const std::vector<std::string> 		 &opts,
-                  help_level                     		  help,
-                  const boost::optional<boost::filesystem::path> &cfg)>
+std::function<int(int argc, char **argv)>
 handler_type;
 
 /**
@@ -76,14 +77,35 @@ struct register_command
 };
 
 /// Return true if a sub-command named \a s has been registered
-bool has_sub_command(const std::string &s);
+bool has_sub_command(const char*);
 
 /// Retrieve a sub-command my bame
-handler_type get_sub_command(const std::string &s);
+handler_type get_sub_command(const char *);
+
+/// Convert (argc, argv) style parameters to a collection of tokens
+template <typename forward_output_iterator>
+forward_output_iterator convert_tokens(int argc, 
+                                       char **argv,
+                                       forward_output_iterator pout,
+                                       bool skip_first = false)
+{
+  while (argc) {
+    if (skip_first) {
+      skip_first = false;
+    } else {
+      *pout++ = std::string(argv[0]);
+    }
+    --argc; ++argv;
+  }
+  return pout;
+}
 
 void
-print_usage(std::ostream                                      &os,
+print_usage(std::ostream                                  &os,
 	    const boost::program_options::options_description &opts,
 	    const std::string                                 &usage);
+
+void
+show_man_page(const std::string &page);
 
 #endif // not COMMAND_UTILITIES_HH_INCLUDED

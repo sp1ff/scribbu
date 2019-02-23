@@ -120,10 +120,12 @@ namespace scribbu {
   class bad_code_unit: public error {
   public:
     bad_code_unit(encoding enc, std::size_t cb);
+    virtual const char * what() const noexcept(true);
 
   private:
     encoding enc_;
     std::size_t cb_;
+    mutable std::shared_ptr<std::string> pwhat_;
   };
 
   /// Response when a byte sequence in the source encoding cannot
@@ -227,6 +229,13 @@ namespace scribbu {
                                encoding dstenc,
                                on_no_encoding rsp = on_no_encoding::fail);
 
+  template<typename string_type>
+  string_type convert_encoding(const char *pbuf,
+                               std::size_t cbbuf,
+                               encoding srcenc,
+                               encoding dstenc,
+                               on_no_encoding rsp = on_no_encoding::fail);
+  
   /**
    * \brief Convert encodings from std strings to buffers of char
    *
@@ -245,6 +254,13 @@ namespace scribbu {
   template <typename string_type>
   std::vector<unsigned char>
   convert_encoding(const string_type &text,
+                   encoding srcenc,
+                   encoding dstenc,
+                   bool add_bom = false,
+                   on_no_encoding rsp = on_no_encoding::fail);
+
+  std::vector<unsigned char>
+  convert_encoding(const char *ptext,
                    encoding srcenc,
                    encoding dstenc,
                    bool add_bom = false,

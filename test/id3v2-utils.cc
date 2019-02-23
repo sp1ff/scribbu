@@ -963,7 +963,7 @@ BOOST_AUTO_TEST_CASE( test_multi_id3v2 )
   fs::ifstream ifs1(DATA1, fs::ifstream::binary);
 
   vector<unique_ptr<id3v2_tag>> tags;
-  read_all_id3v2(ifs1, back_inserter(tags));
+  BOOST_CHECK_THROW( read_all_id3v2(ifs1, back_inserter(tags)), scribbu::error );
   BOOST_CHECK(1 == tags.size());
 
   fs::ifstream ifs2(DATA2, fs::ifstream::binary);
@@ -1068,3 +1068,23 @@ BOOST_AUTO_TEST_CASE( test_template_text )
   BOOST_CHECK("Lorca's Novena - Pogues, The (Hell's Ditch [Expanded] (US Version)).mp3" == S);
 
 }
+
+BOOST_AUTO_TEST_CASE( test_total_size )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
+
+  fs::ifstream ifs(TEST_DATA_V2_3, fs::ifstream::binary);
+
+  vector<unique_ptr<id3v2_tag>> tags;
+  read_all_id3v2(ifs, back_inserter(tags));
+  
+  size_t tot, pad;
+  tie(tot, pad) = total_id3v2_size(tags.begin(), tags.end(), false);
+  BOOST_CHECK( tot == 452951 );
+  BOOST_CHECK( pad == 335921 );
+
+
+} // End test_total_size.

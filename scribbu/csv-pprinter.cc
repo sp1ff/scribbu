@@ -29,6 +29,17 @@
 #include "id3v23.hh"
 #include "id3v24.hh"
 
+/*virtual*/
+const char * scribbu::csv_pprinter::bad_separator::what() const noexcept(true)
+{
+  if (!pwhat_) {
+    std::stringstream stm;
+    stm << (int) sep_ << " is not a valid separater";
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
 /*static*/
 const boost::optional<scribbu::encoding>
 scribbu::csv_pprinter::DEFAULT_V1ENC = boost::none;
@@ -315,6 +326,8 @@ scribbu::csv_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
+  
+  return os;
 }
 
 /*virtual*/ std::ostream&
@@ -359,7 +372,7 @@ scribbu::csv_pprinter::pprint_POP(const POP &f, std::ostream &os)
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
 
-  encoding src = encoding::ISO_8859_1;
+  encoding src = encoding::UTF_8;
   if (v2enc_) {
     src = *v2enc_;
   }
@@ -375,6 +388,25 @@ scribbu::csv_pprinter::pprint_POP(const POP &f, std::ostream &os)
   }
 
   return os;
+}
+
+/*virtual*/ std::ostream&
+scribbu::csv_pprinter::pprint_XTG(const XTG &f, std::ostream &os)
+{
+  using namespace std;
+
+  encoding dst;
+  on_no_encoding rsp;
+  std::tie(dst, rsp) = encoding_from_stream(os);
+  
+  string own = f.owner(), tags = f.urlencoded();
+  os << escape(convert_encoding<string>(own.c_str(), own.length(), 
+                                        encoding::UTF_8, dst, rsp)) << 
+    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(), 
+                                            encoding::UTF_8, dst, rsp));
+  
+  return os;
+
 }
 
 /*virtual*/ std::ostream&
@@ -418,6 +450,8 @@ scribbu::csv_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
+  
+  return os;
 }
 
 /*virtual*/ std::ostream&
@@ -508,6 +542,24 @@ scribbu::csv_pprinter::pprint_POPM(const POPM &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
+scribbu::csv_pprinter::pprint_XTAG(const XTAG &f, std::ostream &os)
+{
+  using namespace std;
+
+  encoding dst;
+  on_no_encoding rsp;
+  std::tie(dst, rsp) = encoding_from_stream(os);
+  
+  string own = f.owner(), tags = f.urlencoded();
+  os << escape(convert_encoding<string>(own.c_str(), own.length(), 
+                                        encoding::UTF_8, dst, rsp)) << 
+    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(), 
+                                            encoding::UTF_8, dst, rsp));
+  
+  return os;
+
+}
+/*virtual*/ std::ostream&
 scribbu::csv_pprinter::pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame &f,
                                                 std::ostream &os)
 {
@@ -549,6 +601,8 @@ scribbu::csv_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
+  
+  return os;
 }
 
 /*virtual*/ std::ostream&
@@ -637,4 +691,23 @@ scribbu::csv_pprinter::pprint_POPM_2_4(const POPM_2_4 &f, std::ostream &os)
   }
 
   return os;
+}
+
+/*virtual*/ std::ostream&
+scribbu::csv_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &f, std::ostream &os)
+{
+  using namespace std;
+
+  encoding dst;
+  on_no_encoding rsp;
+  std::tie(dst, rsp) = encoding_from_stream(os);
+  
+  string own = f.owner(), tags = f.urlencoded();
+  os << escape(convert_encoding<string>(own.c_str(), own.length(), 
+                                        encoding::UTF_8, dst, rsp)) << 
+    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(), 
+                                            encoding::UTF_8, dst, rsp));
+  
+  return os;
+
 }

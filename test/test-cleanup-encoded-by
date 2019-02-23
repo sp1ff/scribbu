@@ -7,7 +7,7 @@ eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-cleanup-encoded-
          > >(t_std=$(cat); typeset -p t_std) )"
 t_stat=$?
 echo "$t_std"
-t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-encoded-by.scm' | grep -v 'newer than compiled')
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-encoded-by.scm' | grep -v 'newer than compiled'|grep -v ';;; WARNING: failed to parse.*lunch4bfast.mp3')
 if [ ! -z "$t_err" ]; then
     printf '=%.0s' $(seq 1 $cols)
 	echo "$t_err"

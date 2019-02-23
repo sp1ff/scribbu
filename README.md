@@ -1,118 +1,142 @@
 scribbu - The extensible tool for tagging your music collection
 ===============================================================
 
-This directory contains the 0.5 release of scribbu.
+This directory contains the 0.5 release of [scribbu](https://github.com/sp1ff/scribbu).
 
 See the file NEWS for the user-visible changes from previous releases.
 
-Please check the system-specific notes below for any caveats related to
-your operating system.
+Please check the system-specific notes below for any caveats related to your operating system.
 
 For general building and installation instructions, see the file [INSTALL]().
 
-scribbu is free software.  See the file COPYING for copying
-conditions.  scribbu is copyrighted by Michael Herstine.  Copyright
-notices condense sequential years into a range; e.g. "1987-1994" means
-all years from 1987 to 1994 inclusive.
+scribbu is free software.  See the file [COPYING]() for copying conditions.  scribbu is copyrighted by Michael Herstine <sp1ff@pobox.com>. Copyright notices condense sequential years into a range; e.g. "1987-1994" means all years from 1987 to 1994 inclusive.
 
-What is it?
------------
+Introduction
+------------
 
-scribbu is a C++ library & associated command-line tool for working
-with ID3-tagged files (music, presumably). In addition to assorted
-sub-commands, the scribbu command
-embeds [Guile](https://www.gnu.org/software/guile/ "Guile"), allowing
-it to be scripted in Scheme.
+scribbu is a C++ library & associated command-line tool for working with [ID3](http://id3.org) tags. It was born when I retired my last Windows machine & could no longer use [Winamp](https://en.wikipedia.org/wiki/Winamp) to manage my library of digital music. The scribbu library offers classes & methods for reading, editing & writing ID3v1 & ID3v2 tags. The scribbu program provides assorted sub-commands for working with ID3-tagged files (e.g. re-naming files based on their tags), but its real power lies in its embedded Scheme [interpreter](https://www.gnu.org/software/guile/) in which scribbu library features are exported as a Scheme module (on which more below).
 
-Downloading
------------
-
-You can find the project at https://github.com/sp1ff/scribbu. You can
-clone it by typing `git clone https://github.com/sp1ff/scribbu.git`.
-
-Documentation
--------------
-
-scribbu was born when I retired my last Windows machine & could no
-longer use Winamp to manage my library of digital music. While
-everyone else is streaming their music, I still manage my own library
-(harumph).  The project is still crude; I'm building it out as I
-discover features I want.
+Usage
+-----
 
 scribbu can be invoked in a few ways:
 
-  - with a Scheme expression (`-e`, `--expression`) or Scheme file
-    (`-f`, `--file`).  In this case, scribbu will evaluate the given
-    code & exit.
+  - with a sub-command & relevant options & arguments; i.e. `scribbu SUB-COMMAND OPTION...`. scribbu implements the following sub-commands:
 
-  - with no arguments at all. In this case, scribbu will drop into a
-    Scheme shell in which the user can evaluate arbitrary Scheme
-    expressions.
+	+ `scribbu dump` will write the contents of ID3 tags found in one or more files to stdout
 
-  - with a sub-command & relevant options & arguments.  scribbu
-    implements the following sub-commands:
+    + `scribbu rename` will rename one or more files based on the content of their ID3 tags; e.g. `scribbu rename -t %A-%T.mp3 *.mp3` will rename all the files matching *.mp3 to <artist>-<title>.mp3 where "artist" and "title" are derived from their ID3 tags (if any).
 
-	+ `scribbu dump` will write the contents of any & all ID3 tags
-      found in one or more files to stdout.
+    + `scribbu report` will generate a report listing ID3 attributes on one or more files on stdout. CSV & TDF formats are supported currently (on the basis that there are better querying/reporting tools out there already; they can just import the .csv or .tdf & do better than scribbu would)
 
-    + `scribbu rename` will rename one or more files based on the
-      contents of their ID3 tags; e.g. `scribbu rename -t %A-%T.mp3 *.mp3`
-	  will rename all the files matching *.mp3 to
-      <artist>-<title>.mp3 where "artist" and "title" are derived from
-      their ID3 tags (if any).
+	+ `scribbu popm` will create or update popularimeter & playcount frames. This can be used to keep up the play count, or set a rating.
 
-    + `scribbu report` will generate a report listing ID3 attributes
-      on one or more files on stdout.  Only CSV format is supported
-      currently (on the basis that there are better querying/reporting
-      tools out there already; they can just import the .csv & do
-      better than scribbu would)
+  - with a Scheme expression (`-e`, `--expression`) or Scheme file (`-f`, `--file`). E.g.
 
-    + `scribbu split` will split one file into many; with each new
-      file corresponding to some component of the input file: ID3v1
-      tag, data, and/or ID3v2 tag(s).
+        srcibbu -e '(with-track-in <path> (lambda (v2 pth v1) (format #t "~s: ~a\n" pth v1)))'
 
-Any sub-command can be invoked with `--help` or `-h` for more
-information. Add the `--info` option to display the Info manual.
+    will list (recursively) the ID3v1 tag for all files in `<path>`.
 
-I got the project name from this cool project name
-[http://mrsharpoblunto.github.io/foswig.js/](generator).
+  - as part of a script
 
-### Scripting Examples
+        #!/home/vagrant/bin/scribbu \
+		--debug -L /home/vagrant/share/guile/site -e main -s
+		!#
+		;;; coding: utf-8
 
-Let's illustrate the power of scripting scribbu
-using [Guile](https://www.gnu.org/software/guile/ "Guile") using a
-worked example.  Suppose that we have a directory full of .mp3 files
-ripped by Winamp some time ago & that we noted that fact by setting
-their ID3v1 comment to "Ripped by Winamp".
+		(use-modules (ice-9 format)
+		             (ice-9 getopt-long)
+		             (oop goops)
+		             (scribbu))
 
-We would like to update these files by ensuring that:
+		(setlocale LC_ALL "")
 
-  - They have an ID3v2 tag
+		(define (main args)
+		  (let* ((options-spec '((help          (single-char #\h) (value #f))
+		                         (version       (single-char #\v) (value #f))
+								 ...))
+		         (options  (getopt-long args options-spec))
+		         (help     (option-ref options 'help   #f))
+				 ...
 
-  - That tag has a @code{TENC} frame set to "Winamp"
+  - with no arguments at all. In this case, scribbu will drop into a Scheme shell in which the user can evaluate arbitrary Scheme expressions. For instance:
+
+	    scribbu
+		scribbu 0.5
+		Copyright (C) 2017-2019 Michael Herstine <sp1ff@pobox.com>
+
+		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
+
+		GNU Guile 2.2.0
+		Copyright (C) 1995-2017 Free Software Foundation, Inc.
+
+		Guile comes with ABSOLUTELY NO WARRANTY; for details type `,show w'.
+		This program is free software, and you are welcome to redistribute it
+		under certain conditions; type `,show c' for details.
+
+		Enter `,help' for help.
+		scheme@(guile-user)> (use-modules (scribbu))
+		scheme@(guile-user)> (use-modules (oop goops))
+		scheme@(guile-user)> (define tags (read-tagset "<path>"))
+		scheme@(guile-user)> (length tags)
+		$1 = 1
+		scheme@(guile-user)> (car tags)
+		$2 = (#<<id3v2-tag> 2cd4210> 3)
+		scheme@(guile-user)> (define tag (caar tags))
+		scheme@(guile-user)> (define artists (get-frames tag 'artist-frame))
+		scheme@(guile-user)> (length artists)
+		$5 = 1
+		scheme@(guile-user)> (define A (car artists))
+		scheme@(guile-user)> (slot-ref A 'text)
+		$6 = "The Pogues"
+
+Any sub-command can be invoked with `--help` or `-h` for more information. Use the `--info` option to display the Info manual.
+
+## More Scheme Examples
+
+As I built out the program, it quickly became clear that I was never going to be able to implement a sub-command for every operation anyone might conceivably want to carry out. One could of course write a new program using the underlying library, but that seemed like too high a barrier for someone who, say, just wanted to print the contents of the "artist" frame for a bunch of files.
+
+That gave me the opportunity to use [Guile](https://www.gnu.org/software/guile/). Guile provides a [Scheme](https://groups.csail.mit.edu/mac/projects/scheme/) interpreter that can be embedded into your program, along with facilities for exposing your program's features to the interpreter (Scheme is a Lisp dialect).
+
+Let's demonstrate using a worked example.  Suppose that we have a directory full of .mp3 files ripped by Winamp some time ago & that we noted that fact by setting their ID3v1 comment to "Ripped by Winamp". We would like to update these files by ensuring that:
+
+  - they have an ID3v2 tag
+
+  - that tag has a `TENC` ("encoded-by") frame set to "Winamp"
 
 We begin experimenting:
 
-``` common-lisp
-scheme@@(guile-user)> (define t (scribbu/make-track "/vagrant/test/data/elliot-goldenthal.id3v1.tag"))
-scheme@@(guile-user)> (scribbu/get-path t)
-$5 = "/vagrant/test/data/elliot-goldenthal.id3v1.tag"
-scheme@@(guile-user)> (scribbu/get-id3v1-string t 'scribbu/comment)
-$6 = "Ripped by Winamp on Pimperne"
-scheme@@(guile-user)> (scribbu/get-id3v2-tag-count t)
-$7 = 0
+```scheme
+scheme@(guile-user)> (use-modules (scribbu) (oop goops))
+scheme@(guile-user)> (define v1 (read-id3v1-tag "/vagrant/test/data/elliot-goldenthal.id3v1.tag"))
+scheme@(guile-user)> (slot-ref v1 'comment)
+$1 = "Ripped by Winamp on Pimperne"
+scheme@(guile-user)> (define tags (read-tagset "/vagrant/test/data/elliot-goldenthal.id3v1.tag"))
+scheme@(guile-user)> (length tags)
+$2 = 0
 ```
 
-So this track has an ID3v1 tag with the comment we wrote when we
-ripped it using Winamp, but no ID3v2 tags. Let's fix that:
+So this track has an ID3v1 tag with the comment we wrote when we ripped it using Winamp, but no ID3v2 tags. Let's fix that:
 
-``` common-lisp
-scheme@@(guile-user)> (scribbu/make-id3v2-tag t 0)
+``` scheme
+scheme@(guile-user)> (define frames (list (make <text-frame> #:id 'encoded-by-frame #:text "Winamp")))
 $1 = ()
-scheme@@(guile-user)> (scribbu/set-frame t 0 'scribbu/encoded-by "Winamp")
+scheme@(guile-user)> (define tag (make <id3v2-tag> #:frames frames))
 $2 = ()
-scheme@@(guile-user)> (scribbu/write-id3v2-tag t 0 "test.out")
+scheme@(guile-user)> (write-tagset (list (list tag 3)) "test.out")
 $3 = 27
+```
+
+The odd second argument to `write-tagset` is a list of pairs. Each pair represents an ID3v2 tag (files can have multiple ID3v2 tags): the first element is the Scheme `<id3v2-tag>` instance & the second is an `int` indicating what version of the ID3v2 spec shall be used to serialize it (we'll write the tag in ID3v2.3 format in this case). Because we have a single tag, the outer list has only one element. So one _could_ write out the same tag in different formats like so:
+
+``` scheme
+(write-tagset (list (list tag 2) (list tag 3) (list tag 4)))
+```
+
+or write multiple ID3v2 tags:
+
+``` scheme
+(write-tagset (list (list tag1 2) (list tag1 3) (list tag2 3)))
 ```
 
 In a shell, we see that an ID3v2 tag has been written to "test.out":
@@ -124,34 +148,19 @@ vagrant@@vagrant:~/build$ od -Ax -t x1z test.out
 00001b
 ```
 
-We attempt to write the new track to file:
+But "test.out" is a new file containing *just* the new ID3v2 tag. Let's try adding this tag to an existing file. In the shell
 
-``` common-lisp
-@example
-scheme@@(guile-user)> (scribbu/write-track t "test.mp3")
-Cannot write a track that wasn't created with load-data
+``` shell
+cp -v /vagrant/test/data/elliot-goldenthal.id3v1.tag test.mp3
 ```
 
-By default, `scribbu/make-track` will *not* load the track data into
-memory (just the ID3 tags), and so `scribbu/write-track` refuses to
-re-write it (see `scribbu/replace-tags` for an alternative approach
-here).
+and back in the interpreter:
 
-We're just experimenting, however, so let's try this again:
-
-``` common-lisp
-scheme@@(guile-user)> (define t (scribbu/make-track "/vagrant/test/data/elliot-goldenthal.id3v1.tag" #:load-data #t))
-scheme@@(guile-user)> (scribbu/make-id3v2-tag t 0)
-$1 = ()
-scheme@@(guile-user)> (scribbu/set-frame t 0 'scribbu/encoded-by "Winamp")
-$2 = ()
-scheme@@(guile-user)> (scribbu/write-track t "test.mp3")
-$3 = ()
+``` scheme
+scheme@(guile-user)> (write-tagset (list (list tag 3)) "test.mp3")
 ```
 
-Checking in the shell, we see that the entire track has been written
-out (this is a contrived example, so there's no audio data-- just the
-new ID3v2 tag & the old ID3v1 tag):
+Checking in the shell, we see that the entire track has been written out (this is a contrived example, so there's no audio data-- just the new ID3v2 tag & the old ID3v1 tag):
 
 ``` shell
 vagrant@@vagrant:~/build$ od -Ax -t x1z test.mp3
@@ -168,8 +177,103 @@ vagrant@@vagrant:~/build$ od -Ax -t x1z test.mp3
 00009b
 ```
 
-Refer to the unit test `test-cleanup-encoded-by` for a Scheme program
-that will do this for all files in a given directory.
+Having worked out the basics, we would now like to automate a solution. scribbu offers a utlity function `with-track-in`: given a directory, it will recursively traverse the tree rooted there, opening each file, parsing all tags, and invoking a caller-supplied function with a list ID3v2 tags, the path to the file, and the ID3v1 tag. This is actually a unit test (`test-cleanup-encoded-by`), but here's how one could do it. Note in particular the sh-bang line-- the script can be run directly:
+
+``` shell
+#!scribbu
+!#
+# cleanup-encoded-by
+(use-modules (ice-9 format))
+(use-modules (ice-9 regex))
+(use-modules (scribbu))
+(use-modules (oop goops))
+
+(define (cleanup-encoded-by tags pth v1)
+  "Clean-up the 'encoded-by' attribute of TRACK.
+
+If TRACK does not have an ID3v1 comment field matching /.*winamp.*/,
+do nothing.
+
+Else, if TRACK has an ID3v2 tag without a TENC frame, add a TENC frame
+of 'Winamp'.  If TRACK has no ID3v2 tag. create one with only a TENC
+frame of 'Winamp'. Otherwise, print a warning consisting of the TENC
+frames in the extant ID3v2 frames."
+
+  (unless (null? v1)
+    (let ((r (make-regexp ".*winamp.*" regexp/icase)))
+      (if (regexp-exec r (slot-ref v1 'comment))
+          (begin
+            (if (eq? 0 (length tags))
+                (let* ((frames (list (make <text-frame>
+                                       #:id 'encoded-by-frame
+                                       #:text "Winamp")))
+                       (tag (make <id3v2-tag> #:frames frames))
+                       (out (string-join (list (basename pth) "out") ".")))
+                  (write-tagset (list (list tag 3)) out))
+                (let ((x tags)
+                      (i 0)
+                      (encoders '()))
+                  (while (not (null? x))
+                         (let* ((tag (caar tags))
+                                (enc (get-frames tag 'encoded-by-frame)))
+                           (if (eq? 0 (length enc))
+                               (begin
+                                 (slot-set! tag 'frames
+                                            (append (slot-ref tag 'frames)
+                                                    (list
+                                                     (make <id3v2-text-frame>
+                                                       #:id 'encoded-by-frame
+                                                       #:text "Winamp"))))
+                                 (write-tagset
+                                  (list (list tag 3))
+                                  (string-join (list (basename pth)
+                                                     (number->string i)
+                                                     "out") ".")))
+                               (set! encoders (cons (car enc) encoders))))
+                         (set! x (cdr x))
+                         (set! i (+ i 1)))
+                  (if (eq? (length encoders) (length tags))
+                      (format #t "~s: already encoded by ~s\n"
+                              pth encoders)))))))))
+
+(let ((cl (cdr (command-line))))
+  (if (= 1 (length cl))
+      (with-track-in (car cl) cleanup-encoded-by)
+      (begin
+        (format #t "Usage: clean-up-encoded-by ${srcdir}\n")
+        (exit 2))))
+```
+
+
+Downloading
+-----------
+
+You can find the project at https://github.com/sp1ff/scribbu. You can clone it by typing `git clone https://github.com/sp1ff/scribbu.git`.
+
+
+Installing
+----------
+
+General instructions may be found in [INSTALL](). MacOS support is experimental, and limited to Mojave at this point. Patches, suggestions & more information are welcome.
+
+``` shell
+cd /tmp
+# curl -O .../scribbu-0.5.tar.gz
+xcode-select --install
+brew install openssl libiconv
+brew install -vf --build-from-source --cc=clang boost@1.60
+tar -zxvf scribbu-0.5.tar.gz
+cd scribbu-0.5
+./configure --with-boost=/usr/local/opt/boost@1.60 \
+    --with-openssl=/usr/local/opt/openssl \
+    CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
+    -I/usr/local/opt/boost@1.60/include" \
+    CXXFLAGS="-Wno-register" \
+    LDFLAGS="-L/usr/local/opt/boost@1.60/lib -L/usr/local/opt/openssl/lib -liconv"
+make
+make check
+make install
+```
 
 Development
 -----------
@@ -182,7 +286,7 @@ cd scribbu
 ./autogen.sh
 ```
 
-I like to build in a separate directory:
+I like to build in a separate directory (AKA VPATH build):
 
 ``` shell
 cd /tmp
@@ -191,7 +295,7 @@ mkdir build && cd build
 make check
 ```
 
-Alternatively, you can just use Vagrant:
+Alternatively, you can just use Vagrant (there's a Vagrantfile as part of the distribution):
 
 ``` shell
 vagrant up
@@ -213,12 +317,18 @@ sp1ff@pobox.com
 System-specific Notes
 ---------------------
 
-Linux only, Mac coming.
+Linux & Mac only
 
 Ports
 -----
 
 None.
+
+Notes
+-----
+
+  - Right now the project is only distributed as source; I don't even have an Autotools tarball available. I'm working on that.
+  - I got the project name from this cool project name [generater](http://mrsharpoblunto.github.io/foswig.js/).
 
 -------------------------------------------------------------------------------
 Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>

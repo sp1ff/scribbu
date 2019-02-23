@@ -23,6 +23,21 @@
 
 #include <scribbu/id3v1.hh>
 
+#include <boost/filesystem/fstream.hpp>
+
+namespace fs = boost::filesystem;
+
+
+//////////////////////////////////////////////////////////////////////////////
+//                             class invalid_tag                            //
+//////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+const char *
+scribbu::id3v1_tag::invalid_tag::what() const noexcept(true)
+{
+  return "invalid ID3v1 tag";
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //                         class id3v1_tag                                  //
@@ -142,23 +157,27 @@ scribbu::id3v1_tag::id3v1_tag(std::istream &is,
 
 namespace scribbu {
 
-  template<>
+  template <>
   std::string
   scribbu::id3v1_tag::album(const boost::optional<encoding> &src,
-                            encoding dst,
-                            on_no_encoding rsp) const
+                            encoding                         dst,
+                            on_no_encoding                   rsp) const
   {
     using std::string;
     using namespace scribbu;
+
     if (!scribbu::char_traits<char>::is_code_unit(dst)) {
       throw bad_code_unit(dst, sizeof(char));
     }
-    return convert_encoding<string>(&(album_[0]), album_.size(),
-                                    src ? src.get() :
-                                    encoding_from_system_locale(),
-                                    dst, rsp);
-  }
 
+    return convert_encoding<string>(&(album_[0]), 
+                                    album_.size(),
+                                    src ? src.get() :
+                                        encoding_from_system_locale(),
+                                    dst, 
+                                    rsp);
+  }
+  
   template<>
   std::string
   scribbu::id3v1_tag::artist(const boost::optional<encoding> &src,
@@ -644,7 +663,48 @@ scribbu::process_id3v1(std::istream &is)
   std::unique_ptr<scribbu::id3v1_tag> p;
   scribbu::id3v1_info I = scribbu::ends_in_id3v1(is);
   if (id3_v1_tag_type::none != I.type_) {
+    is.seekg(I.start_);
     p.reset(new id3v1_tag(is));
   }
   return p;
+}
+
+void 
+scribbu::maybe_remove_id3v1(const fs::path &pth)
+{
+  const std::ios::iostate EXC_MASK = std::ios::eofbit  | 
+                                     std::ios::failbit | 
+                                     std::ios::badbit;
+
+  fs::ifstream ifs;
+  ifs.exceptions(EXC_MASK);
+  
+  try {
+    ifs.open(pth, fs::ifstream::binary);
+  } catch (const std::ios_base::failure&) {
+    return;
+  }
+           
+  auto p = process_id3v1(ifs);
+  
+  ifs.close();
+  
+  if (!p) {
+    return;
+  }
+  
+  fs::resize_file(pth, fs::file_size(pth) - p->size());
+}
+
+void 
+scribbu::replace_id3v1(const fs::path &pth, const id3v1_tag &tag)
+{
+  const std::ios::iostate EXC_MASK = std::ios::eofbit  | 
+                                     std::ios::failbit | 
+                                     std::ios::badbit;
+  
+  maybe_remove_id3v1(pth);
+  fs::ofstream ofs(pth, fs::ofstream::binary|fs::ofstream::app);
+  ofs.exceptions(EXC_MASK);
+  tag.write(ofs);
 }

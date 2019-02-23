@@ -74,6 +74,8 @@ struct reporter {
              const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
              const scribbu::track_data                 &info,
              const std::unique_ptr<scribbu::id3v1_tag> &pid3v1) = 0;
+  virtual ~reporter() 
+  { }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -279,7 +281,7 @@ tdf_reporter::tdf_reporter(const fs::path   &output,
           "ID3v1 Album"        << sep_ <<
           "ID3v1 Year"         << sep_ <<
           "ID3v1 Comment"      << sep_ <<
-          "ID3v1 Genrre"       << endl;
+          "ID3v1 Genre"        << endl;
 
   // Imbue our output stream with a manipulator that will cause all subsequently
   // inserted tags &c to be printed in CSV format.
@@ -314,7 +316,7 @@ tdf_reporter::make_entry(const scribbu::file_info                  &fi,
     fill_n(oi, 14 + ncomm_, sep_);
   }
 
-  ofs_ << "sep_" << info << "sep_";
+  ofs_ << sep_ << info << sep_;
 
   if (pid3v1) {
     ofs_ << *pid3v1;
@@ -423,9 +425,7 @@ void sequential_strategy::process_directory(const fs::path &pth) {
 namespace {
 
   int
-  handle_report(const std::vector<std::string>  &tokens,
-                help_level                       help,
-                const boost::optional<fs::path> &cfg)
+  handle_report(int argc, char **argv)
   {
     using namespace std;
 
@@ -461,6 +461,7 @@ namespace {
 
     po::options_description opts("general options");
     opts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
       ("num-comments,c", po::value<size_t>()->default_value(6),
        "Number of comment tags to be printed (their # will always be reported")
       ("output,o", po::value<fs::path>()->required(), "output file to which the "
@@ -478,7 +479,7 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
+      ("arguments", po::value<std::vector<string>>(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
 
@@ -496,38 +497,35 @@ namespace {
 
     try {
 
+      vector<string> tokens;
+      convert_tokens(argc, argv, back_inserter(tokens));
+
+      po::variables_map vm;
+      po::parsed_options parsed = po::command_line_parser(tokens).
+        options(all).
+        positional(popts).
+        run();
+      po::store(parsed, vm);
+
+      help_level help = help_level::none;
+      if (vm.count("help")) {
+        help = help_level_for_parsed_opts(parsed);
+      }
+      
+      parsed = po::parse_environment(nocli, "SCRIBBU");
+      po::store(parsed, vm);
+
+      po::notify(vm);
+
       if (help_level::regular == help) {
+
         print_usage(cout, docopts, USAGE);
+
       } else if (help_level::verbose == help) {
-        execlp("man", "man", "scribbu-report", (char *)NULL);
-        // If we're here, `execlp' failed.
-        stringstream stm;
-        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
-        throw runtime_error(stm.str());
+
+        show_man_page("scribbu-report");
+
       } else {
-
-        po::variables_map vm;
-
-        // Command line takes highest priority...
-        po::parsed_options parsed = po::command_line_parser(tokens).
-          options(all).
-          positional(popts).
-          run();
-
-        po::store(parsed, vm);
-
-        // followed by the configuration file...
-        if (cfg) {
-          fs::ifstream ifs(cfg.get());
-          parsed = po::parse_config_file(ifs, nocli);
-          po::store(parsed, vm);
-        }
-
-        // and finally any environment variables.
-        parsed = po::parse_environment(nocli, "SCRIBBU");
-        po::store(parsed, vm);
-
-        po::notify(vm);
 
         // That's it-- the list of files and/or directories to be processed
         // should be waiting for us in 'arguments'...
@@ -587,12 +585,16 @@ namespace {
       }
 
     } catch (const po::error &ex) {
+
       cerr << ex.what() << endl;
       print_usage(cerr, docopts, USAGE);
       status = EXIT_INCORRECT_USAGE;
+
     } catch (const std::exception &ex) {
+
       cerr << ex.what() << endl;
       status = EXIT_FAILURE;
+
     }
 
     return status;

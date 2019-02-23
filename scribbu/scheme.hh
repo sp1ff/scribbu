@@ -34,7 +34,8 @@ extern "C" {
    * \return always returns nil
    *
    *
-   * This function is intended to be called from within scm_with_guile; it will:
+   * This function is intended to be called from within scm_with_guile; it 
+   * will:
    *
    *   <li>define the scribbu Scheme module
    *   <li>define all scribbu foreign ojbect types
@@ -46,6 +47,6 @@ extern "C" {
   void*
   initialize_guile(void*);
 
-}
+} // End extern "C"
 
 #endif // not SCHEME_HH

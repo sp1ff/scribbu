@@ -236,20 +236,21 @@ namespace scribbu {
     id3v2_4_tag(std::istream &is);
     /// Read an ID3v2.3 tag once it's header has already been read into \a H
     id3v2_4_tag(std::istream &is, const id3v2_info &H);
-    /// Instantiate an ID3v2.4 tag "from scratch"
-    id3v2_4_tag(std::size_t cbpad = 0, bool exp = false,
-                bool footer = false);
-    id3v2_4_tag(std::size_t cbpad = 0, bool exp = false, bool footer = false,
-                bool update = false, bool crc = false, bool restricted = false,
-                tag_size tsr = tag_size::restricted, bool ter = false,
-                text_size tzr = text_size::unrestricted,
-                bool ier = false, image_size izr = image_size::unrestricted);
+    id3v2_4_tag(std::size_t cbpad = 0, bool fexp = false);
+    id3v2_4_tag(const id3v2_4_tag &that);
+    virtual id3v2_tag* clone() const
+    { return new id3v2_4_tag(*this); }
+    id3v2_4_tag& operator=(const id3v2_4_tag &that);
 
   public:
 
     /// Retrieve this tag's ID3v2 flags; the exact meaning of each bit will
     /// depend on the particular ID3v2 version
     virtual unsigned char flags() const;
+    /// Retrieve this tag's experimental flag
+    bool experimental() const 
+    { return (flags() & 32) != 0; }
+
     /////////////////////////////////////////////////////////////////////////////
     //                          ID3v2 Serialization                            //
     /////////////////////////////////////////////////////////////////////////////
@@ -417,8 +418,6 @@ namespace scribbu {
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////
 
-    bool experimental() const
-    { return experimental_; }
     bool has_extended_header() const
     { return (bool) pext_header_; }
     ext_header extended_header() const

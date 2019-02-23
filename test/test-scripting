@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# This will be called as /vagrant/test/test-scripting
+# from /home/vagrant/build/test-- no arguments
+
+case `uname` in
+    Linux)
+        echo "#!../src/scribbu \\" > /tmp/test-scripting.scm;;
+    Darwin)
+        # TODO(sp1ff): workaround for MacOS-- should be:
+        # but that doesn't work & I don't know why.
+        echo "#!../src/.libs/scribbu \\" >  /tmp/test-scripting.scm;;
+    *)
+        echo "Unknown system" 2>&1;
+        exit 1;;
+esac
+
+cat >> /tmp/test-scripting.scm<<EOF
+-e main -s
+!#
+(use-modules (ice-9 getopt-long))
+
+(define (main args)
+  (let* ((option-spec '((help (single-char #\h) (value #f))))
+         (options (getopt-long args option-spec))
+         (help (option-ref options 'help #f)))
+    (if help
+        (display "help\n")
+        (display "not-help\n"))))
+;; (main (command-line))
+EOF
+
+chmod a+x /tmp/test-scripting.scm
+export GUILE_AUTO_COMPILE=0
+cols=$(tput cols)
+export GUILE_LOAD_PATH=${srcdir}/../scheme
+
+eval "$(/tmp/test-scripting.scm -h \
+        2> >(t_err=$(cat); typeset -p t_err) \
+         > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+echo "$t_std"
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-scripting.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+
+if [ "$t_std" != "help" ]; then
+    exit 1
+fi
+
+eval "$(/tmp/test-scripting.scm \
+        2> >(t_err=$(cat); typeset -p t_err) \
+         > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+echo "$t_std"
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-scripting.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+
+if [ "$t_std" != "not-help" ]; then
+    exit 1
+fi
+exit $t_stat

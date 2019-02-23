@@ -23,93 +23,217 @@
 
 #include "config.h"
 #include "command-utilities.hh"
+
 #include <scribbu/scribbu.hh>
 #include <scribbu/scheme.hh>
 
-#include <iostream>
 #include <libguile.h>
 #include <signal.h>
 #include <sys/resource.h>
 
+#include <iostream>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
+
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
+
 namespace {
 
-  /**
-   * \brief Evaluate a Scheme expression
-   *
-   *
-   * \param p [in] Address of a std::string containing the Scheme expression
-   * to be evaluated
-   *
-   * \return This method always returns nil (on which more below)
-   *
-   *
-   * This function will unpack the std::string & invoke scm_c_eval_string. That
-   * method will return a SCM containing the result of the expression, which this
-   * function ignores.
-   *
-   * It also accepts the default Guile error handling; cf. `scm_c_catch' to change
-   * that (https://www.gnu.org/software/guile/manual/html_node/Catching-Exceptions.html#Catching-Exceptions)
-   *
-   *
-   */
-
-  void* evaluate_expression(void *p) {
-    initialize_guile(0);
-    std::string s = *reinterpret_cast<std::string*>(p);
-    scm_c_eval_string(s.c_str());
-    return 0;
-  }
-
-  /**
-   * \brief Evaluate a Scheme file
-   *
-   *
-   * \param p [in] Address of an fs::path containing the Scheme file to be
-   * evaluated
-   *
-   * \return This method always returns nil (on which more below)
-   *
-   *
-   * This function will unpack the fs::path, read the file & invoke
-   * scm_c_eval_string. That method will return a SCM containing the result of
-   * the expression, which this function ignores.
-   *
-   * It also accepts the default Guile error handling; cf. `scm_c_catch' to change
-   * that (https://www.gnu.org/software/guile/manual/html_node/Catching-Exceptions.html#Catching-Exceptions)
-   *
-   *
-   */
-
-  void* evaluate_file(void *p) {
-    initialize_guile(0);
-    fs::path pth = *reinterpret_cast<fs::path*>(p);
-
-    boost::uintmax_t cb = fs::file_size(pth);
-    std::unique_ptr<char[]> pb(new char[cb + 1]);
-
-    fs::ifstream ifs(pth);
-    ifs.read(pb.get(), cb);
-    pb[cb] = 0;
-
-    scm_c_eval_string(pb.get());
-    return 0;
-  }
-
-  const std::string USAGE(R"(scribbu -- the extensible tool for tagging your music collection
+  const std::string USAGE(R"( -- the extensible tool for tagging your music collection
 
 Usage:
-    scribbu [OPTION...] [SUB-COMMAND]
+
+    scribbu [GLOBAL-OPTION...] [SUB-COMMAND] [OPTION...] [ARGUMENT...]
+    scribbu [GLOBAL-OPTION...] ([-s] FILE|-c EXPR|--) [ARGUMENT...]
+
+The first form invokes one of the scribbu sub-commands (type `scribbu --help'
+for a list). The second invokes the Guile Scheme interpreter embedded within
+scribbu.
+
+GLOBAL-OPTION may be:
+
+    -h                    display this help message and exit with status zero
+    --help                display the scribbu man page
+    -v, --version         display this package's version information and exit
+                          with status zero
+    -L DIRECTORY          add DIRECTORY to the front of the Guile module load 
+                          path
+    -C DIRECTORY          like -L, but for compiled files
+    -x EXTENSION          add EXTENSION to the front of the load extensions
+    -l FILE               load source code from FILE
+    -e FUNCTION           after reading script, apply FUNCTION to
+                          command line arguments
+    -ds                   do -s script at this point
+    --debug               start with the "debugging" VM engine
+    --no-debug            start with the normal VM engine (backtraces but
+                          no breakpoints); default is --debug for interactive
+                          use, but not for `-s' and `-c'.
+    --auto-compile        compile source files automatically
+    --fresh-auto-compile  invalidate auto-compilation cache
+    --no-auto-compile     disable automatic source file compilation;
+                          default is to enable auto-compilation of source
+                          files.
+    --listen[=P]          listen on a local port or a path for REPL clients;
+                          if P is not given, the default is local port 37146
+    -q                    inhibit loading of user init file
+    --use-srfi=LS         load SRFI modules for the SRFIs in LS,
+                          which is a list of numbers like "2,13,14"
+    \                     read arguments from following script lines
+
+The following switches stop argument processing, and pass all remaining
+arguments as the value of `(command-line)'. If FILE begins with `-' the
+-s switch is mandatory.
+
+     [-s] FILE      load source code from FILE, and exit
+     -c EXPR        evalute expression EXPR, and exit
+     --             stop scanning arguments; run interactively
 
 For detailed help, say `scribbu --help'. To see the scribbu manual, say `info scribbu'.
 )");
+  
+  /**
+   * \brief Parse options until we encounter something we don't understand; copy
+   * Guile options & return any scribbu-specific options; consume argc & argv
+   *
+   *
+   * \param argc [in,out] address of argc
+   *
+   * \param argv [in,out] address of argv
+   *
+   * \param gargc [out] address of an integer variable counting Guile argumetns;
+   * on return it will contain the numbr of arguments added to \a gargv
+   *
+   * \param gargv [out] address of an array of const char *-- Guile options
+   * will be copied from argv to here
+   *
+   * \return a bool, help_level pair; the bool indicates whether version
+   * information was requested
+   *
+   *
+   * This function will consume up to the first un-recognized option or
+   * argument. The caller can determine whether all arguments were consumed by
+   * inspecting *argc on return. Encountering -s, -c or -- will cause all
+   * remaining options to beconsumed & copied over to \a gargv.
+   *
+   *
+   */
 
-  const fs::path DEFCFG("~/.scribbu");
+  std::tuple<bool, help_level>
+  handle_options(int *argc, char ***argv,
+                 int *gargc, char **gargv)
+  {
+    int n = 0;
+    bool version = false;
+    bool copy_rest = false;
+    help_level help = help_level::none;
+
+    while (*argc > 0) {
+
+      const char *cmd = (*argv)[0];
+      
+      if (!strcmp("-h", cmd)) {
+
+        help = help_level::regular; // short help
+        (*argv)++; (*argc)--;       // consume `argv'
+
+      } else if (!strcmp("--help", cmd)) {
+
+        help = help_level::verbose; // verbose help
+        (*argv)++; (*argc)--;       // consume `argv'
+
+      } else if (!strcmp("-v", cmd) || !strcmp("--version", cmd)) {
+
+        version = true;       // version requested
+        (*argv)++; (*argc)--; // consume `argv'
+
+      } else if (!strcmp("-L", cmd) || 
+                 !strcmp("-C", cmd) ||
+                 !strcmp("-x", cmd) || 
+                 !strcmp("-l", cmd) ||
+                 !strcmp("-e", cmd)) {
+
+        // all (short) Guile options accepting a second argument 
+        gargv[n++] = (*argv)[0];          // copy to `gargv'
+        (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
+        
+        // There *should* be an option value waiting for us
+        if (0 == *argc) {
+          throw po::required_option(cmd);
+        } else {
+          gargv[n++] = (*argv)[0];          // copy to `gargv'
+          (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
+        }
+
+      } else if (!strncmp("--language", cmd, 10)      ||
+                 !strncmp("--listen", cmd, 8)         ||
+                 !strncmp("--use-srfi", cmd, 10)      ||
+                 !strcmp("-ds", cmd)                  || 
+                 !strcmp("--debug", cmd)              ||
+                 !strcmp("--no-debug", cmd)           || 
+                 !strcmp("--auto-compile", cmd)       ||
+                 !strcmp("--fresh-auto-compile", cmd) ||
+                 !strcmp("--no-auto-compile", cmd)    ||
+                 !strcmp("-q", cmd)                   || 
+                 !strcmp("\\", cmd)) {
+        
+        // Guile options that either take no values, or that are
+        // long options that take their values in a single argument
+        // (i.e. "--foo=bar")
+        gargv[n++] = (*argv)[0];          // copy to `gargv'
+        (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
+
+      } else if (!strcmp("-c", cmd) || !strcmp("-s", cmd)) {
+
+        gargv[n++] = (*argv)[0];          // copy to `gargv'
+        (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
+
+        // There *should* be an option value waiting for us:
+        if (*argc == 0) {
+          throw po::required_option(cmd);
+        } else {
+          copy_rest = true;
+          break;
+        }
+
+      } else if (!strcmp("--", cmd)) {
+        
+        // Everything else goes to `gargv'
+        copy_rest = true;
+        break;
+
+      } else {
+        
+        // If we're here, we've encountered something we don't understand-- bail
+        break;
+
+      }
+
+    } // End while on *argc.
+    
+    if (copy_rest) {
+      
+      while (*argc) {
+        gargv[n++] = (*argv)[0];          // copy to `gargv'
+        (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
+      }
+
+    }
+    
+    return std::make_tuple(version, help);
+  }
+  
+  void
+  print_usage(std::ostream      &os, 
+              const std::string &usage, 
+              const std::string  pname)
+  {
+    os << pname << usage << "\n" << std::endl;
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   //                        scribbu signal handling                          //
@@ -188,154 +312,146 @@ main(int argc, char * argv[])
     return 3;
   }
 
-  //  and finally carry out library initialization.
+  //  carry out scribbu library initialization...
   scribbu::static_initialize();
+  
+  // and, finally, parse the command line:
+
+  //////////////////////////////////////////////////////////////////////////
+  //                            command line parsing                      //
+  //////////////////////////////////////////////////////////////////////////
+
+  // This task is complicated by the multiple ways in which scribbu can be
+  // invoked:
+  
+  //     1. scribbu (-h|--help|--version) : just display the requested
+  //        information & exit
+  //     2. scribbu [GLOBAL-OPTION...] SUBCMD [OPTION...] [ARGUMENT...]: parse
+  //        any global options, then dispatch to the sub-command for further
+  //        option parsing-- do _not_ parse any options or arguments for
+  //        the sub-command.
+  //     3. scribbu [(GLOBAL-OPTION|GUILE-OPTION)...] [-s FILE|-e EXPR|--]
+  //        [ARGUMENT...]: parse the global options and the Guile options; 
+  //        handle the global options & pass all the Guile options to 
+  //        `scm_shell' for processing there
+  
+  // Constraints:
+  //
+  //     1. I can't just pass on all unknown options to Guile; if I do that,
+  //     someone typing, say, `scribbu --hepl' will get the Guile usage message,
+  //     which will be very confusing to them.
+  //
+  //     2. Whatever option parsing framework I use, I need to _stop_ parsing at
+  //     the first non-global: suppose a sub-command also defines an option with
+  //     the same name as a global? There's no way to do that in a general way.
+  
+  // boost::program_options really isn't suited for this. For instance, it's
+  // inconvenient to distinguish between `-h' (for which I want to directly
+  // print a short usage message on stdout) and `--help' (for which I want to
+  // display the man page). You can allow unrecognized parameters, but you can't
+  // get it to stop parsing on an un-recognized token, so it _will_ parse
+  // sub-command options by the same name as global options. In casting about, I
+  // found some Stack Overflow answers that involved using undocumented
+  // features, but it seemed to me like hammering a square peg into a round
+  // hole.
+  
+  // I thought about getopt-long, but then perused the Git source
+  // (https://github.com/git/git/blob/master/git.c) and just doing it "by hand"
+  // didn't look so bad...
 
   int status = EXIT_SUCCESS;
 
-  // Global options, or options that apply to all sub-commands, should
-  // be defined here. Each sub-command will define & parse its own options
-  // separately.
-  po::options_description gopts("Global options");
-  gopts.add_options()
-    ("config,c", po::value<fs::path>()->default_value(DEFCFG),
-     "path (absolute or relative) to the config file from which additional"
-     " options will be read")
-    ("expression,e", po::value<string>(), "Scheme expression to evaluate")
-    ("file,f", po::value<string>(), "Scheme file to evaluate")
-    ("h", "print the " PACKAGE " usage message & exit with status zero")
-    ("help", "show more detailed help")
-    ("version,v", "print the " PACKAGE " version & exit with status zero");
-
-  po::options_description hidden;
-  hidden.add_options()
-    ("sub-command", po::value<vector<string>>());
+  string program_name(argv[0]);
 
   try {
 
-    po::options_description allopts;
-    allopts.add(gopts).add(hidden);
+    typedef char *argv_t;
+    unique_ptr<argv_t[]> gargv(new argv_t[argc + 1]);
+    
+    int gargc = 1;
+    gargv[0] = argv[0];
+    
+    argv++; argc--;
 
-    // In order to have boost accept later positional parameters, it
-    // seems we need to stuff them all one option (as opposed to
-    // making position 1 the command and all the rest something else).
-    po::positional_options_description popts;
-    popts.add("sub-command", -1);
+    bool version;
+    help_level help;
+    tie(version, help) = handle_options(&argc, &argv, &gargc, &(gargv[1]));
+    
 
-    po::parsed_options parsed = po::command_line_parser(argc, argv).
-      options(allopts).
-      // Workaround for
-      // https://stackoverflow.com/questions/3621181/short-options-only-in-boostprogram-options
-      style(po::command_line_style::default_style |
-            po::command_line_style::allow_long_disguise).
-      positional(popts).
-      allow_unregistered().
-      run();
+  
+    // At this point, we have a few possibilities. Our our caller could be
+    // asking for help/version information; version "wins":
+    if (version) {
+      
+      cout << PACKAGE_STRING << endl;
 
-    po::variables_map vm;
-    po::store(parsed, vm);
+    } else if (help_level::verbose == help) {
 
-    // At this point, any global options we've defined ('--help',
-    // '--version' &c) have been parsed out and placed in 'vm',
-    // regardless of where they appear. So if, for instance, the user
-    // typed something like 'scribbu list --help', (i.e. they're
-    // seeking help on the list command specifically), the '--help'
-    // has already been removed from 'opts' (see which below).
+      show_man_page("scribbu");
 
-    // Furthermore, different global options interact with
-    // sub-commands in different ways:
+    }
+    else if (help_level::regular == help) {
 
-    // 	 - version can only be given with no sub-command
-    // 	 - config can only be given *with* a sub-command
-    // 	 - help can be given either way, but it's behaviour will differ
+      print_usage(cout, USAGE, program_name);
 
-    // 'vm["sub-command"]' will only contain positional options, not
-    // flags. To get everything, we need to do this:
-    vector<string> opts = po::collect_unrecognized(parsed.options, po::include_positional);
+    } else if (argc > 0 && has_sub_command(argv[0])) {
 
-    if (vm.count("version")) {
-      if (opts.size()) {
-        throw po::error("unrecognized argument: --version");
-      } else {
-        cout << PACKAGE_STRING << endl;
-      }
-    } else if (!vm["config"].defaulted() && !opts.size()) {
-      throw po::error("configuration specified, but nothing asked");
+      // If there's something remaining un-processed on the command line, it
+      // could be a sub-command (presumably with more options & arguments behind
+      // it.
+      handler_type f = get_sub_command(argv[0]);
+      argv++; argc--;
+      status = f(argc, argv);
+
     } else {
+  
+      // Otherwise, _if_ there is still something waiting for us on `argv', 
+      // it must be a file to be handed to the Scheme interpreter, or it's 
+      // just garbage. Impossible to tell from here, of course, but I'm giong
+      // to say that if the argument begins with a '-', it is a mis-typed
+      // option.
+      if (argc) {
+      
+        if ('-' == argv[0][0]) {
+        
+          throw po::unknown_option(argv[0]);
 
-      // If we're here, we going to do *something*, albeit as little
-      // as printing help; how much help was requested (if any)?
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level::verbose;
-      } else if (vm.count("h")) {
-        help = help_level::regular;
-      }
-
-      // Was a config file given?
-      optional<fs::path> cfg;
-      fs::path pth = vm["config"].as<fs::path>();
-      if (fs::exists(pth)) {
-        cfg = pth;
-      } else if (!vm["config"].defaulted()) {
-        // If it was explicitly given, and it doesn't exist, that's an error.
-        throw po::error(pth.native() + " does not exist");
-      }
-
-      if (opts.size() && has_sub_command(opts.front())) {
-
-        // 'opts' is non-empty, so there's at least one element--
-        // attempt to resolve the first element to a command...
-        handler_type f = get_sub_command(opts.front());
-        // pop it...
-        opts.erase(opts.begin());
-        // and dispatch.
-        status = f(opts, help, cfg);
-
-      } else {
-
-        if (help_level::verbose == help) {
-          execlp("man", "man", "scribbu", (char *)NULL);
-          // If we're here, `execlp' failed.
-          stringstream stm;
-          stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
-          throw runtime_error(stm.str());
-        }
-        else if (help_level::regular == help) {
-          print_usage(cout, gopts, USAGE);
-        }
-        else {
-
-          // No sub-command has been given, so we're going to be evaluating
-          // some Scheme. Will it be an expression...
-          if (vm.count("expression")) {
-            // it is:
-            string exp = vm["expression"].as<string>();
-            status = (intptr_t) scm_with_guile(evaluate_expression, &exp);
-          }
-          else if (vm.count("file")) { // Will it be a file?
-            // It is:
-            fs::path pth(vm["file"].as<string>());
-            void *p = scm_with_guile(evaluate_file, &pth);
-            status = p != 0;
-          }
-          else {
-            // Otherwise, startup the interprester.
-            scm_with_guile(&initialize_guile, NULL);
-            scm_shell(argc, argv);
+        } else {
+        
+          // Consume everything-- there may be options & arguments for the
+          // script as well.      
+          while (argc) {
+            gargv[gargc++] = argv[0]; // copy to `gargv'
+            argv++; argc--;           // consume `argv'
           }
 
         }
 
-      } // End if on 'opts' size.
-    } // End if on '--version' &c.
+      } // End if on `argc'.
+    
+      // Per C11 5.1.2.2.1 Program startup:
+    
+      //     "If they are declared, the parameters to the main function shall
+      //     obey the following constraints: The value of argc shall be
+      //     nonnegative. argv[argc] shall be a null pointer."
+      gargv[gargc] = 0;
+
+      scm_with_guile(&initialize_guile, NULL);
+      scm_shell(gargc, gargv.get());
+
+    } // End if on options.
+
   } catch (const po::error &ex) {
+
     cerr << ex.what() << endl;
-    print_usage(cerr, gopts, USAGE);
+    print_usage(cerr, USAGE, program_name);
     status = EXIT_INCORRECT_USAGE;
+
   } catch (const std::exception &ex) {
+
     cerr << ex.what() << endl;
     status = EXIT_FAILURE;
+
   }
 
   scribbu::static_cleanup();

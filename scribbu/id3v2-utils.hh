@@ -41,6 +41,8 @@ namespace scribbu {
    *
    * \return An ID3v2 tag, typed as pointer to id3v2_tag
    *
+   * \throw An id3v2_tag::error on detecting an invalid tag
+   *
    *
    * This function shall:
    *
@@ -66,6 +68,8 @@ namespace scribbu {
    * \return a unique_ptr to an id3v2_2_tag, id3v2_3_tag, or id3v_2_4 tag, depending
    * on the ID3v2 version of the \a idx -th tag
    *
+   * \throw An id3v2_tag::error on detecting an invalid tag
+   *
    *
    * Unlike maybe_read_id3v2, this method will attempt the read the given tag
    * from \a is, and throw should it fail to do so.
@@ -86,6 +90,8 @@ namespace scribbu {
    *
    * \return p, after copy
    *
+   * \throw id32_tag::error sub-class on encountering an invalid tag
+   *
    *
    * There may be multiple ID3v2 tags at the start of a file; use this
    * method to read all possible & copy pointers to the resulting tags.
@@ -96,17 +102,46 @@ namespace scribbu {
   template <typename forward_output_iterator>
   forward_output_iterator read_all_id3v2(std::istream           &is,
                                          forward_output_iterator p) {
-    try {
-      std::unique_ptr<id3v2_tag> ptag = maybe_read_id3v2(is);
-      while (ptag) {
-        *p = std::move(ptag); p++;
-        ptag = maybe_read_id3v2(is);
-      }
-    }
-    catch (const std::exception&) {
+
+    std::unique_ptr<id3v2_tag> ptag = maybe_read_id3v2(is);
+    while (ptag) {
+      *p = std::move(ptag); p++;
+      ptag = maybe_read_id3v2(is);
     }
 
     return p;
+  }
+  
+  /**
+   * \brief Compute the size, on disk, taken up by a sequence of ID3v2 tags
+   *
+   *
+   * \param p0 [in] a forward input iterator marking the beginning of a range
+   * of pointers to id3v2_tag
+   *
+   * \param p1 [in] a forward input iterator marking the one-past-the-end of a
+   * range of pointers to id3v2_tag
+   *
+   * \param unsync [in] if true, compute the serialized size applying the
+   * unsynchronisation scheme
+   *
+   * \return a pair of size_t; the first is the size, in bytes, needed
+   * to serialize [p0, p1) & the second the total padding included
+   * in [p0, p1)
+   *
+   *
+   */
+  template <typename forward_input_iterator>
+  std::tuple<size_t, size_t>
+  total_id3v2_size(forward_input_iterator p0,
+                   forward_input_iterator p1,
+                   bool unsync) {
+    size_t sz = 0, pad = 0;
+    for ( ; p0 != p1; ++p0) {
+      sz  += (*p0)->size(unsync);
+      pad += (*p0)->padding();
+    }
+    return std::make_tuple(sz, pad);
   }
 
   /**

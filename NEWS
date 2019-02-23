@@ -14,6 +14,10 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 *** `scribbu report' now includes the filename, directory & overall size
 
+*** Scheme API completely re-written
+
+*** New sub-commands `scribbu popm' & `scribbu xtag'
+
 * Changes in scribbu 0.4
 
 ** New Features

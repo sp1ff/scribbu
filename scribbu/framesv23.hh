@@ -179,13 +179,13 @@ namespace scribbu {
                        const id_type          &enc,
                        const id_type          &gid):
       id3v2_frame(id.experimental()),
-      id_        (id  ),
-      tap_       (tap ),
-      fap_       (fap ),
-      read_only_ (ro  ),
-      compressed_(cmp ),
-      enc_method_(enc ),
-      group_id_  (gid )
+      id_        (id ),
+      tap_       (tap),
+      fap_       (fap),
+      read_only_ (ro ),
+      compressed_(cmp),
+      enc_method_(enc),
+      group_id_  (gid)
     { }
 
     /// Construct with an array of four chars et al.
@@ -223,8 +223,8 @@ namespace scribbu {
       fap_       (that.file_alter_preserve()),
       read_only_ (that.readonly()),
       compressed_(that.compressed()),
-      enc_method_(that.encrypted()),
-      group_id_  (that.grouped())
+      enc_method_(that.enc_method_),
+      group_id_  (that.group_id_)
     { }
 
 
@@ -334,6 +334,7 @@ namespace scribbu {
       id3v2_3_plus_frame(id, tap, fap, ro, (bool)decsz, encmth, gid)
     { }
 
+    // construct with a four-character frame ID; forwards to the above ctor
     id3v2_3_frame(const char              id[4],
                   tag_alter_preservation  tap,
                   file_alter_preservation fap,
@@ -344,18 +345,6 @@ namespace scribbu {
       id3v2_3_frame(frame_id4(id), tap, fap, ro, encmth, gid, decsz)
     { }
 
-    id3v2_3_frame(unsigned char           id0,
-                  unsigned char           id1,
-                  unsigned char           id2,
-                  unsigned char           id3,
-                  tag_alter_preservation  tap,
-                  file_alter_preservation fap,
-                  read_only               ro,
-                  const id_type          &encmth,
-                  const id_type          &gid,
-                  const opt_sz_type      &decsz):
-      id3v2_3_frame(frame_id4(id0, id1, id2, id3), tap, fap, ro, encmth, gid, decsz)
-    { }
     virtual id3v2_3_frame* clone() const = 0;
 
     /// Convert ID3v2.3 encoded text to an arbitrary encoding
@@ -623,6 +612,7 @@ namespace scribbu {
       std::copy(p0, p1, std::back_inserter(text_));
     }
 
+    // forwards to the above ctor
     template <typename forward_input_iterator>
     id3v2_3_text_frame(const char              id[4],
                        forward_input_iterator  p0,
@@ -633,30 +623,16 @@ namespace scribbu {
                        const id_type           &encmth,
                        const id_type           &gid,
                        const opt_sz_type       &decsz):
-      id3v2_3_text_frame(frame_id4(id), p0, p1, tap, fap, ro, encmth, gid, decsz)
-    { }
-
-    template <typename forward_input_iterator>
-    id3v2_3_text_frame(unsigned char           id0,
-                       unsigned char           id1,
-                       unsigned char           id2,
-                       unsigned char           id3,
-                       forward_input_iterator  p0,
-                       forward_input_iterator  p1,
-                       tag_alter_preservation  tap,
-                       file_alter_preservation fap,
-                       read_only               ro,
-                       const id_type           &encmth,
-                       const id_type           &gid,
-                       const opt_sz_type       &decsz):
-      id3v2_3_text_frame(frame_id4(id0, id1, id2, id3), p0, p1, tap, fap, ro, encmth, gid, decsz)
+      id3v2_3_text_frame(frame_id4(id), p0, p1, tap, fap, ro, 
+                         encmth, gid, decsz)
     { }
 
     /**
-     * \brief Construct an arbitrary ID3v2.2 text frame
+     * \brief Construct an arbitrary ID3v2.3 text frame (the prior two ctors
+     * were written for deserialization)
      *
      *
-     * \param id [in] frame identfier; must begin with "T" and not be "TXX"
+     * \param id [in] frame identfier; must begin with "T" and not be "TXXX"
      *
      * \param text [in] an std basic_string containing the text to be encoded
      * into the text frame
@@ -670,21 +646,24 @@ namespace scribbu {
      */
 
     template <typename string_type>
-    id3v2_3_text_frame(const frame_id4 &id,
-                       const string_type &text,
-                       encoding src,
-                       bool add_bom = false,
-                       on_no_encoding rsp = on_no_encoding::fail,
-                       bool ucs2 = false,
-                       tag_alter_preservation tap = tag_alter_preservation::preserve,
-                       file_alter_preservation fap = file_alter_preservation::preserve,
-                       read_only ro = read_only::clear,
-                       const id_type &encmth = boost::none,
-                       const id_type &grid = boost::none,
-                       const opt_sz_type &decsz = boost::none):
-      id3v2_3_text_frame(id, ucs2, convert_encoding(text, src, ucs2 ? encoding::UCS_2LE :
-                                                    encoding::ISO_8859_1, add_bom, rsp),
-                         tap, fap, ro, encmth, grid, decsz)
+    id3v2_3_text_frame(const frame_id4        &id,
+                       const string_type      &text,
+                       encoding                src     = encoding::UTF_8,
+                       bool                    add_bom = false,
+                       on_no_encoding          rsp     = on_no_encoding::fail,
+                       bool                    ucs2    = false,
+                       tag_alter_preservation  tap     = tag_alter_preservation::preserve,
+                       file_alter_preservation fap     = file_alter_preservation::preserve,
+                       read_only               ro      = read_only::clear,
+                       const id_type          &encmth  = boost::none,
+                       const id_type          &gid     = boost::none,
+                       const opt_sz_type      &decsz   = boost::none):
+      id3v2_3_text_frame(id, ucs2, 
+                         convert_encoding(text, src, 
+                                          ucs2 ? encoding::UCS_2LE :
+                                          encoding::ISO_8859_1, add_bom, rsp),
+                         tap, fap, ro, 
+                         encmth, gid, decsz)
     { }
 
     virtual id3v2_3_frame* clone() const
@@ -995,6 +974,17 @@ namespace scribbu {
       id3v2_3_frame("PCNT", tap, fap, ro, encmth, gid, decsz),
       play_count(p0, p1)
     { }
+    
+    PCNT(std::size_t count,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("PCNT", tap, fap, ro, encmth, gid, decsz),
+      play_count(count)
+    { }
 
     virtual id3v2_3_frame* clone() const
     { return new PCNT(*this); }
@@ -1017,8 +1007,9 @@ namespace scribbu {
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
 
-    std::size_t count() const
-    { return play_count::count(); }
+    // TODO(sp1ff): why?
+    // std::size_t count() const
+    // { return play_count::count(); }
 
   protected:
     /// Serialize this frame to \a os, exclusive of any compression, encryption
@@ -1043,6 +1034,19 @@ namespace scribbu {
          const opt_sz_type       &decsz):
       id3v2_3_frame("POPM", tap, fap, ro, encmth, gid, decsz),
       popularimeter(p0, p1)
+    { }
+
+    POPM(const std::string      &email,
+         unsigned char           rating,
+         std::size_t             count,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("POPM", tap, fap, ro, encmth, gid, decsz),
+      popularimeter(email,rating, count)
     { }
 
     virtual id3v2_3_frame* clone() const
@@ -1077,6 +1081,95 @@ namespace scribbu {
       popularimeter::emailb(back_inserter(buf));
       return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class POPM.
+
+  /// ID3v2.3 Tag cloud
+  class XTAG: public id3v2_3_frame, public tag_cloud {
+
+  public:
+
+    template <typename forward_input_iterator>
+    XTAG(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("XTAG", tap, fap, ro, encmth, gid, decsz),
+      tag_cloud(p0, p1)
+    { }
+    
+    XTAG(const std::string &own,
+         std::initializer_list<tag_cloud::value_type> init,
+         tag_alter_preservation  tap = tag_alter_preservation::preserve,
+         file_alter_preservation fap = file_alter_preservation::preserve,
+         read_only               ro = read_only::clear,
+         const id_type           &encmth = boost::none,
+         const id_type           &gid = boost::none,
+         const opt_sz_type       &decsz = boost::none):
+      id3v2_3_frame("XTAG", tap, fap, ro, encmth, gid, decsz),
+      tag_cloud(own, init)
+    { }
+
+    /// Construct "from scratch"-- [p0, p1) will be used to initialize the
+    /// tag cloud, so the value_type shall be pair<const string, set<string>>
+    template <typename forward_input_iterator>
+    XTAG(const std::string      &own,
+         forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("XTAG", tap, fap, ro, encmth, gid, decsz),
+      tag_cloud(own, p0, p1)
+    { }
+
+    /// Construct "from scratch"-- text shall be a query-string style
+    /// representation of the tag cloud (i.e. that which is returned from 
+    /// urlencoded())
+    XTAG(const std::string      &owner, 
+         const std::string      &text,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("XTAG", tap, fap, ro, encmth, gid, decsz),
+      tag_cloud(owner, text)
+    { }
+
+    virtual id3v2_3_frame* clone() const
+    { return new XTAG(*this); }
+
+    static
+    std::unique_ptr<id3v2_3_frame>
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
 
   protected:
     /// Serialize this frame to \a os, exclusive of any compression, encryption

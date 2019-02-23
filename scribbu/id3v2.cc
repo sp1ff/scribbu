@@ -178,8 +178,8 @@ scribbu::looking_at_id3v2(std::istream &is,
   try {
     is.read((char*)buf, ID3V2_HEADER_SIZE);
   } catch (const std::ios_base::failure &ex) {
-    is.exceptions(exc_mask);
     is.clear();
+    is.exceptions(exc_mask);
     is.seekg(here, std::ios_base::beg);
     return H;
   }

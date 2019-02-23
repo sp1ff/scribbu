@@ -93,7 +93,7 @@
  *
  * \section scribbu_id3v2_unsync Unsynchorisation
  *
- * MPEG decoding software uses a two-byte sentinal value in the input stream to
+ * MPEG decoding software uses a two-byte sentinel value in the input stream to
  * detect the beginning of the audio. MPEG decoding software that is not
  * ID3-aware could mistakenly interpret that value as the beginning of the
  * audio should it happen to occur in the ID3v2 tag. Unsynchronisation is an
@@ -289,7 +289,7 @@
  * needs_unsynchronisation() which I found unpalatable. When I realized I could
  * apply lazy evaluation & a "dirty" flag to individual frames to avoid
  * repeated serialization I decided to go with an interface that presents a
- * naiive approach, easily implemented for ID3v2.2 frames, that would mask a
+ * naive approach, easily implemented for ID3v2.2 frames, that would mask a
  * more complex implementation in the case of later frame implementations.
  *
  *
@@ -646,8 +646,23 @@ namespace scribbu {
     id3v2_tag(unsigned char ver, unsigned char rev):
       version_(ver), revision_(rev), unsync_(boost::none)
     { }
+    id3v2_tag(const id3v2_tag &that):
+      version_(that.version_),
+      revision_(that.revision_),
+      unsync_(that.unsync_)
+    { }
     virtual ~id3v2_tag()
     { }
+    virtual id3v2_tag* clone() const = 0;
+    
+    id3v2_tag& operator=(const id3v2_tag &that) {
+      if (this != &that) {
+        version_ = that.version_;
+        revision_ = that.revision_;
+        unsync_ = that.unsync_;
+      }
+      return *this;
+    }
 
   public:
     /////////////////////////////////////////////////////////////////////////////

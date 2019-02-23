@@ -48,7 +48,8 @@ BOOST_AUTO_TEST_CASE( test_charsets )
   string s;
 
   // Let's test some edge cases, first...
-  s = convert_encoding<string>(0, 0, encoding::UTF_8, encoding::ISO_8859_1);
+  s = convert_encoding<string>((const char*)0, 0, encoding::UTF_8, 
+                               encoding::ISO_8859_1);
   BOOST_CHECK(s.empty());
 
   unsigned char buf0[] = { 0 };
@@ -67,6 +68,10 @@ BOOST_AUTO_TEST_CASE( test_charsets )
                                              encoding::ISO_8859_1),
     iconv_error);
 
+  // Trivial, but this was actually failing at one point.
+  vector<unsigned char> v;
+  v = convert_encoding<string>("", encoding::UTF_8, encoding::ISO_8859_1);
+  BOOST_CHECK(v.empty());
 }
 
 BOOST_AUTO_TEST_CASE( test_utf8 )

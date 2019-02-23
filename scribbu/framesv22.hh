@@ -73,7 +73,8 @@ namespace scribbu {
 
   public:
 
-    id3v2_2_frame(const frame_id3 &id): id3v2_frame(id.experimental()), id_(id)
+    id3v2_2_frame(const frame_id3 &id): 
+      id3v2_frame(id.experimental()), id_(id)
     { }
     id3v2_2_frame(unsigned char id0, unsigned char id1, unsigned char id2):
       id3v2_frame('X' == id0 || 'Y' == id0 || 'Z' == id0),
@@ -623,15 +624,21 @@ namespace scribbu {
 
   }; // End class COM.
 
-  /// play count
+  /// ID3v2.2 play count
   class CNT: public id3v2_2_frame, public play_count {
 
   public:
+    /// Construct from a raw buffer (forward_input_iterator shall dereferene
+    /// to an unsigned char)
     template <typename forward_input_iterator>
-    CNT(forward_input_iterator p0,
-        forward_input_iterator p1):
+    CNT(forward_input_iterator p0, forward_input_iterator p1):
       id3v2_2_frame("CNT"),
       play_count(p0, p1)
+    { }
+    /// Construct "from scratch"
+    CNT(std::size_t n):
+      id3v2_2_frame("CNT"),
+      play_count(n)
     { }
 
     virtual id3v2_2_frame* clone() const
@@ -641,10 +648,6 @@ namespace scribbu {
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
 
   public:
-
-    std::size_t count() const
-    { return play_count::count(); }
-
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
@@ -656,15 +659,21 @@ namespace scribbu {
 
   }; // End class CNT.
 
-  /// Popularimeter
+  /// ID3v2.2 popularimeter
   class POP: public id3v2_2_frame, public popularimeter {
 
   public:
+    /// Construct from a raw buffer (forward_input_iterator shall dereference
+    /// to unsigned char)
     template <typename forward_input_iterator>
-    POP(forward_input_iterator p0,
-        forward_input_iterator p1):
+    POP(forward_input_iterator p0, forward_input_iterator p1):
       id3v2_2_frame("POP"),
       popularimeter(p0, p1)
+    { }
+    /// Construct "from scratch"
+    POP(const std::string &own, unsigned char rating, std::size_t count):
+      id3v2_2_frame("POP"),
+      popularimeter(own, rating, count)
     { }
 
     virtual id3v2_2_frame* clone() const
@@ -697,6 +706,56 @@ namespace scribbu {
     virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class POP.
+  
+  /// ID2v2.2 tag cloud
+  class XTG: public id3v2_2_frame, public tag_cloud {
+
+  public:
+    /// Construct from a serialized frame (forward_input_iterator shall 
+    /// dereference to unsigned char)
+    template <typename forward_input_iterator>
+    XTG(forward_input_iterator p0, forward_input_iterator p1):
+      id3v2_2_frame("XTG"), 
+      tag_cloud(p0, p1)
+    { }
+    /// Construct "from scratch"
+    XTG(const std::string &own, std::initializer_list<value_type> init):
+      id3v2_2_frame("XTG"),
+      tag_cloud(own, init)
+    { }
+    /// Construct "from scratch"-- [p0, p1) will be used to initialize the
+    /// tag cloud, so the value_type shall be pair<const string, set<string>>
+    template <typename forward_input_iterator>
+    XTG(const std::string &own, 
+        forward_input_iterator p0,
+        forward_input_iterator p1):
+      id3v2_2_frame("XTG"),
+      tag_cloud(own, p0, p1)
+    { }
+    /// Construct "from scratch"-- text shall be a query-string style
+    /// representation of the tag cloud (i.e. that which is returned from 
+    /// urlencoded())
+    XTG(const std::string &owner, const std::string &text):
+      id3v2_2_frame("XTG"),
+      tag_cloud(owner, text)
+    { }
+
+    virtual id3v2_2_frame* clone() const
+    { return new XTG(*this); }
+    static std::unique_ptr<id3v2_2_frame>
+    create(const frame_id3& id, const unsigned char *p, std::size_t cb);
+    
+  public:
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class XTG.
 
 } // End namespace scribbu.
 

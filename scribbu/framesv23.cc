@@ -155,7 +155,7 @@ void
 scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
 {
   using namespace std;
-  using scribbu::detail::count_false_syncs;
+  using scribbu::detail::count_syncs;
   using scribbu::detail::unsynchronise;
 
   // This logic is still too complex for my tastes, but this is as simple
@@ -230,8 +230,9 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
     copy(payload.begin(), payload.end(), pout);
 
     // Either way, count the # of false syncs in that buffer...
-    num_false_syncs_ = count_false_syncs(cache_[SERIALIZED_WITH_CE].begin(),
-                                         cache_[SERIALIZED_WITH_CE].end());
+    num_false_syncs_ = count_syncs(cache_[SERIALIZED_WITH_CE].begin(),
+                                   cache_[SERIALIZED_WITH_CE].end(),
+                                   true);
 
     // and prepare an unsynchronised copy.
     unsynchronise(back_inserter(cache_[SERIALIZED_WITH_CEU]),
@@ -674,4 +675,40 @@ std::size_t
 scribbu::POPM::serialize(std::ostream &os) const
 {
   return popularimeter::write(os);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                                class XTAG                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
+scribbu::XTAG::create(const frame_id4 &id,
+                      const unsigned char *p,
+                      std::size_t cb,
+                      tag_alter_preservation tap,
+                      file_alter_preservation fap,
+                      read_only read_only,
+                      const boost::optional<unsigned char> &enc,
+                      const boost::optional<unsigned char> &gid,
+                      const boost::optional<std::size_t> &dsz)
+{
+  return std::unique_ptr<id3v2_3_frame>(new XTAG(p, p + cb, tap,
+                                                 fap, read_only,
+                                                 enc, gid, dsz));
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::XTAG::size() const
+{
+  return tag_cloud::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::XTAG::serialize(std::ostream &os) const
+{
+  return tag_cloud::write(os);
 }

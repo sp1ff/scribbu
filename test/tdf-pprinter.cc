@@ -155,3 +155,21 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v24 )
   BOOST_CHECK(GOLDEN == text);
 }
 
+BOOST_AUTO_TEST_CASE( test_tdf_pprinting_xtag )
+{
+  using namespace std;
+  using namespace scribbu;
+  
+  XTAG tc01("sp1ff@pobox.com",
+                { { "tag1", { "has ,", "has %" } },
+                  { "tag2", { "你好" } } }); 
+  
+  stringstream stm01;
+  stm01 << print_as_tdf(1, encoding::ASCII, boost::none) << tc01;
+  
+  string text01 = stm01.str();
+  BOOST_TEST_MESSAGE( text01 );
+  BOOST_CHECK( text01 == "sp1ff@pobox.com\ttag1=has%20%25,has%20%2c&"
+               "tag2=%e4%bd%a0%e5%a5%bd" );
+
+} // End test_csv_pprinting_xtag.

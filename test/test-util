@@ -1,0 +1,70 @@
+###########################################################################
+# scribbu test utilities
+# $id: $
+###########################################################################
+
+function log()
+{
+    echo $@ >&1
+}
+
+function error()
+{
+    echo $@ >&2
+}
+
+function verbose()
+{
+    echo $@ >&3
+}
+
+function fail()
+{
+    error $@
+    exit 1
+}
+
+# setup a testing directory
+# usage: set_testdir name file...
+# will copy files from the .../test/data directory into
+# $popm_testdir/$name then set the pwd there as well
+# NB If the caller's pwd is significant to them, they will need to save
+# it
+function set_testdir()
+{
+    local srcdir="$1"
+    local testdir="$2"
+    local name="$3"
+    shift 3
+
+    set -x
+    set -e
+
+    local dir="${testdir}/${name}"
+    if [ -d "$dir" ]; then
+        rm -rf "$dir"
+    fi
+
+    mkdir -p "$dir"
+    cd ${srcdir}/data && cp $@ "$dir" && cd "$dir"
+    chmod a+w $@
+
+    set +e
+    set +x
+}
+
+function clean_testdir()
+{
+    local there=$1
+    local testdir=$2
+    local name=$3
+
+    local dir="$testdir/$name"
+
+    set -e
+
+    cd $there
+    rm -rf $dir
+
+    set +e
+}

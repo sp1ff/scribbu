@@ -14,7 +14,7 @@ if [ ! -z "$t_err" ]; then
 	exit 1
 fi
 
-../src/scribbu dump test.tag > test-cleanup-from-audacity.out || exit 1
+../src/scribbu dump test-audacity.tag > test-cleanup-from-audacity.out || exit 1
 diff test-cleanup-from-audacity.out ${srcdir}/data/golden-test-cleanup-from-audacity.out || exit 1
-
+rm -f test-audacity.tag
 exit $t_stat

@@ -150,9 +150,12 @@ namespace scribbu {
     public:
       bad_separator(char sep): sep_(sep)
       { }
+      virtual const char * what() const noexcept(true);
 
     private:
       char sep_;
+      mutable std::shared_ptr<std::string> pwhat_;
+
     };
 
   public:
@@ -187,6 +190,8 @@ namespace scribbu {
     virtual std::ostream&
     pprint_POP(const POP&, std::ostream&);
     virtual std::ostream&
+    pprint_XTG(const XTG&, std::ostream&);
+    virtual std::ostream&
     pprint_unk_id3v2_3_frame(const unknown_id3v2_3_frame&, std::ostream&);
     virtual std::ostream&
     pprint_id3v2_3_text_frame(const id3v2_3_text_frame&, std::ostream&);
@@ -203,6 +208,8 @@ namespace scribbu {
     virtual std::ostream&
     pprint_POPM(const POPM&, std::ostream&);
     virtual std::ostream&
+    pprint_XTAG(const XTAG&, std::ostream&);
+    virtual std::ostream&
     pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame&, std::ostream&);
     virtual std::ostream&
     pprint_id3v2_4_text_frame(const id3v2_4_text_frame&, std::ostream&);
@@ -218,6 +225,8 @@ namespace scribbu {
     pprint_PCNT_2_4(const PCNT_2_4&, std::ostream&);
     virtual std::ostream&
     pprint_POPM_2_4(const POPM_2_4&, std::ostream&);
+    virtual std::ostream&
+    pprint_XTAG_2_4(const XTAG_2_4&, std::ostream&);
 
     virtual ~csv_pprinter()
     { }

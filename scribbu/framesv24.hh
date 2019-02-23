@@ -139,6 +139,9 @@ namespace scribbu {
                          scribbu::on_no_encoding::fail,
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
+    
+    bool unsynchronised() const 
+    { return unsynchronised_; }
 
   protected:
     /// Serialize this tag's header to an output stream, including any special
@@ -790,6 +793,20 @@ namespace scribbu {
       play_count(p0, p1)
     { }
 
+    PCNT_2_4(std::size_t                          count,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("PCNT", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      play_count(count)
+    { }
+
     virtual id3v2_4_frame* clone() const
     { return new PCNT_2_4(*this); }
 
@@ -812,8 +829,9 @@ namespace scribbu {
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
 
-    std::size_t count() const
-    { return play_count::count(); }
+    // TODO(sp1ff): Why?
+    // std::size_t count() const
+    // { return play_count::count(); }
 
   protected:
 
@@ -840,6 +858,22 @@ namespace scribbu {
       id3v2_4_frame("POPM", tap, fap, ro, enc, gid,
                     cmprsd, unsynch, dli),
       popularimeter(p0, p1)
+    { }
+
+    POPM_2_4(const std::string                    &email,
+             unsigned char                         rating,
+             std::size_t                           count,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("POPM", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      popularimeter(email, rating, count)
     { }
 
     virtual id3v2_4_frame* clone() const
@@ -883,6 +917,92 @@ namespace scribbu {
     virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class POPM_2_4.
+
+  // ID3v2.4 tag cloud
+  class XTAG_2_4: public id3v2_4_frame, public tag_cloud {
+  public:
+    template <typename forward_input_iterator>
+    XTAG_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("XTAG", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      tag_cloud(p0, p1)
+    { }
+
+    /// Construct "from scratch"-- [p0, p1) will be used to initialize the
+    /// tag cloud, so the value_type shall be pair<const string, set<string>>
+    template <typename forward_input_iterator>
+    XTAG_2_4(const std::string                    &own,
+             forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("XTAG", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      tag_cloud(own, p0, p1)
+    { }
+
+    /// Construct "from scratch"-- text shall be a query-string style
+    /// representation of the tag cloud (i.e. that which is returned from 
+    /// urlencoded())
+    XTAG_2_4(const std::string                    &owner, 
+             const std::string                    &text,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("XTAG", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      tag_cloud(owner, text)
+    { }
+
+    virtual id3v2_4_frame* clone() const
+    { return new XTAG_2_4(*this); }
+
+    static std::unique_ptr<id3v2_4_frame>
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tap,
+           file_alter_preservation               fap,
+           read_only                             ro,
+           const boost::optional<unsigned char> &enc,
+           const boost::optional<unsigned char> &gid,
+           bool                                  cmprsd,
+           bool                                  unsynch,
+           const boost::optional<std::size_t>   &dli);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class XTAG_2_4.
 
 } // End namespace scribbu.
 

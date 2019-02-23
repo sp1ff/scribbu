@@ -28,7 +28,31 @@
 
 #include <boost/algorithm/string/replace.hpp>
 
+
 namespace po = boost::program_options;
+
+
+/// Extract help_level from a set of parsed_options
+help_level
+help_level_for_parsed_opts(const po::parsed_options &opts)
+{
+  using namespace std;
+
+  help_level out = help_level::none;
+  
+  for (auto o: opts.options) {
+    for (auto t: o.original_tokens) {
+      if (t == "-h") {
+        out = help_level::regular;
+      } else if (t == "--help") {
+        out = help_level::verbose;
+      }
+    }
+  }
+  
+  return out;
+  
+}
 
 namespace {
 
@@ -52,12 +76,12 @@ register_command::register_command(const std::string &s, handler_type f)
 }
 
 bool
-has_sub_command(const std::string &s)
+has_sub_command(const char *s)
 {
   return 0 != get_handler_map().count(s);
 }
 
-handler_type get_sub_command(const std::string &s)
+handler_type get_sub_command(const char *s)
 {
   return get_handler_map().at(s);
 }
@@ -77,3 +101,16 @@ print_usage(std::ostream                  &os,
   boost::algorithm::replace_all(str4644, "--h ", "-h  ");
   os << usage << str4644  << std::endl;
 }
+
+void
+show_man_page(const std::string &page)
+{
+  using namespace std;
+
+  execlp("man", "man", page.c_str(), (char *)NULL);
+  // If we're here, `execlp' failed.
+  stringstream stm;
+  stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+  throw runtime_error(stm.str());
+}
+

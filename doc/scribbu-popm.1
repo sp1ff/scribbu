@@ -1,0 +1,194 @@
+.\" Copyright (C) 2019 Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu-popm 1 2019-08-17 "scribbu 0.5" "scribbu Manual"
+.SH NAME
+scribbu popm \- Manage the play count and/or popularimeter ID3v2 tags
+.SH SYNOPSIS
+.BR scribbu " [(-c|--config) config-file] " popm " [-h] [--help] [--info]"
+.RS 8
+.br
+[-n|--dry-run] [-u|--adjust-unsync] [-c|--count=] <play count>
+[-a|--create] [-b|--create-backups] [-i|--increment=] <incement>
+[-o|--owner=] <popularimeter owner> [-p|--playcount-only]
+[-m|--popularimeter-only] [-r|--rating=] <rating>
+[-t|--tag=] <tag index> <file-or-directory> <file-or-directory>...
+
+.SH DESCRIPTION
+
+Create or update the play count and/or popularimeter frames. With no
+options, increment the count field in every play count and
+popularimeter frame in all tags by one. With the
+.I --create
+flag, 
+.B create 
+the relevant frames in each tag. Popularimeter frames will not
+be created in the absence of the
+.I --owner
+option. Play count & popularimeter frame creation can be inhibited via the
+.IR --popularimeter-only and --playcount-only
+flags, respectively.
+
+The popularimeter rating can be set using the
+.I --rating
+option. Ratings can be specified explicitly as an integer between zero
+and two-hundred fifty-five (inclusive), or as one-to-five stars. "Stars"
+would most naturally be expressed as
+.I *
+(asterisks), but since that will often be inconvenient in the shell,
+.I scribbu
+will accept almost any character, repeated one to five times.
+.I scribbu
+maps stars to rating thusly:
+
+.PP
+no rating
+.RS 4
+0
+.RE
+.PP
+one star
+.RS 4
+1-51 (26)
+.RE
+.PP
+two stars
+.RS 4
+52-102 (77)
+.RE
+.PP
+three stars
+.RS 4
+103->153 (128)
+.RE
+.PP
+four stars
+.RS 4
+154->204 (179)
+.RE
+.PP
+five stars
+.RS 4
+205->255 (230)
+.RE
+
+.SH OPTIONS
+
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help; this man page by default, or the
+.B scribbu-rename
+node in the local Info system if the
+.I --info
+flag is also given.
+.RE
+.PP
+\-\-info
+.RS 4
+Modify the
+.I --help
+flag by using the users's Infor viewer instead of man page viewer.
+.RE
+.PP
+\-n|\-\-dry\-run
+.RS 4
+Dry-run; only print what
+.I would
+happen
+.RE
+.PP
+\-a,\-\-create
+.RS 4
+Create playcount and/or popularimeter frames in any tags that are missing.
+This can be modified by the
+.IR --playcount-only and --popularimetr-only options,
+respectively. Popularimeter frames will only be created if the
+.IR--owner flag
+is given, as well.
+.RE
+.PP
+\-b,\-\-create-backups
+.RS 4
+By default, the new tagset will be written in-place (emplacing, if 
+feasible). This option will cause a backup file to be made first.
+.RE
+.PP
+\-c,\-\-count=COUNT
+.RS 4
+Set the counter fields to COUNT
+.RE
+.PP
+\-i,\-\-increment=INCR
+.RS 4
+Increment the count field by
+.I INCR
+, instead of one.
+.RE
+.PP
+\-o,\-\-owner=OWNER
+.RS 4
+Specify the owner field for popularimeter frames. If incrementing or
+setting count fields, only popularimeter frames with an owner of
+.I OWNER
+will be alerted. When creating popularimeter frames, the owner field
+will be set to
+.BR OWNER .
+.RE
+.PP
+\-p,\-\-playcount-only
+.RS 4
+If present, this switch will limit operations to play count frames.
+.RE
+.PP
+\-m,\-\-popularimeter-only
+.RS 4
+If present, this switch will limit operations to popularimeter frames.
+.RE
+.PP
+\-r,\-\-rating=RATING
+.RS 4
+Specify the rating for use in popularimeter tags. RATING may be given
+either as an integer between 0 & 255 (inclusive), or as one to
+five "stars", given as [a-zA-Z@#%*+]{1,5} (e.g. three stars could be
+expressed as "xxx", or "###").
+.RE
+.PP
+\-t,\-\-tag=INDEX
+.RS 4
+Specify a zero-based index describing which tag to alter, in the
+case of multiple ID3v2 tags in a given file. This option may be
+given more than once to select multiple tags. If not given, all
+tags present will be modified.
+.RE
+.PP
+\-u,\-\-adjust-unsync
+.RS 4
+Adjust each tag's use of the unsynchronisation scheme on write (by
+default, it's never used)
+.RE
+.PP
+<argument...>
+.RS 4
+One or more files or directories to be examined; if a directory is
+given, it will be searched recursively for files containing ID3v2
+tags.
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu "(1), " scribbu-dump "(1), " scribbu-report "(1), " scribbu-split "(1)"
+
+

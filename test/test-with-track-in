@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
 SCRIPT_FILE=/tmp/test-with-track-in.$$
 OUTPUT_FILE=/tmp/test-with-track-in.out.$$
+
 cat <<EOF > $SCRIPT_FILE
 (use-modules (ice-9 format))
+(use-modules (oop goops))
+(use-modules (scribbu))
 
 (setlocale LC_ALL "")
 
-(scribbu/with-track-in
+(with-track-in
  "${srcdir}/data"
- (lambda (x)
-   (if (scribbu/has-id3v1-tag x)
-	   (let ((c (scribbu/get-id3v1-string x 'scribbu/comment))
+ (lambda (tagset pth v1)
+   (unless (null? v1)
+	   (let ((c (slot-ref v1 'comment))
 			 (r (make-regexp "rip.*winamp" regexp/icase)))
 		 (if (regexp-exec r c)
-			 (format #t "~s: ~s\n" (scribbu/get-path x) c))))))
+			 (format #t "~s: ~s\n" pth c))))))
 EOF
-../src/scribbu -f $SCRIPT_FILE > $OUTPUT_FILE
+
+../src/scribbu -L ${srcdir}/../scheme -s $SCRIPT_FILE > $OUTPUT_FILE
 # This is irritating, but we need to strip out the paths above
 # "data" since we do a dumb diff, below.
 sed -e 's_^".*/data_"data_' $OUTPUT_FILE | sort > with-track-in.log

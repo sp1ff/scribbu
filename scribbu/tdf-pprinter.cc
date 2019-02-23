@@ -344,6 +344,24 @@ scribbu::tdf_pprinter::pprint_POP(const POP &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
+scribbu::tdf_pprinter::pprint_XTG(const XTG &f, std::ostream &os)
+{
+  using namespace std;
+
+  encoding dst;
+  on_no_encoding rsp;
+  std::tie(dst, rsp) = encoding_from_stream(os);
+
+  string own = f.owner(), tags = f.urlencoded();
+  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8, 
+                                 dst, rsp) << sep_ << 
+    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8, 
+                             dst, rsp);
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
 scribbu::tdf_pprinter::pprint_unk_id3v2_3_frame(const unknown_id3v2_3_frame &f, std::ostream &os)
 {
   return os << f.id();
@@ -469,6 +487,24 @@ scribbu::tdf_pprinter::pprint_POPM(const POPM &f, std::ostream &os)
   for (auto x: counter) {
     os << setw(2) << (unsigned)x;
   }
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
+scribbu::tdf_pprinter::pprint_XTAG(const XTAG &f, std::ostream &os)
+{
+  using namespace std;
+
+  encoding dst;
+  on_no_encoding rsp;
+  std::tie(dst, rsp) = encoding_from_stream(os);
+
+  string own = f.owner(), tags = f.urlencoded();
+  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8, 
+                                 dst, rsp) << sep_ << 
+    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8, 
+                             dst, rsp);
 
   return os;
 }
@@ -601,6 +637,24 @@ scribbu::tdf_pprinter::pprint_POPM_2_4(const POPM_2_4 &f, std::ostream &os)
   for (auto x: counter) {
     os << setw(2) << (unsigned)x;
   }
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
+scribbu::tdf_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &f, std::ostream &os)
+{
+  using namespace std;
+
+  encoding dst;
+  on_no_encoding rsp;
+  std::tie(dst, rsp) = encoding_from_stream(os);
+
+  string own = f.owner(), tags = f.urlencoded();
+  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8, 
+                                 dst, rsp) << sep_ << 
+    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8, 
+                             dst, rsp);
 
   return os;
 }

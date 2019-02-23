@@ -138,3 +138,14 @@ MD5: 69c1753bd5f81501d95132d08af04464
   BOOST_CHECK(text == GOLD1);
 
 }
+
+BOOST_AUTO_TEST_CASE( test_url_encoding )
+{
+  using namespace std;
+
+  string s = "你好";
+  string t = scribbu::urlencode(s);
+  string r = scribbu::urldecode(t);
+  BOOST_CHECK(s == r);
+
+} // End test_url_encoding.

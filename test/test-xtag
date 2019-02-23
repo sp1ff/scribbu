@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+
+
+source ${srcdir}/test-util
+
+
+# run `scribbu xtag ...'
+# usage: run_xtag var_to_rcv_stdout var_to_rcv_stderr var_to_rcv_status args...
+# for instance:
+#     run_xtag out err stat -t 1 --playcount-only
+# will execute `scribbu xtag -t 1 --playcount-only'; on return the process'
+# stdout will be in `out', stderr in `err', and exit status in `stat'. Note
+# that due to quoting issues, any `'' or ``' characters will have been
+# replaced with `:'.
+function run_xtag()
+{
+    local __stdout=$1
+    local __stderr=$2
+    local __status=$3
+    shift 3
+
+    verbose `pwd`
+    verbose ${xtag_scribbu_dir}/scribbu -L ${srcdir}/../scheme xtag $@
+    # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
+    local t_std
+    local t_err
+    local t_stat
+    echo $- >&3
+    eval "$( ${xtag_scribbu_dir}/scribbu -L ${srcdir}/../scheme xtag $@ \
+    2> >(t_err=$(cat); typeset -p t_err) \
+     > >(t_std=$(cat); typeset -p t_std) ); t_stat=$?"
+
+    eval "$__stdout='$(echo $t_std|tr \' :|tr \` :)'"
+    eval "$__stderr='$(echo $t_err|tr \' :|tr \` :)'"
+    eval "$__status='$t_stat'"
+
+    verbose "status ${t_stat}	"
+    printf 'stdout ' >&3
+    printf '=%.0s' $(seq 1 $((${xtag_cols}-7))) >&3
+    verbose "$t_std"
+    printf 'stderr ' >&3
+    printf '=%.0s' $(seq 1 $((${xtag_cols}-7))) >&3
+    echo "$t_err"
+    printf '=%.0s' $(seq 1 $xtag_cols) >&3
+}
+
+###########################################################################
+# tests
+###########################################################################
+
+function smoke_tests()
+{
+    local out
+    local err
+    local stat
+
+    # can we get a help message?
+    run_xtag out err stat -h
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -h"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr for -h"
+    [ -n "$out" ] || fail "smoke_tests: empty stdout for -h"
+
+    here=`pwd`
+    set_testdir ${srcdir} $xtag_testdir xtag_smoke_tests id3v2.3.tag
+
+    run_xtag out err stat id3v2.3.tag
+    [ $stat -eq 2 ] || fail "smoke_tests: incorrect status for no tags"
+    [ -n "$err" ] || fail "smoke_tests: nil stderr for no tags"
+    [ -z "$out" ] || fail "smoke_tests: non-nil stdout for no tags"
+
+    run_xtag out err stat '--tags=foo&bar=splat&grog=a,b,c' id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: incorrect status for tags"
+
+    ${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG
+    stat=$?
+    # Shouldn't be there, since there's no XTAG
+    [ $stat -ne 0 ] || fail "smoke_tests: XTAG"
+
+    run_xtag out err stat -a -o sp1ff@pobox.com '--tags=foo&bar=splat&grog=a,b,c' id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: incorrect status for tags (2)"
+    xtag=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG|awk '{print $2}')
+    [ "$xtag" = "sp1ff@pobox.com" ] || fail "smoke_tests: failed to create"
+
+    run_xtag out err stat -m -o sp1ff@pobox.com '--tags=foo&bar=splat2&grog=d' id3v2.3.tag
+    bar=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F bar|awk '{print $2, $3}')
+    [ "$bar" = "splat, splat2" ] || fail "smoke_tests: bad bar"
+
+    grog=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F grog|awk '{print $2, $3, $4, $5}')
+    [ "$grog" = "a, b, c, d" ] || fail "smoke_tests: bad grog"
+
+    clean_testdir $here $popm_testdir xtag_smoke_tests
+}
+
+###########################################################################
+
+if [ -z "$srcdir" ]; then
+    echo >&2 "the \`srcdir' variable needs to be set to this script's location"
+    exit 1
+fi
+
+xtag_builddir=../src
+xtag_cols=$(tput cols)
+xtag_debug=false
+xtag_help=false
+xtag_nargs=0
+xtag_scribbu_dir=../src
+xtag_testdir=./test-xtag-tmp
+xtag_verbose=false
+xtag_prev_option=
+for xtag_option
+do
+    # If the previous option required an argument, assign it now.
+    if test -n "$xtag_prev_option"; then
+        eval $xtag_prev_option=\$xtag_option
+        xtag_prev_option=
+        xtag_nargs=$(($xtag_nargs+1))
+        continue
+    fi
+
+    # Parse out the argument option in $xtag_option, if present.
+    case $xtag_option in
+        *=?*) xtag_optarg=$(expr "X$xtag_option" : '[^=]*=\(.*\)') ;;
+        *=)   xtag_optarg= ;;
+        *)    xtag_optarg=yes ;;
+    esac
+
+    # Options are handled here:
+    case $xtag_option in
+        -d | --de | --deb | --debu | --debug)
+            xtag_debug=true;;
+        -h | --he | --hel | --help)
+            xtag_help=yes;;
+        -v | --ve | --ver | --verb | --verbo | --verbose)
+            xtag_verbose=true;;
+        *)
+            cat >&2 <<EOF
+Unrecognized option \`$xtag_option'.
+Try \`$0 --help' for more information.
+EOF
+            exit 2;;
+    esac
+
+done
+
+if test "$xtag_help" == "true"; then
+    cat <<EOF
+\`$0' -- test the \`xtag' sub-command
+
+TODO(sp1ff): write me!
+EOF
+fi
+
+if test "$xtag_verbose" == "true"; then
+    exec 3>&1
+else
+    exec 3> /dev/null
+fi
+
+if test "$xtag_debug" == "true"; then
+    set -x
+fi
+
+# Both must be absolute in order for `make-distcheck' to work
+xtag_scribbu_dir=`cd "$xtag_scribbu_dir"; pwd`
+[ -d "$xtag_testdir" ] || mkdir -p "$xtag_testdir"
+xtag_testdir=`cd "$xtag_testdir"; pwd`
+smoke_tests

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+cols=$(tput cols)
+
+# test --version
+eval "$(../src/scribbu --version \
+     2> >(t_err=$(cat); typeset -p t_err) \
+      > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-from-audacity.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+echo "$t_std" | grep -E 'scribbu [0-9]+\.[0-9]+' || exit 1
+
+# test -h
+eval "$(../src/scribbu -h \
+     2> >(t_err=$(cat); typeset -p t_err) \
+      > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-from-audacity.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+echo "$t_std" | grep -E 'Usage:' || exit 1
+
+# test SUBCMD -h
+eval "$(../src/scribbu rename -h \
+     2> >(t_err=$(cat); typeset -p t_err) \
+      > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-from-audacity.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+echo "$t_std" | grep -E 'scribbu rename -- rename .mp3 files' || exit 1

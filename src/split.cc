@@ -132,9 +132,7 @@ For detailed help, say `scribbu split --help'. To see the manual, say
 namespace {
 
   int
-  handle_split(const std::vector<std::string>  &tokens,
-               help_level                       help,
-               const boost::optional<fs::path> &cfg)
+  handle_split(int argc, char **argv)
   {
     using namespace std;
 
@@ -168,13 +166,14 @@ namespace {
 
     po::options_description opts("general options");
     opts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
       ("suffix", po::value<std::string>()->default_value(std::string()),
        "Optional suffix to be appended to all generated files");
 
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("argument", po::value<std::string>()->required(), "input file");
+      ("argument", po::value<std::string>(), "input file");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
@@ -189,51 +188,52 @@ namespace {
     popts.add("argument", 1);
 
     try {
+      
+      vector<string> tokens;
+      convert_tokens(argc, argv, back_inserter(tokens));
+
+      po::variables_map vm;
+      po::parsed_options parsed = po::command_line_parser(tokens).
+        options(all).
+        positional(popts).
+        run();
+      po::store(parsed, vm);
+      
+      help_level help = help_level::none;
+      if (vm.count("help")) {
+        help = help_level_for_parsed_opts(parsed);
+      }
+      
+      parsed = po::parse_environment(nocli, "SCRIBBU");
+      po::store(parsed, vm);
+
+      po::notify(vm);
 
       if (help_level::regular == help) {
+
         print_usage(cout, docopts, USAGE);
+
       } else if (help_level::verbose == help) {
-        execlp("man", "man", "scribbu-split", (char *)NULL);
-        // If we're here, `execlp' failed.
-        stringstream stm;
-        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
-        throw runtime_error(stm.str());
+
+        show_man_page("scribbu-split");
+
       } else {
-
-        po::variables_map vm;
-
-        // Command line takes highest priority...
-        po::parsed_options parsed = po::command_line_parser(tokens).
-          options(all).
-          positional(popts).
-          run();
-
-        po::store(parsed, vm);
-
-        // followed by the configuration file...
-        if (cfg) {
-          fs::ifstream ifs(cfg.get());
-          parsed = po::parse_config_file(ifs, nocli);
-          po::store(parsed, vm);
-        }
-
-        // and finally any environment variables.
-        parsed = po::parse_environment(nocli, "SCRIBBU");
-        po::store(parsed, vm);
-
-        po::notify(vm);
 
         split_file(fs::path(vm["argument"].as<std::string>()),
                    vm["suffix"].as<std::string>());
       }
 
     } catch (const po::error &ex) {
+
       cerr << ex.what() << endl;
       print_usage(cerr, docopts, USAGE);
       status = EXIT_INCORRECT_USAGE;
+
     } catch (const std::exception &ex) {
+
       cerr << ex.what() << endl;
       status = EXIT_FAILURE;
+
     }
 
     return status;

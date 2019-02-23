@@ -163,9 +163,7 @@ namespace {
 namespace {
 
   int
-  handle_rename(const std::vector<std::string>  &tokens,
-                help_level                       help,
-                const boost::optional<fs::path> &cfg)
+  handle_rename(int argc, char **argv)
   {
     using namespace std;
 
@@ -205,6 +203,7 @@ namespace {
     opts.add_options()
       ("dry-run,n", po::bool_switch(), "Dry-run; only print what would "
        "happen")
+      ("help,h", po::bool_switch(), "Display help & exit")
       ("output,o", po::value<fs::path>(), "If specified, copy the output files "
        "to this directory, rather than renaming in-place.")
       ("rename,r", po::bool_switch()->default_value(DEFAULT_RENAME),
@@ -217,7 +216,7 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
+      ("arguments", po::value<std::vector<string>>(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
 
@@ -234,39 +233,36 @@ namespace {
     popts.add("arguments", -1);
 
     try {
+      
+      vector<string> tokens;
+      convert_tokens(argc, argv, back_inserter(tokens));
+
+      po::variables_map vm;
+      po::parsed_options parsed = po::command_line_parser(tokens).
+        options(all).
+        positional(popts).
+        run();
+      po::store(parsed, vm);
+
+      help_level help = help_level::none;
+      if (vm.count("help")) {
+        help = help_level_for_parsed_opts(parsed);
+      }
+      
+      parsed = po::parse_environment(nocli, "SCRIBBU");
+      po::store(parsed, vm);
+
+      po::notify(vm);
 
       if (help_level::regular == help) {
+
         print_usage(cout, docopts, USAGE);
+
       } else if (help_level::verbose == help) {
-        execlp("man", "man", "scribbu-rename", (char *)NULL);
-        // If we're here, `execlp' failed.
-        stringstream stm;
-        stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
-        throw runtime_error(stm.str());
+
+        show_man_page("scribbu-rename");
+
       } else {
-
-        po::variables_map vm;
-
-        // Command line takes highest priority...
-        po::parsed_options parsed = po::command_line_parser(tokens).
-          options(all).
-          positional(popts).
-          run();
-
-        po::store(parsed, vm);
-
-        // followed by the configuration file...
-        if (cfg) {
-          fs::ifstream ifs(cfg.get());
-          parsed = po::parse_config_file(ifs, nocli);
-          po::store(parsed, vm);
-        }
-
-        // and finally any environment variables.
-        parsed = po::parse_environment(nocli, "SCRIBBU");
-        po::store(parsed, vm);
-
-        po::notify(vm);
 
         // That's it-- the list of files and/or directories to be processed
         // should be waiting for us in 'arguments'...
@@ -290,15 +286,20 @@ namespace {
                                                 rename, verbose));
 
         std::for_each(arguments.begin(), arguments.end(), std::ref(*pr));
+
       }
 
     } catch (const po::error &ex) {
+
       cerr << ex.what() << endl;
       print_usage(cerr, docopts, USAGE);
       status = EXIT_INCORRECT_USAGE;
+
     } catch (const std::exception &ex) {
+
       cerr << ex.what() << endl;
       status = EXIT_FAILURE;
+
     }
 
     return status;

@@ -101,6 +101,10 @@ namespace scribbu {
     /// Initialize an ID3v2.2 tag "from scratch"
     id3v2_2_tag(std::size_t cbpad = 0, bool fexp = false): id3v2_tag(2, 0)
     { }
+    id3v2_2_tag(const id3v2_2_tag &that);
+    virtual id3v2_tag* clone() const
+    { return new id3v2_2_tag(*this); }
+    id3v2_2_tag& operator=(const id3v2_2_tag &that);
 
   public:
 

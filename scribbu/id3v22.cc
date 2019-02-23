@@ -144,6 +144,7 @@ scribbu::id3v2_2_tag::static_initializer::static_initializer()
     REGG("TXX", TXX);
     REGG("CNT", CNT);
     REGG("POP", POP);
+    REGG("XTG", XTG);
     // N.B. COM intentionally omitted
 
 #   undef REGT
@@ -195,7 +196,42 @@ scribbu::id3v2_2_tag::id3v2_2_tag(std::istream     &is,
     std::inserter(text_parsers_, text_parsers_.begin()));
 
   parse(is, H.size_);
+}
 
+scribbu::id3v2_2_tag::id3v2_2_tag(const id3v2_2_tag &that):
+  id3v2_tag(that),
+  text_parsers_(that.text_parsers_),
+  generic_parsers_(that.generic_parsers_),
+  compression_(that.compression_),
+  padding_(that.padding_)
+{
+  for (auto &p: that.frames_) {
+    frames_.push_back(std::unique_ptr<id3v2_2_frame>(p->clone()));
+    add_frame_to_lookups( *frames_.back(), frames_.size() );
+  }
+}
+
+scribbu::id3v2_2_tag& scribbu::id3v2_2_tag::operator=(const id3v2_2_tag &that)
+{
+  if (this != &that) {
+    id3v2_tag::operator=(*this);
+    text_parsers_ = that.text_parsers_;
+    generic_parsers_ = that.generic_parsers_;
+    compression_ = that.compression_;
+    padding_ = that.padding_;
+    
+    coms_.clear();
+    cnts_.clear();
+    pops_.clear();
+    frames_.clear();
+    frame_map_.clear();
+    text_map_.clear();
+    for (auto &p: that.frames_) {
+      frames_.push_back(std::unique_ptr<id3v2_2_frame>(p->clone()));
+      add_frame_to_lookups( *frames_.back(), frames_.size() );
+    }
+  }
+  return *this;
 }
 
 /*virtual*/ unsigned char
@@ -238,8 +274,11 @@ scribbu::id3v2_2_tag::write(std::ostream &os, bool unsync) const
 {
   using namespace std;
 
-  // Write the header...
-  write_header(os, flags(), size(unsync));
+  // Write the header... taking care to add the "unsync" flag if we're
+  // applying unsynchronisation
+  unsigned char f = flags();
+  if (unsync) f |= 0x80;
+  write_header(os, f, size(unsync));
   // the frames (note we start the accumulation at 10)...
   size_t cb = accumulate(begin(), end(), 10,
                          [&os, unsync](size_t n, const id3v2_2_frame &f)
@@ -856,10 +895,14 @@ void scribbu::id3v2_2_tag::parse(std::istream &is, std::size_t size)
 
     } // End iteration over frames.
 
+  } catch (const scribbu::error &ex) {
+    is.seekg(here, std::ios_base::beg);
+    is.exceptions(exc_mask);
+    throw;
   } catch (const std::exception &ex) {
     is.seekg(here, std::ios_base::beg);
     is.exceptions(exc_mask);
-    throw ex;
+    throw;
   }
 
   is.exceptions(exc_mask);

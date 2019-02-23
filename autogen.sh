@@ -17,5 +17,6 @@ test -f build-aux/config.rpath || touch build-aux/config.rpath
 # Runs autoconf, autoheader, aclocal, automake, autopoint, libtoolize
 echo "Regenerating autotools files"
 autoreconf -vfi
+touch NEWS AUTHORS ChangeLog
 
 echo "Now run configure, make & make install"

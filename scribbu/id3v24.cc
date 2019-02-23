@@ -152,6 +152,7 @@ scribbu::id3v2_4_tag::static_initializer::static_initializer()
     REGG("TXXX", TXXX_2_4);
     REGG("PCNT", PCNT_2_4);
     REGG("POPM", POPM_2_4);
+    REGG("XTAG", XTAG_2_4);
 
     // NB COMM intentionally omitted--handled specially.
 
@@ -479,6 +480,68 @@ scribbu::id3v2_4_tag::id3v2_4_tag(std::istream     &is,
   get_default_text_frame_parsers(std::inserter(text_parsers_,
                                                   text_parsers_.begin()));
   parse(is, H.size_, H.flags_ & 0x40);
+}
+
+scribbu::id3v2_4_tag::id3v2_4_tag(std::size_t cbpad /*= 0*/, 
+                                  bool fexp /*= false*/):
+  id3v2_tag(4, 0),
+  experimental_(fexp),
+  footer_(false),
+  padding_(cbpad)
+{ 
+  get_default_generic_frame_parsers(
+    std::inserter(generic_parsers_, generic_parsers_.begin()));
+  get_default_text_frame_parsers(
+    std::inserter(text_parsers_, text_parsers_.begin()));
+}
+
+scribbu::id3v2_4_tag::id3v2_4_tag(const id3v2_4_tag &that):
+  id3v2_tag(*this),
+  experimental_(that.experimental_),
+  footer_(that.footer_),
+  generic_parsers_(that.generic_parsers_),
+  text_parsers_(that.text_parsers_),
+  pext_header_(new ext_header(*that.pext_header_)),
+  padding_(that.padding_)
+{
+  for (auto &p: that.frames_) {
+    frames_.push_back(std::unique_ptr<id3v2_4_frame>(p->clone()));
+    add_frame_to_lookups( *frames_.back(), frames_.size() );
+    if (frames_.back()->id() == frame_id4("ENCR")) {
+      register_encryption_method(dynamic_cast<const ENCR_2_4&>(*frames_.back()));
+    }
+  }
+}
+
+scribbu::id3v2_4_tag& scribbu::id3v2_4_tag::operator=(const id3v2_4_tag &that)
+{
+  if (this != &that) {
+    id3v2_tag::operator=(*this);
+    experimental_ = that.experimental_;
+    footer_ = that.footer_;
+    generic_parsers_ = that.generic_parsers_;
+    text_parsers_ = that.text_parsers_;
+    pext_header_.reset(new ext_header(*that.pext_header_));
+    padding_ = that.padding_;
+
+    comms_.clear();
+    pcnts_.clear();
+    popms_.clear();
+    encryption_methods_.clear();
+    frames_.clear();
+    frame_map_.clear();
+    text_map_.clear();
+
+    for (auto &p: that.frames_) {
+      frames_.push_back(std::unique_ptr<id3v2_4_frame>(p->clone()));
+      add_frame_to_lookups( *frames_.back(), frames_.size() );
+      if (frames_.back()->id() == frame_id4("ENCR")) {
+        register_encryption_method(dynamic_cast<const ENCR_2_4&>(*frames_.back()));
+      }
+    }
+  }
+  
+  return *this;
 }
 
 /*virtual*/ unsigned char
@@ -1382,10 +1445,14 @@ void scribbu::id3v2_4_tag::parse(std::istream &is, std::size_t size, bool extend
 
     } // End iteration over all frames.
 
+  } catch (const scribbu::error &ex) {
+    is.seekg(here, std::ios_base::beg);
+    is.exceptions(exc_mask);
+    throw;
   } catch (const std::exception &ex) {
     is.seekg(here, std::ios_base::beg);
     is.exceptions(exc_mask);
-    throw ex;
+    throw;
   }
 
   is.exceptions(exc_mask);

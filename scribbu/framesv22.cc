@@ -189,7 +189,7 @@ void
 scribbu::id3v2_2_frame::ensure_cached_data_is_fresh() const
 {
   using namespace std;
-  using scribbu::detail::count_false_syncs;
+  using scribbu::detail::count_syncs;
   using scribbu::detail::unsynchronise;
 
   if (is_dirty()) {
@@ -212,8 +212,9 @@ scribbu::id3v2_2_frame::ensure_cached_data_is_fresh() const
     copy(payload.begin(), payload.end(), pout);
 
     // Either way, count the # of false syncs in that buffer...
-    num_false_syncs_ = count_false_syncs(cache_[SERIALIZED].begin(),
-                                         cache_[SERIALIZED].end());
+    num_false_syncs_ = count_syncs(cache_[SERIALIZED].begin(),
+                                   cache_[SERIALIZED].end(),
+                                   true);
 
     // and prepare an unsynchronised copy.
     unsynchronise(back_inserter(cache_[SERIALIZED_WITH_UNSYNC]),
@@ -480,4 +481,35 @@ scribbu::POP::serialize(std::ostream &os) const
 {
   return popularimeter::write(os);
 }
+
+////////////////////////////////////////////////////////////////////////////
+//                                 class XTG                              //
+////////////////////////////////////////////////////////////////////////////
+
+/*static*/ std::unique_ptr<scribbu::id3v2_2_frame>
+scribbu::XTG::create(const frame_id3& id, 
+                     const unsigned char *p, 
+                     std::size_t cb)
+{
+  return std::unique_ptr<scribbu::id3v2_2_frame>( new XTG(p, p + cb) );
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/ std::size_t 
+scribbu::XTG::size() const
+{
+  return tag_cloud::size();
+}
+
+/// Serialize this frame to \a os, exclusive of any compression, encryption
+/// or unsynchronisation; return the number of bytes written
+/*virtual*/ std::size_t 
+scribbu::XTG::serialize(std::ostream &os) const
+{
+  return tag_cloud::write(os);
+}
+
+
+
 

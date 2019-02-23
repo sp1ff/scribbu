@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+
+
+source ${srcdir}/test-util
+
+
+# run `scribbu popm ...'
+# usage: run_popm var_to_rcv_stdout var_to_rcv_stderr var_to_rcv_status args...
+# for instance:
+#     run_popm out err stat -t 1 --playcount-only
+# will execute `scribbu popm -t 1 --playcount-only'; on return the process'
+# stdout will be in `out', stderr in `err', and exit status in `stat'. Note
+# that due to quoting issues, any `'' or ``' characters will have been
+# replaced with `:'.
+function run_popm()
+{
+    local __stdout=$1
+    local __stderr=$2
+    local __status=$3
+    shift 3
+
+    verbose `pwd`
+    verbose ${popm_scribbu_dir}/scribbu -L ${srcdir}/../scheme popm $@
+    # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
+    local t_std
+    local t_err
+    local t_stat
+    eval "$(${popm_scribbu_dir}/scribbu -L ${srcdir}/../scheme popm $@ \
+    2> >(t_err=$(cat); typeset -p t_err) \
+     > >(t_std=$(cat); typeset -p t_std) ); t_stat=$?"
+
+    eval "$__stdout='$(echo $t_std|tr \' :|tr \` :)'"
+    eval "$__stderr='$(echo $t_err|tr \' :|tr \` :)'"
+    eval "$__status='$t_stat'"
+
+    verbose $t_stat
+    printf '=%.0s' $(seq 1 $popm_cols) >&3
+    verbose "$t_std"
+    printf '=%.0s' $(seq 1 $popm_cols) >&3
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $popm_cols) >&3
+}
+
+###########################################################################
+# tests
+###########################################################################
+
+function smoke_tests()
+{
+    local out
+    local err
+    local stat
+
+    # can we get a help message?
+    run_popm out err stat -h
+
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -h"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr for -h"
+    [ -n "$out" ] || fail "smoke_tests: empty stdout for -h"
+
+    here=`pwd`
+    set_testdir ${srcdir} $popm_testdir smoke_tests id3v2.3.tag
+
+    run_popm out err stat id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on create"
+
+    # should be a nop, since this tag has no PCNT frame to begin with
+    ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT
+    stat=$?
+    [ $stat -ne 0 ] || fail "smoke_tests: should not have PCNT frame"
+
+    run_popm out err stat --dry-run --create id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on dry-run"
+    echo $out|grep -F "creating a new PCNT frame with a count of 0">/dev/null
+    stat=$?
+    [ $stat -eq 0 ] || fail "smoke_tests: failed to find PCNT (dry-run)"
+
+    # run it again-- should be there now
+    run_popm out err stat --create id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero exit status on create"
+    ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT
+    stat=$?
+    [ $stat -eq 0 ] || fail "smoke_tests: failed to find PCNT"
+
+    run_popm out err stat id3v2.3.tag
+    pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|awk '{print $2}')
+    [ $pcnt = "1" ] || fail "smoke_tests: PCNT is $pcnt; should be 1"
+
+    run_popm out err stat --popularimeter-only -a -o "sp1ff@pobox.com" -r 192 id3v2.3.tag
+    popm=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F POPM|awk '{print $2}')
+    [ "$popm" = "sp1ff@pobox.com" ] || fail "smoke_tests: no POPM"
+    rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
+    [ "$rating" = "192" ] || fail "smoke_tests: rating is $rating; should be 192"
+
+    run_popm out err stat --count=11 id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on pc => 11"
+    pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|awk '{print $2}')
+    [ $pcnt = "11" ] || fail "smoke_tests: PCNT is $pcnt; should be 11"
+    cnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F counter|awk '{print $2}')
+    [ $cnt = "0b" ] || fail "smoke_tests: POPM counter is $cnt; should be 0x0b"
+
+    run_popm out err stat --rating=200 id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on rating"
+    rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
+    [ "$rating" = "200" ] || fail "smoke_tests: rating is $rating; should be 200"
+
+    clean_testdir $here $popm_testdir smoke_tests
+
+}
+
+###########################################################################
+
+if [ -z "$srcdir" ]; then
+    echo >&2 "the \`srcdir' variable needs to be set to this script's location"
+    exit 1
+fi
+
+popm_builddir=../src
+popm_cols=$(tput cols)
+popm_debug=false
+popm_help=false
+popm_nargs=0
+popm_scribbu_dir=../src
+popm_testdir=./test-popm-tmp
+popm_verbose=false
+popm_prev_option=
+for popm_option
+do
+    # If the previous option required an argument, assign it now.
+    if test -n "$popm_prev_option"; then
+        eval $popm_prev_option=\$popm_option
+        popm_prev_option=
+        popm_nargs=$(($popm_nargs+1))
+        continue
+    fi
+
+    # Parse out the argument option in $popm_option, if present.
+    case $popm_option in
+        *=?*) popm_optarg=$(expr "X$popm_option" : '[^=]*=\(.*\)') ;;
+        *=)   popm_optarg= ;;
+        *)    popm_optarg=yes ;;
+    esac
+
+    # Options are handled here:
+    case $popm_option in
+        -d | --de | --deb | --debu | --debug)
+            popm_debug=true;;
+        -h | --he | --hel | --help)
+            popm_help=yes;;
+        -v | --ve | --ver | --verb | --verbo | --verbose)
+            popm_verbose=true;;
+        *)
+            cat >&2 <<EOF
+Unrecognized option \`$popm_option'.
+Try \`$0 --help' for more information.
+EOF
+            exit 2;;
+    esac
+
+done
+
+if test "$popm_help" == "true"; then
+    cat <<EOF
+\`$0' -- test the \`popm' sub-command
+
+TODO(sp1ff): write me!
+EOF
+fi
+
+if test "$popm_verbose" == "true"; then
+    exec 3>&1
+else
+    exec 3> /dev/null
+fi
+
+if test "$popm_debug" == "true"; then
+    set -x
+fi
+
+# Both must be absolute in order for `make-distcheck' to work
+popm_scribbu_dir=`cd "$popm_scribbu_dir"; pwd`
+[ -d "$popm_testdir" ] || mkdir -p "$popm_testdir"
+popm_testdir=`cd "$popm_testdir"; pwd`
+smoke_tests

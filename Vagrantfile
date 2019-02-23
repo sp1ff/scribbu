@@ -30,6 +30,7 @@ sudo apt-get -y install gdb
 # make
 # sudo make install
 
+sudo apt-get -y install build-essential devscripts
 sudo apt-get -y install libbz2-dev
 sudo apt-get -y install libunistring-dev
 sudo apt-get -y install libffi-dev
@@ -55,12 +56,13 @@ sudo ldconfig
 sudo apt-get -y install autoconf
 sudo apt-get -y install automake
 sudo apt-get -y install libtool
+sudo apt-get -y install libtool-bin
 sudo apt-get -y install texinfo
 sudo apt-get -y install texlive texlive-latex-extra
 sudo apt-get -y install libssl-dev
 sudo apt-get -y install flex
 sudo apt-get -y install bison
-sudo apt-get -y install global
+sudo apt-get -y install global ntp
 
 echo source /vagrant/.vmbashrc >> /home/vagrant/.bashrc
 
@@ -103,8 +105,8 @@ Vagrant.configure(2) do |config|
 
   # Create a public network, which generally matched to bridged
   # network.  Bridged networks make the machine appear as another
-  # physical device on your network.  config.vm.network
-  # "public_network"
+  # physical device on your network.
+  config.vm.network "public_network", ip: "192.168.0.12", bridge: "eth0"
 
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
@@ -149,5 +151,6 @@ Vagrant.configure(2) do |config|
   # available. Please see the documentation for more information about
   # their specific syntax and use.
   config.vm.provision "shell", inline: $provision
+  # config.vm.provision :shell, :inline => "sudo rm /etc/localtime && sudo ln -s /usr/share/zoneinfo/US/Pacific /etc/localtime", run: "always"
 
 end

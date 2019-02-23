@@ -1,3 +1,28 @@
+2019-08-18  Michael Herstine  <sp1ff@pobox.com>
+
+	This commit contains the accessioning features.
+	It may be squashed into the prior commit at some point.
+
+	This commit:
+
+	    1. Introduces the free functions `maybe_remove_id3v1' and
+	       `replace_id3v1' for updating ID3v1 tags
+
+	    2. Introduces the free function `maybe_emplace_tagset' and
+	       its downstreams, for working with ID3v2 tagsets.
+
+	    3. Introduces `<id3v1-tag>', my first GOOPS class in the
+	       scribbu module, along with foreign functions for serde.
+
+	    4. Introduces `<id3v2-tag>' & its associated frames classes,
+	       along with the foreign functions for serde.
+
+	    5. Introduces the {read,write}-tagset methods
+
+	    6. adds the "tag cloud" ID3v2 frame
+
+	    7. adds two new  sub-commands `popm' & `xtag'
+
 2019-01-06  Michael Herstine  <sp1ff@pobox.com>
 
 	Initial commit of accessioning features.

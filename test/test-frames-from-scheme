@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+cols=$(tput cols)
+eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-frames-from-scheme.scm ${srcdir}/data \
+        2> >(t_err=$(cat); typeset -p t_err) \
+         > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+echo "$t_std"
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-frames-from-scheme.scm' | grep -v 'newer than compiled')
+if [ ! -z "$t_err" ]; then
+    printf '=%.0s' $(seq 1 $cols)
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $cols)
+	exit 1
+fi
+
+exit $t_stat

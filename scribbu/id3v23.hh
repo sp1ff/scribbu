@@ -209,6 +209,10 @@ namespace scribbu {
 
     id3v2_3_tag(std::size_t cbpad = 0, bool fexp = false,
                 want_extended_header ext = want_extended_header::none);
+    id3v2_3_tag(const id3v2_3_tag &that);
+    virtual id3v2_tag* clone() const
+    { return new id3v2_3_tag(*this); }
+    id3v2_3_tag& operator=(const id3v2_3_tag &that);
 
   public:
 
@@ -774,7 +778,6 @@ namespace scribbu {
     popm_frame_lookup_type;
 
     bool experimental_;
-    // std::size_t size_;
     generic_parser_map_type generic_parsers_;
     text_parser_map_type text_parsers_;
     std::shared_ptr<ext_header> pext_header_;

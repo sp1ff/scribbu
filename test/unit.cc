@@ -272,4 +272,3 @@ BOOST_AUTO_TEST_CASE( test_file_processing )
   BOOST_CHECK(pid3v1);
 
 }
-

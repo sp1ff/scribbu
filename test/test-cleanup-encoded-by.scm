@@ -24,27 +24,31 @@
 (use-modules (ice-9 format))
 (use-modules (ice-9 regex))
 (use-modules (scribbu))
+(use-modules (oop goops))
 
 (setlocale LC_ALL "")
 
-(define (report-on-encoded-by track)
+(define (report-on-encoded-by tags pth v1)
   "Utility routine for evaluating the 'encoded by' attribute of TRACK.
 
 This function is for testing & debugging purposes. It will simply print the track
 path, the ID3v1 comment (if any) and the ID3v2 TENC frame (if any)."
-  (format #t "~s: " (scribbu/get-path track))
-  (if (scribbu/has-id3v1-tag track)
-	  (format #t "ID3v1 comment: ~s" (scribbu/get-id3v1-string track 'scribbu/comment))
-	  (display "<no ID3v1 match>"))
-  (let ((num-tags (scribbu/get-id3v2-tag-count track)))
-	  (do ((i 0 (1+ i)))
-		    ((>= i num-tags))
-	    (if (< 0 (scribbu/has-frame track i 'scribbu/encoded-by))
-		      (format #t ", tag ~d/encoded-by: ~s" i
-				          (scribbu/get-frame track i 'scribbu/encoded-by)))))
+  (format #t "~s: " pth)
+  (if (null? v1)
+	    (display "<no ID3v1 match>")
+	    (format #t "ID3v1 comment: ~s" (slot-ref v1 'comment)))
+  (while (not (null? tags))
+         (let ((tag (caar tags)))
+           (format #t "tag ~a" tag)
+           (if (has-frame? tag 'encoded-by-frame)
+               (let ((tenc (slot-ref
+                            (car (get-frames tag 'encoded-by-frame))
+                            'text)))
+                 (format #t ", tag encoded-by: ~s" tenc))))
+         (set! tags (cdr tags)))
   (format #t "\n"))
 
-(define (cleanup-encoded-by track)
+(define (cleanup-encoded-by tags pth v1)
   "Clean-up the 'encoded-by' attribute of TRACK.
 
 If TRACK does not have an ID3v1 comment field matching /.*winamp.*/,
@@ -55,46 +59,59 @@ of 'Winamp'.  If TRACK has no ID3v2 tag. create one with only a TENC
 frame of 'Winamp'. Otherwise, print a warning consisting of the TENC
 frames in the extant ID3v2 frames."
 
-  (if (scribbu/has-id3v1-tag track)
-	    (let ((r (make-regexp ".*winamp.*" regexp/icase)))
-		    (if (regexp-exec r (scribbu/get-id3v1-string track 'scribbu/comment))
-			      (begin
-			        (let ((num-tags (scribbu/get-id3v2-tag-count track)))
-				        (if (eq? num-tags 0)
-					          (begin
-					            (scribbu/make-id3v2-tag track 0)
-					            (scribbu/set-frame track 0 'scribbu/encoded-by "Winamp")
-					            (scribbu/write-id3v2-tag
-					             track 0
-					             (string-join (list (basename (scribbu/get-path track)) "out") ".")))
-					          (let ((encoders '()))
-					            (begin
-						            (do ((i 0 (1+ i)))
-							              ((>= i num-tags))
-						              (if (scribbu/has-frame track i 'scribbu/encoded-by)
-							                (set!
-							                 encoders
-							                 (cons (scribbu/get-frame track i 'scribbu/encoded-by) encoders))
-							                (begin
-							                  (scribbu/set-frame track i 'scribbu/encoded-by "Winamp")
-							                  (scribbu/write-id3v2-tag
-							                   track i
-							                   (string-join (list
-											                         (basename (scribbu/get-path track))
-											                         (number->string i)
-											                         "out") "."))))))
-                      (if (eq? num-tags (length encoders))
-                          (format #t "~s: already encoded by ~s\n"
-                                  (scribbu/get-path track) encoders))))))))))
+  (unless (null? v1)
+	  (let ((r (make-regexp ".*winamp.*" regexp/icase)))
+		  (if (regexp-exec r (slot-ref v1 'comment))
+			    (begin
+				    (if (eq? 0 (length tags))
+					      (let* ((frames (list (make <text-frame>
+                                       #:id 'encoded-by-frame
+                                       #:text "Winamp")))
+                       (tag (make <id3v2-tag> #:frames frames))
+                       (out (string-join (list (basename pth) "out") ".")))
+                  (format #t "~s gets new tag ~s => ~s\n" pth tag out)
+                  (let ((tmp (slot-ref tag 'frames)))
+                    (format #t "its frames are: ~s | ~s | ~s\n"
+                            tmp
+                            (car tmp)
+                            (slot-ref (car tmp) 'text)))
+                  (write-tagset (list (list tag 3)) out))
+                (let ((x tags)
+                      (i 0)
+                      (encoders '()))
+                  (while (not (null? x))
+                         (let* ((tag (caar tags))
+                                (enc (get-frames tag 'encoded-by-frame)))
+                           (if (eq? 0 (length enc))
+                               (begin
+                                 (slot-set! tag 'frames
+                                            (append (slot-ref tag 'frames)
+                                                    (list
+                                                     (make <id3v2-text-frame>
+                                                       #:id 'encoded-by-frame
+                                                       #:text "Winamp"))))
+                                 (format #t "New frames: ~s"
+                                         (slot-ref tag 'frames))
+                                 (write-tagset
+                                  (list (list tag 3))
+                                  (string-join (list (basename pth)
+                                                     (number->string i)
+                                                     "out") ".")))
+                               (set! encoders (cons (car enc) encoders))))
+                         (set! x (cdr x))
+                         (set! i (+ i 1)))
+                  (if (eq? (length encoders) (length tags))
+                      (format #t "~s: already encoded by ~s\n"
+                              pth encoders)))))))))
 
 (define (main dir)
   "Cleanup the 'Encoded By' attribute for all tags in DIR."
   (let ((data (string-join (list dir "data") "/" 'infix)))
     (display "Report:\n=======\n")
-	  (scribbu/with-track-in data report-on-encoded-by)
-    (display "\n")
+	  (with-track-in data report-on-encoded-by)
+    (display "\n.Report done.\n")
     (display "Cleanup:\n========\n")
-	  (scribbu/with-track-in data cleanup-encoded-by)))
+	  (with-track-in data cleanup-encoded-by)))
 
 (let ((cl (cdr (command-line))))
   (if (= 1 (length cl))

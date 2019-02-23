@@ -53,12 +53,12 @@ namespace scribbu {
    *
    */
 
-  class error: public virtual boost::exception,
+  struct error: public virtual boost::exception,
                public virtual std::exception
   {
-  public:
     error()
     { }
+    virtual const char * what() const noexcept(true) = 0 ;
   };
 
 } // End namespace scribbu.

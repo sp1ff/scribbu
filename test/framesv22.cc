@@ -77,3 +77,54 @@ BOOST_AUTO_TEST_CASE( test_com )
   BOOST_CHECK( 'b' == buf[0] && 'a' == buf[1] && 'r' == buf[2] );
 
 } // End test_com.
+
+BOOST_AUTO_TEST_CASE( test_cnt )
+{
+  using namespace std;
+  using namespace scribbu;
+  
+  CNT cnt01(11);
+  BOOST_CHECK( 11 == cnt01.count() );
+  cnt01.inc();
+  BOOST_CHECK( 12 == cnt01.count() );
+
+} // End test_cnt.
+
+BOOST_AUTO_TEST_CASE( test_pop )
+{
+  using namespace std;
+  using namespace scribbu;
+  
+  POP pop01("foo@bar.com", 11, 12);
+  BOOST_CHECK( pop01.rating() == 11 );
+  pop01.inc();
+  BOOST_CHECK( pop01.count() == 13 );
+
+} // End test_pop.
+
+
+BOOST_AUTO_TEST_CASE( test_xtg )
+{
+  using namespace std;
+  using namespace scribbu;
+  
+  const vector<unsigned char> buf01{
+    0x01, 0x66, 0x6f, 0x6f, 0x40, 0x62, 0x61, 0x72, 
+    0x2e, 0x63, 0x6f, 0x6d, 0x00, 0x39, 0x30, 0x73, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x73, 0x75, 0x62, 
+    0x67, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x00, 0x00, 
+    0x00, 0x00, 0x0e, 0x72, 0x6f, 0x63, 0x6b, 0x00, 
+    0x61, 0x6c, 0x74, 0x2d, 0x72, 0x6f, 0x63, 0x6b, 
+    0x00, 0x6d, 0x6f, 0x6f, 0x64, 0x00, 0x00, 0x00, 
+    0x00, 0x07, 0x6d, 0x65, 0x6c, 0x6c, 0x6f, 0x77, 
+    0x00,
+  };
+  
+  XTG xtg01(buf01.begin(), buf01.end());
+  BOOST_CHECK( "foo@bar.com" == xtg01.owner() );
+  BOOST_CHECK( xtg01.has_key("90s") );
+  BOOST_CHECK( !xtg01.has_key("80s") );
+
+  BOOST_CHECK( 65 == xtg01.size() );
+
+} // End test_xtg.

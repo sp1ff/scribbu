@@ -583,6 +583,21 @@ scribbu::detail::iconv_specific::string_for_encoding(encoding enc,
   return TBL.at(enc) + SFX.at(rsp);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                            class bad_code_unit                            //
+///////////////////////////////////////////////////////////////////////////////
+
+const char * scribbu::bad_code_unit::what() const noexcept
+{
+  if (! pwhat_) {
+    std::stringstream stm;
+    stm << cb_ << " is an invalid code unit for encoding " << enc_;
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
+
 char*
 scribbu::detail::iconv_specific::str_for_encoding(encoding enc,
 												  on_no_encoding rsp
@@ -629,6 +644,10 @@ namespace scribbu {
     if (!scribbu::char_traits<char>::is_code_unit(dstenc)) {
       throw bad_code_unit(dstenc, sizeof(char));
     }
+    
+    if (0 == cbbuf) {
+      return std::string();
+    }
 
     detail::iconv_specific::descriptor dsc(srcenc, dstenc, rsp);
 
@@ -642,10 +661,10 @@ namespace scribbu {
     std::unique_ptr<char []> poutbuf(new char[cbout]);
 
     // "The iconv function converts one multibyte character at a time, and for
-    // each character conversion it increments *inbuf and decrements *inbytesleft
-    // by the number of converted input bytes, it increments *outbuf and
-    // decrements *outbytesleft by the number of converted output bytes, and it
-    // updates the conversion state contained in cd."
+    // each character conversion it increments *inbuf and decrements
+    // *inbytesleft by the number of converted input bytes, it increments
+    // *outbuf and decrements *outbytesleft by the number of converted output
+    // bytes, and it updates the conversion state contained in cd."
     std::size_t outbytesleft = cbout;
     char *outbuf = poutbuf.get();
     std::size_t status = iconv(dsc, &inbuf, &inbytesleft,
@@ -711,10 +730,21 @@ namespace scribbu {
 
   } // End convert_encoding<string>.
 
-  /// Convert encodings from std strings to buffers of char
+  template <>
+  std::string
+  convert_encoding(const char *pbuf,
+				   std::size_t cbbuf,
+				   encoding srcenc,
+				   encoding dstenc,
+				   on_no_encoding rsp /*= on_no_encoding::fail*/) {
+    return convert_encoding<std::string>((const unsigned char*)pbuf, cbbuf, 
+                                         srcenc, dstenc, rsp);
+  }
+  
+    /// Convert encodings from C strings to buffers of unsigned char
   template <>
   std::vector<unsigned char>
-  convert_encoding(const std::string &text,
+  convert_encoding(char const* const& text,
                    encoding srcenc,
                    encoding dstenc,
                    bool add_bom /*= false*/,
@@ -730,6 +760,10 @@ namespace scribbu {
 
     if (!scribbu::char_traits<char>::is_code_unit(srcenc)) {
       throw bad_code_unit(dstenc, sizeof(char));
+    }
+    
+    if (0 == strlen(text)) {
+      return std::vector<unsigned char>();
     }
 
     size_t cbbom = 0;
@@ -768,12 +802,13 @@ namespace scribbu {
 
     detail::iconv_specific::descriptor dsc(srcenc, dstenc, rsp);
 
-    char *inbuf = const_cast<char*>(text.c_str());
-    size_t inbytesleft = text.size();
+    char *inbuf = const_cast<char*>(text);
+    size_t ntext = strlen(text);
+    size_t inbytesleft = ntext;
     // We can't know a priori how many octets the output buffer will require;
     // cf.
     // http://stackoverflow.com/questions/13297458/simple-utf8-utf16-string-conversion-with-iconv
-    std::size_t cbout = cbbom + (text.size() << 2);
+    std::size_t cbout = cbbom + (ntext << 2);
     vector<unsigned char> out(cbout);
     std::size_t outbytesleft = cbout;
     char *outbuf = reinterpret_cast<char*>(&(out[cbbom]));
@@ -785,8 +820,8 @@ namespace scribbu {
       cbout <<= 2;
       out.resize(cbout);
 
-      inbuf = const_cast<char*>(text.c_str());
-      inbytesleft = text.size();
+      inbuf = const_cast<char*>(text);
+      inbytesleft = ntext;
       outbytesleft = cbout;
       char *outbuf = reinterpret_cast<char*>(&(out[cbbom]));
       std::size_t outbytesleft = cbout;
@@ -812,6 +847,39 @@ namespace scribbu {
     return out;
   }
 
+  /// Convert encodings from C strings to buffers of unsigned char
+  template <>
+  std::vector<unsigned char>
+  convert_encoding(char* const& text,
+                   encoding srcenc,
+                   encoding dstenc,
+                   bool add_bom /*= false*/,
+                   on_no_encoding rsp /*= on_no_encoding::fail*/)
+  {
+    return convert_encoding<char const*>(text, srcenc, dstenc, add_bom, rsp);
+  }
+  
+  std::vector<unsigned char>
+  convert_encoding(const char *ptext,
+                   encoding srcenc,
+                   encoding dstenc,
+                   bool add_bom /*= false*/,
+                   on_no_encoding rsp /*= on_no_encoding::fail*/)
+  {
+    return convert_encoding<char const*>(ptext, srcenc, dstenc, add_bom, rsp);
+  }
+  
+  template <>
+  std::vector<unsigned char>
+  convert_encoding(const std::string &text,
+                   encoding srcenc,
+                   encoding dstenc,
+                   bool add_bom /*= false*/,
+                   on_no_encoding rsp /*= on_no_encoding::fail*/)
+  {
+    return convert_encoding<const char*>(text.c_str(), srcenc, dstenc, add_bom, 
+                                         rsp);
+  }
 } // End namespace scribbu.
 
 scribbu::language

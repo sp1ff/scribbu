@@ -202,6 +202,7 @@ pprint_dispatcher::pprint_dispatcher()
   reg_v22_frame<COM, &pprinter::pprint_COM>();
   reg_v22_frame<CNT, &pprinter::pprint_CNT>();
   reg_v22_frame<POP, &pprinter::pprint_POP>();
+  reg_v22_frame<XTG, &pprinter::pprint_XTG>();
   reg_v23_frame<unknown_id3v2_3_frame, &pprinter::pprint_unk_id3v2_3_frame>();
   reg_v23_frame<id3v2_3_text_frame, &pprinter::pprint_id3v2_3_text_frame>();
   reg_v23_frame<UFID, &pprinter::pprint_UFID>();
@@ -210,6 +211,7 @@ pprint_dispatcher::pprint_dispatcher()
   reg_v23_frame<COMM, &pprinter::pprint_COMM>();
   reg_v23_frame<PCNT, &pprinter::pprint_PCNT>();
   reg_v23_frame<POPM, &pprinter::pprint_POPM>();
+  reg_v23_frame<XTAG, &pprinter::pprint_XTAG>();
   reg_v24_frame<unknown_id3v2_4_frame, &pprinter::pprint_unk_id3v2_4_frame>();
   reg_v24_frame<id3v2_4_text_frame, &pprinter::pprint_id3v2_4_text_frame>();
   reg_v24_frame<UFID_2_4, &pprinter::pprint_UFID_2_4>();
@@ -218,6 +220,7 @@ pprint_dispatcher::pprint_dispatcher()
   reg_v24_frame<COMM_2_4, &pprinter::pprint_COMM_2_4>();
   reg_v24_frame<PCNT_2_4, &pprinter::pprint_PCNT_2_4>();
   reg_v24_frame<POPM_2_4, &pprinter::pprint_POPM_2_4>();
+  reg_v23_frame<XTAG_2_4, &pprinter::pprint_XTAG_2_4>();
 
 }
 
@@ -582,6 +585,31 @@ scribbu::standard_pprinter::pprint_POP(const POP &frame, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
+scribbu::standard_pprinter::pprint_XTG(const XTG &frame, std::ostream &os)
+{
+  using namespace std;
+
+  os << sin_ << frame.id() << ": " << frame.owner() << "\n" <<
+    sin_ << "tags:\n";
+  
+  for (auto x: frame) {
+    os << sin_ << x.first << ": ";
+    bool first = true;
+    for (auto val: x.second) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
+      os << val;
+    }
+    os << "\n";
+  }
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
 scribbu::standard_pprinter::pprint_unk_id3v2_3_frame(
   const unknown_id3v2_3_frame &frame,
   std::ostream &os)
@@ -704,6 +732,31 @@ scribbu::standard_pprinter::pprint_POPM(const POPM &frame, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
+scribbu::standard_pprinter::pprint_XTAG(const XTAG &frame, std::ostream &os)
+{
+  using namespace std;
+
+  os << sin_ << frame.id() << ": " << frame.owner() << "\n" <<
+    sin_ << "tags:\n";
+  
+  for (auto x: frame) {
+    os << sin_ << x.first << ": ";
+    bool first = true;
+    for (auto val: x.second) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
+      os << val;
+    }
+    os << "\n";
+  }
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
 scribbu::standard_pprinter::pprint_unk_id3v2_4_frame(
   const unknown_id3v2_4_frame &frame, std::ostream &os)
 {
@@ -822,6 +875,32 @@ scribbu::standard_pprinter::pprint_POPM_2_4(const POPM_2_4 &frame, std::ostream 
   }
 
   return os << "\n";
+}
+
+/*virtual*/ std::ostream&
+scribbu::standard_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &frame, 
+                                            std::ostream &os)
+{
+  using namespace std;
+
+  os << sin_ << frame.id() << ": " << frame.owner() << "\n" <<
+    sin_ << "tags:\n";
+  
+  for (auto x: frame) {
+    os << sin_ << x.first << ": ";
+    bool first = true;
+    for (auto val: x.second) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
+      os << val;
+    }
+    os << "\n";
+  }
+
+  return os;
 }
 
 void
