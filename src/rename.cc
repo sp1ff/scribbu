@@ -194,16 +194,18 @@ namespace {
     /////////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
       ("dry-run,n", po::bool_switch(), "Dry-run; only print what would "
        "happen")
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("output,o", po::value<fs::path>(), "If specified, copy the output files "
        "to this directory, rather than renaming in-place.")
       ("rename,r", po::bool_switch()->default_value(DEFAULT_RENAME),
@@ -216,7 +218,7 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>(), "one or more "
+      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
 
@@ -242,52 +244,41 @@ namespace {
         options(all).
         positional(popts).
         run();
+
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-rename",
+                        "(scribbu) Invoking scribbu rename");
+
       po::store(parsed, vm);
 
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level_for_parsed_opts(parsed);
-      }
-      
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
       po::notify(vm);
 
-      if (help_level::regular == help) {
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
 
-        print_usage(cout, docopts, USAGE);
-
-      } else if (help_level::verbose == help) {
-
-        show_man_page("scribbu-rename");
-
-      } else {
-
-        // That's it-- the list of files and/or directories to be processed
-        // should be waiting for us in 'arguments'...
-
-        // Work around to https://svn.boost.org/trac/boost/ticket/8535
-        std::vector<fs::path> arguments;
-        for (auto s: vm["arguments"].as<std::vector<string>>()) {
-          arguments.push_back(fs::path(s));
-        }
-
-        bool dry_run = vm["dry-run"].as<bool>();
-        fs::path output;
-        if (vm.count("output")) {
-          output = vm["output"].as<fs::path>();
-        }
-        std::string templat = vm["template"].as<std::string>();
-        bool rename = vm["rename"].as<bool>();
-        bool verbose = vm["verbose"].as<bool>();
-
-        std::unique_ptr<renamer> pr(new renamer(templat, output, dry_run,
-                                                rename, verbose));
-
-        std::for_each(arguments.begin(), arguments.end(), std::ref(*pr));
-
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      std::vector<fs::path> arguments;
+      for (auto s: vm["arguments"].as<std::vector<string>>()) {
+        arguments.push_back(fs::path(s));
       }
+
+      bool dry_run = vm["dry-run"].as<bool>();
+      fs::path output;
+      if (vm.count("output")) {
+        output = vm["output"].as<fs::path>();
+      }
+      std::string templat = vm["template"].as<std::string>();
+      bool rename = vm["rename"].as<bool>();
+      bool verbose = vm["verbose"].as<bool>();
+
+      std::unique_ptr<renamer> pr(new renamer(templat, output, dry_run,
+                                              rename, verbose));
+
+      std::for_each(arguments.begin(), arguments.end(), std::ref(*pr));
 
     } catch (const po::error &ex) {
 

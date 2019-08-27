@@ -5,7 +5,7 @@
 .SH NAME
 scribbu-report \- generate a report on one or more files' ID3 tags
 .SH SYNOPSIS
-.B scribbu " [(-c|--config) config-file] " report " [-h] [--help] [--info]"
+.B "scribbu report " "[-h] [--help] [--info]"
 .RS 8
 [(-c|--num-comments) arg] [(-o|--output) output] [(-1|--v1-encoding) arg]
 [-t|--tsv-format [-a|--ascii-delimited]] <file-or-directory> <file-or-directory...>
@@ -23,6 +23,22 @@ chosen to facilitate transformation to other formats as well as import
 by other tools.
 
 .SH OPTIONS
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help.
+.RE
+.PP
+\-\-info
+Display this sub-command's node in the user's Info viewer.
+.RE
 .PP
 \-c, \-\-num\-comments arg
 .RS 4

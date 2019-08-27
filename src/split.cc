@@ -135,6 +135,8 @@ namespace {
   handle_split(int argc, char **argv)
   {
     using namespace std;
+    
+    using boost::optional;
 
     int status = EXIT_SUCCESS;
 
@@ -173,7 +175,7 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("argument", po::value<std::string>(), "input file");
+      ("argument", po::value<std::string>()->required(), "input file");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
@@ -197,17 +199,15 @@ namespace {
         options(all).
         positional(popts).
         run();
+
+      help_level help;
+      optional<verbose_flavor> flav;
+      std::tie(help, flav) = help_level_for_parsed_opts(parsed);
+
       po::store(parsed, vm);
-      
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level_for_parsed_opts(parsed);
-      }
       
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
-
-      po::notify(vm);
 
       if (help_level::regular == help) {
 
@@ -219,8 +219,10 @@ namespace {
 
       } else {
 
+        po::notify(vm);
         split_file(fs::path(vm["argument"].as<std::string>()),
                    vm["suffix"].as<std::string>());
+
       }
 
     } catch (const po::error &ex) {

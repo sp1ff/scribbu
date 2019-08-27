@@ -789,3 +789,27 @@ BOOST_AUTO_TEST_CASE( test_tag_cloud )
   BOOST_CHECK(c03.has_value("tag2", "你好"));
 
 } // End test_tag_cloud.
+
+BOOST_AUTO_TEST_CASE( test_id3v2_text_frames )
+{
+  using namespace std;
+  using namespace scribbu;
+  
+  {
+    stringstream stm("artist");
+    id3v2_text_frames x;
+    stm >> x;
+    BOOST_CHECK( id3v2_text_frames::tpe1 == x );
+    
+    frame_id3 id3(x);
+    BOOST_CHECK( id3 == "TP1" );
+    
+    frame_id4 id4(x);
+    BOOST_CHECK( id4 == "TPE1" );
+    
+    stringstream out;
+    out << x;
+    BOOST_CHECK( out.str() == "tpe1" );
+  }
+
+} // End test_id3v2_text_frames.

@@ -195,16 +195,16 @@
  *
  * \section scribbu_pprinter_refs References
  *
- * 1. \anchor scribbu_pprinter_ref_01 Unknown, cited 2015: Visitor pattern
- *    [Available online at https://en.wikipedia.org/wiki/Visitor_pattern]
+ * 1. \anchor scribbu_pprinter_ref_01 [1] Unknown, Visitor pattern
+ *    https://en.wikipedia.org/wiki/Visitor_pattern (updated 2015)
  *
- * 2. \anchor scribbu_pprinter_ref_02 Robert C. Martin: Acyclic Visitor
- *    [Available online at
- *    http://condor.depaul.edu/dmumaugh/OOT/Design-Principles/acv.pdf]
+ * 2. \anchor scribbu_pprinter_ref_02 [2] Robert C. Martin: Acyclic Visitor
+ *    http://condor.depaul.edu/dmumaugh/OOT/Design-Principles/acv.pdf (updated
+ *    August 30, 2019)
  *
- * 3. \anchor scribbu_pprinter_ref_03 Erich Gamma, Richard Helm, Ralph
- *    Johnson, John Vlissides, 1994: Design Patterns: Elements of Reusable
- *    Object-Oriented Software, Addison Wesley, Boston.
+ * 3. \anchor scribbu_pprinter_ref_03 [3] Erich Gamma, Richard Helm, Ralph
+ *    Johnson, John Vlissides, Design Patterns: Elements of Reusable
+ *    Object-Oriented Software, Addison Wesley, Boston, 1994.
  *
  *
  */

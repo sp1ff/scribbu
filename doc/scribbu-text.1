@@ -1,0 +1,120 @@
+.\" Copyright (C) 2019 Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu-text 1 2019-09-13 "scribbu 0.5" "scribbu Manual" 
+.SH NAME
+scribbu-text \- Manage ID3v2 text frames
+.SH SYNOPSIS
+.BR "scribbu text " "[-h] [--help] [--info]"
+.RS 8
+.br
+[-u|--adjust-unsync] [-a|--album=] <album> [-A|--artist=] <artist>
+[-b|--create-backups] [-d|--delete=] <frames> [-E|--encoding] encoding
+[-e|--encoded-by] encoder [-g|--genre] genre [-t|--tag] index
+[-T|--title] title [-k|--track] track [-y|--year] year
+<file-or-directory> <file-or-directory>...
+
+.SH DESCRIPTION
+
+Create, update or delete assorted text frames.
+.br
+.nf
+
+scribbu text --artist="Pogues, The" --title="Lorca's Novena" some.mp3
+
+.fi
+will set the artist & title frames (
+.BR TPE1 " and " TIT2 ", resp.)"
+in all tags in 
+.B some.mp3.
+.nf
+
+scribbu text --tag=0 --artist='Pogues, The' *.mp3
+
+.fi
+will set the artist frame in the first ID3v2 tag only in all
+.B .mp3
+files in the current directory.
+.nf
+
+scribbu text --delete=TENC foo/
+
+.fi
+will delete the encoded-by frame in all ID3v2-tagged files in 
+.B foo/
+and its sub-directories.
+
+.SH OPTIONS
+
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help.
+.RE
+.PP
+\-\-info
+.RS 4
+Display this sub-command's node in the user's Info viewer.
+.RE
+.PP
+\-a,\-\-album=ALBUM Set the TALB, or Album/Movie/Show Title frame
+.RE
+.PP
+\-A,\-\-artist=ARTIST Set the TPE1, or Lead artist(s)/Lead 
+performer(s)/Soloist(s)/Performing group frame
+.RE
+.PP
+\-e,\-\-encoded-by=ENCODED_BY Set the TENC, or Encoded By frame
+.RE
+.PP
+\-g,\-\-genre=GENRE Set the TCON, or Content time frame
+.RE
+.PP
+\-T,\-\-title=TITLE Set the TIT2, or Title/Songname/Content description frame
+.RE
+.PP
+\-k,\-\-track=TRACK Set the TRCK, or Track number/Position in set frame
+.RE
+.PP
+\-y,\--year=YEAR Set the TYER, or Year frame
+.RE
+.PP
+\-d,\-\-delete=FRAME Specify a frame to remove, if present; this
+option may be given more than once to delete multiple frames. Frames
+may be named by either their option name (e.g. `artist') or by their
+ID3v2.3 frame ID (e.g. TPE1).
+.RE
+.PP
+\-E,\-\-encoding=ENCODING Specify the character encoding used in the
+input strings using the iconv name (`ISO-8859-1', e.g.) If not given,
+the system locale will be assumed.
+.RE
+.PP
+\-t,\-\-tag=INDEX Zero-based index of the tag on which to operate; may
+be given more than once to select multiple tags
+.RE
+.PP
+\-b,\-\-create-backups Create backup copies of all files before
+modifying them.
+.RE
+.PP
+\-u,\-\-adjust-unsync Update the unsynchronisation flag as needed on
+write (default is to never use it).
+.RE
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR scribbu "(1), " scribbu-dump "(1), " scribbu-report "(1), " scribbu-popm "(1), " scribbu-split "(1)"

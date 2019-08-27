@@ -2,13 +2,21 @@
 # This will be called as /vagrant/test/test-scripting
 # from /home/vagrant/build/test-- no arguments
 
+scribbu_dir=`cd ../src; pwd`
+lib_dir=`cd ../scribbu; pwd`
 case `uname` in
     Linux)
-        echo "#!../src/scribbu \\" > /tmp/test-scripting.scm;;
+        echo "#!${scribbu_dir}/scribbu \\" > /tmp/test-scripting.scm;;
     Darwin)
-        # TODO(sp1ff): workaround for MacOS-- should be:
-        # but that doesn't work & I don't know why.
-        echo "#!../src/.libs/scribbu \\" >  /tmp/test-scripting.scm;;
+        # Workaround for MacOS-- should be; for some reason I don't
+        # understand (and don't care to debug), the `src/scribbu'
+        # libtool script doesn't work well with the extended #! line
+        # I use below. So, I call the MacOS binary directly, being careful
+        # to set DYLD_LIBRARY_PATH (like the libtool script would)
+        # so that we load the .so under test and not any previously installed
+        # version.
+        echo "#!${scribbu_dir}/.libs/scribbu \\" >  /tmp/test-scripting.scm;
+        export DYLD_LIBRARY_PATH=$lib_dir/.libs:$DYLD_LIBRARY_PATH;;
     *)
         echo "Unknown system" 2>&1;
         exit 1;;

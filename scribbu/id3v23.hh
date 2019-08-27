@@ -378,6 +378,26 @@ namespace scribbu {
                           const std::string &dsc = std::string(),
                           on_no_encoding rsp = on_no_encoding::fail);
 
+    /// Retrieve the contents of an arbitrary text frame
+    virtual
+    std::string
+    text(id3v2_text_frames id,
+         encoding dst = encoding::UTF_8,
+         on_no_encoding rsp = on_no_encoding::fail,
+         const boost::optional<encoding> &src = boost::none) const;
+    /// Set the contents of an arbitrary text frame
+    virtual 
+    void
+    text(id3v2_text_frames id,
+         const std::string &text,
+         encoding src = encoding::UTF_8,
+         bool add_bom = false,
+         on_no_encoding rsp = on_no_encoding::fail);
+    /// Delete an arbitrary text frame
+    virtual
+    void
+    delete_frame(id3v2_text_frames id);
+    
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////

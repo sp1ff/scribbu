@@ -389,8 +389,8 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>(), "one or more "
-       "files or directories to be examined; if a directory is given, it "
+      ("arguments", po::value<std::vector<string>>()->required(), "one or "
+       "more files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
 
     po::options_description docopts;
@@ -415,73 +415,59 @@ namespace {
         options(all).
         positional(popts).
         run();
+
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-popm",
+                        "(scribbu) Invoking scribbu popm");
+
       po::store(parsed, vm);
 
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level_for_parsed_opts(parsed);
-      }
-      
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 
       po::notify(vm);
 
-      if (help_level::regular == help) {
-
-        print_usage(cout, docopts, USAGE);
-
-      } else if (help_level::verbose == help) {
-
-        show_man_page("scribbu-xtag");
-        
-      } else {
-
-        // That's it-- the list of files and/or directories to be processed
-        // should be waiting for us in 'arguments'...
-      
-        // Work around to https://svn.boost.org/trac/boost/ticket/8535
-        std::vector<fs::path> args;
-        if (vm.count("arguments")) {
-          for (auto s: vm["arguments"].as<std::vector<string>>()) {
-            args.push_back(fs::path(s));
-          }
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
+    
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      std::vector<fs::path> args;
+      if (vm.count("arguments")) {
+        for (auto s: vm["arguments"].as<std::vector<string>>()) {
+          args.push_back(fs::path(s));
         }
-
-        bool adj_unsync     = vm["adjust-unsync" ].as<bool>();
-        bool create         = vm["create"        ].as<bool>();
-        bool create_backups = vm["create-backups"].as<bool>();
-        bool dry_run        = vm["dry-run"       ].as<bool>();
-        bool merge          = vm["merge"         ].as<bool>();
-
-        string owner;
-        if (vm.count("owner")) {
-          owner = vm["owner"].as<string>();
-        }
-        
-        deque<size_t> tags;
-        if (vm.count("tag")) {
-          vector<size_t> V = vm["tag"].as<vector<size_t>>();
-          tags.insert(tags.begin(), V.begin(), V.end());
-        } else {
-          tags.push_back(0);
-        }
-
-        if (!vm.count("tags")) {
-          throw po::required_option("--tags");
-        }
-        string tag_cloud = vm["tags"].as<string>();
-
-        for_each(args.begin(), args.end(), 
-                 [=] (const fs::path &pth) {
-                   process_dirent(pth, tag_cloud, tags, owner, create, merge,
-                                  create_backups, dry_run, adj_unsync);
-                 }
-               );
-        
-        
       }
 
+      bool adj_unsync     = vm["adjust-unsync" ].as<bool>();
+      bool create         = vm["create"        ].as<bool>();
+      bool create_backups = vm["create-backups"].as<bool>();
+      bool dry_run        = vm["dry-run"       ].as<bool>();
+      bool merge          = vm["merge"         ].as<bool>();
+
+      string owner;
+      if (vm.count("owner")) {
+        owner = vm["owner"].as<string>();
+      }
+      
+      deque<size_t> tags;
+      if (vm.count("tag")) {
+        vector<size_t> V = vm["tag"].as<vector<size_t>>();
+        tags.insert(tags.begin(), V.begin(), V.end());
+      } else {
+        tags.push_back(0);
+      }
+
+      if (!vm.count("tags")) {
+        throw po::required_option("--tags");
+      }
+      string tag_cloud = vm["tags"].as<string>();
+
+      for_each(args.begin(), args.end(), 
+               [=] (const fs::path &pth) {
+                 process_dirent(pth, tag_cloud, tags, owner, create, merge,
+                                create_backups, dry_run, adj_unsync);
+               }
+             );
+      
     } catch (const po::error &ex) {
 
       cerr << ex.what() << endl;

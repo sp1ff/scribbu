@@ -105,8 +105,64 @@ function smoke_tests()
     rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
     [ "$rating" = "200" ] || fail "smoke_tests: rating is $rating; should be 200"
 
+    run_popm out err stat --rating=x id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on star rating"
+    rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
+    [ "$rating" = "1" ] || fail "smoke_tests: rating is $rating; should be 1"
+
+    run_popm out err stat --rating=x -L id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on linear rating"
+    rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
+    [ "$rating" = "26" ] || fail "smoke_tests: rating is $rating; should be 1"
+
     clean_testdir $here $popm_testdir smoke_tests
 
+}
+
+# Exercise https://github.com/sp1ff/scribbu/issues/1
+function test_issue_1
+{
+    local out
+    local err
+    local stat
+
+    case `uname` in
+        Linux)
+            sed_regex="-r";;
+        Darwin)
+            sed_regex="-E";;
+        *)
+            echo "Unknown system" 2>&1;
+            exit 1;;
+    esac
+
+    here=`pwd`
+    set_testdir ${srcdir} $popm_testdir test_issue_1 id3v2.3.tag
+
+    run_popm out err stat --create --owner=sp1ff@pobox.com --rating=255 id3v2.3.tag
+    stat=$?
+    [ $stat -eq 0 ] || fail "test_issue_1: non-zero exit status on create"
+
+    ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT
+    stat=$?
+    [ $stat -eq 0 ] || fail "test_issue_1: should have PCNT frame"
+
+    ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F POPM
+    stat=$?
+    [ $stat -eq 0 ] || fail "test_issue_1: should have POPM frame"
+
+    run_popm out err stat id3v2.3.tag
+    stat=$?
+    [ $stat -eq 0 ] || fail "test_issue_1: non-zero exit status on update"
+
+    pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|sed ${sed_regex} 's/PCNT: ([0-9]+)/\1/'`
+    test "$pcnt" == "1" || fail "test_issue_1: PCNT should be one, got $pcnt"
+
+    pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F counter|sed ${sed_regex} 's/counter: ([0-9]+)/\1/'`
+    test "$pcnt" == "01" || fail "test_issue_1: POPM counter should be one, got $pcnt"
+
+
+    clean_testdir $here $popm_testdir test_issue_1
 }
 
 ###########################################################################
@@ -183,3 +239,4 @@ popm_scribbu_dir=`cd "$popm_scribbu_dir"; pwd`
 [ -d "$popm_testdir" ] || mkdir -p "$popm_testdir"
 popm_testdir=`cd "$popm_testdir"; pwd`
 smoke_tests
+test_issue_1

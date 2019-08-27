@@ -5,7 +5,7 @@
 .SH NAME
 scribbu-split \- split a file into ID3v2, track & ID3v1 pieces
 .SH SYNOPSIS
-.BR scribbu " [(-c|--config) config-file] " dump " [-h] [--help] [--info]"
+.BR "scribbu dump " "[-h] [--help] [--info]"
 .RS 8
 .br
 [--suffix arg] <file>
@@ -40,18 +40,12 @@ Print a brief usage message on
 .PP
 \-\-help
 .RS 4
-Display more detailed help; this man page by default, or the
-.B scribbu-rename
-node in the local Info system if the
-.I --info
-flag is also given.
+Display more detailed help.
 .RE
 .PP
 \-\-info
 .RS 4
-Modify the
-.I --help
-flag by using the users's Infor viewer instead of man page viewer.
+Display this sub-command's node in the user's Info viewer.
 .RE
 .PP
 \-\-suffix arg
@@ -67,4 +61,4 @@ is maintained at https://github.com/sp1ff/scribbu.
 
 .SH "SEE ALSO"
 
-.BR scribbu "(1), " scribbu-dump "(1), " scribbu-rename "(1), " scribbu-report "(1)"
+.BR scribbu "(1), " scribbu-dump "(1), " scribbu-popm "(1), " scribbu-rename "(1), " scribbu-report "(1)"

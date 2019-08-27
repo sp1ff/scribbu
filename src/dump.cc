@@ -40,6 +40,7 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
+
 const std::string USAGE(R"(scribbu dump -- dump ID3 tags from one or more files
 to stdout
 
@@ -256,34 +257,36 @@ namespace {
     int status = EXIT_SUCCESS;
 
     ///////////////////////////////////////////////////////////////////////////
-    //                                                                        /
-    //                       C O M M A N D   O P T I O N S                    /
-    //                                                                        /
-    // Let's divide the options in two ways:                                  /
-    //                                                                        /
-    // - public versus developer-only options                                 /
-    // - options permissible only on the command line versus options          /
-    //   permissible on the command line, configuration file, and the         /
-    //   environment                                                          /
-    //                                                                        /
-    //                            public   private                            /
-    //                          +--------+---------+                          /
-    //                cli-only  | clopts | xclopts |                          /
-    //                          +--------+---------+                          /
-    //                cli, cfg, |  opts  |  xopts  |                          /
-    //                & env     +--------+---------+                          /
-    //                                                                        /
+    //                                                                       //
+    //                       C O M M A N D   O P T I O N S                   //
+    //                                                                       //
+    // Let's divide the options in two ways:                                 //
+    //                                                                       //
+    // - public versus developer-only options                                //
+    // - options permissible only on the command line versus options         //
+    //   permissible on the command line, configuration file, and the        //
+    //   environment                                                         //
+    //                                                                       //
+    //                            public   private                           //
+    //                          +--------+---------+                         //
+    //                cli-only  | clopts | xclopts |                         //
+    //                          +--------+---------+                         //
+    //                cli, cfg, |  opts  |  xopts  |                         //
+    //                & env     +--------+---------+                         //
+    //                                                                       //
     ///////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("id3v1-tags,1", po::bool_switch(), "Display only ID3v1 tags")
       ("track-data,D", po::bool_switch(), "Display only track data")
       ("id3v2-tags,2", po::bool_switch(), "Display only ID3v2 tags")
@@ -296,13 +299,15 @@ namespace {
        "expression will be considered)")
       ("format,f", po::value<format>()-> default_value(format::standard),
        "Output format")
+      ("num-comments,m", po::value<size_t>()->default_value(6),
+       "Number of comment frames to dump")
       ("v1-encoding,c", po::value<encoding>()->default_value(encoding::CP1252),
        "Encoding uses to interpret text in ID3v1 tags.");
 
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<vector<string>>(), "one or more "
+      ("arguments", po::value<vector<string>>()->required(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
 
@@ -328,80 +333,67 @@ namespace {
         options(all).
         positional(popts).
         run();
-      po::store(parsed, vm);
 
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level_for_parsed_opts(parsed);
-      }
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-dump",
+                        "(scribbu) Invoking scribbu dump");
+
+      po::store(parsed, vm);
       
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
       po::notify(vm);
 
-      if (help_level::regular == help) {
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      vector<fs::path> arguments;
+      for (auto s: vm["arguments"].as<vector<string>>()) {
+        arguments.push_back(fs::path(s));
+      }
 
-        print_usage(cout, docopts, USAGE);
+      boost::regex file_regex;
+      if (vm.count("expression")) {
+        file_regex = boost::regex(vm["expression"].as<string>());
+      }
 
-      } else if (help_level::verbose == help) {
+      typedef dumper::dump_id3v2 dump_id3v2;
+      typedef dumper::dump_track dump_track;
+      typedef dumper::dump_id3v1 dump_id3v1;
 
-        show_man_page("scribbu-dump");
+      format fmt = vm["format"    ].as<format>();
+      dump_id3v2 f0 = vm["id3v2-tags"].as<bool>() ? dump_id3v2::yes :
+        dump_id3v2::no;
+      dump_track f1 = vm["track-data"].as<bool>() ? dump_track::yes :
+        dump_track::no;
+      dump_id3v1 f2 = vm["id3v1-tags"].as<bool>() ? dump_id3v1::yes :
+        dump_id3v1::no;
 
-      } else {
+      unique_ptr<dumper> p;
+      if (dumper::format::standard == fmt) {
+        size_t   indent =   vm["indent"         ].as<size_t  >();
+        bool     expand = ! vm["no-expand-genre"].as<bool    >();
+        encoding v1enc  =   vm["v1-encoding"    ].as<encoding>();
+        p.reset(new dumper(file_regex, f0, f1, f2,
+                           indent, expand, v1enc));
+      }
+      else {
+        encoding v1enc = vm["v1-encoding" ].as<encoding>();
+        size_t   ncomm = vm["num-comments"].as<size_t  >();
+        p.reset(new dumper(file_regex, f0, f1, f2,
+                           v1enc, ncomm));
+      }
 
-        // That's it-- the list of files and/or directories to be processed
-        // should be waiting for us in 'arguments'...
-        // Work around to https://svn.boost.org/trac/boost/ticket/8535
-        vector<fs::path> arguments;
-        for (auto s: vm["arguments"].as<vector<string>>()) {
-          arguments.push_back(fs::path(s));
-        }
-
-        boost::regex file_regex;
-        if (vm.count("expression")) {
-          file_regex = boost::regex(vm["expression"].as<string>());
-        }
-
-        typedef dumper::dump_id3v2 dump_id3v2;
-        typedef dumper::dump_track dump_track;
-        typedef dumper::dump_id3v1 dump_id3v1;
-
-        format fmt = vm["format"    ].as<format>();
-        dump_id3v2 f0 = vm["id3v2-tags"].as<bool>() ? dump_id3v2::yes :
-          dump_id3v2::no;
-        dump_track f1 = vm["track-data"].as<bool>() ? dump_track::yes :
-          dump_track::no;
-        dump_id3v1 f2 = vm["id3v1-tags"].as<bool>() ? dump_id3v1::yes :
-          dump_id3v1::no;
-
-        unique_ptr<dumper> p;
-        if (dumper::format::standard == fmt) {
-          size_t   indent =   vm["indent"         ].as<size_t  >();
-          bool     expand = ! vm["no-expand-genre"].as<bool    >();
-          encoding v1enc  =   vm["v1-encoding"    ].as<encoding>();
-          p.reset(new dumper(file_regex, f0, f1, f2,
-                             indent, expand, v1enc));
+      for (auto x: arguments) {
+        if (fs::is_directory(x)) {
+          for_each(fs::recursive_directory_iterator(x),
+                   fs::recursive_directory_iterator(),
+                   ref(*p));
         }
         else {
-          encoding v1enc = vm["v1-encoding" ].as<encoding>();
-          size_t   ncomm = vm["num-comments"].as<size_t  >();
-          p.reset(new dumper(file_regex, f0, f1, f2,
-                             v1enc, ncomm));
+          (*p)(x);
         }
-
-        for (auto x: arguments) {
-          if (fs::is_directory(x)) {
-            for_each(fs::recursive_directory_iterator(x),
-                     fs::recursive_directory_iterator(),
-                     ref(*p));
-          }
-          else {
-            (*p)(x);
-          }
-        }
-
-      } // End if on help.
+      }
 
     } catch (const po::error &ex) {
 

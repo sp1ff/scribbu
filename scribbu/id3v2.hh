@@ -295,29 +295,30 @@
  *
  * \section scribbu_id3v2_refs References
  *
- * 1. \anchor scribbu_id3v2_refs_1 Martin Nilsson, cited 2015: ID3 tag
- * version 2 [Availbale online at http://id3.org/id3v2-00]
+ * 1. \anchor scribbu_id3v2_refs_1 [1] Nilson, Martin. ID3 tag version 2
+ * http://id3.org/id3v2-00 (updated September 1, 2019)
  *
- * 2. \anchor scribbu_id3v2_refs_2 Martin Nilsson, cited 2015:
- * Contributors [Available online at http://id3.org/Contributors]
+ * 2. \anchor scribbu_id3v2_refs_2 [2] Nilson, Martin.  Contributors
+ * http://id3.org/Contributors (updated September 1, 2019)
  *
- * 3. \anchor scribbu_id3v2_refs_3 Unknown, cited 2015:
- * ID3v2 [Available online at https://en.wikipedia.org/wiki/ID3#ID3v2]
+ * 3. \anchor scribbu_id3v2_refs_3 [3] unknown, ID3v2
+ * https://en.wikipedia.org/wiki/ID3#ID3v2 (updated September 1, 2019)
  *
- * 4. \anchor scribbu_id3v2_refs_4 Martin Nilsson, cited 2015: ID3 tag
- * version 2.4.0 - Main Structure [Availbale online at
- * http://id3.org/id3v2.4.0-structure]
+ * 4. \anchor scribbu_id3v2_refs_4 [4] Nilson, Martin. ID3 tag version 2.4.0 -
+ * Main Structure http://id3.org/id3v2.4.0-structure (updated September 1, 2019)
  *
- * 5. \anchor scribbu_id3v2_refs_5 Herb Sutter, cited 2016: When Is a Container
- * Not a Container? [Available online at http://www.gotw.ca/publications/mill09.htm]
+ * 5. \anchor scribbu_id3v2_refs_5 [5] Sutter, Herb. When Is a Container Not a
+ * Container? http://www.gotw.ca/publications/mill09.htm (updated September 1,
+ * 2019)
  *
- * 6. \anchor scribbu_id3v2_refs_6 Eric Niebler, cited 2016: To Be or Not to Be
- * (an Iterator) [Available online at
- * http://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/]
+ * 6. \anchor scribbu_id3v2_refs_6 [6] Niebler, Eric. To Be or Not to Be (an
+ * Iterator) http://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/
+ * (updated September 1, 2019)
  *
- * 7. \anchor scribbu_id3v2_refs_7 B. Stroustrup and A. Sutton (Editors): A
- * Concept Design for the STL [Available online at
- * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf\
+ * 7. \anchor scribbu_id3v2_refs_7 [7] Stroustrup, B. and Sutton,
+ * A. (Editors). A Concept Design for the STL
+ * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf (updated
+ * September 1, 2019)
  *
  *
  */
@@ -884,6 +885,26 @@ namespace scribbu {
                           use_unicode unicode = use_unicode::no,
                           const std::string &dsc = std::string(),
                           on_no_encoding rsp = on_no_encoding::fail) = 0;
+
+    /// Retrieve the contents of an arbitrary text frame
+    virtual
+    std::string
+    text(id3v2_text_frames id,
+         encoding dst = encoding::UTF_8,
+         on_no_encoding rsp = on_no_encoding::fail,
+         const boost::optional<encoding> &src = boost::none) const = 0;
+    /// Set the contents of an arbitrary text frame
+    virtual 
+    void
+    text(id3v2_text_frames id,
+         const std::string &text,
+         encoding src = encoding::UTF_8,
+         bool add_bom = false,
+         on_no_encoding rsp = on_no_encoding::fail) = 0;
+    /// Delete an arbitrary text frame
+    virtual
+    void
+    delete_frame(id3v2_text_frames id) = 0;
 
     //////////////////////////////////////////////////////////////////////////
     //                           iterator support                           //

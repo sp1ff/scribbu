@@ -27,6 +27,10 @@
 
 extern "C" {
 
+  typedef struct tagInitGuile {
+    const char * const datadir_;
+  } init_guile;
+
   /**
    * \brief Initializae the Guile interpreter
    *

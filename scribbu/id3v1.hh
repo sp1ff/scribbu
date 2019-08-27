@@ -286,20 +286,20 @@
   *
   * \section scribbu_id3v1_refs References
   *
-  * 1. \anchor scribbu_id3v1_refs_1 Unknown, cited 2015: ID3v1. [Available online
-  * at http://id3.org/ID3v1.]
+  * 1. \anchor scribbu_id3v1_refs_1 [1] unknown. ID3v1 http://id3.org/ID3v1
+  * (updated September 1, 2019)
   *
-  * 2. \anchor scribbu_id3v1_refs_2 Unknown, 1999: MPEG Audio Tag ID3v1
-  * [Available online at
-  * http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm#MPEGTAG.]
+  * 2. \anchor scribbu_id3v1_refs_2 [2] unknown. MPEG Audio Tag ID3v1
+  * http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm#MPEGTAG (updated
+  * September 1, 2019)
   *
-  * 3. \anchor scribbu_id3v1_refs_3 Unknown, cited 2015: MP3 TAG & Enhanced TAG
-  * description (english) [Originally available online at
+  * 3. \anchor scribbu_id3v1_refs_3 [3] unknown. MP3 TAG & Enhanced TAG
+  * description (english) Originally available online at
   * http://www.fortunecity.com/underworld/sonic/3/id3tag.html, now cached at
-  * https://web.archive.org/web/20120310015458/http://www.fortunecity.com/underworld/sonic/3/id3tag.html]
+  * https://web.archive.org/web/20120310015458/http://www.fortunecity.com/underworld/sonic/3/id3tag.html
   *
-  * 4. \anchor scribbu_id3v1_refs_4 Unknown, cited 2015: ID3v1 [Originally
-  * available online at https://en.wikipedia.org/wiki/ID3#ID3v1]
+  * 4. \anchor scribbu_id3v1_refs_4 [4] unknown. ID3v1
+  * https://en.wikipedia.org/wiki/ID3#ID3v1 (updated September 1, 2019)
   *
   *
   */

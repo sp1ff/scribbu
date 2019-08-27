@@ -129,7 +129,7 @@ at `root'"
   (year       #:init-value '() #:accessor year       #:init-keyword #:year)
   (comment    #:init-value ""  #:accessor comment    #:init-keyword #:comment)
   (genre      #:init-value 255 #:accessor genre      #:init-keyword #:genre)
-  (track-no   #:init-value 255 #:accessor track-no   #:init-keyword #:track-no)
+  (track-no   #:init-value '() #:accessor track-no   #:init-keyword #:track-no)
   (enh-genre  #:init-value ""  #:accessor enh-genre  #:init-keyword #:enh-genre)
   (speed      #:init-value '() #:accessor speed      #:init-keyword #:speed)
   (start-time #:init-value ""  #:accessor start-time #:init-keyword #:start-time)
@@ -181,8 +181,6 @@ at `root'"
 (make-symbol "udt-frame")                   ;; TXX/TXXX
 (make-symbol "year-frame")                  ;; TYE/TYER
 
-;; TODO(sp1ff): add support for compression, encryption and/or data-length
-;; indicator(?)
 (define-class <id3v2-frame> ()
   (id      #:init-value 'unknown-frame #:accessor id      #:init-keyword #:id)
   (tap     #:init-value '()            #:accessor tap     #:init-keyword #:tap)
@@ -230,9 +228,11 @@ at `root'"
         (else (has-frame-internal (cdr frms) f))))
 
 (define-method (has-frame? (tag <id3v2-tag>) (f <symbol>))
+  "Return #t if TAG has any frames with symbol F"
   (has-frame-internal (slot-ref tag 'frames) f))
 
 (define-method (get-frames (x <id3v2-tag>) (f <symbol>))
+  "Return a list (possibly empty) of frames in TAG with symbol F"
   (let ((frms (slot-ref x 'frames))
         (ret '()))
     (while (not (null? frms))

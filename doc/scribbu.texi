@@ -50,10 +50,11 @@ This manual corresponds to scribbu version 0.5.
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
 * Introduction::
-* The scribbu Program::
-* Scripting scribbu::
-* Using libscribbu::
+* The @command{scribbu} Program::
+* Scripting @command{scribbu}::
+* Using @code{libscribbu}::
 * Frame Identifiers::
+* Character Encodings::
 * Index::
 @end menu
 
@@ -71,18 +72,15 @@ scribbu is a C++ library & associated command-line tool for working
 with ID3 tags (@xref{ID3}). It was born when I retired my last Windows
 machine & could no longer use Winamp (@xref{Winamp}) to manage my
 library of digital music. The scribbu library offers classes & methods
-for reading, editing & writing ID3v1 & ID3v2 tags. The scribbu program
-provides assorted sub-commands for working with ID3-tagged files
-(e.g. re-naming files based on their tags), but its real power lies in
-its embedded Scheme interpreter (@xref{Top,,, Guile, The Guile
+for reading, modifying & writing ID3v1 & ID3v2 tags. The scribbu
+program provides assorted sub-commands for working with ID3-tagged
+files (e.g. re-naming files based on their tags), but its real power
+lies in its embedded Scheme interpreter (@xref{Top,,, Guile, The Guile
 Reference Manual}) in which scribbu library features are exported as a
 Scheme module (on which more below).
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
-Project overview
-@cindex Project overview
-
 * scribbu::
 * Project Background::
 @end menu
@@ -91,35 +89,50 @@ Project overview
 @section scribbu
 @cindex scribbu
 
-The ``scribbu'' project has a few components. It is a program that provides
-assorted sub-commands:
+The scribbu project has a few components. The first is a program that
+provides assorted sub-commands, a few of which are:
 
 @enumerate
 
 @item
-@command{scribbu dump} @xref{scribbu dump}. will write the contents of
-any & all ID3 tags found in one or more files to stdout.
+@command{scribbu dump} @xref{Invoking @command{scribbu dump}}. will write
+the contents of any & all ID3 tags found in one or more files to
+stdout.
 
 @item
-@command{scribbu report} @xref{scribbu report}. will generate a report
-listing ID3 attributes on one or more files on stdout.  CSV, TDF &
-ASCII-delimited formats are supported currently.
+@command{scribbu report} @xref{Invoking @command{scribbu
+report}}. will generate a report listing ID3 attributes on one or more
+files on stdout.  CSV, TDF & ASCII-delimited formats are supported
+currently.
 
 @item
-@command{scribbu rename} @xref{scribbu rename}. will rename one or more
-files based on the contents of their ID3 tags; e.g. `scribbu rename -t
-%A-%T.mp3 *.mp3' will rename all the files matching *.mp3 to
-<artist>-<title>.mp3 where "artist" and "title" are derived from their
-ID3 tags (if any).
+@command{scribbu rename} @xref{Invoking @command{scribbu
+rename}}. will rename one or more files based on the contents of their
+ID3 tags; e.g. @command{scribbu rename -t ``%A-%T.mp3'' *.mp3} will rename
+all the files matching ``*.mp3'' to ``<artist>-<title>.mp3'' where
+"artist" and "title" are derived from their ID3 tags (if any).
+
+@item
+@command{scribbu popm} @xref{Invoking @command{scribbu popm}} will
+update ID3v2 play count & popularimeter tags. For instance,
+@command{scribbu popm foo.mp3} will increment the play counts in
+``foo.mp3''.
+
+@item
+@command{scribbu text} @xref{Invoking @command{scribbu text}}
+maintains assorted ID3v2 text frames; for instance, @command{scribbu
+text --artist='Roxy Music' *.mp3} will set the artist frame to ``Roxy
+Music'' in all ID3v2 tags in all files matching ``*.mp3''.
 
 @end enumerate
 
 Any sub-command can be invoked with @option{--help} or @option{-h} for
-more information. Add the @option{--info} option to display this
-manual.
+more information. Use @option{--info} option to display the command's
+node in this manual.
 
-It also exports functions & GOOPS @xref{Top,,, Guile, GOOPS} classes
-to a Scheme interpreter, so @command{scribbu} can be invoked:
+The @command{scribbu} program also exports functions & GOOPS
+@xref{Top,,, Guile, GOOPS} classes to a Scheme interpreter, so
+@command{scribbu} can @emph{also} be invoked...
 
 @enumerate
 
@@ -136,27 +149,28 @@ arbitrary Scheme expressions.
 @item
 as a script:
 
-@example
+@lisp
 #!/usr/local/scribbu \
 -e main -s
 #!
 (define (main args)
     ...
-@end example
+@end lisp
 
 @end enumerate
 
-Finally, it contains a C++ library ``libscribbu'' @xref{Using
-libscribbu} with which one can build C++ code. TODO brief example here
+Finally, scribbu contains a C++ library (@code{libscribbu})
+@xref{Using @code{libscribbu}} against which one can build C++
+libraries & programs.
 
 
 @node Project Background
 @section Project Background
 
+Some background on MP3, ID3, Winamp & the genesis of this project.
+
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
-Some background:
-
 * MP3::
 * ID3::
 * Winamp::
@@ -167,11 +181,11 @@ Some background:
 @subsection MP3
 
 Widespread digital encoding of music arrived with the introduction of
-the compact disk in 1982. However, the size of the resulting
-representation was large: the standard Compact Disk stores about one
+the compact disk in 1982. However, the size of the resulting digital
+representation was large: the standard Compact Disk stored about one
 hour & twenty minutes worth of music in about seven hundred MiB (at a
 time when the typical hard drive could hold ten MiB). In 1989 the
-relevant standards body (the Moving Pictures Experts Group, or MPEG)
+relevant standards body (the Moving Picture Experts Group, or MPEG)
 called for proposals for lossy audio compression algorithms. The
 fourteen propsals they received were eventually combined into three
 ``layers'', each with a different set of trade-offs between quality,
@@ -179,22 +193,21 @@ space, and computational complexity. ``MPEG Audio Layer I'' was the
 simplest, designed to enable real-time encoding on the hardware of the
 day. ``MPEG Audio Layer II'' provides higher quality than Layer I but
 offers computationally simpler decoding than Layer III.  ``MPEG Audio
-Layer III'' (or MP3) provides good quality at lower bitrates than
-Layer II, albeit at the cost of greater computational complexity.
+Layer III'' (or @dfn{MP3}) provides good quality at lower bitrates
+than Layer II, albeit at the cost of greater computational complexity.
 
 Layer three was primarily developed by the German company Fraunhofer
-IIS. The file extension `.mp3' was selected as a result of an internal
-survey of researchers at Frauhofer. At a sampling rate of
+IIS. The file extension @code{.mp3} was selected as a result of an
+internal survey of researchers at Frauhofer. At a sampling rate of
 128kbits/sec, MP3 needed about a megabyte per minute of music encoded;
 nearly one-tenth the size of CD audio.
 
-At one MB per minute, given the size of hard drives in the nineties,
-home users could easily store many MP3 tracks. The format found such
-universal application in the portable digital music players becoming
-available that they came to be known as ``mp3 players''. Finally,
-given the network bandwidths becoming available at the time, one could
-conveniently transmit MP3-encoded files across the internet, and even
-stream them.
+At one MB per minute, given the size of consumer hard drives in the
+nineties, home users could easily store many MP3 tracks. The format
+found such universal application in the portable digital music players
+becoming available that they came to be known as ``mp3 players''. With
+the network bandwidths available at the time, one could conveniently
+transmit MP3-encoded files across the internet, and even stream them.
 
 Typically of technological history, the application responsible for
 the widespread adoption of MP3 was not the application for which it
@@ -208,21 +221,21 @@ the medium of choice for digital music became the `.mp3' file.
 @subsection ID3
 
 A problem quickly emerged: the MP3 standard included no provision for
-metadata; no way to ``tag'' an `.mp3' file with information such as
-title, artist, et cetera. NamkraD (AKA Eric Kemp) is credited with the
-idea of attaching such a tag to `.mp3' files in 1996. Presumably to
-make it easy to detect & parse, while not interfering with existing
-decoders it had a fixed size of one hundred twenty-eight bytes, and
-was attached to the end of the file (if a player that was unaware of
-the tag played the enclosing file, at worst the user would hear a bit
-of static at the end). It provided for a thirty-byte title, artist &
-album along with year, comment & genre. The original proposal defined
-eighty genres, extended to 148 by 1.91 release of Winamp
-(@xref{Winamp}) (in June 1998) and to 192 by the 5.6 release of Winamp
-in November 2010.
+metadata; no way to ``tag'' an @code{.mp3} file with information such
+as title, artist, et cetera. NamkraD (AKA Eric Kemp) is credited with
+the idea of attaching such a tag to @code{.mp3} files in
+1996. Presumably to make it easy to detect & parse, while not
+interfering with existing decoders, it had a fixed size of one hundred
+twenty-eight bytes, and was attached to the end of the file (if a
+player that was unaware of the tag played the enclosing file, at worst
+the user would hear a bit of static at the end). It provided for a
+thirty-byte title, artist & album along with year, comment & a
+one-byte genre field. The original proposal defined eighty genres,
+extended to 148 by 1.91 release of Winamp (@xref{Winamp}) in June 1998
+and to 192 by the 5.6 release of Winamp in November 2010.
 
-The limitations of this format became aparent, leading to the proposal
-in 1998 of ID3v2 by Martin Nilsson and several other
+The limitations of this format quickly became aparent, leading to the
+proposal in 1998 of ID3v2 by Martin Nilsson and several other
 contributors. Although it shared a name, ID3v2 was a completely
 different approach to tagging music: it was prepended to the audio
 data (making it suitable for streaming media) and it was
@@ -239,11 +252,11 @@ ready means of listening to it. The then-existing Windows Media Player
 and Real Networks' Real Player never found widespread adoption. In
 April 1997 Justin Frankel and Dmitry Boldyrev released Winamp, a
 small, performant Windows MP3 player. Frankel formed Nullsoft in
-January 1998; at version 1.5, Winamp changed from freeware to
-shareware & charged at ten dollar registration fee; this brought
-Nullsoft $100,000 a month from $10 paper checks in the mail from
-paying users. Winamp 2.0 was released in September 1998 & became one
-of the most downloaded Windows programs ever.
+January 1998. With version 1.5, Winamp changed from freeware to
+shareware & charged a ten dollar registration fee; far from dampening
+uptake, this brought in $100,000 a month from $10 paper checks in the
+mail from paying users. Winamp 2.0 was released in September 1998 &
+became one of the most downloaded Windows programs ever.
 
 One of the things that endeared Winamp to its users was its plugin
 architecture. Nullsoft provided several plugins as part of the standard
@@ -251,76 +264,79 @@ distribution, one of which was the Music Library. Using this, one
 could manage, organize, search & play a personal library of thousands
 of MP3 files, all based on ID3 tags (@xref{ID3}).
 
-Nullsoft was (in)famoulsy acquired by AOL in 1999. By 2000 it had been
-registered twenty-five million times, but Nullsoft began to struggle
-with the propblems of so many AOL acquisitions. 2002 saw the
+Nullsoft was (in)famoulsy acquired by AOL in 1999. By 2000 Winamp had
+been registered twenty-five million times, but Nullsoft began to
+struggle with the propblems of so many AOL acquisitions. 2002 saw the
 misbegotten release of Winamp 3, a complete re-write that broke with
 the prior ethos of tight, lightweight code. Widespread incidence of
 users (including the author) reverting to Winamp 2 in response to poor
 performance & high resource demands of Winamp 3 led to Nullsoft
 continuing 2.x development, and eventually the release of Winamp 5
-(2+3) late in 2003. From 5.2, Winamp provided the ability to sync the
-user's library with iPods, which led to many iPod owners' (again
-including the author) choosing to use Winamp instead of iTunes to
-manage their devices.
+(2+3) late in 2003. From version 5.2, Winamp provided the ability to
+sync the user's library with iPods, which led to many iPod owners'
+(again including the author) choosing to use Winamp instead of iTunes
+to manage their devices.
 
-The original team quit AOL in 2004 & development moved to Dulles (VA).
-Development continued, albeit at a slower pace. With the release of
-Winamp 5.66 in late 2013, AOL announced that winamp.com would be
-shutdown later that year and that the software would no longer be
-availble for download. It was later announced that Nullsoft &
-Shoutcast had been sold to the Belgian company Radionomy. As of the
-time of this writing, winamp.com is up, and offering a download of
-Winamp 5.8 (beta) from Radionomy.
+The original Winamp team quit AOL in 2004 & development moved to
+Dulles (VA).  Work continued, albeit at a slower pace. With the
+release of Winamp 5.66 in late 2013, AOL announced that winamp.com
+would be shutdown later that year and that the software would no
+longer be availble for download. It was later announced that Nullsoft
+(along with Shoutcast, an MP3 streaming platform) had been sold to the
+Belgian company Radionomy. As of the time of this writing, winamp.com
+is up, and offering a download of Winamp 5.8 (beta) from Radionomy.
 
 
 @node Today
 @subsection Today
 
 It is a credit to Winamp that it remained usable well into the
-twenty-teens as a way to mange large libraries of `.mp3' files. Winamp
-is not quite dead, but it is stranded on an operating system that I
-have left behind (along, I suspect, with many other
-technically-inclined music aficionados). The MP3 format itself is
-showing its age; Fraunhofer IIS announced in 2017 that it was ending
-its licensing programs for MP3. AAC is now the standard for digital
-music.
+twenty-teens as a way to mange large libraries of @code{.mp3}
+files. Winamp is not quite dead, but it is stranded on an operating
+system that I have left behind (along, I suspect, with many other
+technically-inclined music aficionados today). The MP3 format itself
+is showing its age; Fraunhofer IIS announced in 2017 that it was
+ending its licensing programs for MP3. AAC is now the standard for
+digital music.
 
-And yet, I have several thousand `.mp3' files in my personal
+And yet, I have several thousand @code{.mp3} files in my personal
 library. Since both MP3 and AAC are lossy formats, transcoding them to
 AAC would not lead to good results even if I were inclined to do the
-work. The original sources of many of the `.mp3s' have been lost, so
-re-encoding to AAC is not possible.
+work. The original sources of many of the @code{.mp3s} have been lost,
+so re-encoding to AAC is not possible.
 
-Perhaps @command{scribbu} @xref{The scribbu Program} will support AAC
-in the future, but it seems that MP3 & ID3 will be relevant to
-@emph{my} musical life for some time. I wrote this tool to help me
-manage them, and I offer it to anyone else in the same place: if you
-need to manage ID3-tagged `.mp3' files, and especially if you enjoy
-hacking in LISP and/or C++, I hope you find @command{scribbu} useful
-and enjoyable.
+Perhaps @command{scribbu} (@xref{The @command{scribbu} Program}) will
+support AAC in the future, but it seems that MP3 & ID3 will be
+relevant to @emph{my} musical life for some time. I wrote this tool to
+help me manage them, and I offer it to anyone else in the same
+position: if you need to manage ID3-tagged @code{.mp3} files, and
+especially if you enjoy hacking in LISP and/or C++, I hope you find
+@command{scribbu} useful and enjoyable.
 
 
-@node The scribbu Program
-@chapter The scribbu Program
-@cindex The scribbu Program
+@node The @command{scribbu} Program
+@chapter The @command{scribbu} Program
+@cindex The @command{scribbu} Program
 
-The simplest way to use @command{scribbu} is through the command-line
-tool. For the @command{scribbu} command itself, as well as all
-@command{scribbu} subcommands, the @code{-h} flag will produce a brief
-help message on @code{stdout}, and the @code{--help} will display the
-corresponding man page. You can get a list of all the sub-commands
-@command{scribbu} provides by saying @code{scribbu -h} or
-@code{scribbu --help}. Display this manual by saying @code{scribbu
+The simplest way to use scribbu is through the command-line tool. For
+the @command{scribbu} command itself, as well as all @command{scribbu}
+subcommands, the @option{-h} flag will produce a brief help message on
+@code{stdout}, and the @option{--help} will display the corresponding
+man page. You can get a list of all the sub-commands @command{scribbu}
+provides by saying @command{scribbu -h}. You can display a given
+sub-command's node in this Info manual by saying @command{scribbu CMD
 --info}.
+
+Display this manual by saying @code{scribbu --info}.
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
 * Example::
-* Invoking @code{scribbu dump}::
-* Invoking @code{scribbu report}::
-* Invoking @code{scribbu rename}::
-* Invoking @code{scribbu popm}::
+* Invoking @command{scribbu dump}::
+* Invoking @command{scribbu report}::
+* Invoking @command{scribbu rename}::
+* Invoking @command{scribbu popm}::
+* Invoking @command{scribbu text}::
 @end menu
 
 @node Example
@@ -436,13 +452,15 @@ unknown genre 255
 
 We see we have three files, all of which have both ID3v1 & ID3v2 tags.
 The output also contains some basic information on the MP3 data in
-between the tags. @command{scribbu dump} takes as arguments one or
-more files and/or directories, and prints information about all files
-listed, or in the directories named, recursively. With no options,
-@command{scribbu dump} will dump everything it understands. With
-options, the output can be scoped in various ways (e.g. ID3v2 tags
-only, ID3v1 tags only, track data only, among other options; refer
-to the man page for a complete list).
+between the tags. 
+
+@command{scribbu dump} takes as arguments one or more files and/or
+directories, and prints information about all files listed, or in the
+directories named, recursively. With no options, @command{scribbu
+dump} will dump everything it understands. With options, the output
+can be scoped in various ways (e.g. ID3v2 tags only, ID3v1 tags only,
+track data only, among other options; refer to the man page for a
+complete list (or @xref{Invoking @command{scribbu dump}})).
 
 @node scribbu report
 @subsection scribbu report
@@ -459,13 +477,14 @@ directory,file,file size(MB),ID3v2 version,ID3v2 revision,ID3v2 size(bytes),ID3v
 "/tmp/tut","orlando.mp3",6.247,3,0,607,0x40,0,Bill LeFaive,Orlando,http://music.download.com,,,,,0,,0,,,,,,,6549838,dd0c70e13d4aeec676f8d7a7bda622b0,1,0,Bill LeFaive,Orlando,http://music.download.com,2004,http://music.download.com/,255
 @end example
 
-Running @command{scribbu report} with an option of @code{-o
-<name>.csv} will produce an RFC-4180-compliant comma separated variable
-file reporting on the files given on the command line. Option
-@code{-t} will instead produce tab-delimited data. @command{scribbu}
-itself provides little beyond this in terms of reporting, the idea
-being that CSV or TDF output can be readily imported into other
-programs better suited to that task.
+Running @command{scribbu report} (@xref{Invoking @command{scribbu
+report}}) with an option of @option{-o <name>.csv} will produce an
+RFC-4180-compliant comma separated variable file reporting on the
+files given on the command line. Option @option{-t} will instead
+produce tab-delimited data. @command{scribbu} itself provides little
+beyond this in terms of reporting, the idea being that CSV or TDF
+output can be readily imported into other programs better suited to
+that task.
 
 That said, one can do some basic querying at the command line, for
 which tab-delimited format can be convenient. For example, this
@@ -481,15 +500,14 @@ file ID3v2 version
 "orlando.mp3" 3
 @end example
 
-
 @node scribbu popm
 @subsection scribbu popm
 
 We notice that none of these files contain a @code{PCNT} or
-a @code{POPM} frame; let's add them now.
+a @code{POPM} frame; let's add them now:
 
 @example
-$>: scribbu popm -a -o foo@@bar.com -r xxxx *.mp3 
+$>: scribbu popm -a -o foo@@bar.com -r oooo *.mp3 
 $>: scribbu dump *.mp3
 ...
 PCNT: 0
@@ -499,14 +517,15 @@ counter: 00
 ...
 @end example
 
-The @code{popm} command can be used to manage both PCNT & POPM
-frames. The @code{-a} flag indicates that we want to create the
-relevant frames, if they don't already exist. @code{-r} sets the
-rating for the POPM frame; you can provide an integer between 0 and
-255, or use the ``star'' system. In this case, I've given all the
-files four stars. ``****'' would be more mnemonic, but inconvenient in
-the shell, so @command{scribbu} will recognize almost any character,
-repeated one to five times, as a ``star''.
+The @code{popm} command can be used to manage both PCNT & POPM frames
+(@xref{Invoking @command{scribbu popm}}). The @option{-a} flag
+indicates that we want to create the relevant frames, if they don't
+already exist. @option{-r} sets the rating for the POPM frame; you can
+provide an integer between 0 and 255, or use the ``star'' system. In
+this case, I've given all the files four stars. ``****'' would be more
+mnemonic, but inconvenient in the shell, so @command{scribbu} will
+recognize almost any character, repeated one to five times, as a
+``star''.
 
 Having created the PCNT and/or POPM frames, one can update the play
 counts with a simple command; e.g.
@@ -515,33 +534,35 @@ counts with a simple command; e.g.
 scribbu popm opium.mp3
 @end example
 
-will increment the play count by one in any PCNT or POPM frames
-it finds. The operation can be scoped or modified in a number
-of ways, such as limiting it to only one or the other, or only
-to POPM frames with a certain owner-- see the man page for full
-details. The intent of the command is to enable players that don't
-update the playcount or set ratings themselves, but which can
-be scripted or extended in some way, to do so.
+will increment the play count by one in any @code{PCNT} or @code{POPM}
+frames it finds. The operation can be scoped or modified in a number
+of ways, such as limiting it to only one or the other, or only to
+@code{POPM} frames with a certain owner-- see the man page or
+@xref{Invoking @command{scribbu popm}}for full details. The intent of
+the command is to enable players that don't update the playcount or
+set ratings themselves, but which can be scripted or extended in some
+way, to do so.
 
 
 @node scribbu rename
 @subsection scribbu rename
 
-Finally, let us re-name the files based on their ID3 tags. 
+Finally, let us re-name the files based on their ID3 tags:
 
 @example
 scribbu rename *.mp3
 @end example
 
 Will by default rename each file to ``<artist> - <title>.mp3'' with
-``<artist>'' & ``<title>'' each derived from the corresponding ID3v2
-frame. This can be customized by providing a ``template'': text
-interspersed with replacement parameters to be filled in with tag
-contents. The parameters begin with a `%', and each parameter has a
-one-character ``short'' form and a more descriptive ``long'' form. For
-instance, ``artist'' can be represented as either %A or %(artist). So
-the default template could be expressed as ``%A - %T.mp3'' or
-``%(artist) - %(title).mp3''.
+@code{<artist>} & @code{<title>} each derived from the corresponding
+ID3v2 frame (@xref{Invoking @command{scribbu rename}}). This can be
+customized by providing a ``template'': text interspersed with
+replacement parameters to be filled in with tag contents. The
+parameters begin with a `%', and each parameter has a one-character
+``short'' form and a more descriptive ``long'' form. For instance,
+``artist'' can be represented as either %A or %(artist). So the
+default template could be expressed as ``%A - %T.mp3'' or ``%(artist)
+- %(title).mp3''.
 
 If the long form is used, the action of the replacement parameter may
 optionally be modified by options given after the parameter name and a
@@ -570,57 +591,483 @@ be carried out. ``lorca.mp3'' has a number of empty text frames
 that should be removed, ``opium.mp3'' has a comment frame with no
 owner, and the ID3v1 genre in all three is set to ``255''.
 
-As I developed @command{scribbu}, and used it to manage my personal
-music collection, it became clear that providing a sub-command for
-every conceivable operation was not feasible. Furthermore, many of the
-things I wanted it to do were one-off tasks relevant to a single file,
-or a handful of files, that weren't worth formally coding up. What I
-really wanted was a way to ``script'' @code{libscribbu} @xref{Using
-libscribbu}. I found my solution in Guile @xref{Top,,, Guile, The
-Guile Reference Manual}, the topic of the next chapter.
+As I developed scribbu, and began using it to manage my personal music
+collection, it became clear that providing a sub-command for every
+conceivable operation was not feasible. Furthermore, many of the
+things I wanted it to do were one-off tasks pertinent to a single
+file, or a handful of files, that weren't worth formally coding up as
+sub-commands. What I really wanted was a way to ``script''
+@code{libscribbu} (@xref{Using @code{libscribbu}}). I found my
+solution in Guile (@xref{Top,,, Guile, The Guile Reference Manual}),
+which is the topic of the next chapter.
 
 
-@node Invoking @code{scribbu dump}
-@section Invoking @code{scribbu dump}
-@cindex Invoking @code{scribbu dump}
+@node Invoking @command{scribbu dump}
+@section Invoking @command{scribbu dump}
+@cindex Invoking @command{scribbu dump}
 
-TODO
+@code{scribbu dump} will walk each file and/or directory specified
+(recursing directories), read each file found, look for ID3 tags
+therein, and pretty-print what it finds to @code{stdout}.
 
-@node Invoking @code{scribbu report}
-@section Invoking @code{scribbu report}
-@cindex Invoking @code{scribbu report}
+@node @code{scribbu dump} Options
+@subsection @code{scribbu dump} Options
+@cindex @code{scribbu dump} Options
 
-TODO
+@code{scribbu dump} accepts the following options:
 
-@node Invoking @code{scribbu rename}
-@section Invoking @code{scribbu rename}
-@cindex Invoking @code{scribbu rename}
+@enumerate
 
-TODO
+@item 
+@option{-1|--id3v1-tags} display only ID3v1 tags
 
-@node Invoking @code{scribbu popm}
-@section Invoking @code{scribbu popm}
-@cindex Invoking @code{scribbu popm}
+@item
+@option{-D|--track-data} display track data only
 
-TODO
+@item 
+@option{-2|--id3v2-tags} display only ID3v2 tags
+
+@item
+@option{-i arg|--indent=arg} indent all output @verb{.arg.} spaces
+
+@item
+@option{-g|--no-expand-genre} don't attempt to expand the genre when
+specified as a numeric constant
+
+@item
+@option{-e regex|--expression=regex} define a regular expression for
+filtering the files to be pretty-printed. For each file, its entire
+path will be matched against this regular expression before being
+pretty-printed (non-matches will be ignored).
+
+@item
+@option{-f FMT|--format=FMT} specify the desired output format; at
+present, only two values are supported for this option:
+@code{standard}, which is the default, pretty-prints the selectd
+portions of each file to @verb{.stdout.} with one attribute (artist,
+title &c) per line.  A format of @code{csv} will print one line in CSV
+format per file.
+
+The precise columns output in @code{csv} format will depend on the
+other options, but for ID3v2 tags include:
+
+version, revision, size, flags, unsynchronised, artist, title,
+album, genre, encoded by, year, languages, play count, comments
+
+for track data: size & MD5 checksum
+
+for ID3v1 tags: v1.1, extended, artist, title, album, year, comment & genre.
+
+@item
+@option{-c ENC|--v1-encoding=ENC} specify an encoding for ID3v1 tags
+(@verb{.CP1252.} by default). See @xref{Character Encodings} for a
+complete list of the encodings supported and their identifiers.
+
+@end enumerate
+
+@node Invoking @command{scribbu report}
+@section Invoking @command{scribbu report}
+@cindex Invoking @command{scribbu report}
+
+@command{scribbu report} will walk each file and/or directory specfied
+(recursing directories), read each file found, look for ID3 tags
+therein, and generate a report on their contents. The idea is to use
+scribbu to do the work of scanning the tags in combination with some
+other tool better suited to querying & reporting. Consequently,
+filtering mechanisms are minimal, and the output formats (CSV or TDF)
+are chosen to facilitate transformation to other formats as well as
+import by other tools.
+
+@node @code{scribbu report} Options
+@subsection @code{scribbu report} Options
+@cindex @code{scribbu report} Options
+
+@enumerate
+
+@item
+@option{-c ARG|--num-comments=ARG} number of comments to be reported;
+the total number of comment frames is always reported, but this
+governs the number of comment frames (owner, text &c) to be included
+in the report (default six)
+
+@item
+@option{-o ARG|--output=ARG} the file to which the report shall be written
+
+@item
+@option{-1 ENC|--v1-encoding=ENC} specify the encoding @xref{Character
+Encodings} to be used to read ID3v1 tags (defaults to @verb{.CP1252.}
+
+@item
+@option{-t|--tsv-format} select tab-delimited format instead of
+comma-separated values (the default).
+
+@item
+@option{-a|--ascii-delimited} @emph{if} using tab-delimited format,
+output ASCII-delimited text by using 0x1f (the ASCII unit separater)
+to delimit fields rather than TABs.
+
+@end enumerate
+
+@node Invoking @command{scribbu rename}
+@section Invoking @command{scribbu rename}
+@cindex Invoking @command{scribbu rename}
+
+@code{scribbu rename} will walk each file and/or directory specified
+(recursively, in the case of directories) and rename each ID3-tagged
+file found according to its tag(s). By default, each ID3-tagged file
+will be renamed to ``<artist> - <title>.<extension>'' (where
+@code{<artist>} & @code{<title>} are derived from the file's ID3
+tags), but this can be heavily customized by specifying a naming
+``template'' made up of a mixture of text and replacement parameters
+(such as artist, title, album &c).
+
+Replacement parameters begin with a @verb{.%.} character (percent
+characters that do @emph{not} begin a replacement parameter may be
+escaped with a backslash). Each replacement parameter has a
+one-character ``short'' form as well as a ``long-form'' name. For
+example, the @dfn{artist} replacement can be represented as either
+@verb{.%A.}  or as @verb{.%(artist).}.
+
+When the long form is used, the action of replacement may optionally
+be modified by giving options after a colon. The options take the form
+@code{opt0&opt1&opt2&...} where @code{opti} is of the form
+@code{name=value}, or just @code{name}. So to continue the above
+example, if we wanted the artist name to instead be derived from the
+ID3v1 tag, and that field was encoded as ISO-8859-1, we would say:
+
+@example
+%(artist:v1-only&v1-encoding=iso-8859-1)
+@end example
+
+See @xref{Tag-Based Replacements} for a complete list of replacement
+parameters & their options.
+
+@node @code{scribbu rename} Options
+@subsection @code{scribbu rename} Options
+@cindex @code{scribbu rename} Options
+
+@enumerate
+
+@item
+@option{-h,--help} Display help & exit
+
+@item
+@option{-n,--dry-run} Dry-run; only print what @emph{would} happen
+
+@item
+@option{-o ARG,--output=ARG,} If specified, copy the output files to
+this directory, rather than renaming in-place.
+
+@item
+@option{-r,--rename} Remove the source file (ignored if
+@option{--dry-run} is given)
+
+@item
+@option{-t TEMPLATE,--template=TEMPLATE} The template by which to 
+rename ID3-tagged files in the arguments (defaults to ``%A - %T.mp3''
+
+@item
+@option{-v,--verbose} Produce verbose output.
+
+@end enumerate
+
+@node Tag-Based Replacements
+@subsection Tag-Based Replacements
+@cindex Tag-Based Replacements
+
+Tag-based replacement parameters:
+
+@multitable {content type} {short-form} {content-type,genre}
+@headitem Content @tab Short-Form @tab Long-Form
+@item album @tab L @tab albim
+@item artist @tab A @tab artist
+@item content type @tab G @tab content-type,genre
+@item encoded by @tab e @tab encoded-by
+@item title @tab T @tab title
+@item year @tab Y @tab year
+@end multitable
+
+Tag-based replacement parameters take the following options:
+
+@enumerate
+
+@item 
+Source of the replacement text:
+@enumerate
+@item
+prefer-v2
+@item
+prefer-v1
+@item
+v2-only
+@item
+v1-only
+@end enumerate
+
+@item 
+character encoding when the ID3v1 tag is used: @code{v1-encoding=}...
+
+@enumerate
+@item
+auto
+@item
+iso-8859-1
+@item
+ascii
+@item
+cp1252
+@item
+utf-8
+@item
+utf-16-be
+@item
+utf-16-le
+@item
+utf-32
+@end enumerate
+
+@item
+Handling ``The...'': @code{the=}...
+
+@enumerate
+@item
+suffix (i.e. ``The Pogues'' will be changed to ``Pogues, The'')
+
+@item
+prefix
+
+@end enumerate
+
+@item
+capitalization: @code{cap=}...
+
+@enumerate
+@item
+all-upper
+@item
+all-lower
+@end enumerate
+
+@item
+handling whitespace: either @code{compress} can be given (to merge space
+between words to a single space) or @code{ws=TEXT} can be given to replace
+whitespace (e.g. if @code{ws=_} were given, ``a    b'' would become ``a_b''.
+@end enumerate
+
+Lastly, the year can be formatted as two digits or four by giving
+``yy'' or ``yyyy'' in the options for @code{%(year)}.
+
+E.g. @code{%(artist:prefer-v2&v1-encoding=cp1252&the=suffix&compress)}
+applied to a file whose ID3v2 tag had an artist frame of "The  Pogues"
+would produce "Pogues, The".
+
+@node File-based Replacements
+@subsection File-based Replacements
+@cindex File-based Replacements
+
+There are a few more replacement parameters based on the file itself:
+
+@enumerate
+
+@item
+@code{b,basename}: The file basename
+
+@item
+@code{E,extension}: The file extension (including the dot)
+
+@end enumerate
+
+Both of these take the same ``The,'', capitalization & whitespace options as
+@xref{Tag-Based Replacements}.
+
+@enumerate
+
+@item
+@code{5,md5}: the MD5 checksum of the file's audio data
+
+@item
+@code{S,size}: the file size, in bytes
+
+@end enumerate
+
+Both of these take the following options:
+
+@enumerate
+
+@item
+@code{base=(decimal|hex)}: specify the radix for the numbers
+
+@item
+@code{hex-case=(U|L)}: case to use for hexidecimal numbers
+
+@end enumerate
 
 
-@node Scripting scribbu
-@chapter Scripting scribbu
-@cindex Scripting scribbu
+@node Invoking @command{scribbu popm}
+@section Invoking @command{scribbu popm}
+@cindex Invoking @command{scribbu popm}
+
+@command{scribbu popm} creates or updates play count and/or
+popularimeter frames. With no options, it increments the counter fields in
+every and/or play count popularimeter frame in every tag by one. With the
+@option{--create} flag, create the relevant frames in each tag.
+Popularimeter frames will not be created in the absence of the
+@option{--owner} option.  Play count & popularimeter frame creation
+can be inhibited via the @option{--popularimeter-only} and
+@option{--playcount-only} flags, respectively.
+
+The popularimeter rating field can be set using the 
+@option{--rating} option. Ratings can be specified explicitly
+as an integer between 0 & 255, or as one-to-five stars. ``Stars''
+would most naturally be expressed as @verb{.*.}s (asterisks), but
+since this will often be inconvenient in the shell, @command{scribbu}
+will accept almost any character, repeated one-to-five times.
+
+@node @code{scribbu popm} Options
+@subsection @code{scribbu popm} Options
+@cindex @code{scribbu popm} Options
+
+@enumerate
+
+@item
+@option{-h,--help} display help & exit with status zero
+
+@item
+@option{-n,--dry-run} don't modify the files named in the arguments; just
+print what @emph{would} have been done
+
+@item
+@option{-a,--create} create playcount and/or popularimeter in any tags
+that are missing. This can be modified by the
+@option{--popularimeter-only} and @option{--playcount-only} flags,
+respectively. Popularimeter frames will only be created if the
+@option{--owner} flag is given, as well.
+
+@item
+@option{-b,--create-backups} by default, the new tagset will be written
+in-place (emplacing, if possible); this option will cause a backup file
+to be made first.
+
+@item
+@option{-c COUNT,--count=COUNT} set all counter fields to @verb{.COUNT.}
+instead of incrementing
+
+@item
+@option{-i INCR,--increment=INCR} increment all counter fields by
+@verb{.INCR.}, instead of by one.
+
+@item
+@option{-o OWNER,--owner=OWNER} Specify the owner field for popularimeter
+frames. If incrementing count fields, only popularimeter frames with an 
+owner of @verb{.OWNER.} will be updated. When creating popularimeter frames,
+the owner field will be set to @verb{.OWNER.}.
+
+@item
+@option{-p,--playcount-only} if present, this switch will limit operations
+to playcount frames only
+
+@item
+@option{-m,--popularimeter-only} if present, this switch will limit operaitons
+to popularimeter frames only
+
+@item
+@option{-r RATING,--rating=RATING} specify the rating for use in
+popularimeter tags. @verb{.RATING.} may be given either as an integer
+between 0 & 255 (inclusive) or as one-to-five ``stars'', given as
+@code{[a-zA-Z@@#%*+]@{1,5@}} e.g.  three stars could be expressed as
+``xxx'' or ``###'' or ``***''.
+
+@item
+@option{-t INDEX,--tag=INDEX} specify a zero-based index describing
+which tag to alter, in case of multiple ID3v2 tags in a single
+file. This option may be given more than once to indicate multiple
+tags. If not given, @emph{all} tags will be modified.
+
+@item
+@option{-u,--adjust-unsync} adjust each tag's use of the
+unysnchronisation scheme on write (by default, it's never used)
+
+@end enumerate
+
+
+@node Invoking @command{scribbu text}
+@section Invoking @command{scribbu text}
+@cindex Invoking @command{scribbu text}
+
+@code{scribbu text} will create, udpate & delete various ID3v2 text
+frames.
+
+@node @code{scribbu text} Options
+@subsection @code{scribbu text} Options
+@cindex @code{scribbu text} Options
+
+@enumerate
+
+@item
+@option{-a ALBUM,--album=ALBUM} set the TALB, or Album/Movie/Show
+Title frame
+
+@item
+@option{-A ARTIST,--artist=ARTIST} Set the TPE1, or Lead
+artist(s)/Lead performer(s)/Soloist(s)/Performing group frame
+
+@item
+@option{-e ENC,--encoded-by=ENC} Set the TENC, or Encoded By frame
+
+@item
+@option{-g GENRE,--genre=GENRE} Set the TCON, or Content time frame
+
+@item
+@option{-T TITLE,--title=TITLE} Set the TIT2, or
+Title/Songname/Content description frame
+
+@item
+@option{-k TRACK,--track=TRACK} Set the TRCK, or Track number/Position
+in set frame
+
+@item
+@option{-y YEAR,--year=YEAR} Set the TYER, or Year frame
+
+@item
+@option{-d FRAME,--delete=FRAME} Specify a frame to remove, if
+present; this option may be given more than once to delete multiple
+frames. Frames may be named by either their option name
+(e.g. `artist') or by their ID3v2.3 frame ID (e.g. TPE1).
+
+@item
+@option{-E ENC,--encoding=ENC} Specify the character encoding used in
+the input strings using the iconv name (`ISO-8859-1', e.g.) If not
+given, the system locale will be assumed (@xref{Character Encodings}
+for a complete list of the encodings supported and their identifiers).
+
+@item
+@option{-t INDEX,--tag=INDEX} Zero-based index of the tag on which to
+operate; may be given more than once to select multiple tags
+
+@item
+@option{-u,--adjust-unsync} Update the unsynchronisation flag as
+needed on write (default is to never use it).
+
+@item
+@option{-b,--create-backups} Create backup copies of all files before
+modifying them.
+
+@end enumerate
+
+
+@node Scripting @command{scribbu}
+@chapter Scripting @command{scribbu}
+@cindex Scripting @command{scribbu}
 
 The set of sub-commands @command{sribbu} offers, or could offer, is
 small in comparison to the number of operations one could possibly
-hope to carry out in managing tags. Sooner or later (likely sooner)
+hope to carry out in managing ID3 tags. Sooner or later (likely sooner)
 you will want to do something you can't accomplish via a sub-command.
 
 For that reason, the bulk of the work on @command{scribbu} has been
 exposing the library's functionality to a first-class language like
-LISP @xref{Top,,, Guile, The Guile Reference Manual}, to enable
-@command{scribbu} users to build their own solutions. This chapter
-begins by demonstrating how to use the interactive Scheme REPL
-to explore solutions, then demonstrates building Scheme programs
-using @command{scribbu}, and finishes with some references.
+LISP (@xref{Top,,, Guile, The Guile Reference Manual}), to enable
+@command{scribbu} users to build their own solutions. 
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
@@ -632,6 +1079,10 @@ using @command{scribbu}, and finishes with some references.
 @node Worked Example
 @section Worked Example
 
+This chapter begins by demonstrating how to use the interactive Scheme
+REPL to explore solutions, then demonstrates building Scheme programs
+using @command{scribbu}, and finishes with some references.
+
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
 * Initial Experiments: The Scheme REPL.
@@ -642,12 +1093,10 @@ using @command{scribbu}, and finishes with some references.
 @node The Scheme REPL
 @subsection The Scheme REPL
 
-At the end of the last chapeter @xref{scribbu rename}, there were a
+At the end of ``scribbu rename'' (@xref{scribbu rename}), there were a
 number of tag hygiene issues to be cleaned up. Let us begin
 experimenting with solutions. Invoking @command{scribbu} with no
 arguments at all will start the Scheme REPL:
-
-TODO Touch up the result numbers in this sequence
 
 @example
 $>: scribbu
@@ -669,9 +1118,9 @@ scheme@@(guile-user)>
 
 You are now at the Scheme prompt (``scheme'' refers to the language
 currently in use and ``guile-user'' refers to the current module). You can
-type in Scheme & have your statements evaluated:
+type Scheme statements & have your statements evaluated:
 
-@example
+@lisp
 scheme@@(guile-user)> (format #t "Hello, world!")
 Hello, world!$1 = #t
 scheme@@(guile-user)> (define x 1)
@@ -681,32 +1130,31 @@ $2 = 2
 scheme@@(guile-user)> (if (> x 1) (format #t "Yes!"))
 Yes!$3 = #
 scheme@@(guile-user)>
-@end example
+@end lisp
 
 @code{scribbu} exports assorted types & functions for working with ID3
 tags to the Guile interpreter. Let's take a look at that owner-less
 comment frame. We begin by reading in the ID3v2 tagset:
 
-@example
+@lisp
 scheme@@(guile-user)> (use-modules (oop goops) (scribbu))
 scheme@@(guile-user)> (define tags (read-tagset "opium.mp3")) 
 scheme@@(guile-user)> tags
-$1 = ((#<<id3v2-tag> 1ccf780> 3 #f))
-@end example
+$4 = ((#<<id3v2-tag> 1ccf780> 3 #f))
+@end lisp
 
 @code{read-tagset} returns a list of three-tuples, one for each ID3v2
-tag present in its argument. Since ``opium.mp3'' has only one ID3v2t
+tag present in its argument. Since ``opium.mp3'' has only one ID3v2
 tag, the list has only one element. The triplet consists of an
 @code{<id3v2-tag>} instance, the ID3v2 version (``3'' in this case)
 and a boolean indicating whether the unsynchronisation flag is set (it
 is not). Let's examine the tag:
 
-@example
+@lisp
 scheme@@(guile-user)> (define tag (caar tags))
 scheme@@(guile-user)> tag
-$18 = #<<id3v2-tag> 1ccf780>
-scheme@@(guile-user)> (let ((frames (slot-ref tag 'frames)) (i 0)) (while (> (length frames) 0) (format #t "~d: ~a\n" i (slot-ref (ca
-r frames) 'id)) (set! i (+ i 1)) (set! frames (cdr frames))))
+$5 = #<<id3v2-tag> 1ccf780>
+scheme@@(guile-user)> (let ((frames (slot-ref tag 'frames)) (i 0)) (while (> (length frames) 0) (format #t "~d: ~a\n" i (slot-ref (car frames) 'id)) (set! i (+ i 1)) (set! frames (cdr frames))))
 0: encoded-by-frame
 1: track-frame
 2: comment-frame
@@ -721,48 +1169,49 @@ r frames) 'id)) (set! i (+ i 1)) (set! frames (cdr frames))))
 11: title-frame
 12: play-count-frame
 13: pop-frame
-$7 = #f
-@end example
+$6 = #f
+@end lisp
 
-We see that ``tag'' is an instance of the GOOPS class ``<id3v2-tag>'', and that
-it has 14 frames. Frame two (counting from zero) is that comment frame:
+We see that @code{tag} is an instance of the GOOPS class
+@code{<id3v2-tag>}, and that it has 14 frames. Frame two (counting
+from zero) is that comment frame:
 
-@example
+@lisp
 scheme@@(guile-user)> (slot-ref (list-ref (slot-ref tag 'frames) 2) 'dsc)
-$15 = ""
-@end example
+$7 = ""
+@end lisp
 
 As expected, the description field is an empty string-- let's fix that:
 
-@example
+@lisp
 scheme@@(guile-user)> (slot-set! (list-ref (slot-ref tag 'frames) 2) 'dsc "sp1ff@@pobox.com")
-$16 = "sp1ff@@pobox.com"
+$8 = "sp1ff@@pobox.com"
 # check
 scheme@@(guile-user)> (slot-ref (list-ref (slot-ref tag 'frames) 2) 'dsc)
-$17 = "sp1ff@@pobox.com"
-@end example
+$9 = "sp1ff@@pobox.com"
+@end lisp
 
 Now what about that ID3v1 genre?
 
-@example
+@lisp
 scheme@@(guile-user)> (define v1 (read-id3v1-tag "opium.mp3"))
 scheme@@(guile-user)> v1
-$19 = #<<id3v1-tag> 18fb8c0>
+$10 = #<<id3v1-tag> 18fb8c0>
 scheme@@(guile-user)> (slot-ref v1 'genre)
-$20 = 255
-@end example
+$11 = 255
+@end lisp
 
 Let's set that to ``Lounge''-- the Winamp genre list sets that to 171:
 
-@example
+@lisp
 scheme@@(guile-user)> (slot-set! v1 'genre 171)
-$21 = 171
-@end example
+$12 = 171
+@end lisp
 
 What remains is writing out our modifications to their respective
 tags. We @emph{could} do this directly in the REPL, but let's capture
-our work in the form of a program @xref{Writing Scheme Programs with
-@command{scribbu}}.
+our work in the form of a program (@xref{Writing Scheme Programs with
+@command{scribbu}}).
 
 
 @node Writing Scheme Programs with @command{scribbu}
@@ -774,13 +1223,13 @@ parameters applicable to @command{guile}, it will collect them and
 pass them on to the Scheme interpreter (when this makes sense, of
 course; supplying @command{guile} options while invoking a
 @command{scribbu} sub-command, for instance, would make no sense &
-result in an error). This means that @command{scribbu} can take
-advantage of the @command{guile} scripting options @xref{Guile
-Scripting,,, Guile, The Guile Reference Manual}.
+results in an error). This means that @command{scribbu} can take
+advantage of the @command{guile} scripting options (@xref{Guile
+Scripting,,, Guile, The Guile Reference Manual}).
 
 Continuing our example, let us capture our work so far:
 
-@example
+@lisp
 #!/usr/local/bin/scribbu -e main -s
 #!
 (use-modules (oop goops) (scribbu))
@@ -791,18 +1240,14 @@ Continuing our example, let us capture our work so far:
            (tag  (caar tags)))
         (slot-set! (list-ref (slot-ref tag 'frames) 2) 'dsc "sp1ff@@pobox.com")
         (slot-set! v1 'genre 171)))
-@end example
+@end lisp
 
 This Scheme program of course does nothing; it corrects the orphaned
-comment frame as well as the ID3v1 genre, but only in-memory. Let's
+comment frame as well as the ID3v1 genre, but only in-memory. Let us
 write these out to disk. Writing out the ID3v1 is simpler since it's
-a fixed size:
+a fixed size, so we'll start with that:
 
-TODO: also easier because its appended; note that whether it will
-be written as ID3v1, ID31.1, and or ID3v2 enh will depend on the structure
-include xref to ``ID3v1 tags''
-
-@example
+@lisp
 #!/usr/local/bin/scribbu -e main -s
 #!
 (use-modules (oop goops) (scribbu))
@@ -814,16 +1259,19 @@ include xref to ``ID3v1 tags''
         (slot-set! (list-ref (slot-ref tag 'frames) 2) 'dsc "sp1ff@@pobox.com")
         (slot-set! v1 'genre 171)
         (write-id3v1-tag v1 "optimum.mp3")))
-@end example
+@end lisp
+
+Writing an ID3v1 tag is also easier because it is appended to the
+file.  NB. @code{v1} may be written as an ID3v1, ID3v1.1 and/or an
+ID3v1 enhanced tag, depending on the precise contents of @code{v1}
+@xref{ID3v1 tags}.
 
 Writing ID3v2 tagsets is more complicated, since their size can
-vary. ``write-tagset'' can either make a wholesale copy of the file,
-or attempt to emplace the new tagset at the beginning of the
-extantfile (which is the default):
+vary. @code{write-tagset} can either make a wholesale copy of the
+file, or attempt to emplace the new tagset at the beginning of the
+extant file (which is the default):
 
-TODO expand on this
-
-@example
+@lisp
 #!/usr/local/bin/scribbu -e main -s
 #!
 (use-modules (oop goops) (scribbu))
@@ -836,13 +1284,28 @@ TODO expand on this
         (slot-set! v1 'genre 171)
         (write-id3v1-tag v1 "optimum.mp3")
         (write-tagset (list (list tag 3)) "opium.mp3")))
-@end example
+@end lisp
 
 
 @node Getting More Information
 @subsection Getting More Information
 
-TODO
+References:
+
+@enumerate
+
+@item 
+@xref{Introduction,,, Guile, The Guile Reference Manual}
+
+@item
+Scheme versus Common Lisp @uref{https://www.cs.utexas.edu/~novak/schemevscl.html}
+
+@item
+
+Schemers.org @uref{https://schemers.org}
+
+@end enumerate
+
 
 @node ID3v1 tags
 @section ID3v1 tags
@@ -931,7 +1394,7 @@ limitations, leading to the introduction in 1998 of ID3v2 (by Mrtin
 Nilsson, Michael Mutschler et al.).  Despite the name, this format has
 nothing to do with ID3v1.  ID3v2 tags are much more complex. The tags
 are pre-pended to the files they describe. They are comprised of one
-or more @emph{frames}, each of which contains one piece of
+or more @dfn{frames}, each of which contains one piece of
 information. There is provision for padding appended to the tag, to
 permit subsequent augmentation of the tag without having to re-write
 the entire file. ID3v1 tags suffered from the fact that they encoded
@@ -965,9 +1428,9 @@ stream to detect the beginning of the audio. MPEG decoding software
 that is not ID3-aware could mistakenly interpret that value as the
 beginning of the audio should it happen to occur in an ID3v2
 tag. Unsynchronisation is an optional encoding scheme for the ID3v2
-tag to prevent that. "Unsynchronisation may only be made with MPEG
-2 layer I, II and III and MPEG 2.5 files."  \ref scribbu_id3v2_refs_1
-"[1]" TODO
+tag to prevent that. "Unsynchronisation may only be made with MPEG 2
+layer I, II and III and MPEG 2.5 files."
+@uref{http://id3.org/id3v2-00}
 
 More specifically, whenever a two byte combination of the form:
 
@@ -1078,7 +1541,7 @@ identifer.  @code{scribbu} represents such frames as instances of
 @code{<comment-frame>} encodes the @verb{.COM.} & @verb{.COMM.}
 (comment) frames. @code{#:lang} is a three-letter ISO-639-2 language
 code.  The @code{#:dsc} fields is described in the specification as a
-``short content description''. TODO any more information on this?
+``short content description''.
 
 @lisp
 (define-class <comment-frame> (<id3v2-frame>)
@@ -1090,11 +1553,12 @@ code.  The @code{#:dsc} fields is described in the specification as a
 @node @code{<user-defined-text-frame>}
 @subsubsection @code{<user-defined-text-frame>}
 
-@code{<user-defined-text-frame>} encodes the @verb{.TXX.} & @verb{.TXXX.}
-(user-defined text) frames. The @code{#:dsc} fields is a description
-of the textual information & @code{#:text} is the information
-itself. There may be multiple user-defined text frames in a tag, but
-only one with a given description. TODO: ref 4.2.2 of spec.
+@code{<user-defined-text-frame>} encodes the @verb{.TXX.} &
+@verb{.TXXX.}  (user-defined text) frames. The @code{#:dsc} fields is
+a description of the textual information & @code{#:text} is the
+information itself. There may be multiple user-defined text frames in
+a tag, but only one with a given description. Cf. section 4.2.2 of the
+ID3v2 spec.
 
 @lisp
 (define-class <user-defined-text-frame> (<id3v2-frame>)
@@ -1109,7 +1573,7 @@ only one with a given description. TODO: ref 4.2.2 of spec.
 count) frames. The @code{#:count} field is simply a counter recording
 the number of times the file has been played @xref{scribbu
 popm}. There may be only one @code{<play-count-frame} frame in a
-tag. TODO ref sec 4.17 of the spec.
+tag. Cf. section 4.17 of the ID3v2 spec.
 
 @lisp
 (define-class <play-count-frame> (<id3v2-frame>)
@@ -1144,8 +1608,8 @@ Frames about which @code{scribbu} does not know may be encoded as
   (data    #:init-value #vu8() #:accessor data    #:init-keyword #:data))
 @end lisp
 
-TODO does the `data' field include header ifnromation, e.g? How to construct
-one if I want to build a frame ``from scratch''?
+The @code{data} field will contain everything @emph{beyond} the ID3v2 header;
+i.e. the frame identifier & flags will have been parsed out.
 
 @node @code{<id3v2-tag>}
 @subsection @code{<id3v2-tag>}
@@ -1154,7 +1618,7 @@ The @command{scribbu} ID3v2 tag abstraction doesn't try to model the various
 versions of the ID3v2 spec. Rather, it encodes a ``generic'' ID3v2 tag; the
 version to which it shall be serialized is specified at write time, and
 the version from which it was deserialized is returned at read time
-@xref{ID3v2 Serialization}.
+(@xref{ID3v2 Serialization}).
 
 @lisp
 (define-class <id3v2-tag> ()
@@ -1164,14 +1628,9 @@ the version from which it was deserialized is returned at read time
   (padding      #:init-value   0 #:accessor padding #:init-keyword #:padding))
 @end lisp
 
-TODO how are ID3v2-version-specific things handled? What about other
-header flags?
-
-TODO has-frames, get-frames
-
 @menu
 * ID3v2 Serialization::
-* ``with-track-in''::
+* @code{with-track-in}::
 @end menu
 
 @node ID3v2 Serialization
@@ -1240,8 +1699,8 @@ data & ID3v1 tag (if any) will be copied over to the new file.
 
 @end enumerate
 
-@node ``with-track-in''
-@subsubsection ``with-track-in''
+@node @code{with-track-in}
+@subsubsection @code{with-track-in}
 
 @code{with-track-in(directory, fn)} is a convenience function; it will
 iterate over all filesystem entities in @code{directory} and apply
@@ -1268,9 +1727,9 @@ scheme@@(guile-user)> (with-track-in "." (lambda (tags pth v1) (format #t "~s ha
 @end lisp
 
 
-@node Using libscribbu
-@chapter Using libscribbu
-@cindex Using libscribbu
+@node Using @code{libscribbu}
+@chapter Using @code{libscribbu}
+@cindex Using @code{libscribbu}
 
 TODO
 
@@ -1324,6 +1783,81 @@ TODO
 @item 'udt-frame @tab TXX @tab TXXX
 @item 'year-frame @tab TYE @tab TYER
 @end multitable
+
+@node Character Encodings
+@unnumbered Character Encodings
+
+@code{scribbu} uses @code{iconv} for character encoding. For
+convenience, here is the list of identifiers used to name them:
+
+@enumerate
+
+@item European & Russian languages
+
+@verb{.ASCII.}, @verb{.ISO_8859_1.}, @verb{.ISO_8859_2.},
+@verb{.ISO_8859_3.}, @verb{.ISO_8859_4.}, @verb{.ISO_8859_5.},
+@verb{.ISO_8859_7.}, @verb{.ISO_8859_9.}, @verb{.ISO_8859_10.},
+@verb{.ISO_8859_13.}, @verb{.ISO_8859_14.}, @verb{.ISO_8859_15.},
+@verb{.ISO_8859_16.}, @verb{.KOI8_R.}, @verb{.KOI8_U.},
+@verb{.KOI8_RU.}, @verb{.CP1250.}, @verb{.CP1251.}, @verb{.CP1252.},
+@verb{.CP1253.}, @verb{.CP1254.}, @verb{.CP1257.}, @verb{.CP850.},
+@verb{.CP866.}, @verb{.CP1131.}, @verb{.MacRoman.},
+@verb{.MacCentralEurope.}, @verb{.MacIceland.}, @verb{.MacCroatian.},
+@verb{.MacRomania.}, @verb{.MacCyrillic.}, @verb{.MacUkraine.},
+@verb{.MacGreek.}, @verb{.MacTurkish.}, @verb{.Macintosh.}
+
+@item Semitic languages
+@verb{.ISO_8859_6.}, @verb{.ISO_8859_8.}, @verb{.CP1255.},
+@verb{.CP1256.}, @verb{.CP862.}, @verb{.MacHebrew.},
+@verb{.MacArabic.}
+
+@item Japanese
+@verb{.EUC_JP.}, @verb{.SHIFT_JIS.}, @verb{.CP932.},
+@verb{.ISO_2022_JP.}, @verb{.ISO_2022_JP_2.}, @verb{.ISO_2022_JP_1.},
+@verb{.ISO_2022_JP_MS.}
+
+@item Chinese
+@verb{.EUC_CN.}, @verb{.HZ.}, @verb{.GBK.}, @verb{.CP936.},
+@verb{.GB18030.}, @verb{.EUC_TW.}, @verb{.BIG5.}, @verb{.CP950.},
+@verb{.BIG5_HKSCS.}, @verb{.BIG5_HKSCS_2004.},
+@verb{.BIG5_HKSCS_2001.}, @verb{.BIG5_HKSCS_1999.},
+@verb{.ISO_2022_CN.}, @verb{.ISO_2022_CN_EXT.}
+
+@item Korean
+@verb{.EUC_KR.}, @verb{.CP949.}, @verb{.ISO_2022_KR.}, @verb{.JOHAB.}
+
+@item Armenian
+@verb{.ARMSCII_8.}
+
+@item Georgian
+@verb{.Georgian_Academy.}, @verb{.Georgian_PS.}
+
+@item Tajik
+@verb{.KOI8_T.}
+
+@item Kazakh
+@verb{.PT154.}, @verb{.RK1048.}
+
+@item Thai
+@verb{.TIS_620.}, @verb{.CP874.}, @verb{.MacThai.}
+
+@item Laotian
+@verb{.MuleLao_1.}, @verb{.CP1133.}
+
+@item Vietnamese
+@verb{.VISCII.}, @verb{.TCVN.}, @verb{.CP1258.}
+
+@item Platform specifics
+@verb{.HP_ROMAN8.}, @verb{.NEXTSTEP.}
+
+@item Full Unicode
+@verb{.UTF_8.}, @verb{.UCS_2.}, @verb{.UCS_2BE.}, @verb{.UCS_2LE.},
+@verb{.UCS_4.}, @verb{.UCS_4BE.}, @verb{.UCS_4LE.}, @verb{.UTF_16.},
+@verb{.UTF_16BE.}, @verb{.UTF_16LE.}, @verb{.UTF_32.},
+@verb{.UTF_32BE.}, @verb{.UTF_32LE.}, @verb{.UTF_7.}, @verb{.C99.},
+@verb{.JAVA.}
+
+@end enumerate
 
 @node Index
 @unnumbered Index

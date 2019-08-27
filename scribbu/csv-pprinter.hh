@@ -101,12 +101,12 @@ namespace scribbu {
    * characters.
    *
    *
-   * 1. \anchor csv_pprinter_ref_1 Shafranovich, 2005: RFC 4180 Common Format
-   * and MIME Type for Comma-Separated Values (CSV)
-   * Files. https://tools.ietf.org/html/rfc4180 (Accessed Deceber 29, 2018).
+   * 1. \anchor csv_pprinter_ref_1 [1] Shafranovich. RFC 4180 Common Format and
+   * MIME Type for Comma-Separated Values (CSV) Files
+   * https://tools.ietf.org/html/rfc4180 (updated Deceber 29, 2018)
    *
-   * 2. \anchor csv_pprinter_ref_2 Warrick, Chris, 2017: CSV is not a standard.
-   * https://chriswarrick.com/blog/2017/04/07/csv-is-not-a-standard/ (Accessed
+   * 2. \anchor csv_pprinter_ref_2 [2] Warrick, Chris. CSV is not a standard
+   * https://chriswarrick.com/blog/2017/04/07/csv-is-not-a-standard/ (updated
    * December 30, 2018).
    *
    *

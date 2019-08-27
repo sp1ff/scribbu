@@ -505,84 +505,77 @@ namespace {
         options(all).
         positional(popts).
         run();
+
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-dump",
+                        "(scribbu) Invoking scribbu dump");
+
       po::store(parsed, vm);
 
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level_for_parsed_opts(parsed);
-      }
-      
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
+      po::notify(vm);
+      
+      // Don't enforce required arguments until we know we're not just
+      // displaying help.
       po::notify(vm);
 
-      if (help_level::regular == help) {
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
 
-        print_usage(cout, docopts, USAGE);
-
-      } else if (help_level::verbose == help) {
-
-        show_man_page("scribbu-report");
-
-      } else {
-
-        // That's it-- the list of files and/or directories to be processed
-        // should be waiting for us in 'arguments'...
-
-        // Work around to https://svn.boost.org/trac/boost/ticket/8535
-        std::vector<fs::path> arguments;
-        for (auto s: vm["arguments"].as<std::vector<string>>()) {
-          arguments.push_back(fs::path(s));
-        }
-
-        // Multi-threaded:
-
-        // - whip up a thread-safe reporter
-
-        // - whip up a queue
-
-        // - whip up a thread pool, giving it a reference to the queue & the reporter
-
-        // - whip up a crawler, giving it a reference to that thread
-        //   pool; the crawler will handle each file by pushing it onto
-        //   the queue (from the main thread)-- the threads will pull
-        //   items off the queue, process them, and send results to the
-        //   reporter
-
-        // - when the crawler has finished, it sets a flag & joins all
-        //   the threads in the thread pool; when that flag is set, and
-        //   a thread can pull no more items off the queue, it
-        //   terminates
-
-        // Single-threaded
-
-        // - whip up a non-thread-safe reporter
-
-        // - whip up a crawler, giving it a reference to the reporter;
-
-        // - the crawler will handle each file by processing it &
-        //   sending the results to the reporter
-
-        // LATER(sp1ff): Implement the multi-threaded option
-
-        size_t ncomm = vm["num-comments"].as<size_t>();
-        fs::path out = vm["output"].as<fs::path>();
-        encoding v1enc = vm["v1-encoding"].as<encoding>();
-        bool no_dir = vm["no-directory"].as<bool>();
-        bool tdf = vm["tsv"].as<bool>();
-        bool ascii = vm["ascii-delimited"].as<bool>();
-
-        std::shared_ptr<reporter> pr(
-          tdf ?
-            (reporter*) new tdf_reporter(out, ncomm, v1enc, no_dir, ascii) :
-            (reporter*) new csv_reporter(out, ncomm, v1enc, no_dir));
-
-        std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
-
-        std::for_each(arguments.begin(), arguments.end(), std::ref(*ps));
-
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      std::vector<fs::path> arguments;
+      for (auto s: vm["arguments"].as<std::vector<string>>()) {
+        arguments.push_back(fs::path(s));
       }
+
+      // Multi-threaded:
+
+      // - whip up a thread-safe reporter
+
+      // - whip up a queue
+
+      // - whip up a thread pool, giving it a reference to the queue & the reporter
+
+      // - whip up a crawler, giving it a reference to that thread
+      //   pool; the crawler will handle each file by pushing it onto
+      //   the queue (from the main thread)-- the threads will pull
+      //   items off the queue, process them, and send results to the
+      //   reporter
+
+      // - when the crawler has finished, it sets a flag & joins all
+      //   the threads in the thread pool; when that flag is set, and
+      //   a thread can pull no more items off the queue, it
+      //   terminates
+
+      // Single-threaded
+
+      // - whip up a non-thread-safe reporter
+
+      // - whip up a crawler, giving it a reference to the reporter;
+
+      // - the crawler will handle each file by processing it &
+      //   sending the results to the reporter
+
+      // LATER(sp1ff): Implement the multi-threaded option
+
+      size_t ncomm = vm["num-comments"].as<size_t>();
+      fs::path out = vm["output"].as<fs::path>();
+      encoding v1enc = vm["v1-encoding"].as<encoding>();
+      bool no_dir = vm["no-directory"].as<bool>();
+      bool tdf = vm["tsv"].as<bool>();
+      bool ascii = vm["ascii-delimited"].as<bool>();
+
+      std::shared_ptr<reporter> pr(
+        tdf ?
+          (reporter*) new tdf_reporter(out, ncomm, v1enc, no_dir, ascii) :
+          (reporter*) new csv_reporter(out, ncomm, v1enc, no_dir));
+
+      std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
+
+      std::for_each(arguments.begin(), arguments.end(), std::ref(*ps));
 
     } catch (const po::error &ex) {
 

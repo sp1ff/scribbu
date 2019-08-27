@@ -31,6 +31,8 @@ scribbu can be invoked in a few ways:
 
 	+ `scribbu popm` will create or update popularimeter & playcount frames. This can be used to keep up the play count, or set a rating.
 
+	+ `scribbu text` will create, update, or delete various text frames
+
   - with a Scheme expression (`-e`, `--expression`) or Scheme file (`-f`, `--file`). E.g.
 
         srcibbu -e '(with-track-in <path> (lambda (v2 pth v1) (format #t "~s: ~a\n" pth v1)))'

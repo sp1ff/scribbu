@@ -102,7 +102,6 @@ BOOST_AUTO_TEST_CASE( test_pop )
 
 } // End test_pop.
 
-
 BOOST_AUTO_TEST_CASE( test_xtg )
 {
   using namespace std;

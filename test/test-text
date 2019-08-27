@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+
+
+source ${srcdir}/test-util
+
+
+# run `scribbu text ...'
+# usage: run_text var_to_rcv_stdout var_to_rcv_stderr var_to_rcv_status args...
+# for instance:
+#     run_text out err stat -t 1 --artist=foo
+# will execute `scribbu text -t 1 --artist=foo'; on return the process'
+# stdout will be in `out', stderr in `err', and exit status in `stat'. Note
+# that due to quoting issues, any `'' or ``' characters will have been
+# replaced with `:'.
+function run_text()
+{
+    local __stdout=$1
+    local __stderr=$2
+    local __status=$3
+    shift 3
+
+    verbose `pwd`
+    verbose ${text_scribbu_dir}/scribbu -L ${srcdir}/../scheme text $@
+    # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
+    local t_std
+    local t_err
+    local t_stat
+    eval "$( ${text_scribbu_dir}/scribbu -L ${srcdir}/../scheme text $@ \
+    2> >(t_err=$(cat); typeset -p t_err) \
+     > >(t_std=$(cat); typeset -p t_std) ); t_stat=$?"
+
+    eval "$__stdout='$(echo $t_std|tr \' :|tr \` :)'"
+    eval "$__stderr='$(echo $t_err|tr \' :|tr \` :)'"
+    eval "$__status='$t_stat'"
+
+    verbose "status ${t_stat}	"
+    printf 'stdout ' >&3
+    printf '=%.0s' $(seq 1 $((${text_cols}-7))) >&3
+    verbose "$t_std"
+    printf 'stderr ' >&3
+    printf '=%.0s' $(seq 1 $((${text_cols}-7))) >&3
+    echo "$t_err"
+    printf '=%.0s' $(seq 1 $text_cols) >&3
+}
+
+###########################################################################
+# tests
+###########################################################################
+
+function smoke_tests()
+{
+    local out
+    local err
+    local stat
+
+    # can we get a help message?
+    run_text out err stat -h
+
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -h ($stat)"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr for -h ($err)"
+    [ -n "$out" ] || fail "smoke_tests: empty stdout for -h"
+
+    here=`pwd`
+    set_testdir ${srcdir} ${text_testdir} smoke_tests id3v2.3.tag
+
+    run_text out err stat --artist=Pogues id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on set artist"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr on set artist ($err)"
+
+    artist=$(${text_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TPE1)
+    stat=$?
+    [ $stat -eq 0 ] || fail "smoke_tests: failed to find TPE1"
+    [ "$artist" == "TPE1: Pogues" ] || fail "smoke_tests: failed to set artist"
+
+    echo $LANG
+    run_text out err stat --title=三三 id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on set title"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr on set title ($err)"
+
+    artist=$(${text_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TIT2)
+    stat=$?
+    [ $stat -eq 0 ] || fail "smoke_tests: failed to find TIT2"
+    [ "$artist" == "TIT2: 三三" ] || fail "smoke_tests: failed to set title"
+
+
+    clean_testdir $here $popm_testdir smoke_tests
+}
+
+###########################################################################
+# main
+###########################################################################
+
+if [ -z "$srcdir" ]; then
+    echo >&2 "the \`srcdir' variable needs to be set to this script's location"
+    exit 1
+fi
+
+text_builddir=../src
+text_cols=$(tput cols)
+text_debug=false
+text_help=false
+text_nargs=0
+text_scribbu_dir=../src
+text_testdir=./test-text-tmp
+text_verbose=false
+text_prev_option=
+for text_option
+do
+    # If the previous option required an argument, assign it now.
+    if test -n "$text_prev_option"; then
+        eval $text_prev_option=\$text_option
+        text_prev_option=
+        text_nargs=$(($text_nargs+1))
+        continue
+    fi
+
+    # Parse out the argument option in $text_option, if present.
+    case $text_option in
+        *=?*) text_optarg=$(expr "X$text_option" : '[^=]*=\(.*\)') ;;
+        *=)   text_optarg= ;;
+        *)    text_optarg=yes ;;
+    esac
+
+    # Options are handled here:
+    case $text_option in
+        -d | --de | --deb | --debu | --debug)
+            text_debug=true;;
+        -h | --he | --hel | --help)
+            text_help=yes;;
+        -v | --ve | --ver | --verb | --verbo | --verbose)
+            text_verbose=true;;
+        *)
+            cat >&2 <<EOF
+Unrecognized option \`$text_option'.
+Try \`$0 --help' for more information.
+EOF
+            exit 2;;
+    esac
+
+done
+
+if test "$text_help" == "true"; then
+    cat <<EOF
+\`$0' -- test the \`text' sub-command
+
+TODO(sp1ff): write me!
+EOF
+fi
+
+if test "$text_verbose" == "true"; then
+    exec 3>&1
+else
+    exec 3> /dev/null
+fi
+
+if test "$text_debug" == "true"; then
+    set -x
+fi
+
+# Both must be absolute in order for `make-distcheck' to work
+text_scribbu_dir=`cd "$text_scribbu_dir"; pwd`
+[ -d "$text_testdir" ] || mkdir -p "$text_testdir"
+text_testdir=`cd "$text_testdir"; pwd`
+smoke_tests

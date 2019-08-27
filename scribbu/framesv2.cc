@@ -23,6 +23,8 @@
 
 #include "framesv2.hh"
 
+#include <unordered_map>
+
 #include <boost/functional/hash.hpp>
 #include <boost/static_assert.hpp>
 
@@ -64,7 +66,235 @@ scribbu::detail::count_syncs(std::uint32_t n, bool false_only)
   return count;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                           enum id3v2_text_frames                          //
+///////////////////////////////////////////////////////////////////////////////
 
+std::istream&
+scribbu::operator>>(std::istream &is, id3v2_text_frames &x)
+{
+  using namespace std;
+  
+  static const unordered_map<string, id3v2_text_frames, hash<string>> TBL{
+    { "talb",         id3v2_text_frames::talb },
+    { "TALB",         id3v2_text_frames::talb },
+    { "tal",          id3v2_text_frames::talb },
+    { "TAL",          id3v2_text_frames::talb },
+    { "album",        id3v2_text_frames::talb },
+    { "tbpm",         id3v2_text_frames::tbpm },
+    { "TBPM",         id3v2_text_frames::tbpm },
+    { "tbm",          id3v2_text_frames::tbpm },
+    { "TBM",          id3v2_text_frames::tbpm },
+    { "tcom",         id3v2_text_frames::tcom },
+    { "TCOM",         id3v2_text_frames::tcom },
+    { "tcm",          id3v2_text_frames::tcom },
+    { "TCM",          id3v2_text_frames::tcom },
+    { "composer",     id3v2_text_frames::tcom },
+    { "tcon",         id3v2_text_frames::tcon },
+    { "TCON",         id3v2_text_frames::tcon },
+    { "tco",          id3v2_text_frames::tcon },
+    { "TCO",          id3v2_text_frames::tcon },
+    { "content-type", id3v2_text_frames::tcon },
+    { "genre",        id3v2_text_frames::tcon },
+    { "tcop",         id3v2_text_frames::tcop },
+    { "TCOP",         id3v2_text_frames::tcop },
+    { "tcr",          id3v2_text_frames::tcop },
+    { "TCR",          id3v2_text_frames::tcop },
+    { "tdat",         id3v2_text_frames::tdat },
+    { "TDAT",         id3v2_text_frames::tdat },
+    { "tda",          id3v2_text_frames::tdat },
+    { "TDA",          id3v2_text_frames::tdat },
+    { "date",         id3v2_text_frames::tdat },
+    { "tdly",         id3v2_text_frames::tdly },
+    { "TDLY",         id3v2_text_frames::tdly },
+    { "tdy",          id3v2_text_frames::tdly },
+    { "TDY",          id3v2_text_frames::tdly },
+    { "tenc",         id3v2_text_frames::tenc },
+    { "TENC",         id3v2_text_frames::tenc },
+    { "ten",          id3v2_text_frames::tenc },
+    { "TEN",          id3v2_text_frames::tenc },
+    { "encoded-by",   id3v2_text_frames::tenc },
+    { "text",         id3v2_text_frames::text },
+    { "TEXT",         id3v2_text_frames::text },
+    { "txt",          id3v2_text_frames::text },
+    { "TXT",          id3v2_text_frames::text },
+    { "tflt",         id3v2_text_frames::tflt },
+    { "TFLT",         id3v2_text_frames::tflt },
+    { "tft",          id3v2_text_frames::tflt },
+    { "TFT",          id3v2_text_frames::tflt },
+    { "time",         id3v2_text_frames::time },
+    { "TIME",         id3v2_text_frames::time },
+    { "tim",          id3v2_text_frames::time },
+    { "TIM",          id3v2_text_frames::time },
+    { "time",         id3v2_text_frames::time },
+    { "tt1",          id3v2_text_frames::tit1 },
+    { "TT1",          id3v2_text_frames::tit1 },
+    { "tit1",         id3v2_text_frames::tit1 },
+    { "TIT1",         id3v2_text_frames::tit1 },
+    { "tit2",         id3v2_text_frames::tit2 },
+    { "TIT2",         id3v2_text_frames::tit2 },
+    { "tt2",          id3v2_text_frames::tit2 },
+    { "TT2",          id3v2_text_frames::tit2 },
+    { "title",        id3v2_text_frames::tit2 },
+    { "tit3",         id3v2_text_frames::tit3 },
+    { "TIT3",         id3v2_text_frames::tit3 },
+    { "tt3",          id3v2_text_frames::tit3 },
+    { "TT3",          id3v2_text_frames::tit3 },
+    { "sub-title",    id3v2_text_frames::tit3 },
+    { "tkey",         id3v2_text_frames::tkey },
+    { "TKEY",         id3v2_text_frames::tkey },
+    { "tke",          id3v2_text_frames::tkey },
+    { "TKE",          id3v2_text_frames::tkey },
+    { "tlan",         id3v2_text_frames::tlan },
+    { "TLAN",         id3v2_text_frames::tlan },
+    { "tla",          id3v2_text_frames::tlan },
+    { "TLA",          id3v2_text_frames::tlan },
+    { "languages",    id3v2_text_frames::tlan },
+    { "tlen",         id3v2_text_frames::tlen },
+    { "TLEN",         id3v2_text_frames::tlen },
+    { "tle",          id3v2_text_frames::tlen },
+    { "TLE",          id3v2_text_frames::tlen },
+    { "length",       id3v2_text_frames::tlen },
+    { "tmed",         id3v2_text_frames::tmed },
+    { "TMED",         id3v2_text_frames::tmed },
+    { "tmt",          id3v2_text_frames::tmed },
+    { "TMT",          id3v2_text_frames::tmed },
+    { "toal",         id3v2_text_frames::toal },
+    { "TOAL",         id3v2_text_frames::toal },
+    { "tot",          id3v2_text_frames::toal },
+    { "TOT",          id3v2_text_frames::toal },
+    { "tofn",         id3v2_text_frames::tofn },
+    { "TOFN",         id3v2_text_frames::tofn },
+    { "tof",          id3v2_text_frames::tofn },
+    { "TOF",          id3v2_text_frames::tofn },
+    { "toly",         id3v2_text_frames::toly },
+    { "TOLY",         id3v2_text_frames::toly },
+    { "tol",          id3v2_text_frames::toly },
+    { "TOL",          id3v2_text_frames::toly },
+    { "tope",         id3v2_text_frames::tope },
+    { "TOPE",         id3v2_text_frames::tope },
+    { "toa",          id3v2_text_frames::tope },
+    { "TOA",          id3v2_text_frames::tope },
+    { "tory",         id3v2_text_frames::tory },
+    { "TORY",         id3v2_text_frames::tory },
+    { "tor",          id3v2_text_frames::tory },
+    { "TOR",          id3v2_text_frames::tory },
+    { "town",         id3v2_text_frames::town },
+    { "TOWN",         id3v2_text_frames::town },
+    { "tpe1",         id3v2_text_frames::tpe1 },
+    { "TPE1",         id3v2_text_frames::tpe1 },
+    { "tp1",          id3v2_text_frames::tpe1 },
+    { "TP1",          id3v2_text_frames::tpe1 },
+    { "artist",       id3v2_text_frames::tpe1 },
+    { "tpe2",         id3v2_text_frames::tpe2 },
+    { "TPE2",         id3v2_text_frames::tpe2 },
+    { "tp2",          id3v2_text_frames::tpe2 },
+    { "TP2",          id3v2_text_frames::tpe2 },
+    { "tpe3",         id3v2_text_frames::tpe3 },
+    { "TPE3",         id3v2_text_frames::tpe3 },
+    { "tp3",          id3v2_text_frames::tpe3 },
+    { "TP3",          id3v2_text_frames::tpe3 },
+    { "tpe4",         id3v2_text_frames::tpe4 },
+    { "TPE4",         id3v2_text_frames::tpe4 },
+    { "tp4",          id3v2_text_frames::tpe4 },
+    { "TP4",          id3v2_text_frames::tpe4 },
+    { "tpos",         id3v2_text_frames::tpos },
+    { "TPOS",         id3v2_text_frames::tpos },
+    { "tpa",          id3v2_text_frames::tpos },
+    { "TPA",          id3v2_text_frames::tpos },
+    { "tpub",         id3v2_text_frames::tpub },
+    { "TPUB",         id3v2_text_frames::tpub },
+    { "tpb",          id3v2_text_frames::tpub },
+    { "TPB",          id3v2_text_frames::tpub },
+    { "trck",         id3v2_text_frames::trck },
+    { "TRCK",         id3v2_text_frames::trck },
+    { "trk",          id3v2_text_frames::trck },
+    { "TRK",          id3v2_text_frames::trck },
+    { "track",        id3v2_text_frames::trck },
+    { "trda",         id3v2_text_frames::trda },
+    { "TRDA",         id3v2_text_frames::trda },
+    { "trd",          id3v2_text_frames::trda },
+    { "TRD",          id3v2_text_frames::trda },
+    { "trsn",         id3v2_text_frames::trsn },
+    { "TRSN",         id3v2_text_frames::trsn },
+    { "trso",         id3v2_text_frames::trso },
+    { "TRSO",         id3v2_text_frames::trso },
+    { "tsiz",         id3v2_text_frames::tsiz },
+    { "TSIZ",         id3v2_text_frames::tsiz },
+    { "tsi",          id3v2_text_frames::tsiz },
+    { "TSI",          id3v2_text_frames::tsiz },
+    { "tsrc",         id3v2_text_frames::tsrc },
+    { "TSRC",         id3v2_text_frames::tsrc },
+    { "trc",          id3v2_text_frames::tsrc },
+    { "TRC",          id3v2_text_frames::tsrc },
+    { "tsse",         id3v2_text_frames::tsse },
+    { "TSSE",         id3v2_text_frames::tsse },
+    { "tss",          id3v2_text_frames::tsse },
+    { "TSS",          id3v2_text_frames::tsse },
+    { "tyer",         id3v2_text_frames::tyer },
+    { "TYER",         id3v2_text_frames::tyer },
+    { "tye",          id3v2_text_frames::tyer },
+    { "TYE",          id3v2_text_frames::tyer },
+    { "year",         id3v2_text_frames::tyer },
+  };
+    
+  string text;
+  is >> text;
+
+  x = TBL.at(text);
+
+  return is;
+}
+
+std::ostream&
+scribbu::operator<<(std::ostream &os, const id3v2_text_frames &x)
+{
+  using namespace std;
+  
+  static 
+  const unordered_map<id3v2_text_frames, string, hash<id3v2_text_frames>> TBL{
+    { id3v2_text_frames::talb, "talb" },
+    { id3v2_text_frames::tbpm, "tbpm" },
+    { id3v2_text_frames::tcom, "tcom" },
+    { id3v2_text_frames::tcon, "tcon" },
+    { id3v2_text_frames::tcop, "tcop" },
+    { id3v2_text_frames::tdat, "tdat" },
+    { id3v2_text_frames::tdly, "tdly" },
+    { id3v2_text_frames::tenc, "tenc" },
+    { id3v2_text_frames::text, "text" },
+    { id3v2_text_frames::tflt, "tflt" },
+    { id3v2_text_frames::time, "time" },
+    { id3v2_text_frames::tit1, "tit1" },
+    { id3v2_text_frames::tit2, "tit2" },
+    { id3v2_text_frames::tit3, "tit3" },
+    { id3v2_text_frames::tkey, "tkey" },
+    { id3v2_text_frames::tlan, "tlan" },
+    { id3v2_text_frames::tlen, "tlen" },
+    { id3v2_text_frames::tmed, "tmed" },
+    { id3v2_text_frames::toal, "toal" },
+    { id3v2_text_frames::tofn, "tofn" },
+    { id3v2_text_frames::toly, "toly" },
+    { id3v2_text_frames::tope, "tope" },
+    { id3v2_text_frames::tory, "tory" },
+    { id3v2_text_frames::town, "town" },
+    { id3v2_text_frames::tpe1, "tpe1" },
+    { id3v2_text_frames::tpe2, "tpe2" },
+    { id3v2_text_frames::tpe3, "tpe3" },
+    { id3v2_text_frames::tpe4, "tpe4" },
+    { id3v2_text_frames::tpos, "tpos" },
+    { id3v2_text_frames::tpub, "tpub" },
+    { id3v2_text_frames::trck, "trck" },
+    { id3v2_text_frames::trda, "trda" },
+    { id3v2_text_frames::trsn, "trsn" },
+    { id3v2_text_frames::trso, "trso" },
+    { id3v2_text_frames::tsiz, "tsiz" },
+    { id3v2_text_frames::tsrc, "tsrc" },
+    { id3v2_text_frames::tsse, "tsse" },
+    { id3v2_text_frames::tyer, "tyer" },
+  };
+
+  return os << TBL.at(x);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                              class frame_id3                              //
@@ -83,6 +313,77 @@ scribbu::frame_id3::frame_id3(const unsigned char id[3]):
 scribbu::frame_id3::frame_id3(const char id[3]):
   experimental_('X' == id[0] || 'Y' == id[0] || 'Z' == id[0])
 { id_[0] = id[0]; id_[1] = id[1]; id_[2] = id[2]; }
+
+scribbu::frame_id3::frame_id3(id3v2_text_frames x) :
+  experimental_(false)
+{
+  id_[0] = 'T';
+  switch (x) {
+  case id3v2_text_frames::talb:
+    id_[1] = 'A'; id_[2] = 'L'; break;
+  case id3v2_text_frames::tbpm:
+    id_[1] = 'B'; id_[2] = 'M'; break;
+  case id3v2_text_frames::tcom:
+    id_[1] = 'C'; id_[2] = 'M'; break;
+  case id3v2_text_frames::tcon:
+    id_[1] = 'C'; id_[2] = 'O'; break;
+  case id3v2_text_frames::tcop:
+    id_[1] = 'C'; id_[2] = 'R'; break;
+  case id3v2_text_frames::tdat:
+    id_[1] = 'D'; id_[2] = 'A'; break;
+  case id3v2_text_frames::tdly:
+    id_[1] = 'D'; id_[2] = 'Y'; break;
+  case id3v2_text_frames::tenc:
+    id_[1] = 'E'; id_[2] = 'N'; break;
+  case id3v2_text_frames::text:
+    id_[1] = 'X'; id_[2] = 'T'; break;
+  case id3v2_text_frames::tflt:
+    id_[1] = 'F'; id_[2] = 'T'; break;
+  case id3v2_text_frames::time:
+    id_[1] = 'I'; id_[2] = 'M'; break;
+  case id3v2_text_frames::tit1:
+    id_[1] = 'T'; id_[2] = '1'; break;
+  case id3v2_text_frames::tit2:
+    id_[1] = 'T'; id_[2] = '2'; break;
+  case id3v2_text_frames::tit3:
+    id_[1] = 'T'; id_[2] = '3'; break;
+  case id3v2_text_frames::tkey:
+    id_[1] = 'K'; id_[2] = 'E'; break;
+  case id3v2_text_frames::tlan:
+    id_[1] = 'L'; id_[2] = 'A'; break;
+  case id3v2_text_frames::tlen:
+    id_[1] = 'L'; id_[2] = 'E'; break;
+  case id3v2_text_frames::tofn:
+    id_[1] = 'O'; id_[2] = 'F'; break;
+  case id3v2_text_frames::tpe1:
+    id_[1] = 'P'; id_[2] = '1'; break;
+  case id3v2_text_frames::tpe2:
+    id_[1] = 'P'; id_[2] = '2'; break;
+  case id3v2_text_frames::tpe3:
+    id_[1] = 'P'; id_[2] = '3'; break;
+  case id3v2_text_frames::tpe4:
+    id_[1] = 'P'; id_[2] = '4'; break;
+  case id3v2_text_frames::tpos:
+    id_[1] = 'P'; id_[2] = 'A'; break;
+  case id3v2_text_frames::tpub:
+    id_[1] = 'P'; id_[2] = 'B'; break;
+  case id3v2_text_frames::trck:
+    id_[1] = 'R'; id_[2] = 'K'; break;
+  case id3v2_text_frames::trda:
+    id_[1] = 'R'; id_[2] = 'D'; break;
+  case id3v2_text_frames::tsiz:
+    id_[1] = 'S'; id_[2] = 'I'; break;
+  case id3v2_text_frames::tsrc:
+    id_[1] = 'R'; id_[2] = 'C'; break;
+  case id3v2_text_frames::tsse:
+    id_[1] = 'S'; id_[2] = 'S'; break;
+  case id3v2_text_frames::tyer:
+    id_[1] = 'Y'; id_[2] = 'E'; break;
+  default:
+    // TODO(sp1ff): throw something more specific
+    throw std::logic_error("");
+  }
+}
 
 bool scribbu::operator==(const frame_id3 &lhs,
                          const frame_id3 &rhs)
@@ -130,6 +431,132 @@ scribbu::frame_id4::frame_id4(const unsigned char id[4]):
 scribbu::frame_id4::frame_id4(const char id[4]):
   experimental_('X' == id[0] || 'Y' == id[0] || 'Z' == id[0])
 { id_[0] = id[0]; id_[1] = id[1]; id_[2] = id[2]; id_[3] = id[3]; }
+
+scribbu::frame_id4::frame_id4(id3v2_text_frames x):
+  experimental_(false)
+{
+  id_[0] = 'T';
+  switch (x) {
+  case id3v2_text_frames::talb:
+    id_[1] = 'A'; id_[2] = 'L'; id_[3] = 'B';
+    break;
+  case id3v2_text_frames::tbpm:
+    id_[1] = 'B'; id_[2] = 'P'; id_[3] = 'M';
+    break;
+  case id3v2_text_frames::tcom:
+    id_[1] = 'C'; id_[2] = 'O'; id_[3] = 'M';
+    break;
+  case id3v2_text_frames::tcon:
+    id_[1] = 'C'; id_[2] = 'O'; id_[3] = 'N';
+    break;
+  case id3v2_text_frames::tcop:
+    id_[1] = 'C'; id_[2] = 'O'; id_[3] = 'P';
+    break;
+  case id3v2_text_frames::tdat:
+    id_[1] = 'D'; id_[2] = 'A'; id_[3] = 'T';
+    break;
+  case id3v2_text_frames::tdly:
+    id_[1] = 'D'; id_[2] = 'L'; id_[3] = 'Y';
+    break;
+  case id3v2_text_frames::tenc:
+    id_[1] = 'E'; id_[2] = 'N'; id_[3] = 'C';
+    break;
+  case id3v2_text_frames::text:
+    id_[1] = 'E'; id_[2] = 'X'; id_[3] = 'T';
+    break;
+  case id3v2_text_frames::tflt:
+    id_[1] = 'F'; id_[2] = 'L'; id_[3] = 'T';
+    break;
+  case id3v2_text_frames::time:
+    id_[1] = 'I'; id_[2] = 'M'; id_[3] = 'E';
+    break;
+  case id3v2_text_frames::tit1:
+    id_[1] = 'I'; id_[2] = 'T'; id_[3] = '1';
+    break;
+  case id3v2_text_frames::tit2:
+    id_[1] = 'I'; id_[2] = 'T'; id_[3] = '2';
+    break;
+  case id3v2_text_frames::tit3:
+    id_[1] = 'I'; id_[2] = 'T'; id_[3] = '3';
+    break;
+  case id3v2_text_frames::tkey:
+    id_[1] = 'K'; id_[2] = 'E'; id_[3] = 'Y';
+    break;
+  case id3v2_text_frames::tlan:
+    id_[1] = 'L'; id_[2] = 'A'; id_[3] = 'N';
+    break;
+  case id3v2_text_frames::tlen:
+    id_[1] = 'L'; id_[2] = 'E'; id_[3] = 'N';
+    break;
+  case id3v2_text_frames::tmed:
+    id_[1] = 'M'; id_[2] = 'E'; id_[3] = 'D';
+    break;
+  case id3v2_text_frames::toal:
+    id_[1] = 'O'; id_[2] = 'A'; id_[3] = 'L';
+    break;
+  case id3v2_text_frames::tofn:
+    id_[1] = 'O'; id_[2] = 'F'; id_[3] = 'N';
+    break;
+  case id3v2_text_frames::toly:
+    id_[1] = 'O'; id_[2] = 'L'; id_[3] = 'Y';
+    break;
+  case id3v2_text_frames::tope:
+    id_[1] = 'O'; id_[2] = 'P'; id_[3] = 'E';
+    break;
+  case id3v2_text_frames::tory:
+    id_[1] = 'O'; id_[2] = 'R'; id_[3] = 'Y';
+    break;
+  case id3v2_text_frames::town:
+    id_[1] = 'O'; id_[2] = 'W'; id_[3] = 'N';
+    break;
+  case id3v2_text_frames::tpe1:
+    id_[1] = 'P'; id_[2] = 'E'; id_[3] = '1';
+    break;
+  case id3v2_text_frames::tpe2:
+    id_[1] = 'P'; id_[2] = 'E'; id_[3] = '2';
+    break;
+  case id3v2_text_frames::tpe3:
+    id_[1] = 'P'; id_[2] = 'E'; id_[3] = '3';
+    break;
+  case id3v2_text_frames::tpe4:
+    id_[1] = 'P'; id_[2] = 'E'; id_[3] = '4';
+    break;
+  case id3v2_text_frames::tpos:
+    id_[1] = 'P'; id_[2] = 'O'; id_[3] = 'S';
+    break;
+  case id3v2_text_frames::tpub:
+    id_[1] = 'P'; id_[2] = 'U'; id_[3] = 'B';
+    break;
+  case id3v2_text_frames::trck:
+    id_[1] = 'R'; id_[2] = 'C'; id_[3] = 'K';
+    break;
+  case id3v2_text_frames::trda:
+    id_[1] = 'R'; id_[2] = 'D'; id_[3] = 'A';
+    break;
+  case id3v2_text_frames::trsn:
+    id_[1] = 'R'; id_[2] = 'S'; id_[3] = 'N';
+    break;
+  case id3v2_text_frames::trso:
+    id_[1] = 'R'; id_[2] = 'S'; id_[3] = 'O';
+    break;
+  case id3v2_text_frames::tsiz:
+    id_[1] = 'S'; id_[2] = 'I'; id_[3] = 'Z';
+    break;
+  case id3v2_text_frames::tsrc:
+    id_[1] = 'S'; id_[2] = 'R'; id_[3] = 'C';
+    break;
+  case id3v2_text_frames::tsse:
+    id_[1] = 'S'; id_[2] = 'S'; id_[3] = 'E';
+    break;
+  case id3v2_text_frames::tyer:
+    id_[1] = 'Y'; id_[2] = 'E'; id_[3] = 'R';
+    break;
+  default:
+    // TODO(sp1ff): throw something more specific
+    throw std::logic_error("");
+
+  }
+}
 
 bool scribbu::operator==(const frame_id4 &lhs,
                          const frame_id4 &rhs)

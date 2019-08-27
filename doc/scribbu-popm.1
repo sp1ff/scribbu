@@ -5,7 +5,7 @@
 .SH NAME
 scribbu popm \- Manage the play count and/or popularimeter ID3v2 tags
 .SH SYNOPSIS
-.BR scribbu " [(-c|--config) config-file] " popm " [-h] [--help] [--info]"
+.BR "scribbu  popm " "[-h] [--help] [--info]"
 .RS 8
 .br
 [-n|--dry-run] [-u|--adjust-unsync] [-c|--count=] <play count>
@@ -84,18 +84,12 @@ Print a brief usage message on
 .PP
 \-\-help
 .RS 4
-Display more detailed help; this man page by default, or the
-.B scribbu-rename
-node in the local Info system if the
-.I --info
-flag is also given.
+Display more detailed help.
 .RE
 .PP
 \-\-info
 .RS 4
-Modify the
-.I --help
-flag by using the users's Infor viewer instead of man page viewer.
+Display this sub-command's node in the user's Info viewer.
 .RE
 .PP
 \-n|\-\-dry\-run
@@ -138,7 +132,7 @@ Increment the count field by
 Specify the owner field for popularimeter frames. If incrementing or
 setting count fields, only popularimeter frames with an owner of
 .I OWNER
-will be alerted. When creating popularimeter frames, the owner field
+will be updated. When creating popularimeter frames, the owner field
 will be set to
 .BR OWNER .
 .RE

@@ -56,18 +56,19 @@ namespace scribbu {
    * that encoding, a bad_code_unit exception shall be thrown.
    *
    *
-   * 1. \anchor tdf_pprinter_ref_1 Lindner, Paul , U of MN Internet Gopher Team,
-   * 1993: IANA, Text Media Types, text/tab-separated-values.
-   * https://www.iana.org/assignments/media-types/text/tab-separated-values
-   * (Accessed January 1, 2019).
+   * 1. \anchor tdf_pprinter_ref_1 [1] Lindner, Paul, U of MN Internet Gopher
+   * Team. IANA, Text Media Types,
+   * text/tab-separated-values. https://www.iana.org/assignments/media-types/text/tab-separated-values
+   * (updated January 1, 2019)
    *
-   * 2. \anchor tdf_pprinter_ref_2 ASCII Delimited
+   * 2. \anchor tdf_pprinter_ref_2 [2] multiple authors. ASCII Delimited
    * Text. https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
-   * (Accessed January 1, 2019).
+   * (updated January 1, 2019)
    *
-   * 3. \anchor tdf_pprinter_ref_3 Duncan, Ronald, 2009: Text File formats –
-   * ASCII Delimited Text – Not CSV or TAB delimited text.
+   * 3. \anchor tdf_pprinter_ref_3 [3] Duncan, Ronald. Text File formats – ASCII
+   * Delimited Text – Not CSV or TAB delimited text.
    * https://ronaldduncan.wordpress.com/2009/10/31/text-file-formats-ascii-delimited-text-not-csv-or-tab-delimited-text/#comments
+   * (updated August 31, 2019)
    *
    *
    */

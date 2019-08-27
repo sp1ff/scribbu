@@ -179,6 +179,58 @@ namespace scribbu {
   /// three ID3v2 versions of which scribbuy is aware
   enum class id3v2_version { v2, v3, v4 };
 
+  /**
+   * \brief an ID3v2 version-independent way of naming text frames
+   *
+   *
+   * \todo produce an analagous enum for all frames
+   *
+   */
+  
+  enum class id3v2_text_frames {
+    talb, // Album/Movie/Show title [TAL]
+    tbpm, // beats per minute [TBM]
+    tcom, // Composer(s) [TCM]
+    tcon, // Content type [TCO]
+    tcop, // Copyright message [TCR]
+    tdat, // Date (DDMM format containing the date for the recording) [TDA]
+    tdly, // Playlist delay [TDY]
+    tenc, // Encoded by [TEN]
+    text, // Lyricist(s)/Text writer(s) [TXT]
+    tflt, // File type (see spec for format) [TFT]
+    time, // Time (HHMM format containing the time for the recording) [TIM]
+    tit1, // Content group description [TT1]
+    tit2, // Title/Songname/Content description [TT2]
+    tit3, // Subtitle/Description refinement [TT3]
+    tkey, // Initial key (see spec for format)
+    tlan, // Language(s) [TLA]
+    tlen, // Length (length of audio in milliseconds, as text) [TLE]
+    tmed, // Media type (media from which this was encoded-- see spec for format)[TMT]
+    toal, // Original album/movie/show title
+    tofn, // Original filename [TOF]
+    toly, // Original lyricist(s)/text writer(s)
+    tope, // Original artist(s)/performer(s)
+    tory, // Original release year
+    town, // File owner/licensee
+    tpe1, // Lead artist(s)/Lead performer(s)/Soloist(s)/Performing group [TP1]
+    tpe2, // Band/Orchestra/Accompaniment [TP2]
+    tpe3, // Conductor [TP3]
+    tpe4, // Interpreted, remixed, or otherwise modified by [TP4]
+    tpos, // Part of a set [TPA]
+    tpub, // Publisher [TPB]
+    trck, // Track number/Position in set [TRK]
+    trda, // Recording dates [TRD]
+    trsn, // Internet radio station name
+    trso, // Internet radio station owner
+    tsiz, // Size (size of audio in bytes) [TSI]
+    tsrc, // International Standard Recording Code [TRC]
+    tsse, // Software/Hardware and settings used for encoding [TSS]
+    tyer, // Year [TYE]
+  };
+  
+  std::istream& operator>>(std::istream &is, id3v2_text_frames &x);
+  std::ostream& operator<<(std::ostream &is, const id3v2_text_frames &x);
+  
   /// ID3v2.2 identifier-- a simple UDT representing a three-character,
   /// ASCII-encoded frame ID for use in hashed collections
   class frame_id3
@@ -189,6 +241,7 @@ namespace scribbu {
     frame_id3(unsigned char id0, unsigned char id1, unsigned char id2);
     frame_id3(const unsigned char id[3]);
     frame_id3(const char id[3]);
+    frame_id3(id3v2_text_frames x);
 
   public:
     bool experimental() const {
@@ -235,6 +288,7 @@ namespace scribbu {
               unsigned char id2, unsigned char id3);
     frame_id4(const unsigned char id[4]);
     frame_id4(const char id[4]);
+    frame_id4(id3v2_text_frames x);
 
   public:
     bool experimental() const {
@@ -272,9 +326,18 @@ namespace scribbu {
 
   std::ostream& operator<<(std::ostream &os, const scribbu::frame_id3 &x);
   std::ostream& operator<<(std::ostream &os, const scribbu::frame_id4 &x);
+
 }
 
 namespace std {
+
+  template <>
+  class hash<scribbu::id3v2_text_frames> {
+  public:
+    std::size_t operator()(const scribbu::id3v2_text_frames &x) const noexcept {
+      return static_cast<std::size_t>(x);
+    }
+  };
 
   template <>
   struct hash<scribbu::frame_id3>

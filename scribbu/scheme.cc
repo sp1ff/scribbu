@@ -741,11 +741,60 @@ extern "C" {
     scm_variable_set_x(scm_version, scm_new);
   }
 
+  SCM
+  get_load_path_variable(void*)
+  {
+    return scm_c_lookup("%load-path");
+  }
+
+  SCM
+  get_load_path_variable_hand(void*, SCM, SCM)
+  {
+    return SCM_EOL;
+  }
+
+  void
+  customize_load_path(const std::string &datadir)
+  {
+    SCM scm_load_path = scm_c_catch(SCM_BOOL_T, 
+                                    get_load_path_variable, 0,
+                                    get_load_path_variable_hand, 0,
+                                    0, 0);
+    if (SCM_EOL == scm_load_path) {
+      return;
+    }
+    
+    SCM scm_value = scm_variable_ref(scm_load_path); // should be a list
+    if (!scm_is_pair(scm_value)) {
+      return;
+    }
+    
+    // Walk that list, checking for DATADIR/guile/site
+    std::string site = datadir + "/guile/site";
+    dynwind_context ctx;
+    bool found = false;
+    for (int i = 0, n = scm_to_int(scm_length(scm_value)); i < n; ++i) {
+      SCM scm = scm_list_ref(scm_value, scm_from_int(i));
+      char *c_pth = ctx.free_locale_string(scm);
+      if (0 == strcmp(c_pth, site.c_str())) {
+        found = true;
+        break;
+      }
+    }
+    
+    if (!found) {
+      SCM args = scm_list_2(scm_list_1(scm_from_locale_string(site.c_str())),
+                            scm_value);                            
+      scm_variable_set_x(scm_load_path, scm_append(args));
+    }
+  }
 
   // Initializae the Guile interpreter
   void*
-  initialize_guile(void*)
+  initialize_guile(void *praw)
   {
+    const init_guile *pig = reinterpret_cast<const init_guile*>(praw);
+
     scribbu::init_symbols();
 
 #   ifndef SCM_MAGIC_SNARFER
@@ -753,6 +802,7 @@ extern "C" {
 #   endif
 
     customize_welcome();
+    customize_load_path(pig->datadir_);
 
     return 0;
   }

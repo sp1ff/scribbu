@@ -1,3 +1,28 @@
+2019-09-26  Michael Herstine  <sp1ff@pobox.com>
+
+	Bug squashing prior to 0.5:
+	This commit fixes:
+
+	  1. https://github.com/sp1ff/scribbu/issues/1: `scribbu popm --create' will only create PCNT frames
+
+	  2. https://github.com/sp1ff/scribbu/issues/2: `scribbu' help messages not working consistently
+
+	  3. https://github.com/sp1ff/scribbu/issues/3: add $(datadir)/guile/site to %load-path
+
+	as well as adds the following features:
+
+	  1. list all sub-commands in the `scribbu' usage message
+
+	  2. change the default for `track-no' in `<id3v1-tag>' to '()
+
+	  3. changes to the Winamp scale for mapping stars to POPM ratings (with a flag
+	     for switching to a linear scale)
+
+	  4. adds a new sub-command `text' for creating, updating & deleting assorted
+	     ID3v2 text frames
+
+	as well as updating the documentation & help handling.
+
 2019-08-18  Michael Herstine  <sp1ff@pobox.com>
 
 	This commit contains the accessioning features.

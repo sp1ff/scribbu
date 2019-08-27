@@ -16,7 +16,7 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 *** Scheme API completely re-written
 
-*** New sub-commands `scribbu popm' & `scribbu xtag'
+*** New sub-commands `scribbu popm', `scribbu xtag' & `scribbu text'
 
 * Changes in scribbu 0.4
 

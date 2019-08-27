@@ -83,7 +83,7 @@ namespace {
 
   /// interpret \a text as a rating
   unsigned char 
-  rating_for_text(const std::string &text)
+  rating_for_text(const std::string &text, bool linear)
   {
     using boost::regex;
     using boost::smatch;
@@ -120,23 +120,49 @@ namespace {
       throw po::invalid_option_value("bad rating");
     }
     
-    // 1-51 (26)      => *
-    // 52-102 (77)    => **
-    // 103->153 (128) => ***
-    // 154->204 (179) => ****
-    // 205->255 (230) => *****
-    if (1 == text.length()) {
-      return 26;
-    } else if (2 == text.length()) {
-      return 77;
-    } else if (3 == text.length()) {
-      return 128;
-    } else if (4 == text.length()) {
-      return 179;
+    size_t n = text.length();
+    if (linear) {
+      
+      // Use a linear scale to map from 1-255 to 1-5 stars (0 doesn't matter,
+      // since 0 means "un-rated" & if we're here, the user is applying a
+      // rating.
+      
+      // | range   | mid-point | stars |
+      // |---------+-----------+-------|
+      // | 1-51    | 26        | *     |
+      // | 52-102  | 77        | **    |
+      // | 103-153 | 128       | ***   |
+      // | 154-204 | 179       | ****  |
+      // | 205-255 | 230       | ***** |
+      if (1 == n) {
+        return 26;
+      } else if (2 == n) {
+        return 77;
+      } else if (3 == n) {
+        return 128;
+      } else if (4 == n) {
+        return 179;
+      } else {
+        return 230;
+      }
+      
     } else {
-      return 230;
+      
+      // Use the Winamp 5.666 scheme
+      if (1 == n) {
+        return 1;
+      } else if (2 == n) {
+        return 64;
+      } else if (3 == n) {
+        return 128;
+      } else if (4 == n) {
+        return 196;
+      } else {
+        return 255;
+      }
+
     }
-    
+      
   }
 
   //////////////////////////////////////////////////////////////////////////
@@ -302,7 +328,9 @@ namespace {
         }
         ++num_pcnt;
 
-      } else if (!playcount_only && traits_type::is_popm(F)) {
+      }
+      
+      if (!playcount_only && traits_type::is_popm(F)) {
 
         // We have a popularimeter frame...
         popm_type &G = dynamic_cast<popm_type&>(F);
@@ -357,7 +385,8 @@ namespace {
         upd = true;
 
       }
-      else if (0 == num_popm && !playcount_only) {
+      
+      if (0 == num_popm && !playcount_only && rating) {
         
         if (dry_run) {
           cout << "creating a new POPM frame for " << owner << 
@@ -412,6 +441,9 @@ namespace {
    * \param dry_run [in] if true, don't actually do anything; just print what
    * *would* be done
    *
+   * \param adj_unsync [in] if true, apply the unsynchronisation scheme when
+   * needed (deafult is to never use it)
+   *
    *
    */
   
@@ -432,9 +464,9 @@ namespace {
     using namespace std;
     using namespace scribbu;
 
+    // TODO(sp1ff): Why convert here? Why not higher up the call stack?
     queue<size_t> tags(dtags);
 
-    // TODO(sp1ff): Why convert here? Why not higher up the call stack?
     vector<unique_ptr<id3v2_tag>> T;
     
     {
@@ -580,10 +612,13 @@ namespace {
     /////////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
@@ -598,7 +633,6 @@ namespace {
        "files before modifying them.")
       ("dry-run,n", po::bool_switch(), "Don't do anything; just print what "
        "*would* be done")
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("increment,i", po::value<size_t>(), "Increment by "
        "which to increment the play count")
       ("owner,o", po::value<string>(), "Operate only on POPM frames with "
@@ -609,14 +643,17 @@ namespace {
        "tag (s); either 0-255, or X{1,5} for X in [a-zA-Z@#%*+]")
       ("tag,t", po::value<vector<size_t>>(), "Zero-based index of the tag "
        "on which to operate; may be given more than once to select "
-       "multiple tags");
+       "multiple tags")
+      ("linear-scale,L", po::bool_switch(), "Use a linear scale when mapping "
+       "stars to the 0-255 popularimeter scale; by default the Winamp 5.666 "
+       "scheme is used");
      
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>(), "one or more "
-       "files or directories to be examined; if a directory is given, it "
-       "will be searched recursively");
+      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
+       "files or directories to be examined; if a directory is given, it will "
+       "be searched recursively");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
@@ -640,98 +677,85 @@ namespace {
         options(all).
         positional(popts).
         run();
+
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-popm",
+                        "(scribbu) Invoking scribbu popm");
+
       po::store(parsed, vm);
 
-      help_level help = help_level::none;
-      if (vm.count("help")) {
-        help = help_level_for_parsed_opts(parsed);
-      }
-      
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
       po::notify(vm);
-
-      if (help_level::regular == help) {
-
-        print_usage(cout, docopts, USAGE);
-
-      } else if (help_level::verbose == help) {
-
-        show_man_page("scribbu-popm");
-        
-      } else {
-
-        // That's it-- the list of files and/or directories to be processed
-        // should be waiting for us in 'arguments'...
-      
-        // Work around to https://svn.boost.org/trac/boost/ticket/8535
-        std::vector<fs::path> args;
-        if (vm.count("arguments")) {
-          for (auto s: vm["arguments"].as<std::vector<string>>()) {
-            args.push_back(fs::path(s));
-          }
+    
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      std::vector<fs::path> args;
+      if (vm.count("arguments")) {
+        for (auto s: vm["arguments"].as<std::vector<string>>()) {
+          args.push_back(fs::path(s));
         }
-
-        bool adj_unsync         = vm["adjust-unsync"     ].as<bool  >();
-        bool playcount_only     = vm["playcount-only"    ].as<bool  >();
-        bool popularimeter_only = vm["popularimeter-only"].as<bool  >();
-        bool create             = vm["create"            ].as<bool  >();
-        bool create_backups     = vm["create-backups"    ].as<bool  >();
-        bool dry_run            = vm["dry-run"           ].as<bool  >();
-        
-        boost::optional<size_t> increment = boost::none;
-        if (vm.count("increment")) {
-          increment = vm["increment"].as<size_t>();
-        }
-         
-        boost::optional<size_t> play_count = boost::none;
-        if (vm.count("count")) {
-          play_count = vm["count"].as<size_t>();
-        }
-
-        string owner; 
-        if (vm.count("owner")) {
-          owner = vm["owner"].as<string>();
-        }
-
-        deque<size_t> tags;
-        if (vm.count("tag")) {
-          vector<size_t> V = vm["tag"].as<vector<size_t>>();
-          tags.insert(tags.begin(), V.begin(), V.end());
-        } else {
-          tags.push_back(0);
-        }
-        
-        boost::optional<unsigned char> rating;
-        if (vm.count("rating")) {
-          string s = vm["rating"].as<string>();
-          rating = rating_for_text(s);
-        }
-        
-        // Validate our options:
-        
-        // 1. At most one of `playcount_only' & `popularimeter_only' may be true
-        if (playcount_only && popularimeter_only) {
-          throw po::invalid_option_value("at most one of `playcount-only' & "
-                                         "`popularimeter-only' may be given");
-        }
-        
-        // 2. `playcount' & `increment' may not both be given
-        if (increment && play_count) {
-          throw po::invalid_option_value("at most one of `playcount' & "
-                                         "`increment' may be given");
-        }
-
-        for_each(args.begin(), args.end(), 
-                 [=] (const fs::path &pth) {
-                   process_dirent(pth, tags, playcount_only, popularimeter_only, 
-                                  owner, increment, play_count, rating, create, 
-                                  create_backups, dry_run, adj_unsync);
-                 }
-               );
-
       }
+
+      bool adj_unsync         = vm["adjust-unsync"     ].as<bool>();
+      bool playcount_only     = vm["playcount-only"    ].as<bool>();
+      bool popularimeter_only = vm["popularimeter-only"].as<bool>();
+      bool create             = vm["create"            ].as<bool>();
+      bool create_backups     = vm["create-backups"    ].as<bool>();
+      bool dry_run            = vm["dry-run"           ].as<bool>();
+      bool linear             = vm["linear-scale"      ].as<bool>();
+      
+      boost::optional<size_t> increment = boost::none;
+      if (vm.count("increment")) {
+        increment = vm["increment"].as<size_t>();
+      }
+       
+      boost::optional<size_t> play_count = boost::none;
+      if (vm.count("count")) {
+        play_count = vm["count"].as<size_t>();
+      }
+
+      string owner; 
+      if (vm.count("owner")) {
+        owner = vm["owner"].as<string>();
+      }
+
+      deque<size_t> tags;
+      if (vm.count("tag")) {
+        vector<size_t> V = vm["tag"].as<vector<size_t>>();
+        tags.insert(tags.begin(), V.begin(), V.end());
+      } else {
+        tags.push_back(0);
+      }
+      
+      boost::optional<unsigned char> rating;
+      if (vm.count("rating")) {
+        string s = vm["rating"].as<string>();
+        rating = rating_for_text(s, linear);
+      }
+      
+      // Validate our options:
+      
+      // 1. At most one of `playcount_only' & `popularimeter_only' may be true
+      if (playcount_only && popularimeter_only) {
+        throw po::invalid_option_value("at most one of `playcount-only' & "
+                                       "`popularimeter-only' may be given");
+      }
+      
+      // 2. `playcount' & `increment' may not both be given
+      if (increment && play_count) {
+        throw po::invalid_option_value("at most one of `playcount' & "
+                                       "`increment' may be given");
+      }
+
+      for_each(args.begin(), args.end(), 
+               [=] (const fs::path &pth) {
+                 process_dirent(pth, tags, playcount_only, popularimeter_only, 
+                                owner, increment, play_count, rating, create, 
+                                create_backups, dry_run, adj_unsync);
+               }
+             );
 
     } catch (const po::error &ex) {
 

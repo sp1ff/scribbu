@@ -131,23 +131,23 @@
  *
  * \section scribbu_references References
  *
- * 1. \anchor ref_01 Alexandrescu, Andrei, 2001: Modern C++ Design.
- *   Addison-Wesley, Boston.
+ * 1. \anchor ref_01 [1] Alexandrescu, Andrei, Modern C++ Design,
+ *   Addison-Wesley, Boston, 2001.
  *
- * 2. \anchor ref_02 Langer, Angelika and Kreft, Klaus, 1999: Standard C++
- *    IOStrems and Locales. Addison-Wesley, Boston.
+ * 2. \anchor ref_02 [2] Langer, Angelika and Kreft, Klaus, Standard C++
+ *    IOStrems and Locales. Addison-Wesley, Boston, 1999.
  *
- * 3. \anchor ref_03 Meyer, Bertrand, 1997: Object Oriented Software
- *    Construction, Prentice Hall.
+ * 3. \anchor ref_03 [3] Meyer, Bertrand, Object Oriented Software
+ *    Construction, Prentice Hall, 1997.
  *
- * 4. \anchor ref_04 Seibel, Peter, 2005: Practical Common Lisp, 
- *    Chapter 25. Practical: An ID3 Parser, retrieved February 20, 2019.
+ * 4. \anchor ref_04 [4] Seibel, Peter, Practical Common Lisp, 
+ *    Chapter 25. Practical: An ID3 Parser, 2005.
  *
- * 5. \anchor ref_04 Unknown, cited 2015: ID3v1. [Available online
- *    at http://id3.org/ID3v1.]
+ * 5. \anchor ref_05 [5] unknown. ID3v1. http://id3.org/ID3v1 (updated September
+ * 1, 2019)
  *
- * 6. \anchor ref_05 Martin Nilsson, cited 2015: ID3 tag
- *    version 2 [Availbale online at http://id3.org/id3v2-00]
+ * 6. \anchor ref_06 [6] Nilsson, Martin.ID3 tag version 2
+ * http://id3.org/id3v2-00 (updated September 1, 2019)
  *
  */
 

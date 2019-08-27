@@ -29,6 +29,8 @@ if [ ! -z "$t_err" ]; then
 	exit 1
 fi
 echo "$t_std" | grep -E 'Usage:' || exit 1
+# Check to be sure we list sub-commands
+echo "$t_std" | grep -E 'scribbu sub-commands.*:' || exit 1
 
 # test SUBCMD -h
 eval "$(../src/scribbu rename -h \

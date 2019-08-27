@@ -6,7 +6,7 @@ EXTRA_DIST = test-util test-split test-rename test-report test-report-tdf \
 	test-cleanup-from-audacity.scm test-cleanup-from-audacity \
 	test-tagsets-from-scheme.scm test-tagsets-from-scheme \
 	test-frames-from-scheme.scm test-frames-from-scheme \
-	test-scripting test-options test-popm test-xtag
+	test-scripting test-options test-popm test-xtag test-text
 CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	report.csv report-last.csv report-tdf.tdf \
 	id3v20A trackB id3v1A trackA \
@@ -17,12 +17,15 @@ CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	test-xtag-tmp/xtag_smoke_tests/id3v2.3.tag \
 	test-xtag-tmp/xtag_smoke_tests/id3v2.3.tag.1 \
 	test-popm-tmp/smoke_tests/id3v2.3.tag \
-	test-popm-tmp/smoke_tests/id3v2.3.tag.1
+	test-popm-tmp/smoke_tests/id3v2.3.tag.1 \
+	test-popm-tmp/test_issue_1/id3v2.3.tag \
+	test-popm-tmp/test_issue_1/id3v2.3.tag.1 \
+	test-text-tmp/smoke_tests/id3v2.3.tag
 TESTS = $(check_PROGRAMS) test-split test-rename test-report test-report-tdf \
 	test-dump test-with-track-in test-fs-generator \
 	test-cleanup-encoded-by test-cleanup-from-audacity \
 	test-tagsets-from-scheme test-frames-from-scheme test-scripting \
-	test-options test-popm test-xtag
+	test-options test-popm test-xtag test-text
 unit_SOURCES = unit.cc charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
 	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc tdf-pprinter.cc \

@@ -709,6 +709,44 @@ scribbu::id3v2_3_tag::add_user_defined_text(const std::string &text,
   add_frame_to_lookups(F, d);
 }
 
+/*virtual*/
+std::string
+scribbu::id3v2_3_tag::text(
+    id3v2_text_frames                id,
+    encoding                         dst /*= encoding::UTF_8*/,
+    on_no_encoding                   rsp /*= on_no_encoding::fail*/,
+    const boost::optional<encoding> &src /*= boost::none*/) const
+{
+  return text_frame_as_str(frame_id4(id), dst, rsp, src);
+}
+
+/// Set the contents of an arbitrary text frame
+/*virtual*/ 
+void
+scribbu::id3v2_3_tag::text(
+    id3v2_text_frames  id,
+    const std::string &text,
+    encoding           src     /*= encoding::UTF_8*/,
+    bool               add_bom /*= false*/,
+    on_no_encoding     rsp     /*= on_no_encoding::fail*/)
+{
+  set_text_frame(frame_id4(id), text, src, add_bom, rsp);
+}
+
+/// Delete an arbitrary text frame
+/*virtual*/
+void
+scribbu::id3v2_3_tag::delete_frame(id3v2_text_frames id)
+{
+  frame_id4 id3(id);
+  auto p = frame_map_.find(id3);
+  if (p != frame_map_.end()) {
+    std::ptrdiff_t idx = p->second;
+    remove_frame_from_lookups(id3, idx);
+  }
+}
+
+
 ///////////////////////////////////////////////////////////////////////////
 //                           tag as container                            //
 ///////////////////////////////////////////////////////////////////////////

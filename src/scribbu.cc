@@ -123,14 +123,17 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
    *
    */
 
-  std::tuple<bool, help_level>
+  std::tuple<bool, help_level, boost::optional<verbose_flavor>>
   handle_options(int *argc, char ***argv,
                  int *gargc, char **gargv)
   {
+    using boost::optional;
+
     int n = 0;
     bool version = false;
     bool copy_rest = false;
     help_level help = help_level::none;
+    optional<verbose_flavor> flav = boost::none;
 
     while (*argc > 0) {
 
@@ -141,9 +144,16 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
         help = help_level::regular; // short help
         (*argv)++; (*argc)--;       // consume `argv'
 
-      } else if (!strcmp("--help", cmd)) {
+      } else if (!strcmp("--help", cmd) || !strcmp("--man", cmd)) {
 
         help = help_level::verbose; // verbose help
+        flav = verbose_flavor::man;
+        (*argv)++; (*argc)--;       // consume `argv'
+
+      } else if (!strcmp("--info", cmd)) {
+
+        help = help_level::verbose; // verbose help
+        flav = verbose_flavor::info;
         (*argv)++; (*argc)--;       // consume `argv'
 
       } else if (!strcmp("-v", cmd) || !strcmp("--version", cmd)) {
@@ -224,7 +234,7 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
 
     }
     
-    return std::make_tuple(version, help);
+    return std::make_tuple(version, help, flav);
   }
   
   void
@@ -232,7 +242,18 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
               const std::string &usage, 
               const std::string  pname)
   {
+    using namespace std;
+
     os << pname << usage << "\n" << std::endl;
+    
+    vector<string> sub_cmd_names;
+    get_sub_command_names(back_inserter(sub_cmd_names));
+
+    os << "scribbu sub-commands (run `scribbu <sub-command> -h' for a " <<
+      "usage message):\n\n    ";
+    ostream_iterator<string> out(cout, "\n    ");
+    copy(sub_cmd_names.begin(), sub_cmd_names.end(), out);
+    os << endl;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -375,10 +396,9 @@ main(int argc, char * argv[])
 
     bool version;
     help_level help;
-    tie(version, help) = handle_options(&argc, &argv, &gargc, &(gargv[1]));
+    optional<verbose_flavor> flav;
+    tie(version, help, flav) = handle_options(&argc, &argv, &gargc, &(gargv[1]));
     
-
-  
     // At this point, we have a few possibilities. Our our caller could be
     // asking for help/version information; version "wins":
     if (version) {
@@ -387,7 +407,11 @@ main(int argc, char * argv[])
 
     } else if (help_level::verbose == help) {
 
-      show_man_page("scribbu");
+      if (verbose_flavor::man == flav) {
+        show_man_page("scribbu");
+      } else {
+        show_info_node("scribbu");
+      }
 
     }
     else if (help_level::regular == help) {
@@ -436,7 +460,8 @@ main(int argc, char * argv[])
       //     nonnegative. argv[argc] shall be a null pointer."
       gargv[gargc] = 0;
 
-      scm_with_guile(&initialize_guile, NULL);
+      init_guile initg = { DATADIR };
+      scm_with_guile(&initialize_guile, &initg);
       scm_shell(gargc, gargv.get());
 
     } // End if on options.
