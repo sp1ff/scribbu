@@ -1731,7 +1731,495 @@ scheme@@(guile-user)> (with-track-in "." (lambda (tags pth v1) (format #t "~s ha
 @chapter Using @code{libscribbu}
 @cindex Using @code{libscribbu}
 
-TODO
+The third way in which to use scribbu is to link against the library
+@code{libscribbu}. Detailed documentation can be found in the 
+@code{libscribbu} source itself (Doxygen documentation can be
+produced by doing @code{cd doc && make doxygen-doc}).
+
+While detailed documentation on individual classes, free functions,
+and sub-systems may one day make it's way into this manual, for now
+this chapter will describe using the library through a worked
+example. This example can be found in the @file{examples/az-tags}
+sub-directory of the scribbu source distribution.
+
+@node Building a @code{libscribbu} program
+@section Building a @code{libscribbu} program
+@cindex Building a @code{libscribbu} program
+
+Let us write a small C++ program using @code{libscribbu} to clean-up
+Amazon.com Song IDs. When downloading @file{.mp3s} from Amazon.com,
+their ID3v2 tags contain non-compliant comment frames (in that they
+have no description). They also try to cram it into the comment field
+in the ID3v1 tag, even though it's generally too small to contain the
+entire string. We will call this program @code{az-tags}.
+
+@node Implementing @code{az-tags}
+@subsection Implementing @code{az-tags}
+@cindex Implementing @code{az-tags}
+
+The complete source for the program can be found in
+@file{examples/az-tags/main.cc} in the source distribution. The logic 
+is simple enough to fit completely in @code{main}. The usage is:
+
+@example
+az-tags [-h] [-v] file [file...]
+@end example
+
+Skipping command line parsing, we begin by initializing the library:
+
+@example
+// ...
+#include <scribbu/scribbu.hh>
+// ...
+int
+main(int argc, char * argv[]) 
+@{
+    // Parse command-line options...
+    scribbu::static_initialize()
+@end example
+
+@code{libscribbu} needs to carry out assorted initialization; rather
+than deal with the static initialization problem, it just depends on the
+caller to explicitly initialize the library.
+
+At this point, the first filename is waiting in @code{argv[optind]}, so
+we can set the basic structure of the program:
+
+@example
+    for (int i = optind; i < argc; ++i) @{
+        // ...
+    @}
+@end example
+
+For each file, we will open it & parse it into its ID3v2 tags, track
+data and ID3v1 tag:
+
+@example
+  for (int i = optind; i < argc; ++i) @{
+
+    fs::ifstream ifs(argv[i], ios_base::binary); // 1
+
+    vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
+    scribbu::read_all_id3v2(ifs, back_inserter(id3v2)); // 2
+    scribbu::track_data td((istream&)ifs); // 3
+    unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(ifs); // 4
+@end example
+
+At @code{1}, we open the file, taking care to use binary mode so as to avoid
+newline translation. At @code{2} we ask @code{libscribbu} to read any and
+all ID3v2 tags into @code{id3v2}. We've used a @code{vector} here, but we
+can use any container providing a forward output iterator.
+
+At this point, the file pointer is pointing just past the last ID3v2
+tag (if an-- there may be none, in which case the file pointer remains
+at the beginning of the file and @code{id3v2} is empty). The easiest
+way to consume the track data is to construct a @code{track_data}
+isntace with it. This will collect some data about the track and
+advance the file pointer to the one-past-the-end point.
+
+There may or may not be some kind of ID3v1 tag waiting for us. That 
+is why @code{process_id3v1} returns a @code{unique_ptr}-- if there
+is no ID3v1 tag, a null pointer will be returned.
+
+We now have zero or more ID3v2 tags to be processed in @code{id3v2}:
+
+@example
+    for (auto &ptag: id3v2) @{
+        // `ptag' is a reference to a unique_ptr<id3v2_tag>
+        // how to get at its frames?
+    @}
+@end example
+
+It is at this point that the @code{libscribbu} API turns out to be
+less than ergonmic. The issue is that @code{read_all_id3v2} returns
+the tags typed as pointers to @code{id3v2_tag}; this is a base class
+providing a ``generic'' interface supported by all ID3v2 tags, but the
+API for iterating over frames is provided individually by each
+sub-class (@code{id3v2_2_tag}, @code{id3v2_3_tag} &
+@code{id3v2_4_tag}).
+
+Perhaps it would be worth it to provide an interface on the base class
+to do this, but for now, I simply @code{dynamic_cast} & dispatch to a
+template function @code{process_tag}:
+
+@example
+    for (auto &ptag: id3v2) @{
+      switch (ptag->version()) @{
+      case 2: @{ // ID3v2.2 tag
+        scribbu::id3v2_2_tag &p = dynamic_cast<scribbu::id3v2_2_tag&>(*ptag);
+        process_tag(p);
+        break;
+      @}
+      case 3: @{ // ID3v2.3 tag
+        scribbu::id3v2_3_tag &p = dynamic_cast<scribbu::id3v2_3_tag&>(*ptag);
+        process_tag(p);
+        break;
+      @}
+      case 4: @{ // ID3v2.4 tag
+        scribbu::id3v2_4_tag &p = dynamic_cast<scribbu::id3v2_4_tag&>(*ptag);
+        process_tag(p);
+        break;
+      @}
+    default:
+      cerr << "Unknown ID3v2 revision " << ptag->version() << endl;
+      abort();
+      @}
+    @}
+@end example
+
+The template parameter is the @code{id3v2_tag} sub-class. Since there
+are only three, I can factor out the ID3v2-version-specific logic
+into a traits class:
+
+@example
+template <class tag_type>
+void
+process_tag(tag_type &T)
+@{
+ ...
+  
+  for (auto fp: T) @{ // 1
+    if (traits_type::COMMID == fp->id()) @{ // 2
+
+      id3v2_frame &F = fp;
+      comm_type &C = dynamic_cast<comm_type&>(F); // 3
+
+      string dsc = C.template description<string>();
+      if (dsc.empty()) @{
+        string txt = C.template text<string>();
+        if ("Amazon.com Song ID" == txt.substr(0, 18)) @{
+          cout << "updating the comment frame containing " << txt << endl;
+          fp = traits_type::replace(C);
+        @}
+      @}
+    @}
+  @}
+@}
+@end example
+
+Each concreate @code{id3v2_tag} subclass implements @code{begin} &
+@code{end}, so we can use instances thereof as targets in for range
+loops like 1. @code{fp} is actually a mutable proxy for an
+ID3v2-version-specific @code{id3v2_frame} subclass. At 2 we have
+factored out the precise frame ID to select for comments frames.
+
+Each ID3v2 version has a concrete comment frame type, to which 
+we again dynamically cast (I really need to re-evaluate this interface)
+at 3.
+
+The rest of the logic is straightforward-- if there is no description
+field in the comments frame, and the comment text begins with
+``Amazon.com Song ID'', replace the frame.
+
+@node Building @code{az-tags}
+@subsection building @code{az-tags}
+@cindex Building @code{az-tags}
+
+The next step is to compile the program. We shall use Autotools, beginning
+with the simplest @code{configure.ac} we can:
+
+@example
+AC_PREREQ([2.69])
+AC_INIT([az-tags], [0.1], [sp1ff@@pobox.com])
+AC_CONFIG_MACRO_DIR([macros])
+AC_CONFIG_SRCDIR([src/main.cc])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_HEADERS([config.h])
+AM_INIT_AUTOMAKE([-Wall -Werror])
+LT_INIT
+AC_RROG_CXX
+AC_CONFIG_FILES([Makefile src/Makefile])
+@end example
+
+@code{AC_PREREQ} just asserts that Autoconf 2.69 is required to build
+a @code{configure} script from this template. @code{AC_INIT} is the
+Autoconf initialization macro. We're going to need some custom macros
+for this project, so @code{AC_CONFIG_MACRO_DIR} tells Autoconf where
+to find them. @code{AC_CONFIG_SRCDIR} is just a sanity check-- when
+running @code{configure} users will sometimes pass an incorrect value
+for @code{--srcdir}-- this macro equips the generated @code{configure}
+script to catch that. @code{AC_CONFIG_AUX_DIR} tells Autoconf to place
+auxilliary scripts (@code{missing} & @code{ionstall-sh}, e.g.) in a
+sub-directory named @file{build-aux}.
+
+@code{AC_CONFIG_HEADERS} tells Autoconf to generate a header file
+named @file{config.h} containing C preprocessor @code{#define}s
+for the project. Note that we need to generate a template file
+@file{config.h.in} via @code{autoheader}.
+
+Finally, we initialize Automake, libtool, check for a C++
+compiler & produce Makefile templates.
+
+The Autmake template for the root makefile is trivial:
+
+@example
+SUBDIRS = src
+@end example
+
+Let us begin the Makefile template in @file{src}:
+
+@example
+bin_PROGRAMS = az-tags
+az_tags_SOURCES = main.cc
+AM_CXXFLAGS = -std=c++17
+@end example
+
+We will need to perform some one-time setup:
+
+@example
+mkdir build-aux
+touch NEWS README AUTHORS ChangeLog
+autoheader
+aclocal
+autoconf
+automake --add-missing
+@end example
+
+At this point, we can run @code{./configure}, but @code{make} will
+fail miserably. Our program needs to be able to find @code{scribbu},
+@code{openssl} and @code{boost} includes, along with the corresponding
+libraries. All the required libraries other than @code{libscribbu}
+provide pre-built macros which we can copy from the scribbu source
+distro into @file{macros}. Let us add the following lines to
+@file{configure.ac}, just before the call to @code{AC_CONFIG_FILES}:
+
+@example
+PKG_CHECK_MODULES([GUILE], [guile-2.2])
+AX_BOOST_BASE([1.58], [], 
+    [AC_MSG_ERROR([Scribbu requires boost_base 1.58 or later.])])
+echo "Checkpoint 3: BOOST_LDFLAGS is $BOOST_LDFLAGS;" >&AS_MESSAGE_LOG_FD
+
+AX_BOOST_IOSTREAMS
+AX_BOOST_FILESYSTEM
+AX_BOOST_SYSTEM
+AX_CHECK_OPENSSL([],[AC_MSG_ERROR([Scribbu requires openssl.])])
+@end example
+
+Each of these will define Automake variables describing where we can
+find headers & libraries which we can add to @file{src/Makefile.am},
+which now reads:
+
+@example
+bin_PROGRAMS = az-tags
+az_tags_SOURCES = main.cc
+AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CXXFLAGS = -std=c++17 $(GUILE_CFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
+LDADD = $(GUILE_LIBS)           \
+	$(BOOST_SYSTEM_LIB)     \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_IOSTREAMS_LIB)  \
+	$(OPENSSL_LIBS)
+@end example
+
+This just leaves the question of where to find @code{libscribbu}. scribbu,
+at the time of this writing, provides no Autoconf macros (however, this
+sample provided the author the opportunity to prototype one).
+
+We add the following code to @file{configure.ac}, just after the call
+to @code{AC_PROG_CXX} (it's a lot of code; step-by-step explanation to
+follow):
+
+@example
+AC_ARG_WITH([scribbu],
+    AS_HELP_STRING([--with-scribbu=DIR], 
+                   [root directory of scribbu installation]),
+    [
+        case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([--with-scribbu takes a root directory]);;
+	*) 
+	    scribbu_dirs="$withval";;
+	esac
+    ],
+    [
+        # Just use the defaults
+	scribbu_dirs="/usr/local /usr /opt/local /sw"
+    ])
+
+dnl One way or another, we have one or more candidates in $@{scribbu_dirs@}
+found=no
+for scribbu_home in $@{scribbu_dirs@}; do
+    AC_MSG_CHECKING([for scribbu/scribbu.h under $@{scribbu_home@}])
+    if test -f "$@{scribbu_home@}/include/scribbu/scribbu.hh"; then
+        SCRIBBU_INCLUDES="-I$@{scribbu_home@}/include/scribbu"
+	SCRIBBU_LDFLAGS="-L$@{scribbu_home@}/lib"
+	SCRIBBU_LIBS="-lscribbu"
+	found=yes
+	AC_MSG_RESULT([yes])
+	break
+    else
+        AC_MSG_RESULT([no])
+    fi
+done
+
+if test "$found" != "yes"; then
+    AC_MSG_ERROR([couldn't find scribbu])
+fi
+
+# try the preprocessor and linker with our new flags,
+# being careful not to pollute the global LIBS, LDFLAGS, and CPPFLAGS
+AC_MSG_CHECKING([whether compiling and linking against scribbu will work])
+
+save_LIBS="$LIBS"
+save_LDFLAGS="$LDFLAGS"
+save_CPPFLAGS="$CPPFLAGS"
+LIBS="$SCRIBBU_LIBS $LIBS"
+LDFLAGS="$SCRIBBU_LDFLAGS $LDFLAGS"
+CPPFLAGS="$SCRIBBU_CPPFLAGS $CPPFLAGS"
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([scribbu/scribbu.hh], [scribbu_hh=yes], [scribbu_hh=no])
+# I'd like to do AC_CHECK_LIB here, but I can't link against libscribbu
+# in a test because it, in turn depends on a bunch of other libs
+AC_CHECK_FILE([$@{scribbu_home@}/lib/libscribbu.la],
+    [scribbu_la=yes], [scribbu_la=no])
+AC_LANG_POP([C++])
+
+LIBS="$save_LIBS"
+LDFLAGS="$save_LDFLAGS"
+CPPFLAGS="$save_CPPFLAGS"
+
+if test "yes" = "$scribbu_hh" && test "yes" = "$scribbu_la"; then
+    AC_DEFINE([HAVE_SCRIBBU], [1], [Define to 1 if you have libscribbu])
+else
+    AC_MSG_ERROR([az-tags requires scribbu])
+fi
+
+AC_SUBST([SCRIBBU_CPPFLAGS])
+AC_SUBST([SCRIBBU_LIBS])
+AC_SUBST([SCRIBBU_LDFLAGS])
+@end example
+
+The first step is to locate @code{libscribbu}. We will form the
+variable @code{scribbu_dirs} containing one or more directories to
+check. Now, the user could always just tell us where it is. That is
+the reason we begin with @code{AC_ARG_WITH}: if the user invokes
+@code{configure} with @code{--with-scribbu=...} we will just use
+that. Otherwise, we will examine a default set of locations.
+
+That's what the for look does; for each location in
+@code{scribbu_dirs}, it checks for @file{scribbu.hh} in a
+sub-directory named @file{include/scribbu} of the current location. On
+success, we set a few variables recording that result & break. If we
+check all locations without success, then we fail.
+
+Now, just because we found a header file at a given place doesn't mean
+we can biuld against it or its associated library. The typical idiom
+is to execute the macros @code{AC_CHECK_HEADER} and
+@code{AC_CHECK_LIB} to make sure we can include the header and link
+against the library, respectively.
+
+The problem in my case is that @code{AC_CHECK_LIB} will fail, not
+through any fault of @code{libscribbu}, but because it depends on a
+number of other libraries; the test will fail with unresolved
+externals & I can't see how to add the relevant link flags in the macro.
+Instead, I settle for @code{AC_CHECK_FILE}.
+
+If both these pass, we know we're good to go; the question remains: how
+to record the information we've just discovered?  The Autoconf manual
+states that one should never add options to user variables such as
+@code{CPPFLAGS}. The idiom seems to be to define new variables that
+the Automake author can add to their rules. In this case, create
+three new variables:
+
+@enumerate
+
+@item
+@code{SCRIBBU_CPPFLAGS} to hold the @code{-I} option that will enable
+the build to find the @code{libscribbu} headers
+
+@item
+@code{SCRIBBU_LIBS} to hold the the @code{-L} options that will
+enable the build to link against @code{libscribbu}
+
+@item
+@code{SCRIBBU_LDLAGS} to hold any linker required flags 
+
+@end enumerate
+
+This lets us augment @file{src/Makefile.am} to:
+
+@example
+bin_PROGRAMS = az-tags
+az_tags_SOURCES = main.cc
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(SCRIBBU_CPPFLAGS)
+AM_CXXFLAGS = -std=c++17 $(GUILE_CFLAGS)
+AM_LDFLAGS = $(SCRIBBU_LDFLAGS) $(BOOST_LDFLAGS)
+LDADD = $(SCRIBBU_LIBS)         \
+        $(GUILE_LIBS)           \
+	$(BOOST_SYSTEM_LIB)     \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_IOSTREAMS_LIB)  \
+	$(OPENSSL_LIBS)
+@end example
+
+With that, we can @code{configure}:
+
+@example
+$>: autoreconf -vfi
+autoreconf: Entering directory `.'
+autoreconf: configure.ac: not using Gettext
+autoreconf: running: aclocal --force
+...
+$>: ./configure --prefix=$HOME
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /bin/mkdir -p
+...
+config.status: creating Makefile
+config.status: creating src/Makefile
+config.status: creating config.h
+config.status: executing depfiles commands
+config.status: executing libtool commands
+$>: make
+make  all-recursive
+make[1]: Entering directory '/tmp/az-tags'
+Making all in src
+make[2]: Entering directory '/tmp/az-tags/src'
+g++ -DHAVE_CONFIG_H -I. -I/home/mgh/doc/code/projects/az-tags/src -I..  -I/usr/include   -std=c++17 -pthread -I/usr/local/include/guile/2.2 -g -O2 -MT main.o -MD -MP -MF .deps/main.Tpo -c -o main.o /home/mgh/doc/code/projects/az-tags/src/main.cc
+...
+@end example
+
+We have a build! Let us take a look at a file downloaded from Amazon.com:
+
+@example
+$>: scribbu dump lorca.mp3
+"lorca.mp3":
+ID3v2.3(.0) Tag:
+452951 bytes, synchronised
+...
+COMM (<no description>):
+Amazon.com Song ID: 203558254
+...
+9425708 bytes of track data:
+MD5: 48ff9cadea7d842e9059db25159d2daa
+ID3v1.1: The Pogues - Lorca's Novena
+Hell's Ditch [Expanded] (US Ve (track 5), 1990
+Amazon.com Song ID: 20355825
+unknown genre 255
+
+$>: src/az-tags lorca.mp3
+lorca.mp3 has 1 ID3v2 tags, and an ID3v1 tag
+updating the comment frame containing Amazon.com Song ID: 203558254
+all tags processed; emplacing new tagset...
+emplacing new tagset...done.
+clearing ID3v1 comment
+$>: scribbu dump lorca.mp3
+"lorca.mp3":
+ID3v2.3(.0) Tag:
+452951 bytes, synchronised
+...
+COMM (amazon.com song id):
+Amazon.com Song ID: 203558254
+...
+9425708 bytes of track data:
+MD5: 48ff9cadea7d842e9059db25159d2daa
+ID3v1.1: The Pogues - Lorca's Novena
+Hell's Ditch [Expanded] (US Ve (track 5), 1990
+
+unknown genre 255
+@end example
 
 
 @node Frame Identifiers

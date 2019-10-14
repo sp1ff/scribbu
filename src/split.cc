@@ -161,14 +161,16 @@ namespace {
     /////////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("suffix", po::value<std::string>()->default_value(std::string()),
        "Optional suffix to be appended to all generated files");
 
@@ -200,30 +202,17 @@ namespace {
         positional(popts).
         run();
 
-      help_level help;
-      optional<verbose_flavor> flav;
-      std::tie(help, flav) = help_level_for_parsed_opts(parsed);
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-split",
+                        "(scribbu) Invoking scribbu split");
 
       po::store(parsed, vm);
       
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 
-      if (help_level::regular == help) {
-
-        print_usage(cout, docopts, USAGE);
-
-      } else if (help_level::verbose == help) {
-
-        show_man_page("scribbu-split");
-
-      } else {
-
-        po::notify(vm);
-        split_file(fs::path(vm["argument"].as<std::string>()),
-                   vm["suffix"].as<std::string>());
-
-      }
+      po::notify(vm);
+      split_file(fs::path(vm["argument"].as<std::string>()),
+                 vm["suffix"].as<std::string>());
 
     } catch (const po::error &ex) {
 

@@ -880,6 +880,7 @@ namespace scribbu {
     return convert_encoding<const char*>(text.c_str(), srcenc, dstenc, add_bom, 
                                          rsp);
   }
+
 } // End namespace scribbu.
 
 scribbu::language

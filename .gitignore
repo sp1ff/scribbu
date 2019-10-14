@@ -4,6 +4,9 @@
 *.la
 *.a
 *.csv
+*.gz
+*.bz2
+*.xz
 #*
 .#*
 autom4te.cache

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+if test -z "${version}"; then
+   cat >&2 <<EOF
+You must define the variable $version to the Autotools version of
+the distribution you are installing.
+EOF
+fi
+set -e
+set -x
+rm -rf /tmp/scribbu-${version}{,.tar.xz}
+cp -v scribbu-${version}.tar.xz /tmp && cd /tmp
+tar xvf scribbu-${version}.tar.xz && cd scribbu-${version}
+./configure CXXFLAGS="-g -O0" && make && make check && sudo make install
+sudo ldconfig

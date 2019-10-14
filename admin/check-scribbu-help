@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+COLS=$(tput cols)
+
+function log()
+{
+    echo $@ >&1
+}
+
+function error()
+{
+    echo $@ >&2
+}
+
+function verbose()
+{
+    echo $@ >&3
+}
+
+function fail()
+{
+    printf 'FAILURE ' >&2
+    printf '=%.0s' $(seq 1 $((${COLS}-8))) >&2
+    echo "$@" >&2
+}
+
+function run_cmd()
+{
+    local __stdout=$1
+    local __stderr=$2
+    local __status=$3
+    shift 3
+
+    # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
+    local t_std
+    local t_err
+    local t_stat
+
+    eval "$( $@ \
+    2> >(t_err=$(cat); typeset -p t_err) \
+     > >(t_std=$(cat); typeset -p t_std) ); t_stat=$?"
+
+    eval "$__stdout='$(echo $t_std|tr \' :|tr \` :)'"
+    eval "$__stderr='$(echo $t_err|tr \' :|tr \` :)'"
+    eval "$__status='$t_stat'"
+}
+
+function test_cmd()
+{
+    local cmd="$1"
+    local text="$2"
+    local batch=$3
+
+    local out
+    local err
+    local stat
+
+    if test "$batch" != "true"; then
+        read -n 1 -p "Press ENTER for \`$cmd': "
+        $cmd
+    fi
+    run_cmd out err stat $cmd
+
+    verbose "status ${stat}	"
+
+    printf 'stdout ' >&3
+    printf '=%.0s' $(seq 1 $((${COLS}-7))) >&3
+    verbose "$out"
+    printf 'stderr ' >&3
+    printf '=%.0s' $(seq 1 $((${COLS}-7))) >&3
+    verbose "$err"
+    printf '=%.0s' $(seq 1 $COLS) >&3
+
+    # Important-- do *not* quote $text!
+    # https://stackoverflow.com/questions/218156/bash-regex-with-quotes
+    if [[ "$out" =~ $text ]]; then
+        verbose "test text matches"
+    else
+        fail "\`$cmd' not displaying expected text"
+    fi
+
+    if test -n "$err"; then
+        fail "\`$cmd' says: $err"
+    fi
+}
+
+cs_batch=false
+cs_debug=false
+cs_help=false
+cs_verbose=false
+cs_prev_option=
+for cs_option
+do
+    # If the previous option required an argument, assign it now.
+    if test -n "$cs_prev_option"; then
+        eval $cs_prev_option=\$cs_option
+        cs_prev_option=
+        cs_nargs=$(($cs_nargs+1))
+        continue
+    fi
+
+    # Parse out the argument option in $cs_option, if present.
+    case $cs_option in
+        *=?*) cs_optarg=$(expr "X$cs_option" : '[^=]*=\(.*\)') ;;
+        *=)   cs_optarg= ;;
+        *)    cs_optarg=yes ;;
+    esac
+
+    # Options are handled here:
+    case $cs_option in
+        -b | --b | --ba | --bat | --batc | --batch)
+            cs_batch=true;;
+        -d | --de | --deb | --debu | --debug)
+            cs_debug=true;;
+        -h | --he | --hel | --help)
+            cs_help=true;;
+        -v | --ve | --ver | --verb | --verbo | --verbose)
+            cs_verbose=true;;
+        *)
+            cat >&2 <<EOF
+Unrecognized option \`$cs_option'.
+Try \`$0 --help' for more information.
+EOF
+            exit 2;;
+    esac
+
+done
+
+if test "$cs_help" == "true"; then
+    cat <<EOF
+\`$0' -- test \`scribbu' help commands in a semi-automated manner
+
+Usage:
+
+    \`$0' [OPTION...]
+
+Where OPTION is one or more of:
+
+  -h, --help:     display this message & exit with status zero
+  -d, --debug:    set -x
+  -v, --verbose:  enable verbose loggging to stdout
+  -b, --batch:    batch mode-- no interactive input
+
+Discussion:
+
+I test \`scribbu' help commands (\`scribbu -h', \`scribbu --help', \`man
+scribbu' &c). At first, this was strictly manual, but as the number of
+sub-commands multiplied, this became increasingly tedius. This script
+semi-automates the process. I'm not comfortable atuomatiing it entirely, yet,
+but this should make things go much faster.
+EOF
+    exit 0
+fi
+
+if test "$cs_verbose" == "true"; then
+    exec 3>&1
+else
+    exec 3> /dev/null
+fi
+
+if test "$cs_debug" == "true"; then
+    set -x
+fi
+
+test_cmd "man scribbu" "NAME scribbu - The extensible tool for tagging your music collection" $cs_batch
+test_cmd "man scribbu-dump" "NAME scribbu-dump - dump ID3 tags from one or more files" $cs_batch
+test_cmd "man scribbu-rename" "NAME scribbu rename - Rename files according to the ID3 tag attributes" $cs_batch
+test_cmd "man scribbu-report" 'NAME scribbu-report - generate a report on one or more files.*ID3 tags' $cs_batch
+test_cmd "man scribbu-split" "NAME scribbu-split - split a file into ID3v2, track & ID3v1 pieces" $cs_batch
+test_cmd "man scribbu-popm" "NAME scribbu popm - Manage the play count and/or popularimeter ID3v2 tags" $cs_batch
+test_cmd "man scribbu-text" "NAME scribbu-text - Manage ID3v2 text frames" $cs_batch
+
+test_cmd "info scribbu" "Next: Introduction, Up: .dir." $cs_batch
+
+test_cmd "scribbu -h" "scribbu -- the extensible tool for tagging your music collection Usage: scribbu" $cs_batch
+test_cmd "scribbu --help" "NAME scribbu - The extensible tool for tagging your music collection" $cs_batch
+test_cmd "scribbu --info" "Next: Introduction, Up: .dir." $cs_batch
+test_cmd "scribbu dump -h" "scribbu dump -- dump ID3 tags from one or more files to stdout USAGE: scribbu dump" $cs_batch
+test_cmd "scribbu dump --help" "NAME scribbu-dump - dump ID3 tags from one or more files" $cs_batch
+
+test_cmd "scribbu dump --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu dump." $cs_batch
+test_cmd "scribbu rename -h" "scribbu rename -- rename .mp3 files scribbu rename" $cs_batch
+test_cmd "scribbu rename --help" "NAME scribbu rename - Rename files according to the ID3 tag attributes" $cs_batch
+test_cmd "scribbu rename --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu rename." $cs_batch
+test_cmd "scribbu report -h" "scribbu report -- generate a report on one or more ID3-tagged files scribbu report"  $cs_batch
+test_cmd "scribbu report --help" "NAME scribbu-report - generate a report on one or more files. ID3 tags" $cs_batch
+test_cmd "scribbu report --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu report." $cs_batch
+test_cmd "scribbu split -h" "scribbu split -- split a file into ID3v2, track data, and ID3v1 tag scribbu split" $cs_batch
+test_cmd "scribbu split --help" "NAME scribbu-split - split a file into ID3v2, track & ID3v1 pieces" $cs_batch
+# `scribbu split' has no Info manual node
+# XFAIL: test_cmd "scribbu split --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu split." $cs_batch
+test_cmd "scribbu popm -h" "scribbu popm -- manage playcount and/or popularimeter frames scribbu popm" $cs_batch
+test_cmd "scribbu popm --help" "NAME scribbu popm - Manage the play count and/or popularimeter ID3v2 tags" $cs_batch
+test_cmd "scribbu popm --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu popm." $cs_batch
+test_cmd "scribbu text -h" "scribbu text -- manage text frames scrubbu text" $cs_batch
+test_cmd "scribbu text --help" "NAME scribbu-text - Manage ID3v2 text frames" $cs_batch
+test_cmd "scribbu text --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu text." $cs_batch

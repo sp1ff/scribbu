@@ -167,6 +167,12 @@ BOOST_AUTO_TEST_CASE( test_id3v1_a )
   BOOST_CHECK(! files_differ(TEST_DATA, tmp));
 
   fs::remove(tmp);
+
+  // LATER(sp1ff): make this work without the cast
+  tag.set_comment((const char*)"");
+  comment.clear();
+  tag.comment(back_inserter(comment));
+  BOOST_CHECK(!comment.empty() && 0 == comment[0]);
 }
 
 BOOST_AUTO_TEST_CASE( test_id3v1_b )

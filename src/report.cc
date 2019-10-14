@@ -454,14 +454,16 @@ namespace {
     /////////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("num-comments,c", po::value<size_t>()->default_value(6),
        "Number of comment tags to be printed (their # will always be reported")
       ("output,o", po::value<fs::path>()->required(), "output file to which the "
@@ -479,7 +481,7 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>(), "one or more "
+      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
        "files or directories to be examined; if a directory is given, it "
        "will be searched recursively");
 
@@ -506,8 +508,8 @@ namespace {
         positional(popts).
         run();
 
-      maybe_handle_help(parsed, docopts, USAGE, "scribbu-dump",
-                        "(scribbu) Invoking scribbu dump");
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-report",
+                        "(scribbu) Invoking scribbu report");
 
       po::store(parsed, vm);
 

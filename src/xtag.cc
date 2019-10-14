@@ -361,10 +361,13 @@ namespace {
     /////////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
@@ -375,7 +378,6 @@ namespace {
        "files before modifying them.")
       ("dry-run,n", po::bool_switch(), "Don't do anything; just print what "
        "*would* be done")
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("merge,m", po::bool_switch(), "Merge the given tags, don't overwrite")
       ("owner,o", po::value<string>(), "Operate only on XTAG frames with "
        "this owner, or specify the owner in case an XTAG frame is being created")
@@ -416,8 +418,8 @@ namespace {
         positional(popts).
         run();
 
-      maybe_handle_help(parsed, docopts, USAGE, "scribbu-popm",
-                        "(scribbu) Invoking scribbu popm");
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-xtag",
+                        "(scribbu) Invoking scribbu xtag");
 
       po::store(parsed, vm);
 

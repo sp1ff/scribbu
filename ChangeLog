@@ -1,4 +1,15 @@
-2019-09-26  Michael Herstine  <sp1ff@pobox.com>
+2019-10-18  Michael Herstine  <sp1ff@pobox.com>
+
+	This commit adds information on how to use libscribbu from C++:
+	  1. a new chapter on this in the Texinfo manual
+
+	  2. a sample program
+
+	It also adds a minor test illustrating a shortcoming in the
+	convert_encoding API. & addresses a number of little bugs
+	in the documentation.
+
+2019-09-27  Michael Herstine  <sp1ff@pobox.com>
 
 	Bug squashing prior to 0.5:
 	This commit fixes:

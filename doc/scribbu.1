@@ -7,7 +7,7 @@ scribbu \- The extensible tool for tagging your music collection
 .SH SYNOPSIS
 .HP
 .B scribbu
-[(-c|--config) config-file] [-h|--help] [-v|--version] [--info]
+[-h|--help] [-v|--version] [--info]
 .RS 8
 .br
 ([(-e|--expression) expr] |
@@ -90,6 +90,12 @@ component of the input file: ID3v1 tag, data, and/or ID3v2 tag(s).
 .B scribbu popm
 will create or update playcount & popularimeter frames in some or all
 ID3v2 tags.
+.RE
+.IP
+.BR scribbu-text (1)
+.RS 8
+.B scribbu text
+manages ID3v2 text frames.
 .RE
 .P
 Any sub-command can be invoked with
@@ -184,33 +190,6 @@ Modify the
 .I --help
 flag by using the users's Infor viewer in stead of man page viewer.
 .RE
-.PP
-\-c, \-\-config=config-file
-.RS4
-Specify a configuration file other than
-.I ~/.scribbu
-from which options shall be read (see
-.B FILES
-below).
-
-.SH FILES
-
-.SS ~/.scribbu
-
-.B scribbu
-uses the boost Program Options library to parse both the command line and
-the configuration file. The file uses a very simple format:
-
-.IP
-The '#' character introduces a comment that extends to the end of the line.
-
-.IP
-Options are specified as
-.SB name=value
-
-.IP
-.B scribbu
-does not use configuration file sections
 
 .SH AUTHOR
 
@@ -220,5 +199,5 @@ is maintained at https://github.com/sp1ff/scribbu.
 
 .SH "SEE ALSO"
 
-.BR scribbu-dump "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1), " scribbu-popm "(1)"
+.BR scribbu-dump "(1), " scribbu-popm "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1), " scribbu-text "(1)"
 

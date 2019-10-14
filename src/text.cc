@@ -207,10 +207,13 @@ namespace {
     ///////////////////////////////////////////////////////////////////////////
 
     po::options_description clopts("command-line only options");
-    // None at this time...
+    clopts.add_options()
+      ("help,h", po::bool_switch(), "Display help & exit")
+      ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
-    // None at this time...
+    xclopts.add_options()
+      ("man", po::bool_switch(), "Display the man page & exit");
 
     po::options_description opts("general options");
     opts.add_options()
@@ -231,7 +234,6 @@ namespace {
        "If not given, the system locale will be assumed")
       ("encoded-by,e", po::value<string>(), "Set the TENC, or Encoded By frame")
       ("genre,g", po::value<string>(), "Set the TCON, or Content time frame")
-      ("help,h", po::bool_switch(), "Display help & exit")
       ("tag,t", po::value<vector<size_t>>(), "Zero-based index of the tag "
        "on which to operate; may be given more than once to select "
        "multiple tags")
