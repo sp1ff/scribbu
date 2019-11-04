@@ -69,14 +69,14 @@ This manual corresponds to scribbu version 0.5.
 @cindex Introduction
 
 scribbu is a C++ library & associated command-line tool for working
-with ID3 tags (@xref{ID3}). It was born when I retired my last Windows
-machine & could no longer use Winamp (@xref{Winamp}) to manage my
+with ID3 tags (@xref{ID3}.) It was born when I retired my last Windows
+machine & could no longer use Winamp (@xref{Winamp}.) to manage my
 library of digital music. The scribbu library offers classes & methods
 for reading, modifying & writing ID3v1 & ID3v2 tags. The scribbu
 program provides assorted sub-commands for working with ID3-tagged
 files (e.g. re-naming files based on their tags), but its real power
 lies in its embedded Scheme interpreter (@xref{Top,,, Guile, The Guile
-Reference Manual}) in which scribbu library features are exported as a
+Reference Manual}.) in which scribbu library features are exported as a
 Scheme module (on which more below).
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
@@ -113,13 +113,13 @@ all the files matching ``*.mp3'' to ``<artist>-<title>.mp3'' where
 "artist" and "title" are derived from their ID3 tags (if any).
 
 @item
-@command{scribbu popm} @xref{Invoking @command{scribbu popm}} will
+@command{scribbu popm} @xref{Invoking @command{scribbu popm}}. will
 update ID3v2 play count & popularimeter tags. For instance,
 @command{scribbu popm foo.mp3} will increment the play counts in
 ``foo.mp3''.
 
 @item
-@command{scribbu text} @xref{Invoking @command{scribbu text}}
+@command{scribbu text} @xref{Invoking @command{scribbu text}}.
 maintains assorted ID3v2 text frames; for instance, @command{scribbu
 text --artist='Roxy Music' *.mp3} will set the artist frame to ``Roxy
 Music'' in all ID3v2 tags in all files matching ``*.mp3''.
@@ -131,7 +131,7 @@ more information. Use @option{--info} option to display the command's
 node in this manual.
 
 The @command{scribbu} program also exports functions & GOOPS
-@xref{Top,,, Guile, GOOPS} classes to a Scheme interpreter, so
+@xref{Top,,, Guile, GOOPS}. classes to a Scheme interpreter, so
 @command{scribbu} can @emph{also} be invoked...
 
 @enumerate
@@ -160,7 +160,7 @@ as a script:
 @end enumerate
 
 Finally, scribbu contains a C++ library (@code{libscribbu})
-@xref{Using @code{libscribbu}} against which one can build C++
+@xref{Using @code{libscribbu}}. against which one can build C++
 libraries & programs.
 
 
@@ -231,7 +231,7 @@ player that was unaware of the tag played the enclosing file, at worst
 the user would hear a bit of static at the end). It provided for a
 thirty-byte title, artist & album along with year, comment & a
 one-byte genre field. The original proposal defined eighty genres,
-extended to 148 by 1.91 release of Winamp (@xref{Winamp}) in June 1998
+extended to 148 by 1.91 release of Winamp (@xref{Winamp}.) in June 1998
 and to 192 by the 5.6 release of Winamp in November 2010.
 
 The limitations of this format quickly became aparent, leading to the
@@ -262,7 +262,7 @@ One of the things that endeared Winamp to its users was its plugin
 architecture. Nullsoft provided several plugins as part of the standard
 distribution, one of which was the Music Library. Using this, one
 could manage, organize, search & play a personal library of thousands
-of MP3 files, all based on ID3 tags (@xref{ID3}).
+of MP3 files, all based on ID3 tags (@xref{ID3}.)
 
 Nullsoft was (in)famoulsy acquired by AOL in 1999. By 2000 Winamp had
 been registered twenty-five million times, but Nullsoft began to
@@ -305,7 +305,7 @@ AAC would not lead to good results even if I were inclined to do the
 work. The original sources of many of the @code{.mp3s} have been lost,
 so re-encoding to AAC is not possible.
 
-Perhaps @command{scribbu} (@xref{The @command{scribbu} Program}) will
+Perhaps @command{scribbu} (@xref{The @command{scribbu} Program}.) will
 support AAC in the future, but it seems that MP3 & ID3 will be
 relevant to @emph{my} musical life for some time. I wrote this tool to
 help me manage them, and I offer it to anyone else in the same
@@ -460,7 +460,7 @@ directories named, recursively. With no options, @command{scribbu
 dump} will dump everything it understands. With options, the output
 can be scoped in various ways (e.g. ID3v2 tags only, ID3v1 tags only,
 track data only, among other options; refer to the man page for a
-complete list (or @xref{Invoking @command{scribbu dump}})).
+complete list (or @xref{Invoking @command{scribbu dump}}.))
 
 @node scribbu report
 @subsection scribbu report
@@ -478,7 +478,7 @@ directory,file,file size(MB),ID3v2 version,ID3v2 revision,ID3v2 size(bytes),ID3v
 @end example
 
 Running @command{scribbu report} (@xref{Invoking @command{scribbu
-report}}) with an option of @option{-o <name>.csv} will produce an
+report}}.) with an option of @option{-o <name>.csv} will produce an
 RFC-4180-compliant comma separated variable file reporting on the
 files given on the command line. Option @option{-t} will instead
 produce tab-delimited data. @command{scribbu} itself provides little
@@ -518,7 +518,7 @@ counter: 00
 @end example
 
 The @code{popm} command can be used to manage both PCNT & POPM frames
-(@xref{Invoking @command{scribbu popm}}). The @option{-a} flag
+(@xref{Invoking @command{scribbu popm}}.) The @option{-a} flag
 indicates that we want to create the relevant frames, if they don't
 already exist. @option{-r} sets the rating for the POPM frame; you can
 provide an integer between 0 and 255, or use the ``star'' system. In
@@ -538,7 +538,7 @@ will increment the play count by one in any @code{PCNT} or @code{POPM}
 frames it finds. The operation can be scoped or modified in a number
 of ways, such as limiting it to only one or the other, or only to
 @code{POPM} frames with a certain owner-- see the man page or
-@xref{Invoking @command{scribbu popm}}for full details. The intent of
+@xref{Invoking @command{scribbu popm}}.for full details. The intent of
 the command is to enable players that don't update the playcount or
 set ratings themselves, but which can be scripted or extended in some
 way, to do so.
@@ -555,7 +555,7 @@ scribbu rename *.mp3
 
 Will by default rename each file to ``<artist> - <title>.mp3'' with
 @code{<artist>} & @code{<title>} each derived from the corresponding
-ID3v2 frame (@xref{Invoking @command{scribbu rename}}). This can be
+ID3v2 frame (@xref{Invoking @command{scribbu rename}}.) This can be
 customized by providing a ``template'': text interspersed with
 replacement parameters to be filled in with tag contents. The
 parameters begin with a `%', and each parameter has a one-character
@@ -597,8 +597,8 @@ conceivable operation was not feasible. Furthermore, many of the
 things I wanted it to do were one-off tasks pertinent to a single
 file, or a handful of files, that weren't worth formally coding up as
 sub-commands. What I really wanted was a way to ``script''
-@code{libscribbu} (@xref{Using @code{libscribbu}}). I found my
-solution in Guile (@xref{Top,,, Guile, The Guile Reference Manual}),
+@code{libscribbu} (@xref{Using @code{libscribbu}}.) I found my
+solution in Guile (@xref{Top,,, Guile, The Guile Reference Manual}.),
 which is the topic of the next chapter.
 
 
@@ -609,6 +609,11 @@ which is the topic of the next chapter.
 @code{scribbu dump} will walk each file and/or directory specified
 (recursing directories), read each file found, look for ID3 tags
 therein, and pretty-print what it finds to @code{stdout}.
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu dump} Options::
+@end menu
 
 @node @code{scribbu dump} Options
 @subsection @code{scribbu dump} Options
@@ -660,7 +665,7 @@ for ID3v1 tags: v1.1, extended, artist, title, album, year, comment & genre.
 
 @item
 @option{-c ENC|--v1-encoding=ENC} specify an encoding for ID3v1 tags
-(@verb{.CP1252.} by default). See @xref{Character Encodings} for a
+(@verb{.CP1252.} by default). See @xref{Character Encodings}. for a
 complete list of the encodings supported and their identifiers.
 
 @end enumerate
@@ -677,6 +682,11 @@ other tool better suited to querying & reporting. Consequently,
 filtering mechanisms are minimal, and the output formats (CSV or TDF)
 are chosen to facilitate transformation to other formats as well as
 import by other tools.
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu report} Options::
+@end menu
 
 @node @code{scribbu report} Options
 @subsection @code{scribbu report} Options
@@ -695,7 +705,7 @@ in the report (default six)
 
 @item
 @option{-1 ENC|--v1-encoding=ENC} specify the encoding @xref{Character
-Encodings} to be used to read ID3v1 tags (defaults to @verb{.CP1252.}
+Encodings}. to be used to read ID3v1 tags (defaults to @verb{.CP1252.}
 
 @item
 @option{-t|--tsv-format} select tab-delimited format instead of
@@ -739,8 +749,15 @@ ID3v1 tag, and that field was encoded as ISO-8859-1, we would say:
 %(artist:v1-only&v1-encoding=iso-8859-1)
 @end example
 
-See @xref{Tag-Based Replacements} for a complete list of replacement
+See @xref{Tag-Based Replacements}. for a complete list of replacement
 parameters & their options.
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu rename} Options::
+* Tag-Based Replacements::
+* File-based Replacements::
+@end menu
 
 @node @code{scribbu rename} Options
 @subsection @code{scribbu rename} Options
@@ -923,6 +940,11 @@ would most naturally be expressed as @verb{.*.}s (asterisks), but
 since this will often be inconvenient in the shell, @command{scribbu}
 will accept almost any character, repeated one-to-five times.
 
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu popm} Options::
+@end menu
+
 @node @code{scribbu popm} Options
 @subsection @code{scribbu popm} Options
 @cindex @code{scribbu popm} Options
@@ -997,6 +1019,11 @@ unysnchronisation scheme on write (by default, it's never used)
 @code{scribbu text} will create, udpate & delete various ID3v2 text
 frames.
 
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu text} Options::
+@end menu
+
 @node @code{scribbu text} Options
 @subsection @code{scribbu text} Options
 @cindex @code{scribbu text} Options
@@ -1037,7 +1064,7 @@ frames. Frames may be named by either their option name
 @item
 @option{-E ENC,--encoding=ENC} Specify the character encoding used in
 the input strings using the iconv name (`ISO-8859-1', e.g.) If not
-given, the system locale will be assumed (@xref{Character Encodings}
+given, the system locale will be assumed (@xref{Character Encodings}.
 for a complete list of the encodings supported and their identifiers).
 
 @item
@@ -1066,7 +1093,7 @@ you will want to do something you can't accomplish via a sub-command.
 
 For that reason, the bulk of the work on @command{scribbu} has been
 exposing the library's functionality to a first-class language like
-LISP (@xref{Top,,, Guile, The Guile Reference Manual}), to enable
+LISP (@xref{Top,,, Guile, The Guile Reference Manual}.), to enable
 @command{scribbu} users to build their own solutions. 
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
@@ -1074,6 +1101,7 @@ LISP (@xref{Top,,, Guile, The Guile Reference Manual}), to enable
 * Worked Example::
 * ID3v1 tags::
 * ID3v2 tags::
+* Text Encoding::
 @end menu
 
 @node Worked Example
@@ -1092,8 +1120,9 @@ using @command{scribbu}, and finishes with some references.
 
 @node The Scheme REPL
 @subsection The Scheme REPL
+@cindex The Scheme REPL
 
-At the end of ``scribbu rename'' (@xref{scribbu rename}), there were a
+At the end of ``scribbu rename'' (@xref{scribbu rename},) there were a
 number of tag hygiene issues to be cleaned up. Let us begin
 experimenting with solutions. Invoking @command{scribbu} with no
 arguments at all will start the Scheme REPL:
@@ -1211,7 +1240,7 @@ $12 = 171
 What remains is writing out our modifications to their respective
 tags. We @emph{could} do this directly in the REPL, but let's capture
 our work in the form of a program (@xref{Writing Scheme Programs with
-@command{scribbu}}).
+@command{scribbu}}.)
 
 
 @node Writing Scheme Programs with @command{scribbu}
@@ -1225,7 +1254,7 @@ course; supplying @command{guile} options while invoking a
 @command{scribbu} sub-command, for instance, would make no sense &
 results in an error). This means that @command{scribbu} can take
 advantage of the @command{guile} scripting options (@xref{Guile
-Scripting,,, Guile, The Guile Reference Manual}).
+Scripting,,, Guile, The Guile Reference Manual}.)
 
 Continuing our example, let us capture our work so far:
 
@@ -1295,7 +1324,7 @@ References:
 @enumerate
 
 @item 
-@xref{Introduction,,, Guile, The Guile Reference Manual}
+@xref{Introduction,,, Guile, The Guile Reference Manual}.
 
 @item
 Scheme versus Common Lisp @uref{https://www.cs.utexas.edu/~novak/schemevscl.html}
@@ -1332,7 +1361,7 @@ thirty-byte free-form genre field, and introduces start-time,
 end-time, and ``speed'' fields.
 
 @code{scribbu} represents the ID3v1 tag by the GOOPS @xref{Top,,,
-Guile, GOOPS} class @code{<id3v1-tag>}:
+Guile, GOOPS}. class @code{<id3v1-tag>}:
 
 @lisp
 (define-class <id3v1-tag> ()
@@ -1388,8 +1417,9 @@ non-nil, it will be written as an ID3v1 enhanced tag.
 
 @node ID3v2 tags
 @section ID3v2 tags
+@cindex ID3v2 tags
 
-The various flavors of ID3v1 tags @xref{ID3v1 tags} had obvious
+The various flavors of ID3v1 tags @xref{ID3v1 tags}. had obvious
 limitations, leading to the introduction in 1998 of ID3v2 (by Mrtin
 Nilsson, Michael Mutschler et al.).  Despite the name, this format has
 nothing to do with ID3v1.  ID3v2 tags are much more complex. The tags
@@ -1420,8 +1450,16 @@ ID3v2.4 was the last version published, but never saw widespread adoption.
 
 @end itemize
 
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* The Unsynchronisation Scheme::
+* ID3v2 Frames::
+* @code{<id3v2-tag>}::
+@end menu
+
 @node The Unsynchronisation Scheme
 @subsection The Unsynchronisation Scheme
+@cindex The Unsynchronisation Scheme
 
 MPEG decoding software uses a two-byte sentinel value in the input
 stream to detect the beginning of the audio. MPEG decoding software
@@ -1473,6 +1511,7 @@ should be employed @emph{last}, after any compression or encryption.
 
 @node ID3v2 Frames
 @subsection ID3v2 Frames
+@cindex ID3v2 Frames
 
 All ID3v2 frames subclass GOOPS class @code{<id3v2-frame>}:
 
@@ -1514,7 +1553,7 @@ signature, the bit should be cleared.'' Sec 3.3.1
 @item
 @code{unsync} Unsynchronisation 
 In ID3v2.2 & ID3v2.3, a value of @code{#t} for this flag indicates that
-the unsynchronisation scheme @xref{The Unsynchronisation Scheme} has been
+the unsynchronisation scheme @xref{The Unsynchronisation Scheme}, has been
 applied to this tag. In ID3v2.4, it indicates that it has been applied to
 all frames.
 
@@ -1522,8 +1561,20 @@ all frames.
 
 Module @code{scribbu} defines a few @code{<id3v2-frame>} sub-classes.
 
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{<text-frame>}::
+* @code{<comment-frame>}::
+* @code{<user-defined-text-frame>}::
+* @code{<play-count-frame>}::
+* @code{<popm-frame>}::
+* @code{<unk-frame>}::
+@end menu
+
 @node @code{<text-frame>}
 @subsubsection @code{<text-frame>}
+@cindex @code{<text-frame>}
 
 A great many ID3v2 frames represent textual information (title, artist
 &c) and are represented in a uniform way, distinguished only by frame
@@ -1537,6 +1588,7 @@ identifer.  @code{scribbu} represents such frames as instances of
 
 @node @code{<comment-frame>}
 @subsubsection @code{<comment-frame>}
+@cindex @code{<comment-frame>}
 
 @code{<comment-frame>} encodes the @verb{.COM.} & @verb{.COMM.}
 (comment) frames. @code{#:lang} is a three-letter ISO-639-2 language
@@ -1552,6 +1604,7 @@ code.  The @code{#:dsc} fields is described in the specification as a
 
 @node @code{<user-defined-text-frame>}
 @subsubsection @code{<user-defined-text-frame>}
+@cindex @code{<user-defined-text-frame>}
 
 @code{<user-defined-text-frame>} encodes the @verb{.TXX.} &
 @verb{.TXXX.}  (user-defined text) frames. The @code{#:dsc} fields is
@@ -1568,6 +1621,7 @@ ID3v2 spec.
 
 @node @code{<play-count-frame>}
 @subsubsection @code{<play-count-frame>}
+@cindex @code{<play-count-frame>}
 
 @code{<play-count-frame} encodes the @verb{.CNT.} & @verb{.PCNT.} (play
 count) frames. The @code{#:count} field is simply a counter recording
@@ -1582,6 +1636,7 @@ tag. Cf. section 4.17 of the ID3v2 spec.
 
 @node @code{<popm-frame>}
 @subsubsection @code{<popm-frame>}
+@cindex @code{<popm-frame>}
 
 @code{<pop-frame>} encodes the @verb{.POP.} & @verb{.POPM.} (popularimeter)
 frames. @code{<pop-frame>} combines an eight-bit rating field with a
@@ -1598,6 +1653,7 @@ tagged with the e-mail address of the author.
 
 @node @code{<unk-frame>}
 @subsubsection @code{<unk-frame>}
+@cindex @code{<unk-frame>}
 
 Frames about which @code{scribbu} does not know may be encoded as
 @code{<unk-frame>} instances:
@@ -1613,12 +1669,13 @@ i.e. the frame identifier & flags will have been parsed out.
 
 @node @code{<id3v2-tag>}
 @subsection @code{<id3v2-tag>}
+@cindex @code{<id3v2-tag>}
 
 The @command{scribbu} ID3v2 tag abstraction doesn't try to model the various
 versions of the ID3v2 spec. Rather, it encodes a ``generic'' ID3v2 tag; the
 version to which it shall be serialized is specified at write time, and
 the version from which it was deserialized is returned at read time
-(@xref{ID3v2 Serialization}).
+(@xref{ID3v2 Serialization}.)
 
 @lisp
 (define-class <id3v2-tag> ()
@@ -1628,6 +1685,7 @@ the version from which it was deserialized is returned at read time
   (padding      #:init-value   0 #:accessor padding #:init-keyword #:padding))
 @end lisp
 
+@c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
 * ID3v2 Serialization::
 * @code{with-track-in}::
@@ -1635,6 +1693,7 @@ the version from which it was deserialized is returned at read time
 
 @node ID3v2 Serialization
 @subsubsection ID3v2 Serialization
+@cindex ID3v2 Serialization
 
 While you can of course create an @code{<id3v2-tag>} instance ``from
 scratch'' (in-memory, as a result of a call to @code{(make <id3v2-tag>
@@ -1684,7 +1743,7 @@ the new tagset shall be written, replacing any tagset present therein.
 
 @item
 @code{#:apply-unsync} governs whether the unsynchronisation scheme
-@xref{The Unsynchronisation Scheme} should be applied when writing out
+@xref{The Unsynchronisation Scheme}, should be applied when writing out
 the given tags: @code{#f} (the default) means never, @code{#t} means
 it will always be applied and @code{'as-needed} means that it will be
 applied to any tag whose serialization would contain false syncs.
@@ -1701,6 +1760,7 @@ data & ID3v1 tag (if any) will be copied over to the new file.
 
 @node @code{with-track-in}
 @subsubsection @code{with-track-in}
+@cindex @code{with-track-in}
 
 @code{with-track-in(directory, fn)} is a convenience function; it will
 iterate over all filesystem entities in @code{directory} and apply
@@ -1727,6 +1787,65 @@ scheme@@(guile-user)> (with-track-in "." (lambda (tags pth v1) (format #t "~s ha
 @end lisp
 
 
+@node Text Encoding
+@section Text Encoding
+@cindex Text Encoding
+
+The various string fields bring up the question: what text encoding is
+used? There are actually three text encodings in play:
+
+@enumerate
+
+@item
+the encoding in use in your Scheme source files
+
+@item
+the encoding in use within the Guile interpreter
+
+@item
+the encoding in use in @code{libscribbu}
+
+@end enumerate
+
+The first is documented in the Guile manual under ``Character Encoding
+of Source Files'' @xref{Character Encoding of Soruce Files,,, Guile,
+The Guile Reference Manual}. The upshot is this: UTF-8 is assumed, but
+the author may tell Guile what is being used through a coding hint:
+
+@lisp
+;;; coding: iso-8859-1
+@end lisp
+
+The set of encodings recognized is defined by IANA in RFC2978.
+
+The second is also documented in the Guile manual, under ``String
+Internals'' @xref{String Internals,,, Guile, The Guile Reference
+Manual}.:
+
+@quotation
+Guile stores each string in memory as a contiguous array of Unicode
+code points along with an associated set of attributes. If all of the
+code points of a string have an integer range between 0 and 255
+inclusive, the code point array is stored as one byte per code point:
+it is stored as an ISO-8859-1 (aka Latin-1) string. If any of the code
+points of the string has an integer value greater that 255, the code
+point array is stored as four bytes per code point: it is stored as a
+UTF-32 string.
+
+Conversion between the one-byte-per-code-point and
+four-bytes-per-code-point representations happens automatically as
+necessary.
+@end quotation
+
+That just leaves @code{libscribbu}. On read (that is, when the library
+reads text from tags on disk), the encoding is sometimes specified by
+the tag itself, or is specified by the caller, or is guessed. From
+there, it will be converted to a Guile string. On write, text will
+be converted from the internal Guile representation to the desired
+text encoding on disk (deduced from either caller preferences or the
+frame settings themselves).
+
+
 @node Using @code{libscribbu}
 @chapter Using @code{libscribbu}
 @cindex Using @code{libscribbu}
@@ -1742,6 +1861,11 @@ this chapter will describe using the library through a worked
 example. This example can be found in the @file{examples/az-tags}
 sub-directory of the scribbu source distribution.
 
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* Building a @code{libscribbu} program::
+@end menu
+
 @node Building a @code{libscribbu} program
 @section Building a @code{libscribbu} program
 @cindex Building a @code{libscribbu} program
@@ -1752,6 +1876,12 @@ their ID3v2 tags contain non-compliant comment frames (in that they
 have no description). They also try to cram it into the comment field
 in the ID3v1 tag, even though it's generally too small to contain the
 entire string. We will call this program @code{az-tags}.
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* Implementing @code{az-tags}::
+* Building @code{az-tags}::
+@end menu
 
 @node Implementing @code{az-tags}
 @subsection Implementing @code{az-tags}

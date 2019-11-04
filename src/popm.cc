@@ -679,7 +679,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-popm",
-                        "(scribbu) Invoking scribbu popm");
+                        "(scribbu) Invoking `scribbu popm'");
 
       po::store(parsed, vm);
 

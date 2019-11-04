@@ -1,3 +1,13 @@
+2019-11-04  Michael Herstine  <sp1ff@pobox.com>
+
+	This commit makes a few minor changes prior to releasing:
+	    1. new verbiage in the Texinfo manual on string character
+	       encodings
+
+	    2. replaced `bp.py' with `admin/update-boilerplate'
+
+	    3. minor documentation updates
+
 2019-10-18  Michael Herstine  <sp1ff@pobox.com>
 
 	This commit adds information on how to use libscribbu from C++:

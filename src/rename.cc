@@ -246,7 +246,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-rename",
-                        "(scribbu) Invoking scribbu rename");
+                        "(scribbu) Invoking `scribbu rename'");
 
       po::store(parsed, vm);
 

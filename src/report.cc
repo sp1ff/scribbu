@@ -509,7 +509,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-report",
-                        "(scribbu) Invoking scribbu report");
+                        "(scribbu) Invoking `scribbu report'");
 
       po::store(parsed, vm);
 

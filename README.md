@@ -3,7 +3,7 @@ scribbu - The extensible tool for tagging your music collection
 
 This directory contains the 0.5 release of [scribbu](https://github.com/sp1ff/scribbu).
 
-See the file NEWS for the user-visible changes from previous releases.
+See the file [NEWS]() for the user-visible changes from previous releases.
 
 Please check the system-specific notes below for any caveats related to your operating system.
 
@@ -256,11 +256,11 @@ You can find the project at https://github.com/sp1ff/scribbu. You can clone it b
 Installing
 ----------
 
-General instructions may be found in [INSTALL](). MacOS support is experimental, and limited to Mojave at this point. Patches, suggestions & more information are welcome.
+General instructions may be found in [INSTALL](). MacOS support is experimental, and limited to Mojave & later at this point. Patches, suggestions & more information are welcome.
 
 ``` shell
 cd /tmp
-# curl -O .../scribbu-0.5.tar.gz
+curl -O https://github.com/sp1ff/scribbu/archive/v0.5.tar.gz
 xcode-select --install
 brew install openssl libiconv
 brew install -vf --build-from-source --cc=clang boost@1.60
@@ -329,7 +329,7 @@ None.
 Notes
 -----
 
-  - Right now the project is only distributed as source; I don't even have an Autotools tarball available. I'm working on that.
+  - Right now the project is only distributed as source.
   - I got the project name from this cool project name [generater](http://mrsharpoblunto.github.io/foswig.js/).
 
 -------------------------------------------------------------------------------

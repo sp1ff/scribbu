@@ -1,0 +1,784 @@
+#!/usr/local/bin/guile \                                                              -*- scheme -*-
+-e main -s
+!#
+
+;;; coding: utf-8
+(setlocale LC_ALL "")
+
+(use-modules (ice-9 format)
+             (ice-9 getopt-long)
+             (ice-9 i18n)
+             (ice-9 optargs)
+             (ice-9 rdelim)
+             (ice-9 regex)
+             (ice-9 textual-ports)
+             (srfi srfi-19))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                           constants                                            ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; regex for matching copyright statements; sub-matches:
+;; 1. start year (may be #f, will have a trailing #\- else)
+;; 2. end year
+;; 3. copyright holder name
+;; 4. copyright holder e-mail (may be #f, will have a leading space else)
+(define COPYRIGHT-REGEXP "Copyright \\(C\\) ([0-9]{4}-)?\
+([0-9]{4})\\s+\
+([^<]+)(\\s+<([-_.@a-zA-Z0-9]+)>)?")
+
+(define LICENSE "This file is part of scribbu.
+
+scribbu is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+scribbu is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with scribbu.  If not, see <http://www.gnu.org/licenses/>.")
+
+(define MAN-PAGES '("scribbu.1" "scribbu-dump.1" "scribbu-popm.1" "scribbu-rename.1"
+                    "scribbu-report.1" "scribbu-split.1" "scribbu-text.1"))
+
+(define SOURCE-DIRS '("scribbu" "scheme" "src" "test"))
+
+(define SOURCE-EXTENSIONS '(".hh" ".cc" ".yy" ".ll" ".scm"))
+
+;; this script's version (not scribbu's)
+(define VERSION "0.1")
+
+;; regex for matching scribbu versions; sub-matches:
+;; 1. the major version
+;; 2. the minor version
+;; 3. the patch/designator (may be #f, will contain a leading #\. else)
+(define VERSION-REGEXP "([0-9]+)\\.([0-9]+)(\\.[-_.0-9a-zA-Z]+)?")
+
+(define src:no-license -2)
+(define src:no-copyright-or-license -1)
+(define src:init 0)
+(define src:saw-file 1)
+(define src:saw-copyright 2)
+(define src:saw-license-no-copyright 3)
+(define src:saw-copyright-and-license 4)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                       utility functions                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (check-git-status root-dir)
+  (unless (eq? 0 (status:exit-val (system "git diff-index --quiet HEAD --")))
+    (error "This program will make large-scale changes to the scribbu source files.
+It should only be run in a \"clean\" git repository (and yours is not).")))
+
+(define (file-read-handler key . args)
+  "Generic catch handler when reading files."
+  ;; TODO(sp1ff): REMOVE THIS
+  (format #t "while reading input file, got key ~a & args ~a\n" key args)
+  (cond
+   ((eq? key 'system-error)
+    (format (current-error-port) "~a\n" (string-join (car (cdr (cdr args))) " "))
+    (exit 1))
+   (#t
+    (error (format #f "unknown error ~a|~a" key args)))))
+  
+(define (guess-missing-input input)
+  "Guess values for any missing inputs; fail if we are unable to do so."
+
+  (unless (assoc 'version input)
+    (error "VERSION must be provided"))
+  (unless (assoc 'author input)
+    (let ((cand (car (string-split (passwd:gecos (getpw (getlogin))) #\,))))
+      (if (not (eq? (string-length cand) 0))
+          (set! input (acons 'author cand input))
+          (error "AUTHOR was not specified and couldn't be guessed"))))
+  (unless (assoc 'email input)
+    (let ((cand (getenv "EMAIL")))
+      (if (and cand (not (eq? string-length(cand) 0)))
+          (set! input (acons 'email cand input))
+          (let ((cand (getenv "DEBEMAIL")))
+            (if (and cand (not (eq? (string-length cand) 0)))
+                (set! input (acons 'email cand input))
+                (error "EMAIL was not specified and could't be guessed"))))))
+  input)
+
+(define (guess-root-directory)
+  "Find the scribbu root directory, assuming that the pwd is a descendant thereof."
+
+  ;; Start in the pwd & work up. Stop when we find a directory named "scribbu" containing a LICENSE
+  ;; file.
+  (let* ((here (getcwd))
+         (idx (string-rindex here #\/))
+         (leaf (substring here idx)))
+    (while (> (string-length here) 1)
+           (if (and (string= leaf "/scribbu")
+                    (access? (format #f "~a/LICENSE" here) R_OK))
+               (break))
+           (set! here (substring here 0 idx))
+           (set! idx (string-rindex here #\/))
+           (set! leaf (substring here idx)))
+    (if (string= "here" "/")
+        (error "couldn't find scribbu root-- are you in the scribbu project?"))
+    here))
+  
+(define (parse-input-file input)
+  "Parse the input file to an association list."
+
+  (let ((comment-re (make-regexp "^\\s*#.*"))
+        (item-re    (make-regexp "^\\s*([a-zA-Z0-9_]+)\\s*=\\s*(.*)"))
+        (ws-re      (make-regexp "^\\s*$")))
+    (catch
+     #t
+     (lambda ()
+       (let* ((out  '())
+              (in   (open-input-file input))
+              (line (read-line in)))
+         (while (not (eof-object? line))
+                (let ((what (regexp-exec comment-re line)))
+                  (if what
+                      (begin
+                        (set! line (read-line in))
+                        (continue)))
+                  (set! what (regexp-exec ws-re line))
+                  (if what
+                      (begin
+                        (set! line (read-line in))
+                        (continue)))
+                  (set! what (regexp-exec item-re line))
+                  (unless what
+                    (error (format #t "un-recognized line: ~s" line)))
+                  (let ((item (string-downcase (match:substring what 1)))
+                        (val (string-trim (match:substring what 2))))
+                    (set!
+                     out
+                     (acons
+                      (cond
+                       ((string= item "version") 'version)
+                       ((string= item "author") 'author)
+                       ((string= item "email") 'email)
+                       (#t
+                        (error (format #t "invalid item ~s" item))))
+                      val
+                      out)))
+                  (set! line (read-line in))))
+         out))
+     file-read-handler)))
+
+(define (process-file-via-regexes filename regexes)
+  "Update a file through the application of one or more regex replacements.
+
+FILENAME names the file to be processed. REGEXES is a list of two-tuples, each pair being a regular
+expressions & either a list of substitutions or a function taking the match object returning the
+list of substitutions. Returns a list of length two: the first element is the number of replacements
+made, the second is a list of lines resulting from the application of REGEXES.
+
+The implementation leverages the (ice-9 regex) `regexp-substitute' function to do its work. For each
+line in FILENAME, each regular expression in REGEXES will be applied to the line; if a match is
+found, `regexp-substitute' will be applied to the list of replacements in (or returned by) the
+corresponding element of REGEXES.  Every element of REGEXES will be tried, so a given regex will be
+applied to the output of all previous regexes (i.e. order matters).
+
+Note that each line is stripped of trailing whitespace, including the newline, before having the
+regexes applied.
+
+N.B. All processing is done in-memory, and the resulting lines are returned as a list (i.e. this
+implementation is not suitable for very large files; there are however, certain conveniences
+associated with this approach, such as being able to readily compute the total number of
+replacements."
+
+  ;; Just in case we were called with just '(REGEX REPLACEMENTS)
+  (unless (list? (car regexes))
+    (set! regexes (list regexes)))
+  ;; Let's put this all in a catch handler so we can provide more useful error messages...
+  (catch
+   #t
+   (lambda ()
+     (with-input-from-file filename
+       (lambda ()
+         (let ((outlines '())
+               (num-replacements 0)
+               (line (read-line (current-input-port))))
+           (while (not (eof-object? line))
+                  (let ((recp regexes)
+                        (inner-line (string-trim-right line)))
+                    (while (> (length recp) 0)
+                           (let* ((head (car recp))
+                                  (re (list-ref head 0))
+                                  (sub (list-ref head 1))
+                                  (what (regexp-exec re inner-line)))
+                             (if what
+                                 (begin
+                                   (set! num-replacements (1+ num-replacements))
+                                   (unless (list? sub)
+                                     (set! sub (sub what)))
+                                   (set!
+                                    inner-line
+                                    (apply regexp-substitute (append (list #f what) sub))))))
+                           (set! recp (cdr recp)))
+                    (set! line inner-line))
+                  (set! outlines (append outlines (list line)))
+                  (set! line (read-line (current-input-port))))
+           (list num-replacements outlines)))))
+     file-read-handler))
+
+(define (replace-file-contents filename lines make-backups dry-run)
+    "Replace the contents of FILENAME with LINES. 
+
+If MAKE-BACKUPS is true, leave a backup copy of the original file.  If DRY-RUN is true, don't
+actually change anything; just print what would be done."
+
+    (if dry-run
+        (let* ((env-cols (getenv "COLUMNS"))
+               (cols (if (string? env-cols) (locale-string->integer env-cols) 70))
+               (hr (make-string cols #\=)))
+          (format #t "~a\nWould write the following to ~s ~a backup:\n" hr filename
+                  (if make-backups "with" "without"))
+          (while (> (length lines) 0)
+                 (format #t "~a\n" (car lines))
+                 (set! lines (cdr lines))))
+        (begin
+          (if make-backups
+              (copy-file filename (format #f "~a.bpbak" filename)))
+          (with-output-to-file filename
+            (lambda ()
+              (while (> (length lines) 0)
+                     (format (current-output-port) "~a\n" (car lines))
+                     (set! lines (cdr lines))))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                  source code update utilities                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (update-source filename version author email make-backups dry-run debug)
+  "Update the standard header found at the top of all source files.
+
+This function will search for a file header in FILENAME. If it is not present, it will be added at
+the top.
+
+If it is present, a copyright statement will be added or updated, and the licensing verbiage will be
+added if not found."
+
+  (let ((year (date->string (current-date) "~Y"))
+        (ext (substring filename (string-rindex filename #\.)))
+        (base (substring filename (1+ (string-rindex filename #\/)) (string-rindex filename #\.)))
+        (cc #f)                             ; comment continuation
+        (ecc #f)                            ; escaped comment continuation
+        (doxy #f)                           ; Doxygen intro
+        (term-doxy #f)                      ; terminate a Doxygen block
+        (filehdr #f)                        ; header line naming this file
+        (fileopen #f)
+        (closehdr #f)                       ; file header closing
+        (def-indent #f)                     ; default indentation string
+        (copy-text #f)                      ; regex for detecting the copyright statement
+        (indent "") (closing #f) (license #f) (state 'src:init); FSM state variables
+        (out-lines '()))
+    (cond
+     ((string= ext ".scm")
+      (set! cc ";;;;")
+      (set! ecc cc)
+      (set! doxy cc)
+      (set! term-doxy "Commentary")
+      (set! filehdr (make-regexp (format #f "^(\\s*);;;; ~a" base)))
+      (set! fileopen base)
+      (set! closehdr "")
+      (set! def-indent ""))
+     (#t
+      (set! cc "*")
+      (set! ecc "\\*")
+      (set! doxy "/**")
+      (set! term-doxy "*/")
+      (set! filehdr (make-regexp (format #f "^(\\s+)~a\\s+\\\\file" ecc)))
+      (set! fileopen (format #f "\\file ~a" base))
+      (set! closehdr "*/")
+      (set! def-indent " ")))
+    (set! copy-text (make-regexp (format #f "^(\\s*)~a\\s+Copyright \\(C\\) \
+([0-9]{4}-)?([0-9]{4})\\s+(.*)" ecc)))
+
+    ;; This function implements a FSM. States:
+    ;;
+    ;;   - 'no-license :: done; parsed header file & found copyright but no license. The line on
+    ;;     which the file header ends is in `closing'
+    ;;   - 'no-copyright-or-license :: done; parsed header file & found no copyright nor any
+    ;;     license. THe line on which the file header ends is in `closing'
+    ;;   - 'init :: initial state
+    ;;   - 'saw-file :: found "\file"
+    ;;   - 'saw-copyright :: found the copyright statement
+    ;;   - 'saw-license-no-copyright :: found a license, but no cpyright; license begins on line
+    ;;     `license'
+    ;;   - 'saw-license-and-copyright :: found both license & copyright; license begins on line
+    ;;     `license'
+
+    (let* ((port (open-input-file filename))
+           (line (read-line port))
+           (idx 0))
+      (while (not (eof-object? line))
+             (set! line (string-trim-right line))
+             (if debug (format #t "idx, state, line: ~d, ~a, ~s\n" idx state line))
+             (cond
+              ((eq? state 'src:init)
+               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+               ;;                             state src:init                                      ;;
+               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+               (set! out-lines (append out-lines (list line)))
+               (let ((what (regexp-exec filehdr line)))
+                 (if what
+                     (begin
+                       (set! state 'src:saw-file)
+                       (set! indent (match:substring what 1))
+                       (if debug (format #t "src:init => src:saw-file (indent => ~s)\n" indent))))))
+              ((eq? state 'src:saw-file)
+               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+               ;;                          state src:saw-file                                     ;;
+               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+               (let ((what (regexp-exec copy-text line)))
+                 (if what
+                     (begin
+                       ;;we found the copyright statement-- update it...
+                       (set!
+                        out-lines
+                        (append
+                         out-lines
+                         (list
+                          (regexp-substitute #f what
+                                             (match:substring what 1) cc " Copyright (C) "
+                                             (if (match:substring what 2)
+                                                 (match:substring what 2)
+                                                 (if (string= (match:substring what 3) year) ""
+                                                     (format #f "~a-" (match:substring what 3))))
+                                             year (format #f " ~a <~a>" author email)))))
+                       (set! state 'src:saw-copyright)
+                       (if debug (format #t "src:saw-file => saw-copyright (updated it to: ~s)\n"
+                                         (car (last-pair out-lines)))))
+                     ;; not copyright statement-- end of file header?
+                     (if (string-contains line term-doxy)
+                         (begin
+                           (set! state src:no-copyright-or-license)
+                           (set! closing idx)
+                           (set! out-lines (append out-lines (list line)))
+                           (if debug (format #t "src:saw-file => no-copyright-or-license \
+(closing is ~d, line is ~s)\n" closing line))
+                           (break))
+                         ;; still in file header-- license?
+                         (if (string-contains line "This file is part of scribbu.")
+                             (begin
+                               (set! state src:saw-license-no-copyright)
+                               (set! license idx)
+                               (set! out-lines (append out-lines (list line)))
+                               (if debug (format #t "src:saw-file => saw-license-no-copyright \
+(line is ~s)\n" line)))
+                             ;; none of the above-- copy the line ot `out-lines' & continue
+                             (set! out-lines (append out-lines (list line))))))))
+              ((eq? state 'src:saw-copyright)
+               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+               ;;                        state src:saw-copyright                                  ;;
+               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+               (if (string-contains line term-doxy)
+                   (begin
+                     (set! state 'src:no-license)
+                     (set! closing idx)
+                     (if debug (format #t "src:saw-copyright => no-license (closing is ~d, \
+line was ~s)\n" closing line))
+                     (break))
+                   (if (string-contains line "This file is part of scribbu.")
+                       (begin
+                         (set! state 'src:saw-copyright-and-license)
+                         (set! license idx)
+                         (if debug (format #t "src:saw-copyright => saw-copyright-and-license \
+(line was ~s)\n" line))
+                         (break))
+                       ;; keep looking
+                       (set! out-lines (append out-lines (list line)))))))
+             (set! line (read-line port))
+             (set! idx (1+ idx)))
+
+      ;; Accumulate the rest of the lines in `port' into `out-lines' (they'll be re-written below)
+      (while (not (eof-object? line))
+             (set! line (string-trim-right line))
+             (set! out-lines (append out-lines (list line)))
+             (set! line (read-line port)))
+      (close-port port))
+
+    (if debug (format #t "out of loop-- state is ~a\n" state))
+
+    (cond
+     ((eq? state 'src:init)
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;                       never saw a file header; insert one now                            ;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      (let ((header-lines (list doxy
+                                (format #f "~a~a ~a" def-indent cc fileopen)
+                                (format #f "~a~a" def-indent cc)
+                                (format #f "~a~a Copyright (C) ~a ~a <~a>" def-indent cc
+                                        year author email)
+                                (format #f "~a~a" def-indent cc))))
+        (set!
+         header-lines
+         (append
+          header-lines
+          (string-split LICENSE #\newline)))
+        (set!
+         header-lines
+         (append
+          header-lines
+          (list
+           (format #f "~a~a" def-indent cc)
+           (format #f "~a~a" def-indent cc)
+           (format #f "~a~a" def-indent closehdr)
+           "")))
+        (set!
+         out-lines
+         (append
+          header-lines
+          out-lines))))
+     ((eq? state 'src:saw-copyright-no-license)
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;                           saw copyright, didn't find license                             ;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      (let ((license-lines (string-split LICENSE #\newline)))
+        ;; insert `license-lines' _before_ `closing' in `out-lines'
+        (set!
+         out-lines
+         (append
+          (list-head out-lines closing)
+          license-lines
+          (list-tail out-lines closing)))))
+     ((eq? state 'src:no-copyright-or-license)
+
+      ;; TODO(sp1ff): DEBUG
+      (format #t "handling src:no-copyright-or-license\n")
+
+      (let ((addnl-lines (list (format #f "~a~a" indent year)
+                               (format #f "~a~a Copyright (C) ~a ~a <~a>" indent cc
+                                       year author email)
+                               (format #f "~a~a" indent year))))
+        (set!
+         addnl-lines
+         (append
+          addnl-lines
+          (string-split LICENSE #\newline)))
+        (set!
+         out-lines
+         (append
+          (list-head out-lines closing)
+          addnl-lines
+          (list-tail out-lines closing)))
+        ))
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ;;                                    fall-through case                                      ;;
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     (#t
+      (unless (eq? state 'src:saw-copyright-and-license)
+        (error (format #f "failed to parse ~s: state is ~a" filename state)))))
+
+    ;; OK-- that's it: our output is in `out-lines':
+    (if debug
+        (let ((n 0))
+          (format #t "Would write (~d lines total):\n" (length out-lines))
+          (while (< n 18)
+                 (format #t "~a\n" (car out-lines))
+                 (set! out-lines (cdr out-lines))
+                 (set! n (1+ n)))
+          (format #t "...\n"))
+        (replace-file-contents filename out-lines make-backups dry-run))))
+
+(define (update-source-in source-dir version author email root-dir make-backups dry-run debug)
+  "Update source code boilerplate in a given directory"
+
+  (let* ((this-dir (format #f "~a/~a" root-dir source-dir))
+         (dir (opendir this-dir))
+         (entry (readdir dir)))
+    (while (not (eof-object? entry))
+           (let ((st (stat (format #f "~a/~a" this-dir entry))))
+             (if (eq? 'regular (stat:type st))
+                 (let ((idx (string-rindex entry #\.)))
+                   (if (and idx (member (substring entry idx) SOURCE-EXTENSIONS))
+                       (update-source (format #f "~a/~a/~a" root-dir source-dir entry)
+                                      version author email make-backups dry-run debug)))))
+           (set! entry (readdir dir)))
+    (closedir dir)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                        update functions                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (update-configure-ac version email root-dir make-backups dry-run)
+  "Update boilerplate in `configure.ac'
+
+This method looks for the line:
+
+    AC_INIT([scribbu], [VERSION], [BUG-EMAIL], ....)
+
+and updates it with VER and EMAIL."
+
+  (let* ((re (make-regexp "AC_INIT\\(\
+\\[([-a-zA-Z0-9_.]+)\\], \
+\\[[0-9a-zA-Z.]+\\], \
+\\[[-a-zA-Z0-9_.]+@[-a-zA-Z0-9.]+\\]\
+(.*)"))
+         (sub (list "AC_INIT([" 1 (format #f "], [~a], [~a]" version email) 2 ))
+         (filename (format #f "~a/configure.ac" root-dir))
+         (out (process-file-via-regexes filename (list re sub)))
+         (num-replacements (list-ref out 0))
+         (outlines (list-ref out 1)))
+    (unless (eq? 1 num-replacements)
+      (error (format #t "while processing `configure.ac', expected 1 replacement, got ~d"
+                     num-replacements)))
+    (replace-file-contents filename outlines make-backups dry-run)))
+
+(define (update-man-pages version author email root-dir make-backups dry-run)
+  "Update boilerplate in the scribbu man pages.
+
+This function will update boilerplate in a few places in man pages:
+
+    1. copyright statements
+    2. headers: .TH scribbu 1 YYYY-MM-DD \"scribbu x.y\" \"scribbu Manual\"
+"
+
+  (let* ((todays-date (current-date))
+         (year (date-year todays-date))
+         (today (date->string todays-date "~Y-~m-~d"))
+         (re1 (make-regexp COPYRIGHT-REGEXP))
+         (sb1 (lambda (what)
+                (list 'pre "Copyright (C) " (if (match:substring what 1) 1 "")
+                      (format #f "~a ~a <~a>" year author email))))
+         (re2 (make-regexp "^.TH (scribbu(-[a-zA-Z0-9]+)?) 1 [-0-9]+ \"scribbu [-_a-zA-Z0-9.]+\" \"scribbu Manual\"$"))
+         (sb2 (list ".TH " 1 " 1 " today (format #f " \"scribbu ~a\" \"scribbu Manual\"" version)))
+         (repls (list (list re1 sb1) (list re2 sb2)))
+         (man-pages MAN-PAGES))
+    (while (> (length man-pages) 0)
+           (let* ((filename (format #f "~a/doc/~a" root-dir (car man-pages)))
+                  (results (process-file-via-regexes filename repls))
+                  (num-replacements (list-ref results 0))
+                  (outlines (list-ref results 1)))
+             (unless (eq? num-replacements 2)
+               (error (format #f "while processing ~s, expected 2 replacements, got ~a"
+                              filename num-replacements)))
+             ;; The last line of each man page is the list of other man pages (under "See Also")--
+             ;; let's auto-generate that, as well.
+             (let ((n (length outlines))
+                   (mp MAN-PAGES)
+                   (line ".BR "))
+               (while (> (length mp) 0)
+                      (unless (string= (car man-pages) (car mp))
+                        (set!
+                         line
+                         (string-append line " " (substring
+                                                  (car mp)
+                                                  0
+                                                  (- (string-length (car mp)) 2))
+                                        " \"(1), \"")))
+                      (set! mp (cdr mp)))
+               ;; replace the trailing ", \"" with "\""
+               (set! line (substring line 0 (- (string-length line) 3)))
+               (set! line (string-append line "\""))
+               (list-set! outlines (1- (length outlines)) line))
+             (replace-file-contents filename outlines make-backups dry-run))
+           (set! man-pages (cdr man-pages)))))
+
+(define (update-readme-md version author email root-dir make-backups dry-run)
+  "Update boilerplate in README.md.
+
+This method looks for lines of the form:
+
+    1. \" This directory contains the x.y release of [scribbu](...\"
+    2. Copyright (C) xxx-yyy XXXX
+    3. scribbu XXXX, where XXXX looks like a version
+
+and updates them with VER, AUTHOR, and the current year."
+
+  (let* ((year (date-year (current-date)))
+         (re1 (make-regexp "This directory contains the ([-_.0-9a-zA-Z]+) release of\
+ \\[scribbu\\](.*)"))
+         (sb1 (list (format #f "This directory contains the ~a release of [scribbu]" version) 2))
+         (re2 (make-regexp COPYRIGHT-REGEXP))
+         (sb2 (lambda (what)
+                (list 'pre "Copyright (C) " (if (match:substring what 1) 1 "")
+                      (format #f "~a ~a <~a>" year author email))))
+         (re3 (make-regexp (format #f "scribbu ~a" VERSION-REGEXP)))
+         (sb3 (list 'pre (format #f "scribbu ~a" version) 'post))
+         (filename (format #f "~a/README.md" root-dir))
+         (result (process-file-via-regexes
+                  filename
+                  (list (list re1 sb1) (list re2 sb2) (list re3 sb3))))
+         (outlines (list-ref result 1)))
+    (replace-file-contents filename outlines make-backups dry-run)))
+
+(define (update-texinfo version author email root-dir make-backups dry-run)
+    "Update boilerplate in the scribbu texinfo manual.
+
+This method looks for lines of the form:
+
+    Copyright @copyright{} xxx-yyy XXXX
+
+and
+
+    This manual corresponds to scribbu version XXX.
+
+and updates them with VER, AUTHOR, and the current year."
+
+    (let* ((year (date-year (current-date)))
+           (re1 (make-regexp "Copyright @copyright\\{\\} ([0-9]{4}-)?([0-9]{4})\
+\\s+([^<]+)(\\s+<([-_.@a-zA-Z0-9]+)>)?"))
+           (sb1 (lambda (what)
+                  (list 'pre (format #f "Copyright @copyright{} ~a~a ~a <~a>"
+                                     (if (match:substring what 1) (match:substring what 1) "")
+                                     year author email) 'post)))
+           (re2 (make-regexp (format #f "This manual corresponds to scribbu version ~a" VERSION-REGEXP)))
+           (sb2 (list 'pre (format #f "This manual corresponds to scribbu version ~a" version) 'post))
+           (filename (format #f "~a/doc/scribbu.texi" root-dir))
+           (result (process-file-via-regexes
+                    filename
+                    (list (list re1 sb1) (list re2 sb2))))
+           (num-replacements (list-ref result 0))
+           (outlines (list-ref result 1)))
+      (unless (eq? 2 num-replacements)
+        (error (format #f "expected 2 Texinfo replacements, got ~d" num-replacements)))
+      (replace-file-contents filename outlines make-backups dry-run)))
+
+(define (update-source-code version author email root-dir make-backups dry-run debug)
+  "Update all source code (Scheme & C++) boilerplate."
+  (let ((sd SOURCE-DIRS))
+    (while (> (length sd) 0)
+           (update-source-in (car sd) version author email root-dir make-backups dry-run debug)
+           (set! sd (cdr sd)))))
+
+(define (upate-scheme-cc author root-dir make-backups dry-run)
+  "Update some boilerplate in scheme.cc specifically"
+
+  (let* ((year (date-year (current-date)))
+         (re1 (make-regexp "#define AUTHOR(\\s+).*"))
+         (sb1 (list "#define AUTHOR " 1 (format #f "\"~a\"" author)))
+         (re2 (make-regexp "#define COPYRIGHT (\\s+).*"))
+         (sb2 (list "#define COPYRIGHT " 1 (format #f "\"2017-~a\"" year)))
+         (filename (format #f "~a/scribbu/scheme.cc" root-dir))
+         (result (process-file-via-regexes
+                  filename
+                  (list (list re1 sb1) (list re2 sb2))))
+         (num-replacements (list-ref result 0))
+         (out-lines (list-ref result 1)))
+    (unless (eq? 2 num-replacements)
+      (error (format #f "expected 2 replacements for ~a, got ~d" filename num-replacements)))
+    (replace-file-contents filename out-lines make-backups dry-run)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                              main                                              ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (main args)
+  (let* ((options-spec '((help         (single-char #\h) (value #f))
+                         (version      (single-char #\v) (value #f))
+                         (input        (single-char #\f) (value #t))
+                         (make-backups (single-char #\b) (value #f))
+                         (root-dir     (single-char #\d) (value #t))
+                         (dry-run      (single-char #\n) (value #f))
+                         (debug        (single-char #\D) (value #f))))
+         (options (getopt-long args options-spec)))
+    (cond
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ;;                                    help & version                                         ;;
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ((option-ref options 'help #f)
+      (let ((ar0 (car (command-line))))
+        (format #t "~a -- update boilerplate throughout scribbu
+
+    Usage: ~a [OPTION]...
+
+    Where OPTION is one or more of:
+
+        -h, --help           print this usage message & exit
+        -v, --version        print this program's version & exit
+        -i, --input=INPUT    specify the input file (on which more
+                             below)-- mandatory
+        -b, --make-backups   make backups of all files before edit-
+                             ing
+        -d, --root-dir=ROOT  specify the scribbu root directory (the 
+                             script will try to guess it, otherwise)
+        -D, --debug          turn on verbose debug output (implies
+                             dry-run)
+        -n, --dry-run        do not modify any files; just print
+                             what *would* be done
+
+    scribbu files share various boilerplate (the project version 
+    number, copyright statements, &c). This program will take 
+    that information from a single source & propagate it 
+    throughout.
+
+    That single source is the file specified through the --input
+    option. It shall be a plain-text file containing configuration
+    items of the form:
+
+        ITEM = VALUE
+
+    Lines beginning with a hash `#' are considered comments and
+    ignored. The following ITEMS shall be supplied:
+
+        1. VERSION: the Autconf-compliant version string (e.g.
+           \"1.0\", or \"2.3.beta\"); this will be inserted into
+           `configure.ac' as well as documentation.
+
+    The following items may be supplied:
+
+        1. AUTHOR: the author name *without* an e-mail address 
+           (i.e. *not* something like \"John Doe <jdoe@gmail.com>\",
+           but rather just \"John Doe\"); this will be used 
+           in documentation
+
+        2. EMAIL: the e-mail address of the author; again used
+           in documentation
+
+    If they are not given, the program will try to guess them (and
+    will fail if unable to do so).
+" ar0 ar0)))
+     ((option-ref options 'version #f)
+      (format #t "~a ~a\n" (car (command-line)) VERSION))
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ;;                                  main program logic                                       ;;
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     (#t
+      ;; Alright, if we're here, we're actually going to do some work; the first step is to unpack
+      ;; all our options & validate them.
+      (let ((input        (option-ref options 'input        '()))
+            (make-backups (option-ref options 'make-backups #f))
+            (root-dir     (option-ref options 'root-dir      #f))
+            (dry-run      (option-ref options 'dry-run      #f))
+            (debug        (option-ref options 'debug        #f))
+            (args         (option-ref options '()           '())))
+        (unless (null? args)
+          (format (current-error-port) "~a does not take argumetns\n" (car (command-line)))
+          (exit 2))
+        (if debug (set! dry-run #t))
+        (if input
+            (set! input (guess-missing-input (parse-input-file input)))
+            (display "--input is a required option\n" (current-error-port)))
+        (unless root-dir
+          (set! root-dir (guess-root-directory)))
+
+        (let ((version (cdr (assoc 'version input)))
+              (author  (cdr (assoc 'author  input)))
+              (email   (cdr (assoc 'email   input))))
+
+          (format #t "root-directory: ~a
+  make-backups: ~a
+         debug: ~a
+       dry-run: ~a
+       version: ~a
+        author: ~a
+         email: ~a
+" root-dir make-backups debug dry-run version author email)
+
+          (unless dry-run (check-git-status root-dir))
+
+          ;; If we made it this far, we're good to go:
+          (update-configure-ac version email root-dir make-backups dry-run)
+          (update-readme-md version author email root-dir make-backups dry-run)
+          (update-man-pages version author email root-dir make-backups dry-run)
+          (update-texinfo version author email root-dir make-backups dry-run)
+          (update-source-code version author email root-dir make-backups dry-run debug)
+          (upate-scheme-cc author root-dir make-backups dry-run)))))))

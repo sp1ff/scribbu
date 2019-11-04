@@ -335,7 +335,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-dump",
-                        "(scribbu) Invoking scribbu dump");
+                        "(scribbu) Invoking `scribbu dump'");
 
       po::store(parsed, vm);
       
