@@ -111,7 +111,7 @@ namespace scribbu {
 
     return p;
   }
-  
+
   /**
    * \brief Compute the size, on disk, taken up by a sequence of ID3v2 tags
    *

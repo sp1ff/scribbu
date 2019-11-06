@@ -219,7 +219,7 @@ scribbu::id3v2_2_tag& scribbu::id3v2_2_tag::operator=(const id3v2_2_tag &that)
     generic_parsers_ = that.generic_parsers_;
     compression_ = that.compression_;
     padding_ = that.padding_;
-    
+
     coms_.clear();
     cnts_.clear();
     pops_.clear();
@@ -358,7 +358,7 @@ scribbu::id3v2_2_tag::text(
 }
 
 /// Set the contents of an arbitrary text frame
-/*virtual*/ 
+/*virtual*/
 void
 scribbu::id3v2_2_tag::text(
     id3v2_text_frames  id,

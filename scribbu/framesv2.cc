@@ -62,7 +62,7 @@ scribbu::detail::count_syncs(std::uint32_t n, bool false_only)
       }
     }
   }
-  
+
   return count;
 }
 
@@ -74,7 +74,7 @@ std::istream&
 scribbu::operator>>(std::istream &is, id3v2_text_frames &x)
 {
   using namespace std;
-  
+
   static const unordered_map<string, id3v2_text_frames, hash<string>> TBL{
     { "talb",         id3v2_text_frames::talb },
     { "TALB",         id3v2_text_frames::talb },
@@ -237,7 +237,7 @@ scribbu::operator>>(std::istream &is, id3v2_text_frames &x)
     { "TYE",          id3v2_text_frames::tyer },
     { "year",         id3v2_text_frames::tyer },
   };
-    
+
   string text;
   is >> text;
 
@@ -250,8 +250,8 @@ std::ostream&
 scribbu::operator<<(std::ostream &os, const id3v2_text_frames &x)
 {
   using namespace std;
-  
-  static 
+
+  static
   const unordered_map<id3v2_text_frames, string, hash<id3v2_text_frames>> TBL{
     { id3v2_text_frames::talb, "talb" },
     { id3v2_text_frames::tbpm, "tbpm" },
@@ -1075,12 +1075,12 @@ scribbu::play_count::reset_counter(std::size_t n)
       break;
     }
   }
-  
+
   while (msb > 0) {
     counter_.push_back( (0xff << msb) & n );
   }
-  
-  counter_.push_back( 0xff & n );  
+
+  counter_.push_back( 0xff & n );
 }
 
 
@@ -1179,12 +1179,12 @@ scribbu::popularimeter::reset_counter(std::size_t n)
       break;
     }
   }
-  
+
   while (msb > 0) {
     counter_.push_back( (0xff << msb) & n );
   }
-  
-  counter_.push_back( 0xff & n );  
+
+  counter_.push_back( 0xff & n );
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1193,7 +1193,7 @@ scribbu::popularimeter::reset_counter(std::size_t n)
 
 /// Construct "from scratch"-- text shall be a query-string style representation
 /// of the tag cloud (i.e. that which is returned from urlencoded())
-scribbu::tag_cloud::tag_cloud(const std::string &owner, 
+scribbu::tag_cloud::tag_cloud(const std::string &owner,
                               const std::string &text):
   own_(owner)
 {
@@ -1201,7 +1201,7 @@ scribbu::tag_cloud::tag_cloud(const std::string &owner,
 }
 
 /// Does a given value exist for a given key?
-bool scribbu::tag_cloud::has_value(const std::string &key, 
+bool scribbu::tag_cloud::has_value(const std::string &key,
                                    const std::string &val) const
 {
   if (!tags_.count(key)) {
@@ -1224,7 +1224,7 @@ bool scribbu::tag_cloud::add_key(const std::string &key)
 
 /// Add a value to an existent key-- a false return value means the key and
 /// value already existed
-bool scribbu::tag_cloud::add_value(const std::string &key, 
+bool scribbu::tag_cloud::add_value(const std::string &key,
                                    const std::string &val)
 {
   if (!tags_.count(key)) {
@@ -1232,27 +1232,27 @@ bool scribbu::tag_cloud::add_value(const std::string &key,
     tags_[key].insert(val);
     return true;
   }
-  
+
   if (tags_[key].count(val)) {
     return false;
   }
-  
+
   tags_[key].insert(val);
   return true;
 }
 
 /// Return an URL-encoded representation of the tag cloud
-std::string 
+std::string
 scribbu::tag_cloud::urlencoded() const
 {
   using namespace std;
-  
+
   using scribbu::urlencode;
-  
+
   string out;
   bool first = true;
   for (auto kv: tags_) {
-    
+
     if (first) {
       first = false;
     } else {
@@ -1262,27 +1262,27 @@ scribbu::tag_cloud::urlencoded() const
     out += urlencode(kv.first);
 
     if (!kv.second.empty()) {
-      
+
       out += '=';
       bool infirst = true;
       for (auto val: kv.second) {
-        
+
         if (infirst) {
           infirst = false;
         } else {
           out += ',';
         }
-        
-        out += urlencode(val);        
+
+        out += urlencode(val);
       }
     }
   }
-  
+
   return out;
 }
 
 /// Merge an URL-coded representation of some tags into the cloud
-void 
+void
 scribbu::tag_cloud::merge(const std::string &tags)
 {
   using namespace std;
@@ -1293,7 +1293,7 @@ scribbu::tag_cloud::merge(const std::string &tags)
     const string key = p.first;
     set<string> value = p.second;
     // tie(key, value) = p;
-    
+
     if (tags_.count(key)) {
       tags_[key].insert(value.begin(), value.end());
     } else {
@@ -1303,7 +1303,7 @@ scribbu::tag_cloud::merge(const std::string &tags)
 }
 
 /// Update the tag cloud
-void 
+void
 scribbu::tag_cloud::update(const std::string &tags)
 {
   tags_.clear();
@@ -1312,26 +1312,26 @@ scribbu::tag_cloud::update(const std::string &tags)
 
 /// Return the size, in bytes, of the frame, prior to desynchronisation,
 /// compression, and/or encryption exclusive of the header
-std::size_t 
+std::size_t
 scribbu::tag_cloud::size() const
 {
   std::size_t cb = 1 + own_.length() + 1;
-  
+
   for (auto kv: tags_) {
-    
+
     const std::string &key = kv.first;
     cb += key.length() + 1 + 4;
     for (auto v: kv.second) {
       cb += v.length() + 1;
     }
   }
-  
+
   return cb;
 }
 
 /// Return the number of bytes this frame will occupy when serialized to
 /// disk, including the header
-std::size_t 
+std::size_t
 scribbu::tag_cloud::serialized_size(bool unsync) const
 {
   std::size_t cb = size();
@@ -1343,7 +1343,7 @@ scribbu::tag_cloud::serialized_size(bool unsync) const
 
 /// Return zero if this frame would not contain false syncs if serialized in
 /// its present state; else return the number of false sync it would contain
-std::size_t 
+std::size_t
 scribbu::tag_cloud::needs_unsynchronisation() const
 {
   return count_syncs(true);
@@ -1352,54 +1352,54 @@ scribbu::tag_cloud::needs_unsynchronisation() const
 /// Serialize this frame to an output stream, perhaps applying the
 /// unsynchronisation scheme if the caller so chooses ("unsynchronised" will
 /// be updated accordingly)
-std::size_t 
+std::size_t
 scribbu::tag_cloud::write(std::ostream &os) const
 {
   const char ver[1] = { 0x01 };
 
   std::size_t cb  = 0;
-  
+
   os.write(ver, 1); cb++;
 
   std::size_t cbw = own_.length() + 1;
   os.write(own_.c_str(), cbw); cb += cbw;
-  
+
   for (auto kv: tags_) {
 
     // `kv' is a pair<const string, set<string>>
     const std::string &key = kv.first;
     cbw = key.length() + 1;
     os.write(key.c_str(), cbw); cb += cbw;
-    
+
     uint32_t nval = 0;
     for (auto v: kv.second) {
       nval += v.length() + 1;
     }
-    
+
     nval = htonl(nval);
     os.write((const char*)&nval, 4); cb += 4;
-    
+
     for (auto v: kv.second) {
       cbw = v.length() + 1;
       os.write(v.c_str(), cbw); cb += cbw;
     }
 
   }
-  
+
   return cb;
 }
 
-std::size_t 
+std::size_t
 scribbu::tag_cloud::count_syncs(bool false_only) const
 {
   using namespace std;
   using namespace scribbu::detail;
-  
+
   size_t nsync = 0;
-  
+
   // The current version is 1, so no false sync.
   nsync += detail::count_syncs(own_.begin(), own_.end(), false_only);
-  
+
   // Owner is null-terminated, so no false sync between owner & the first key.
   for (auto kv: tags_) {
 
@@ -1416,7 +1416,7 @@ scribbu::tag_cloud::count_syncs(bool false_only) const
     }
     // `nval' itself may contain false syncs:
     nsync += detail::count_syncs(nval, false_only);
-    
+
     // Now, if the last octet of `nval' happens to be 0xff _and_ false_only
     // is true, we _could_ have a false sync between the value byte count &
     // the first string.
@@ -1427,24 +1427,24 @@ scribbu::tag_cloud::count_syncs(bool false_only) const
       }
     }
   }
-  
+
   return nsync;
 }
 
-void 
-scribbu::tag_cloud::parse_to_map(const std::string &text, 
+void
+scribbu::tag_cloud::parse_to_map(const std::string &text,
                                  map_type &M)
 {
   using namespace std;
 
   // Parse using a simple FSM:
   bool parsing_key = true;
-  
+
   string token, key;
   for (size_t i = 0, n = text.size(); i < n; ++i) {
 
     char c = text[i];
-    
+
     if (parsing_key) {
       if ('=' == c) {
         key = urldecode(token);
@@ -1468,14 +1468,14 @@ scribbu::tag_cloud::parse_to_map(const std::string &text,
         M[key].insert(urldecode(token));
         token.clear();
         key.clear();
-        parsing_key = true;        
+        parsing_key = true;
       } else {
         token += c;
       }
     }
-    
+
   }
-  
+
   // tidy up whatever's left in `token' & `key'
   if (parsing_key) {
     token = urldecode(token);
@@ -1486,7 +1486,7 @@ scribbu::tag_cloud::parse_to_map(const std::string &text,
   } else {
     M[key].insert(urldecode(token));
   }
-  
+
 }
 
 

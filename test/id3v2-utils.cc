@@ -1080,7 +1080,7 @@ BOOST_AUTO_TEST_CASE( test_total_size )
 
   vector<unique_ptr<id3v2_tag>> tags;
   read_all_id3v2(ifs, back_inserter(tags));
-  
+
   size_t tot, pad;
   tie(tot, pad) = total_id3v2_size(tags.begin(), tags.end(), false);
   BOOST_CHECK( tot == 452951 );

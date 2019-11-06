@@ -130,7 +130,7 @@ It should only be run in a \"clean\" git repository (and yours is not).")))
   "Parse the input file to an association list."
 
   (let ((comment-re (make-regexp "^\\s*#.*"))
-        (item-re    (make-regexp "^\\s*([a-zA-Z0-9_]+)\\s*=\\s*(.*)"))
+        (item-re    (make-regexp "^\\s*([a-zA-Z0-9_]+)\\s*:\\s*(.*)"))
         (ws-re      (make-regexp "^\\s*$")))
     (catch
      #t

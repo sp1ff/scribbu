@@ -210,22 +210,22 @@ scribbu::track_data::track_data(std::istream &is) : size_(0)
 }
 
 
-std::string 
+std::string
 scribbu::urlencode(const std::string &text)
 {
   using namespace std;
-  
+
 
   string out;
   for (auto c: text) {
-    
+
     if ('%' == c) {
       // % needs to be escaped
       out += "%25";
     } else if (('A' <= c && 'Z' >= c) ||
                ('a' <= c && 'z' >= c) ||
                ('0' <= c && '9' >= c) ||
-               '-' == c || '_' == c || '.' == c || '~' == c) { 	      
+               '-' == c || '_' == c || '.' == c || '~' == c) {
       // un-reserved characters never need to be escaped
       out += c;
     } else {
@@ -233,11 +233,11 @@ scribbu::urlencode(const std::string &text)
       stringstream stm;
       // Getting a char to print as a hex is surprisingly difficult:
       // https://stackoverflow.com/questions/673240/how-do-i-print-an-unsigned-char-as-hex-in-c-using-ostream
-      stm << "%" << hex << setfill('0') << setw(2) << 
+      stm << "%" << hex << setfill('0') << setw(2) <<
         ( ((unsigned short) c) & 0xff );
       out += stm.str();
     }
-    
+
   }
 
   return out;
@@ -266,20 +266,20 @@ strtochar(const char *p)
   } else {
     throw std::invalid_argument("expected hex character");
   }
-  
+
   return out;
 }
 
-std::string 
+std::string
 scribbu::urldecode(const std::string &text)
 {
   using namespace std;
-  
+
   string out;
 
   bool saw_pct = false;
   for (size_t i = 0, n = text.size(); i < n; ++i) {
-    
+
     char c = text[i];
     if (saw_pct) {
 
@@ -292,7 +292,7 @@ scribbu::urldecode(const std::string &text)
         out += strtochar(text.c_str() + i);
         i += 1;
       }
-      
+
       saw_pct = false;
 
     } else {
@@ -304,7 +304,7 @@ scribbu::urldecode(const std::string &text)
       }
 
     }
-    
+
   }
 
   return out;

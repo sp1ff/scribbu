@@ -248,7 +248,7 @@ namespace scribbu {
     /// depend on the particular ID3v2 version
     virtual unsigned char flags() const;
     /// Retrieve this tag's experimental flag
-    bool experimental() const 
+    bool experimental() const
     { return (flags() & 32) != 0; }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -422,7 +422,7 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail,
          const boost::optional<encoding> &src = boost::none) const;
     /// Set the contents of an arbitrary text frame
-    virtual 
+    virtual
     void
     text(id3v2_text_frames id,
          const std::string &text,
@@ -433,7 +433,7 @@ namespace scribbu {
     virtual
     void
     delete_frame(id3v2_text_frames id);
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////

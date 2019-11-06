@@ -1,7 +1,7 @@
 .\" Copyright (C) 2019 Michael Herstine <sp1ff@pobox.com>
 .\" You may distribute this file under the terms of the GNU Free
 .\" Documentation License.
-.TH scribbu-text 1 2019-09-13 "scribbu 0.5" "scribbu Manual" 
+.TH scribbu-text 1 2019-11-06 "scribbu 0.5" "scribbu Manual"
 .SH NAME
 scribbu-text \- Manage ID3v2 text frames
 .SH SYNOPSIS
@@ -25,7 +25,7 @@ scribbu text --artist="Pogues, The" --title="Lorca's Novena" some.mp3
 .fi
 will set the artist & title frames (
 .BR TPE1 " and " TIT2 ", resp.)"
-in all tags in 
+in all tags in
 .B some.mp3.
 .nf
 
@@ -40,7 +40,7 @@ files in the current directory.
 scribbu text --delete=TENC foo/
 
 .fi
-will delete the encoded-by frame in all ID3v2-tagged files in 
+will delete the encoded-by frame in all ID3v2-tagged files in
 .B foo/
 and its sub-directories.
 
@@ -67,7 +67,7 @@ Display this sub-command's node in the user's Info viewer.
 \-a,\-\-album=ALBUM Set the TALB, or Album/Movie/Show Title frame
 .RE
 .PP
-\-A,\-\-artist=ARTIST Set the TPE1, or Lead artist(s)/Lead 
+\-A,\-\-artist=ARTIST Set the TPE1, or Lead artist(s)/Lead
 performer(s)/Soloist(s)/Performing group frame
 .RE
 .PP
@@ -117,4 +117,4 @@ is maintained at https://github.com/sp1ff/scribbu.
 
 .SH "SEE ALSO"
 
-.BR scribbu "(1), " scribbu-dump "(1), " scribbu-popm "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1)"
+.BR  scribbu "(1), " scribbu-dump "(1), " scribbu-popm "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1)"

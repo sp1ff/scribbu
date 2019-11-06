@@ -35,7 +35,7 @@
  * modifications (e.g. increasing the play count). It specifically excludes
  * ID3v1 tags-- those are handled by free functions declared in id3v1.hh.
  *
- * 
+ *
  * \section scribbu_tagsets_scribbu scribbu Facilities for File I/O
  *
  * At the time of this writing, there is no central location documenting
@@ -68,7 +68,7 @@
  *        2. ID3v2 version, revision & flags
  *
  *        3. size of the tag, in bytes
- * 
+ *
  *    4. scribbu::id3v1_info (scribbu/id3v1.hh): describes an ID3v1 tag (or the
  *    absence thereof it's returned by ends_in_id3v1). It has attributes:
  *
@@ -161,13 +161,13 @@
 namespace scribbu {
 
   class invalid_tagset_request: public error{
-    
+
   public:
     enum cause {
       emplace_mismatch_sz,
       adj_pad_not_enough,
     };
-    
+
   public:
     invalid_tagset_request(cause c): cause_(c)
     { }
@@ -178,7 +178,7 @@ namespace scribbu {
     mutable std::shared_ptr<std::string> pwhat_;
 
   };
-  
+
   enum class apply_unsync {
     always,
     never,
@@ -186,7 +186,7 @@ namespace scribbu {
   };
 
   namespace detail {
-    
+
     /**
      * \brief Produce a backup file name
      *
@@ -231,13 +231,13 @@ namespace scribbu {
         if (prefix != s.substr(0, nprefix)) {
           continue;
         }
-        
+
         // We next expect s[nprefix] == '.'; the "+1" below guards
         // against "prefix."
         if (s.length() <= nprefix + 1 || '.' != s[nprefix]) {
           continue;
         }
-        
+
         // We next expect all characters in s[nprefix+1:] to be digits
         bool all_num = true;
         for (ptrdiff_t i = nprefix + 1, n = s.length(); i < n; ++i) {
@@ -246,31 +246,31 @@ namespace scribbu {
             break;
           }
         }
-        
+
         if (! all_num) {
           continue;
         }
-        
+
         // If we made it here, *p0 is a path of the form <prefix>.NNN
         entries.push_back(*p0);
       }
-      
+
       if (entries.empty()) {
         string ext = pth.extension().string() + ".1";
         return here / path(pth.stem().string() + ext);
       }
-        
+
       sort(entries.begin(), entries.end(),
-           [](const path &p1, const path &p2) { 
+           [](const path &p1, const path &p2) {
              int x0 = atoi(p1.extension().string().substr(1).c_str());
              int x1 = atoi(p2.extension().string().substr(1).c_str());
              return x0 < x1;
            });
-      
+
       string s = entries.back().extension().string().substr(1);
       int n = atoi(s.c_str());
       n += 1;
-      
+
       stringstream stm;
       stm << pth.string() << "." << n;
 
@@ -292,7 +292,7 @@ namespace scribbu {
     }
 
   } // End nested namespace detail.
-  
+
   /**
    * \brief Replace an ID3v2 tagset by making a copy of the entire file
    *
@@ -316,19 +316,19 @@ namespace scribbu {
    *
    *
    */
-  
+
   template <typename forward_input_iterator>
   void replace_tagset_copy(const boost::filesystem::path &pth,
                            forward_input_iterator p0,
                            forward_input_iterator p1,
                            apply_unsync unsync)
   {
-    const std::ios::iostate EXC_MASK = std::ios::eofbit  | 
-                                       std::ios::failbit | 
+    const std::ios::iostate EXC_MASK = std::ios::eofbit  |
+                                       std::ios::failbit |
                                        std::ios::badbit;
 
     namespace fs = boost::filesystem;
-    
+
     fs::path cp = detail::get_backup_name(pth);
 
     // This is a race condition (`cp' could be created in between the call to
@@ -340,7 +340,7 @@ namespace scribbu {
 
     boost::system::error_code ec;
     fs::copy(pth, cp, ec);
-    
+
     fs::ifstream ifs(cp, fs::ifstream::binary);
     ifs.exceptions(EXC_MASK);
 
@@ -349,11 +349,11 @@ namespace scribbu {
       ifs.seekg(10 + id3v2.size_, fs::ifstream::cur);
       id3v2 = scribbu::looking_at_id3v2(ifs);
     }
-    
+
     // `ifs'' get ptr is now located at the beginning of it's track data
     fs::ofstream ofs(pth, fs::ofstream::binary|fs::ofstream::trunc);
     ofs.exceptions(EXC_MASK);
-    
+
     for ( ; p0 != p1; ++p0) {
       bool do_unsync = detail::compute_apply_unsync(unsync, **p0);
       (*p0)->write(ofs, do_unsync);
@@ -365,14 +365,14 @@ namespace scribbu {
     ifs.seekg(0, fs::ifstream::end);
     std::streampos there = ifs.tellg();
     ifs.seekg(here, fs::ifstream::beg);
-    
+
     std::size_t cb = there - here;
     std::vector<char> buf(cb);
     ifs.read(&(buf[0]), cb);
     ofs.write(&(buf[0]), cb);
-    
+
   }
-  
+
   /**
    * \brief Compute the serialized size, as well as the total padding, of a
    * tagset on disk
@@ -392,13 +392,13 @@ namespace scribbu {
    * the total padding contained in [p0, p1)
    *
    *
-   * 
+   *
    */
-  
+
   template <typename forward_input_iterator>
   std::tuple<std::size_t, std::size_t>
-  tagset_sizes(forward_input_iterator p0, 
-               forward_input_iterator p1, 
+  tagset_sizes(forward_input_iterator p0,
+               forward_input_iterator p1,
                apply_unsync           unsync)
   {
     size_t cb_tot = 0, cb_pad = 0;
@@ -409,7 +409,7 @@ namespace scribbu {
     }
     return std::make_tuple(cb_tot, cb_pad);
   }
-  
+
   /**
    * \brief Get the size of a tagset on disk
    *
@@ -427,8 +427,8 @@ namespace scribbu {
   {
     namespace fs = boost::filesystem;
 
-    const std::ios::iostate EXC_MASK = std::ios::eofbit  | 
-                                       std::ios::failbit | 
+    const std::ios::iostate EXC_MASK = std::ios::eofbit  |
+                                       std::ios::failbit |
                                        std::ios::badbit;
 
     size_t cb = 0;
@@ -455,7 +455,7 @@ namespace scribbu {
    * \brief Replace a tagset
    *
    *
-   * \param pth [in] path naming the file containing the tagset to be 
+   * \param pth [in] path naming the file containing the tagset to be
    * replaced
    *
    * \param p0 [in] a forward input iterator dereferencing to an id3v2_tag*
@@ -476,7 +476,7 @@ namespace scribbu {
    *
    *
    */
-  
+
   template <typename forward_input_iterator>
   void replace_tagset_emplace(const boost::filesystem::path &pth,
                               forward_input_iterator p0,
@@ -489,23 +489,23 @@ namespace scribbu {
     // the caller has already done so, but given the cost of getting this wrong,
     // I'm going to code defensively.
     size_t cb_extant = tagset_size(pth);
-    
+
     // Now let's compute the size of the new tagset.
     size_t cb_new, cb_pad;
     std::tie(cb_new, cb_pad) = tagset_sizes(p0, p1, unsync);
-    
+
     if (cb_extant != cb_new) {
       throw invalid_tagset_request(invalid_tagset_request::emplace_mismatch_sz);
     }
-    
+
     mapped_file mf(pth.native());
     stream<mapped_file> ofs(mf);
-    
+
     for ( ; p0 != p1; ++p0) {
       bool do_unsync = detail::compute_apply_unsync(unsync, **p0);
       (*p0)->write(ofs, do_unsync);
     }
-    
+
     // Done -- close on exit.
   }
 
@@ -518,7 +518,7 @@ namespace scribbu {
     // penalize_last
     // penalize_id322
   };
-  
+
   enum class padding_strategy {
     adjust_padding_evenly
     // LATER(sp1ff):
@@ -527,7 +527,7 @@ namespace scribbu {
     // penalize_last
     // penalize_id322
   };
-  
+
   /**
    * \brief Adjust the padding in a tagset so that it occupies a desired number
    * of bytes
@@ -547,7 +547,7 @@ namespace scribbu {
    * how the padding in [p0, p1) shall be adjusted in order to make its
    * serialized size equal to \a cb_new
    *
-   * 
+   *
    */
 
   template <typename forward_input_iterator>
@@ -556,17 +556,17 @@ namespace scribbu {
                     forward_input_iterator p1,
                     size_t                 cb_new,
                     size_t                 cb_curr,
-                    padding_strategy       strat) 
+                    padding_strategy       strat)
   {
     if (strat != padding_strategy::adjust_padding_evenly) {
       throw std::logic_error("adjust_padding_evenly is the only padding "
                              "strategy currently supported");
     }
-    
+
     ptrdiff_t total_adj = cb_new - cb_curr;
     ptrdiff_t num_tags = std::distance(p0, p1);
     ptrdiff_t adj = total_adj / num_tags, mu = total_adj % num_tags;
-    
+
     size_t pad = (*p0)->padding();
     if (adj < 0 && -(adj + mu) > pad) {
       throw invalid_tagset_request(invalid_tagset_request::adj_pad_not_enough);
@@ -582,7 +582,7 @@ namespace scribbu {
       (*p0)->padding(pad + adj);
     }
   }
-  
+
   /**
    * \brief Write a new tagset to a file, emplacing if possible, copying if
    * requested or need be
@@ -627,13 +627,13 @@ namespace scribbu {
       if (subs_sz < curr_sz) {
         adjust_padding_to(p0, p1, curr_sz, subs_sz, pstrat);
       }
-      replace_tagset_emplace(pth, p0, p1, unsync);      
+      replace_tagset_emplace(pth, p0, p1, unsync);
     }
-    else if (curr_sz >= subs_sz - subs_pad && 
+    else if (curr_sz >= subs_sz - subs_pad &&
              emplace_strategy::only_with_full_padding != estrat) {
       // we can emplace, if we reduce the padding in [p0,p1)
       adjust_padding_to(p0, p1, curr_sz, subs_sz, pstrat);
-      replace_tagset_emplace(pth, p0, p1, unsync);      
+      replace_tagset_emplace(pth, p0, p1, unsync);
     }
     else if (!fs::exists(pth)) {
       // Special case-- output file does not exist

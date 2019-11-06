@@ -72,7 +72,7 @@ For detailed help, say `scribbu xtag --help'. To see the manual, say
 `info "scribbu (xtag) "'.
 )");
 
-
+
 ////////////////////////////////////////////////////////////////////////////
 
 namespace {
@@ -80,14 +80,14 @@ namespace {
   template <typename tag_type>
   struct tag_traits
   { };
-  
+
   template <>
   struct tag_traits<scribbu::id3v2_2_tag>
   {
     typedef scribbu::id3v2_2_tag   tag_type;
     typedef scribbu::id3v2_2_frame frame_type;
     typedef scribbu::XTG           xtag_type;
-    
+
     static bool is_xtag(const frame_type &F) {
       static const scribbu::frame_id3 XTAG("XTG");
       return F.id() == XTAG;
@@ -105,7 +105,7 @@ namespace {
     typedef scribbu::id3v2_3_tag   tag_type;
     typedef scribbu::id3v2_3_frame frame_type;
     typedef scribbu::XTAG          xtag_type;
-    
+
     static bool is_xtag(const frame_type &F) {
       static const scribbu::frame_id4 XTAG("XTAG");
       return F.id() == XTAG;
@@ -114,9 +114,9 @@ namespace {
     static xtag_type make_xtag(const std::string &email,
                                const std::string &tags) {
       using namespace scribbu;
-      return xtag_type(email, tags, 
-                       id3v2_3_plus_frame::tag_alter_preservation::preserve, 
-                       id3v2_3_plus_frame::file_alter_preservation::preserve, 
+      return xtag_type(email, tags,
+                       id3v2_3_plus_frame::tag_alter_preservation::preserve,
+                       id3v2_3_plus_frame::file_alter_preservation::preserve,
                        id3v2_3_plus_frame::read_only::clear, boost::none,
                        boost::none, boost::none);
     }
@@ -128,7 +128,7 @@ namespace {
     typedef scribbu::id3v2_4_tag   tag_type;
     typedef scribbu::id3v2_4_frame frame_type;
     typedef scribbu::XTAG_2_4      xtag_type;
-    
+
     static bool is_xtag(const frame_type &F) {
       static const scribbu::frame_id4 XTAG("XTAG");
       return F.id() == XTAG;
@@ -137,9 +137,9 @@ namespace {
     static xtag_type make_xtag(const std::string &email,
                                const std::string &tags) {
       using namespace scribbu;
-      return xtag_type(email, tags, 
-                       id3v2_3_plus_frame::tag_alter_preservation::preserve, 
-                       id3v2_3_plus_frame::file_alter_preservation::preserve, 
+      return xtag_type(email, tags,
+                       id3v2_3_plus_frame::tag_alter_preservation::preserve,
+                       id3v2_3_plus_frame::file_alter_preservation::preserve,
                        id3v2_3_plus_frame::read_only::clear, boost::none,
                        boost::none, false, false, boost::none);
     }
@@ -148,10 +148,10 @@ namespace {
   template <typename tag_type>
   bool
   process_tag(tag_type          &tag,
-              const std::string &tag_cloud, 
-              const std::string &owner, 
-              bool               create, 
-              bool               merge, 
+              const std::string &tag_cloud,
+              const std::string &owner,
+              bool               create,
+              bool               merge,
               bool               dry_run)
   {
     using namespace std;
@@ -163,7 +163,7 @@ namespace {
 
     size_t num_xtag = 0;
     for (frame_type &F: tag) {
-      
+
       if (traits_type::is_xtag(F)) {
 
         xtag_type &G = dynamic_cast<xtag_type&>(F);
@@ -190,24 +190,24 @@ namespace {
       } // End if on F being XTAG frame.
 
     } // End iteration over `tag''s frames.
-    
+
     bool upd = num_xtag != 0;
 
     if (!num_xtag && create) {
-      
+
       if (dry_run) {
         cout << "creating a new XTAG frame for " << owner << ": " <<
           tag_cloud << endl;
       } else {
         tag.push_back(traits_type::make_xtag(owner, tag_cloud));
       }
-      
+
       upd = true;
 
     }
-    
+
     return upd;
-  
+
   } // End free function template `process_tag'.
 
   void
@@ -228,7 +228,7 @@ namespace {
 
     // TODO(sp1ff): Why convert here? Why not higher up the call stack?
     vector<unique_ptr<id3v2_tag>> T;
-    
+
     {
       fs::ifstream ifs(pth, fs::ifstream::binary);
       read_all_id3v2(ifs, back_inserter(T));
@@ -237,7 +237,7 @@ namespace {
     bool any_upd = false;
 
     for (size_t i = 0, n = T.size(); i < n; ++i) {
-      
+
       if (tags.front() == i) {
 
         bool upd = false;
@@ -258,46 +258,46 @@ namespace {
           throw std::logic_error("unknown ID3v2 version!");
 
         }
-        
+
         tags.pop();
         any_upd = any_upd || upd;
       }
 
     } // End loop over all ID3v2 tags in `pth'.
-    
+
     if (any_upd) {
-      
+
       if (dry_run) {
-      
+
         cout << "the dry-run flag was given-- nothing written";
-      
+
         if (create_backups) {
-        
+
           cout << " (with backup).";
 
         }
-      
+
         cout << endl;
 
       } else {
-      
+
         apply_unsync au = adj_unsync ? apply_unsync::as_needed :
           apply_unsync::never;
-        
+
         if (create_backups) {
-          
+
           replace_tagset_copy(pth, T.begin(), T.end(), au);
 
         } else {
-        
+
           maybe_emplace_tagset(pth, T.begin(), T.end(), au,
                                emplace_strategy::only_with_full_padding,
                                padding_strategy::adjust_padding_evenly);
 
         } // End if on `create_backups'.
-        
+
       } // End if on `dry_run'.
-      
+
     } else if (dry_run) {
 
       cout << "the tagset wasn't updated, so nothing would be written" << endl;
@@ -328,7 +328,7 @@ namespace {
                       }
                     });
     } else {
-      process_file(pth, tag_cloud, tags, owner, create, merge, 
+      process_file(pth, tag_cloud, tags, owner, create, merge,
                    create_backups, dry_run, adj_unsync);
     }
   }
@@ -408,7 +408,7 @@ namespace {
     popts.add("arguments", -1);
 
     try {
-      
+
       vector<string> tokens;
       convert_tokens(argc, argv, back_inserter(tokens));
 
@@ -430,7 +430,7 @@ namespace {
 
       // That's it-- the list of files and/or directories to be processed
       // should be waiting for us in 'arguments'...
-    
+
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
       std::vector<fs::path> args;
       if (vm.count("arguments")) {
@@ -449,7 +449,7 @@ namespace {
       if (vm.count("owner")) {
         owner = vm["owner"].as<string>();
       }
-      
+
       deque<size_t> tags;
       if (vm.count("tag")) {
         vector<size_t> V = vm["tag"].as<vector<size_t>>();
@@ -463,13 +463,13 @@ namespace {
       }
       string tag_cloud = vm["tags"].as<string>();
 
-      for_each(args.begin(), args.end(), 
+      for_each(args.begin(), args.end(),
                [=] (const fs::path &pth) {
                  process_dirent(pth, tag_cloud, tags, owner, create, merge,
                                 create_backups, dry_run, adj_unsync);
                }
              );
-      
+
     } catch (const po::error &ex) {
 
       cerr << ex.what() << endl;
@@ -482,7 +482,7 @@ namespace {
       status = EXIT_FAILURE;
 
     }
-        
+
     return status;
 
   }

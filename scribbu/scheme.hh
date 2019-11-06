@@ -38,7 +38,7 @@ extern "C" {
    * \return always returns nil
    *
    *
-   * This function is intended to be called from within scm_with_guile; it 
+   * This function is intended to be called from within scm_with_guile; it
    * will:
    *
    *   <li>define the scribbu Scheme module

@@ -283,7 +283,7 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail,
          const boost::optional<encoding> &src = boost::none) const;
     /// Set the contents of an arbitrary text frame
-    virtual 
+    virtual
     void
     text(id3v2_text_frames id,
          const std::string &text,
@@ -294,7 +294,7 @@ namespace scribbu {
     virtual
     void
     delete_frame(id3v2_text_frames id);
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //                           public accessors                            //
     ///////////////////////////////////////////////////////////////////////////

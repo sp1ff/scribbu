@@ -116,39 +116,39 @@ SCM sym_unknown_frame;              // 'unknown-frame
 
 SCM sym_album_frame;                // 'album-frame, TAL/TALB
 SCM sym_artist_frame;               // 'artist-frame, TP1/TPE1
-SCM sym_band_frame;                 // 'band-frame, TP2/TPE2 
-SCM sym_bpm_frame;                  // 'bpm-frame, TBP/TBPM 
-SCM sym_composer_frame;             // 'composer-frame, TCM/TCOM 
-SCM sym_conductor_frame;            // 'conductor-frame, TP3/TPE3 
-SCM sym_content_group_frame;        // 'content-group-frame, TT1/TIT1 
-SCM sym_copyright_frame;            // 'copyright-frame, TCR/TCOP 
-SCM sym_date_frame;                 // 'date-frame, TDA/TDAT 
+SCM sym_band_frame;                 // 'band-frame, TP2/TPE2
+SCM sym_bpm_frame;                  // 'bpm-frame, TBP/TBPM
+SCM sym_composer_frame;             // 'composer-frame, TCM/TCOM
+SCM sym_conductor_frame;            // 'conductor-frame, TP3/TPE3
+SCM sym_content_group_frame;        // 'content-group-frame, TT1/TIT1
+SCM sym_copyright_frame;            // 'copyright-frame, TCR/TCOP
+SCM sym_date_frame;                 // 'date-frame, TDA/TDAT
 SCM sym_encoded_by_frame;           // 'encoded-by-frame, TEN/TENC
-SCM sym_file_owner_frame;           // 'file-owner-frame, TOWN     
-SCM sym_file_type_frame;            // 'file-type-frame, TFT/TFLT 
+SCM sym_file_owner_frame;           // 'file-owner-frame, TOWN
+SCM sym_file_type_frame;            // 'file-type-frame, TFT/TFLT
 SCM sym_genre_frame;                // 'genre-frame, TCO/TCON
-SCM sym_initial_key_frame;          // 'initial-key-frame, TKE/TKEY 
-SCM sym_interpreted_by_frame;       // 'interpreted-by-frame, TP4/TPE4 
-SCM sym_isrc_frame;                 // 'isrc-frame, TRC/TSRC 
+SCM sym_initial_key_frame;          // 'initial-key-frame, TKE/TKEY
+SCM sym_interpreted_by_frame;       // 'interpreted-by-frame, TP4/TPE4
+SCM sym_isrc_frame;                 // 'isrc-frame, TRC/TSRC
 SCM sym_langs_frame;                // 'langs-frame, TLA/TLAN
-SCM sym_length_frame;               // 'length-frame, TLE/TLEN 
-SCM sym_lyricist_frame;             // 'lyricist-frame, TXT/TEXT 
-SCM sym_media_type_frame;           // 'media-type-frame, TMT/TMED 
-SCM sym_original_album_frame;       // 'original-album-frame, TOT/TOAL 
-SCM sym_original_artist_frame;      // 'original-artist-frame, TOA/TOPE 
-SCM sym_original_filename_frame;    // 'original-filename-frame, TOF/TOFN 
-SCM sym_original_lyricist_frame;    // 'original-lyricist-frame, TOL/TOLY 
-SCM sym_original_release_year_frame;// 'original-release-year-frame, TOR/TORY 
-SCM sym_part_of_a_set_frame;        // 'part-of-a-set-frame, TPA/TPOS 
-SCM sym_playlist_delay_frame;       // 'playlist-delay-frame, TDY/TDLY 
-SCM sym_publisher_frame;            // 'publisher-frame, TPB/TPUB 
-SCM sym_recording_dates_frame;      // 'recording-dates-frame, TRD/TRDA 
+SCM sym_length_frame;               // 'length-frame, TLE/TLEN
+SCM sym_lyricist_frame;             // 'lyricist-frame, TXT/TEXT
+SCM sym_media_type_frame;           // 'media-type-frame, TMT/TMED
+SCM sym_original_album_frame;       // 'original-album-frame, TOT/TOAL
+SCM sym_original_artist_frame;      // 'original-artist-frame, TOA/TOPE
+SCM sym_original_filename_frame;    // 'original-filename-frame, TOF/TOFN
+SCM sym_original_lyricist_frame;    // 'original-lyricist-frame, TOL/TOLY
+SCM sym_original_release_year_frame;// 'original-release-year-frame, TOR/TORY
+SCM sym_part_of_a_set_frame;        // 'part-of-a-set-frame, TPA/TPOS
+SCM sym_playlist_delay_frame;       // 'playlist-delay-frame, TDY/TDLY
+SCM sym_publisher_frame;            // 'publisher-frame, TPB/TPUB
+SCM sym_recording_dates_frame;      // 'recording-dates-frame, TRD/TRDA
 SCM sym_settings_frame;             // 'settings-frame, TSS/TSSE
-SCM sym_size_frame;                 // 'size-frame, TSI/TSIZ 
-SCM sym_station_name_frame;         // 'station-name-frame, TRSN     
-SCM sym_station_owner_frame;        // 'station-owner-frame, TRSO     
-SCM sym_subtitle_frame;             // 'subtitle-frame, TT3/TIT3 
-SCM sym_time_frame;                 // 'time-frame, TIM/TIME 
+SCM sym_size_frame;                 // 'size-frame, TSI/TSIZ
+SCM sym_station_name_frame;         // 'station-name-frame, TRSN
+SCM sym_station_owner_frame;        // 'station-owner-frame, TRSO
+SCM sym_subtitle_frame;             // 'subtitle-frame, TT3/TIT3
+SCM sym_time_frame;                 // 'time-frame, TIM/TIME
 SCM sym_title_frame;                // 'title-frame, TT2/TIT2
 SCM sym_track_frame;                // 'track-frame, TRK/TRCK
 SCM sym_year_frame;                 // 'year-frame, TYE/TYER
@@ -186,7 +186,7 @@ void scribbu::init_symbols() {
 
   DEFSYM4(file_owner_frame,            file-owner-frame,                 TOWN);
   DEFSYM4(station_name_frame,          station-name-frame,               TRSN);
-  DEFSYM4(station_owner_frame,         station-owner-frame,              TRSO);  
+  DEFSYM4(station_owner_frame,         station-owner-frame,              TRSO);
   DEFSYMX(album_frame,                 album-frame,                 TAL, TALB);
   DEFSYMX(artist_frame,                artist-frame,                TP1, TPE1);
   DEFSYMX(band_frame,                  band-frame,                  TP2, TPE2);
@@ -236,7 +236,7 @@ void scribbu::init_symbols() {
   sym_as_needed = scm_from_utf8_symbol("as-needed");
   kw_apply_unsync = scm_from_utf8_keyword("apply-unsync");
   kw_copy = scm_from_utf8_keyword("copy");
-  
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -244,25 +244,25 @@ void scribbu::init_symbols() {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace {
-  
+
   SCM
-  init_frame(const std::string &cls, SCM id) 
+  init_frame(const std::string &cls, SCM id)
   {
     // NB. on failure, the scm_* functions do not return
     SCM x = scm_make(scm_list_1(scm_c_public_ref("scribbu", cls.c_str())));
     SCM_SET_SLOT(x, 0, id);
     return x;
   }
-  
-  SCM init_frame(const std::string &cls, 
+
+  SCM init_frame(const std::string &cls,
                  SCM id,
                  scribbu::id3v2_3_plus_frame::tag_alter_preservation  tap,
                  scribbu::id3v2_3_plus_frame::file_alter_preservation fap,
                  scribbu::id3v2_3_plus_frame::read_only ro)
   {
-    typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation 
+    typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef scribbu::id3v2_3_plus_frame::file_alter_preservation 
+    typedef scribbu::id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef scribbu::id3v2_3_plus_frame::read_only read_only;
 
@@ -274,21 +274,21 @@ namespace {
     SCM_SET_SLOT(x, 3, ro == read_only::set ? SCM_BOOL_T : SCM_BOOL_F);
     return x;
   }
-  
-  SCM init_frame(const std::string &cls, 
+
+  SCM init_frame(const std::string &cls,
                  SCM id,
                  scribbu::id3v2_3_plus_frame::tag_alter_preservation  tap,
                  scribbu::id3v2_3_plus_frame::file_alter_preservation fap,
-                 scribbu::id3v2_3_plus_frame::read_only  ro, 
+                 scribbu::id3v2_3_plus_frame::read_only  ro,
                  bool unsync)
   {
     SCM x = init_frame(cls, id, tap, fap, ro);
     SCM_SET_SLOT(x, 4, unsync ? SCM_BOOL_T : SCM_BOOL_F);
     return x;
   }
-  
+
   std::string
-  ser_frame_2_2(const std::string &cls, SCM scm, 
+  ser_frame_2_2(const std::string &cls, SCM scm,
                 scribbu::dynwind_context &ctx)
   {
     SCM scm_cls = scm_class_of(scm);
@@ -300,22 +300,22 @@ namespace {
     return ctx.free_utf8_string(scm_symbol_to_string(SCM_SLOT(scm, 0)));
   }
 
-  std::tuple<std::string, 
+  std::tuple<std::string,
              scribbu::id3v2_3_plus_frame::tag_alter_preservation,
              scribbu::id3v2_3_plus_frame::file_alter_preservation,
              scribbu::id3v2_3_plus_frame::read_only>
-  ser_frame_2_3(const std::string &cls, SCM scm, 
+  ser_frame_2_3(const std::string &cls, SCM scm,
                 scribbu::dynwind_context &ctx)
   {
     using namespace std;
     using namespace scribbu;
 
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
-    
+
     string id = ser_frame_2_2(cls, scm, ctx);
 
     tag_alter_preservation tap = tag_alter_preservation::preserve;
@@ -330,38 +330,38 @@ namespace {
     if (SCM_BOOL_T == SCM_SLOT(scm, 3)) {
       ro = read_only::set;
     }
-    
+
     return std::make_tuple(id, tap, fap, ro);
   }
 
-  std::tuple<std::string, 
+  std::tuple<std::string,
              scribbu::id3v2_3_plus_frame::tag_alter_preservation,
              scribbu::id3v2_3_plus_frame::file_alter_preservation,
              scribbu::id3v2_3_plus_frame::read_only,
              bool>
-  ser_frame_2_4(const std::string &cls, SCM scm, 
+  ser_frame_2_4(const std::string &cls, SCM scm,
                 scribbu::dynwind_context &ctx)
   {
     using namespace std;
     using namespace scribbu;
 
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
-    
+
     string id;
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
     std::tie(id, tap, fap, ro) = ser_frame_2_3(cls, scm, ctx);
-    
+
     bool unsync = false;
     if (SCM_BOOL_T == SCM_SLOT(scm, 4)) {
       unsync = true;
     }
-    
+
     return std::make_tuple(id, tap, fap, ro, unsync);
   }
 
@@ -372,38 +372,38 @@ namespace {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace {
-  
-  SCM 
+
+  SCM
   de_text_frame_2_2(const scribbu::id3v2_2_text_frame &f, bool unsync)
   {
     auto p = id3lu.find(f.id());
     if (p == id3lu.end()) {
       throw std::logic_error("unknown frame ID");
     }
-  
+
     SCM x = init_frame("<text-frame>", p->second);
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(f.as_str<std::string>().c_str()));
 
     return x;
   }
-  
-  SCM 
+
+  SCM
   de_text_frame_2_3(const scribbu::id3v2_3_text_frame &f, bool unsync)
   {
     auto p = id4lu.find(f.id());
     if (p == id4lu.end()) {
       throw std::logic_error("unknown frame ID");
     }
-    
+
     SCM x = init_frame("<text-frame>", p->second, f.tag_alter_preserve(),
                        f.file_alter_preserve(), f.readonly());
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(f.as_str<std::string>().c_str()));
 
-    return x;    
+    return x;
 
   }
-  
-  SCM 
+
+  SCM
   de_text_frame_2_4(const scribbu::id3v2_4_text_frame &f, bool unsync)
   {
     auto p = id4lu.find(f.id());
@@ -416,7 +416,7 @@ namespace {
                        f.unsynchronised());
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(f.as_str<std::string>().c_str()));
 
-    return x;    
+    return x;
 
   }
 
@@ -424,16 +424,16 @@ namespace {
   de_comment_2_2(const scribbu::COM &f, bool unsync)
   {
     using namespace std;
-    
+
     SCM x = init_frame("<comment-frame>", sym_comment_frame);
-    
+
     char lang[4] = { 0, 0, 0, 0 };
     f.lang(lang);
     if (0 != (lang[0] & 0x80)) lang[0] = 0;
     if (0 != (lang[1] & 0x80)) lang[1] = 0;
     if (0 != (lang[2] & 0x80)) lang[2] = 0;
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(lang));
-    
+
     string dsc = f.description<string>();
     SCM_SET_SLOT(x, 6, scm_from_utf8_string(dsc.c_str()));
 
@@ -448,7 +448,7 @@ namespace {
   de_comment_2_3(const scribbu::COMM &f, bool unsync)
   {
     using namespace std;
-    
+
     SCM x = init_frame("<comment-frame>", sym_comment_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly());
@@ -459,7 +459,7 @@ namespace {
     if (0 != (lang[1] & 0x80)) lang[1] = 0;
     if (0 != (lang[2] & 0x80)) lang[2] = 0;
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(lang));
-    
+
     string dsc = f.description<string>();
     SCM_SET_SLOT(x, 6, scm_from_utf8_string(dsc.c_str()));
 
@@ -474,7 +474,7 @@ namespace {
   de_comment_2_4(const scribbu::COMM_2_4 &f, bool unsync)
   {
     using namespace std;
-    
+
     SCM x = init_frame("<comment-frame>", sym_comment_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly(), f.unsynchronised());
@@ -485,7 +485,7 @@ namespace {
     if (0 != (lang[1] & 0x80)) lang[1] = 0;
     if (0 != (lang[2] & 0x80)) lang[2] = 0;
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(lang));
-    
+
     string dsc = f.description<string>();
     SCM_SET_SLOT(x, 6, scm_from_utf8_string(dsc.c_str()));
 
@@ -500,10 +500,10 @@ namespace {
   de_udt_2_2(const scribbu::TXX &f, bool unsync)
   {
     using namespace std;
-    
-    SCM x = init_frame("<user-defined-text-frame>", 
+
+    SCM x = init_frame("<user-defined-text-frame>",
                        sym_udt_frame);
-    
+
     string dsc = f.description<string>();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(dsc.c_str()));
 
@@ -518,8 +518,8 @@ namespace {
   de_udt_2_3(const scribbu::TXXX &f, bool unsync)
   {
     using namespace std;
-    
-    SCM x = init_frame("<user-defined-text-frame>", 
+
+    SCM x = init_frame("<user-defined-text-frame>",
                        sym_udt_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly());
@@ -538,8 +538,8 @@ namespace {
   de_udt_2_4(const scribbu::TXXX_2_4 &f, bool unsync)
   {
     using namespace std;
-    
-    SCM x = init_frame("<user-defined-text-frame>", 
+
+    SCM x = init_frame("<user-defined-text-frame>",
                        sym_udt_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly(), f.unsynchronised());
@@ -553,7 +553,7 @@ namespace {
     return x;
 
   }
-  
+
   SCM
   de_cnt_2_2(const scribbu::CNT &f, bool unsync)
   {
@@ -588,13 +588,13 @@ namespace {
     using namespace std;
 
     SCM x = init_frame("<pop-frame>", sym_pop_frame);
-    
+
     string own = f.email<string>();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
-    
+
     unsigned char rating = f.rating();
     SCM_SET_SLOT(x, 6, scm_from_uchar(rating));
-    
+
     size_t count = f.count();
     SCM_SET_SLOT(x, 7, scm_from_size_t(count));
 
@@ -609,13 +609,13 @@ namespace {
     SCM x = init_frame("<pop-frame>", sym_pop_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly());
-    
+
     string own = f.email<string>();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
-    
+
     unsigned char rating = f.rating();
     SCM_SET_SLOT(x, 6, scm_from_uchar(rating));
-    
+
     size_t count = f.count();
     SCM_SET_SLOT(x, 7, scm_from_size_t(count));
 
@@ -630,13 +630,13 @@ namespace {
     SCM x = init_frame("<pop-frame>", sym_pop_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly(), f.unsynchronised());
-    
+
     string own = f.email<string>();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
-    
+
     unsigned char rating = f.rating();
     SCM_SET_SLOT(x, 6, scm_from_uchar(rating));
-    
+
     size_t count = f.count();
     SCM_SET_SLOT(x, 7, scm_from_size_t(count));
 
@@ -650,15 +650,15 @@ namespace {
     using namespace scribbu;
 
     SCM x = init_frame("<tag-cloud-frame>", sym_tag_cloud_frame);
-    
+
     string own = f.owner();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
-  
+
     SCM lst = SCM_EOL;
     for (auto kv: f) {
       vector<SCM> vals;
       transform(kv.second.begin(), kv.second.end(), back_inserter(vals),
-                [] (const string &s) { 
+                [] (const string &s) {
                   return scm_from_stringn(s.c_str(), s.length(), "UTF-8",
                                           SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
                 } );
@@ -679,15 +679,15 @@ namespace {
     SCM x = init_frame("<tag-cloud-frame>", sym_tag_cloud_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly());
-    
+
     string own = f.owner();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
-    
+
     SCM lst = SCM_EOL;
     for (auto kv: f) {
       vector<SCM> vals;
       transform(kv.second.begin(), kv.second.end(), back_inserter(vals),
-                [] (const string &s) { 
+                [] (const string &s) {
                   return scm_from_stringn(s.c_str(), s.length(), "UTF-8",
                                           SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
                 } );
@@ -708,15 +708,15 @@ namespace {
     SCM x = init_frame("<tag-cloud-frame>", sym_tag_cloud_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly(), f.unsynchronised());
-    
+
     string own = f.owner();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
-    
+
     SCM lst = SCM_EOL;
     for (auto kv: f) {
       vector<SCM> vals;
       transform(kv.second.begin(), kv.second.end(), back_inserter(vals),
-                [] (const string &s) { 
+                [] (const string &s) {
                   return scm_from_stringn(s.c_str(), s.length(), "UTF-8",
                                           SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
                 } );
@@ -735,13 +735,13 @@ namespace {
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace {
-  
+
   std::unique_ptr<scribbu::id3v2_2_frame>
   ser_text_frame_2_2(SCM scm)
   {
     using namespace std;
     using namespace scribbu;
-    
+
     dynwind_context ctx;
 
     string id_txt = ser_frame_2_2("<text-frame>", scm, ctx);
@@ -749,7 +749,7 @@ namespace {
     if (p == id3rlu.end()) {
       throw std::logic_error("unknown frame ID");
     }
-    
+
     frame_id3 id = p->second;
     string txt(ctx.free_utf8_string(SCM_SLOT(scm, 5)));
 
@@ -757,16 +757,16 @@ namespace {
       new id3v2_2_text_frame(id, txt, encoding::UTF_8));
 
   }
-    
+
   std::unique_ptr<scribbu::id3v2_3_frame>
   ser_text_frame_2_3(SCM scm)
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -776,21 +776,21 @@ namespace {
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
-    
+
     tie(id_txt, tap, fap, ro) = ser_frame_2_3("<text-frame>", scm, ctx);
 
     auto p = id4rlu.find(id_txt);
     if (p == id4rlu.end()) {
       throw std::logic_error("unknown frame ID");
     }
-    
+
     frame_id4 id = p->second;
 
     string txt(ctx.free_utf8_string(SCM_SLOT(scm, 5)));
 
     return unique_ptr<id3v2_3_frame>(
-      new id3v2_3_text_frame(id, txt, encoding::UTF_8, false, 
-                             on_no_encoding::fail, 
+      new id3v2_3_text_frame(id, txt, encoding::UTF_8, false,
+                             on_no_encoding::fail,
                              false, tap, fap, ro));
 
   }
@@ -800,10 +800,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
     typedef id3v2_4_text_frame::frame_encoding frame_encoding;
@@ -815,22 +815,22 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
     bool unsync;
-    
-    tie(id_txt, tap, fap, ro, unsync) = 
+
+    tie(id_txt, tap, fap, ro, unsync) =
       ser_frame_2_4("<text-frame>", scm, ctx);
 
     auto p = id4rlu.find(id_txt);
     if (p == id4rlu.end()) {
       throw std::logic_error("unknown frame ID");
     }
-    
+
     frame_id4 id = p->second;
 
     string txt(ctx.free_utf8_string(SCM_SLOT(scm, 5)));
 
     return unique_ptr<id3v2_4_frame>(
-      new id3v2_4_text_frame(id, txt, encoding::UTF_8, frame_encoding::UTF_8, 
-                             false, on_no_encoding::fail, 
+      new id3v2_4_text_frame(id, txt, encoding::UTF_8, frame_encoding::UTF_8,
+                             false, on_no_encoding::fail,
                              tap, fap, ro,
                              boost::none,
                              boost::none,
@@ -838,7 +838,7 @@ namespace {
                              unsync));
 
   }
-  
+
   std::unique_ptr<scribbu::id3v2_2_frame>
   ser_comment_2_2(SCM scm)
   {
@@ -847,31 +847,31 @@ namespace {
 
     dynwind_context ctx;
     ser_frame_2_2("<comment-frame>", scm, ctx);
-    
+
     string lang_txt = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     language lang = language::eng;
     if (lang_txt.size()) {
       stringstream stm(lang_txt);
       stm >> lang;
     }
-    
+
     string dsc = ctx.free_utf8_string(SCM_SLOT(scm, 6));
     string text = ctx.free_utf8_string(SCM_SLOT(scm, 7));
 
-    return unique_ptr<id3v2_2_frame>(new COM(lang, text, encoding::UTF_8, 
+    return unique_ptr<id3v2_2_frame>(new COM(lang, text, encoding::UTF_8,
                                              use_unicode::yes, dsc));
-    
+
   }
-  
+
   std::unique_ptr<scribbu::id3v2_3_frame>
   ser_comment_2_3(SCM scm)
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -881,7 +881,7 @@ namespace {
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
-    
+
     tie(id_txt, tap, fap, ro) = ser_frame_2_3("<comment-frame>", scm, ctx);
 
     string lang_txt = ctx.free_utf8_string(SCM_SLOT(scm, 5));
@@ -890,12 +890,12 @@ namespace {
       stringstream stm(lang_txt);
       stm >> lang;
     }
-    
+
     string dsc = ctx.free_utf8_string(SCM_SLOT(scm, 6));
     string text = ctx.free_utf8_string(SCM_SLOT(scm, 7));
 
-    return unique_ptr<id3v2_3_frame>(new COMM(lang, text, encoding::UTF_8, 
-                                              use_unicode::yes, 
+    return unique_ptr<id3v2_3_frame>(new COMM(lang, text, encoding::UTF_8,
+                                              use_unicode::yes,
                                               tap, fap, ro, boost::none,
                                               boost::none, dsc));
 
@@ -906,10 +906,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -920,8 +920,8 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
     bool unsync;
-    
-    tie(id_txt, tap, fap, ro, unsync) = 
+
+    tie(id_txt, tap, fap, ro, unsync) =
       ser_frame_2_4("<comment-frame>", scm, ctx);
 
     string lang_txt = ctx.free_utf8_string(SCM_SLOT(scm, 5));
@@ -930,15 +930,15 @@ namespace {
       stringstream stm(lang_txt);
       stm >> lang;
     }
-    
+
     string dsc = ctx.free_utf8_string(SCM_SLOT(scm, 6));
     string text = ctx.free_utf8_string(SCM_SLOT(scm, 7));
 
     return unique_ptr<id3v2_4_frame>(
-      new COMM_2_4(lang, text, encoding::UTF_8, 
-                   use_unicode::yes, 
+      new COMM_2_4(lang, text, encoding::UTF_8,
+                   use_unicode::yes,
                    tap, fap, ro, boost::none,
-                   boost::none, false, unsync, boost::none, 
+                   boost::none, false, unsync, boost::none,
                    dsc));
 
   }
@@ -951,24 +951,24 @@ namespace {
 
     dynwind_context ctx;
     ser_frame_2_2("<user-defined-text-frame>", scm, ctx);
-    
+
     string dsc = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     string text = ctx.free_utf8_string(SCM_SLOT(scm, 6));
 
-    return unique_ptr<id3v2_2_frame>(new TXX(text, encoding::UTF_8, 
+    return unique_ptr<id3v2_2_frame>(new TXX(text, encoding::UTF_8,
                                              use_unicode::yes, dsc));
-    
+
   }
-  
+
   std::unique_ptr<scribbu::id3v2_3_frame>
   ser_udt_2_3(SCM scm)
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -978,14 +978,14 @@ namespace {
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
-    
+
     tie(id_txt, tap, fap, ro) = ser_frame_2_3("<user-defined-text-frame>", scm, ctx);
 
     string dsc = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     string text = ctx.free_utf8_string(SCM_SLOT(scm, 6));
 
-    return unique_ptr<id3v2_3_frame>(new TXXX(text, encoding::UTF_8, 
-                                              use_unicode::yes, 
+    return unique_ptr<id3v2_3_frame>(new TXXX(text, encoding::UTF_8,
+                                              use_unicode::yes,
                                               tap, fap, ro, boost::none,
                                               boost::none, dsc));
 
@@ -996,10 +996,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1010,16 +1010,16 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
     bool unsync;
-    
-    tie(id_txt, tap, fap, ro, unsync) = 
+
+    tie(id_txt, tap, fap, ro, unsync) =
       ser_frame_2_4("<user-defined-text-frame>", scm, ctx);
 
     string dsc = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     string text = ctx.free_utf8_string(SCM_SLOT(scm, 6));
 
     return unique_ptr<id3v2_4_frame>(
-      new TXXX_2_4(text, encoding::UTF_8, 
-                   use_unicode::yes, 
+      new TXXX_2_4(text, encoding::UTF_8,
+                   use_unicode::yes,
                    tap, fap, ro, boost::none,
                    boost::none, false, unsync,
                    dsc));
@@ -1034,22 +1034,22 @@ namespace {
 
     dynwind_context ctx;
     ser_frame_2_2("<play-count-frame>", scm, ctx);
-    
+
     size_t count = scm_to_size_t(SCM_SLOT(scm, 5));
 
     return unique_ptr<id3v2_2_frame>(new CNT(count));
-    
+
   }
-  
+
   std::unique_ptr<scribbu::id3v2_3_frame>
   ser_cnt_2_3(SCM scm)
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1059,7 +1059,7 @@ namespace {
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
-    
+
     tie(id_txt, tap, fap, ro) = ser_frame_2_3("<play-count-frame>", scm, ctx);
 
     size_t count = scm_to_size_t(SCM_SLOT(scm, 5));
@@ -1074,10 +1074,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-    
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1088,8 +1088,8 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
     bool unsync;
-    
-    tie(id_txt, tap, fap, ro, unsync) = 
+
+    tie(id_txt, tap, fap, ro, unsync) =
       ser_frame_2_4("<play-count-frame>", scm, ctx);
 
     size_t count = scm_to_size_t(SCM_SLOT(scm, 5));
@@ -1099,20 +1099,20 @@ namespace {
                    boost::none, false, unsync, boost::none));
 
   }
-  
+
   std::unique_ptr<scribbu::id3v2_2_frame>
   ser_pop_2_2(SCM scm)
   {
     using namespace std;
     using namespace scribbu;
-  
+
     dynwind_context ctx;
     ser_frame_2_2("<pop-frame>", scm, ctx);
 
     string email = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     unsigned char rating = scm_to_uchar(SCM_SLOT(scm, 6));
     size_t count = scm_to_size_t(SCM_SLOT(scm, 7));
-    
+
     return unique_ptr<id3v2_2_frame>(new POP(email, rating, count));
   }
 
@@ -1121,10 +1121,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-  
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1134,13 +1134,13 @@ namespace {
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
-    
+
     tie(id_txt, tap, fap, ro) = ser_frame_2_3("<pop-frame>", scm, ctx);
 
     string email = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     unsigned char rating = scm_to_uchar(SCM_SLOT(scm, 6));
     size_t count = scm_to_size_t(SCM_SLOT(scm, 7));
-    
+
     return unique_ptr<id3v2_3_frame>(new POPM(email, rating, count,
                                               tap, fap, ro, boost::none,
                                               boost::none, boost::none));
@@ -1151,10 +1151,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-  
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1165,13 +1165,13 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
     bool unsync;
-    
+
     tie(id_txt, tap, fap, ro, unsync) = ser_frame_2_4("<pop-frame>", scm, ctx);
 
     string email = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     unsigned char rating = scm_to_uchar(SCM_SLOT(scm, 6));
     size_t count = scm_to_size_t(SCM_SLOT(scm, 7));
-    
+
     return unique_ptr<id3v2_4_frame>(new POPM_2_4(email, rating, count,
                                                   tap, fap, ro, boost::none,
                                                   boost::none, false, unsync,
@@ -1183,21 +1183,21 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-  
+
     dynwind_context ctx;
     ser_frame_2_2("<tag-cloud-frame>", scm, ctx);
 
     string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
-    
+
     map<string, set<string>> M;
     SCM scm_tags = SCM_SLOT(scm, 6);
-    
+
     for (int i = 0, n = scm_to_int(scm_length(scm_tags)); i < n; ++i) {
 
       SCM scm = scm_list_ref(scm_tags, scm_from_int(i));
-      
+
       string key = ctx.free_utf8_string(scm_list_ref(scm, 0));
-      
+
       set<string> vals;
       SCM scm_vals = scm_list_ref(scm, scm_from_int(1));
       for (int j = 0, m = scm_to_int(scm_length(scm_vals)); j < m; ++j) {
@@ -1205,10 +1205,10 @@ namespace {
         string val = ctx.free_utf8_string(scm_val);
         vals.insert(val);
       }
-      
+
       M[key] = vals;
     }
-    
+
     return unique_ptr<id3v2_2_frame>(new XTG(own, M.begin(), M.end()));
   }
 
@@ -1217,10 +1217,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-  
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1230,28 +1230,28 @@ namespace {
     tag_alter_preservation tap;
     file_alter_preservation fap;
     read_only ro;
-    
+
     tie(id_txt, tap, fap, ro) = ser_frame_2_3("<tag-cloud-frame>", scm, ctx);
 
     string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
-    
+
     map<string, set<string>> M;
     SCM scm_tags = SCM_SLOT(scm, 6);
-    
+
     for (int i = 0, n = scm_to_int(scm_length(scm_tags)); i < n; ++i) {
 
       SCM pair   = scm_list_ref(scm_tags, scm_from_int(i));
       SCM first  = scm_list_ref(pair, scm_from_int(0));
       SCM second = scm_list_tail(pair, scm_from_int(1));
-      
+
       string key = ctx.free_utf8_string(first);
 
-      
+
       SCM test = scm_string_p(second);
       bool ftest = SCM_BOOL_T == test;
       test = scm_list_p(second);
       ftest = SCM_BOOL_T == test;
-      
+
       SCM scm_cls = scm_class_of(second);
       test = scm_variable_p(scm_cls);
       ftest = (SCM_BOOL_T == test);
@@ -1259,13 +1259,13 @@ namespace {
 
       // Could be a string, or a list of strings
       set<string> vals;
-      
+
       if (scm_string_p(second) == SCM_BOOL_T) {
 
         vals.insert(ctx.free_utf8_string(second));
 
       } else if (scm_list_p(second) == SCM_BOOL_T) {
-        
+
         SCM scm_len = scm_length(second);
         int m = scm_to_int(scm_len);
 
@@ -1274,14 +1274,14 @@ namespace {
           string val = ctx.free_utf8_string(scm_val);
           vals.insert(val);
         }
-      
+
       } else {
         throw std::runtime_error("unknown type");
       }
 
       M[key] = vals;
     }
-    
+
     return unique_ptr<id3v2_3_frame>(new XTAG(own, M.begin(), M.end(),
                                               tap, fap, ro, boost::none,
                                               boost::none, boost::none));
@@ -1292,10 +1292,10 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-  
-    typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
       tag_alter_preservation;
-    typedef id3v2_3_plus_frame::file_alter_preservation 
+    typedef id3v2_3_plus_frame::file_alter_preservation
       file_alter_preservation;
     typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1306,21 +1306,21 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
     bool unsync;
-    
-    tie(id_txt, tap, fap, ro, unsync) = 
+
+    tie(id_txt, tap, fap, ro, unsync) =
       ser_frame_2_4("<tag-cloud-frame>", scm, ctx);
 
     string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
-    
+
     map<string, set<string>> M;
     SCM scm_tags = SCM_SLOT(scm, 6);
-    
+
     for (int i = 0, n = scm_to_int(scm_length(scm_tags)); i < n; ++i) {
 
       SCM scm = scm_list_ref(scm_tags, scm_from_int(i));
-      
+
       string key = ctx.free_utf8_string(scm_list_ref(scm, 0));
-      
+
       set<string> vals;
       SCM scm_vals = scm_list_ref(scm, scm_from_int(1));
       for (int j = 0, m = scm_to_int(scm_length(scm_vals)); j < m; ++j) {
@@ -1328,10 +1328,10 @@ namespace {
         string val = ctx.free_utf8_string(scm_val);
         vals.insert(val);
       }
-      
+
       M[key] = vals;
     }
-    
+
     return unique_ptr<id3v2_4_frame>(new XTAG_2_4(own, M.begin(), M.end(),
                                                   tap, fap, ro, boost::none,
                                                   boost::none, false, unsync,
@@ -1348,7 +1348,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
 {
 # define REG_DE(ver, frame, pfn, id, n)                         \
   reg_de_##ver<scribbu::frame, pfn>(scribbu::frame_id ## n(#id))
-  
+
 # define REG_SER(ver, pfn, id) \
   reg_ser_##ver(#id, pfn)
 
@@ -1436,7 +1436,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_DE(2_3, PCNT,               de_cnt_2_3,        PCNT, 4);
   REG_DE(2_3, POPM,               de_popm_2_3,       POPM, 4);
   REG_DE(2_3, XTAG,               de_xtag_2_3,       XTAG, 4);
-  
+
   REG_DE(2_4, id3v2_4_text_frame, de_text_frame_2_4, TALB, 4);
   REG_DE(2_4, id3v2_4_text_frame, de_text_frame_2_4, TBPM, 4);
   REG_DE(2_4, id3v2_4_text_frame, de_text_frame_2_4, TCOM, 4);
@@ -1516,7 +1516,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_2, ser_text_frame_2_2, title-frame                 );
   REG_SER(2_2, ser_text_frame_2_2, track-frame                 );
   REG_SER(2_2, ser_text_frame_2_2, year-frame                  );
-  REG_SER(2_2, ser_comment_2_2,    comment-frame               );    
+  REG_SER(2_2, ser_comment_2_2,    comment-frame               );
   REG_SER(2_2, ser_udt_2_2,        udt-frame                   );
   REG_SER(2_2, ser_cnt_2_2,        play-count-frame            );
   REG_SER(2_2, ser_pop_2_2,        pop-frame                   );
@@ -1560,7 +1560,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_3, ser_text_frame_2_3, title-frame                 );
   REG_SER(2_3, ser_text_frame_2_3, track-frame                 );
   REG_SER(2_3, ser_text_frame_2_3, year-frame                  );
-  REG_SER(2_3, ser_comment_2_3,    comment-frame               );    
+  REG_SER(2_3, ser_comment_2_3,    comment-frame               );
   REG_SER(2_3, ser_udt_2_3,        udt-frame                   );
   REG_SER(2_3, ser_cnt_2_3,        play-count-frame            );
   REG_SER(2_3, ser_pop_2_3,        pop-frame                   );
@@ -1604,7 +1604,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_4, ser_text_frame_2_4, title-frame                 );
   REG_SER(2_4, ser_text_frame_2_4, track-frame                 );
   REG_SER(2_4, ser_text_frame_2_4, year-frame                  );
-  REG_SER(2_4, ser_comment_2_4,    comment-frame               );    
+  REG_SER(2_4, ser_comment_2_4,    comment-frame               );
   REG_SER(2_4, ser_udt_2_4,        udt-frame                   );
   REG_SER(2_4, ser_cnt_2_4,        play-count-frame            );
   REG_SER(2_4, ser_pop_2_4,        pop-frame                   );
@@ -1615,8 +1615,8 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
 }
 
 /// Deserialize an id3v2_2_frame to an <id3v2-frame>
-SCM 
-scribbu::scheme_serde_dispatcher::de_2_2(const scribbu::id3v2_2_frame& frm, 
+SCM
+scribbu::scheme_serde_dispatcher::de_2_2(const scribbu::id3v2_2_frame& frm,
                                          bool unsync) const
 {
   SCM out;
@@ -1634,8 +1634,8 @@ scribbu::scheme_serde_dispatcher::de_2_2(const scribbu::id3v2_2_frame& frm,
 }
 
 /// Deserialize an id3v2_3_frame to an <id3v2-frame>
-SCM 
-scribbu::scheme_serde_dispatcher::de_2_3(const scribbu::id3v2_3_frame& frm, 
+SCM
+scribbu::scheme_serde_dispatcher::de_2_3(const scribbu::id3v2_3_frame& frm,
                                 bool unsync) const
 {
   SCM out;
@@ -1653,8 +1653,8 @@ scribbu::scheme_serde_dispatcher::de_2_3(const scribbu::id3v2_3_frame& frm,
 }
 
 /// Deserialize an id3v2_34_frame to an <id3v2-frame>
-SCM 
-scribbu::scheme_serde_dispatcher::de_2_4(const scribbu::id3v2_4_frame& frm, 
+SCM
+scribbu::scheme_serde_dispatcher::de_2_4(const scribbu::id3v2_4_frame& frm,
                                 bool unsync) const
 {
   SCM out;
@@ -1672,7 +1672,7 @@ scribbu::scheme_serde_dispatcher::de_2_4(const scribbu::id3v2_4_frame& frm,
 }
 
 /// Serialize \a scm to an id3v2_2_frame
-std::unique_ptr<scribbu::id3v2_2_frame> 
+std::unique_ptr<scribbu::id3v2_2_frame>
 scribbu::scheme_serde_dispatcher::ser_2_2(SCM scm) const
 {
   using namespace std;
@@ -1681,13 +1681,13 @@ scribbu::scheme_serde_dispatcher::ser_2_2(SCM scm) const
     scm_error(sym_for_utf8("unexpected-type"), "ser_2_2",
               "expected <id3v2-frame>, got ~A", scm, SCM_BOOL_F);
   }
-  
+
   dynwind_context ctx;
 
   string id(ctx.free_utf8_string(scm_symbol_to_string(SCM_SLOT(scm, 0))));
   auto p = ser_2_2_.find(id);
   std::unique_ptr<scribbu::id3v2_2_frame> pout;
-  
+
   if (ser_2_2_.end() == p) {
     pout = move(ser_unknown_frame_2_2(scm));
   } else {
@@ -1702,7 +1702,7 @@ scribbu::scheme_serde_dispatcher::ser_2_2(SCM scm) const
 }
 
 /// Serialize \a scm to an id3v2_3_frame
-std::unique_ptr<scribbu::id3v2_3_frame> 
+std::unique_ptr<scribbu::id3v2_3_frame>
 scribbu::scheme_serde_dispatcher::ser_2_3(SCM scm) const
 {
   using namespace std;
@@ -1711,7 +1711,7 @@ scribbu::scheme_serde_dispatcher::ser_2_3(SCM scm) const
     scm_error(sym_for_utf8("unexpected-type"), "ser_2_2",
               "expected <id3v2-frame>, got ~A", scm, SCM_BOOL_F);
   }
-  
+
   dynwind_context ctx;
 
   string id(ctx.free_utf8_string(scm_symbol_to_string(SCM_SLOT(scm, 0))));
@@ -1731,7 +1731,7 @@ scribbu::scheme_serde_dispatcher::ser_2_3(SCM scm) const
 }
 
 /// Serialize \a scm to an id3v2_4_frame
-std::unique_ptr<scribbu::id3v2_4_frame> 
+std::unique_ptr<scribbu::id3v2_4_frame>
 scribbu::scheme_serde_dispatcher::ser_2_4(SCM scm) const
 {
   using namespace std;
@@ -1740,7 +1740,7 @@ scribbu::scheme_serde_dispatcher::ser_2_4(SCM scm) const
     scm_error(sym_for_utf8("unexpected-type"), "ser_2_2",
               "expected <id3v2-frame>, got ~A", scm, SCM_BOOL_F);
   }
-  
+
   dynwind_context ctx;
 
   string id(ctx.free_utf8_string(scm_symbol_to_string(SCM_SLOT(scm, 0))));
@@ -1760,37 +1760,37 @@ scribbu::scheme_serde_dispatcher::ser_2_4(SCM scm) const
   return pout;
 }
 
-SCM 
-scribbu::scheme_serde_dispatcher::de_unknown_frame_2_2(const scribbu::id3v2_2_frame &f, 
+SCM
+scribbu::scheme_serde_dispatcher::de_unknown_frame_2_2(const scribbu::id3v2_2_frame &f,
                                               bool unsync) const
 {
   SCM cls = scm_c_public_ref("scribbu", "<unk-frame>");
 
   SCM args = scm_list_1(cls);
   SCM x = scm_make(args);
-  
+
   SCM_SET_SLOT(x, 0, sym_unknown_frame);
   SCM_SET_SLOT(x, 5, scm_from_locale_string(f.id().as_string().c_str()));
-  
+
   std::stringstream stm;
   f.write(stm, unsync);
   std::string s = stm.str();
-  
+
   SCM bv = scm_c_make_bytevector(s.length());
   memcpy(SCM_BYTEVECTOR_CONTENTS(bv), s.data(), s.length());
-  
+
   SCM_SET_SLOT(x, 6, bv);
-  
-  return x;    
+
+  return x;
 }
 
-SCM 
-scribbu::scheme_serde_dispatcher::de_unknown_frame_2_3(const scribbu::id3v2_3_frame &f, 
+SCM
+scribbu::scheme_serde_dispatcher::de_unknown_frame_2_3(const scribbu::id3v2_3_frame &f,
                                               bool unsync) const
 {
-  typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation 
+  typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation
     tag_alter_preservation;
-  typedef scribbu::id3v2_3_plus_frame::file_alter_preservation 
+  typedef scribbu::id3v2_3_plus_frame::file_alter_preservation
     file_alter_preservation;
   typedef scribbu::id3v2_3_plus_frame::read_only read_only;
 
@@ -1798,35 +1798,35 @@ scribbu::scheme_serde_dispatcher::de_unknown_frame_2_3(const scribbu::id3v2_3_fr
 
   SCM args = scm_list_1(cls);
   SCM x = scm_make(args);
-  
+
   SCM_SET_SLOT(x, 0, sym_unknown_frame);
-  SCM_SET_SLOT(x, 1, f.tag_alter_preserve() == 
+  SCM_SET_SLOT(x, 1, f.tag_alter_preserve() ==
                tag_alter_preservation::preserve ? SCM_BOOL_T : SCM_BOOL_F);
-  SCM_SET_SLOT(x, 2, f.file_alter_preserve() == 
+  SCM_SET_SLOT(x, 2, f.file_alter_preserve() ==
                file_alter_preservation::preserve ? SCM_BOOL_T : SCM_BOOL_F);
-  SCM_SET_SLOT(x, 3, f.readonly() == read_only::set ? 
+  SCM_SET_SLOT(x, 3, f.readonly() == read_only::set ?
                SCM_BOOL_T : SCM_BOOL_F);
   SCM_SET_SLOT(x, 5, scm_from_locale_string(f.id().as_string().c_str()));
-  
+
   std::stringstream stm;
   f.write(stm, unsync);
   std::string s = stm.str();
-  
+
   SCM bv = scm_c_make_bytevector(s.length());
   memcpy(SCM_BYTEVECTOR_CONTENTS(bv), s.data(), s.length());
-  
+
   SCM_SET_SLOT(x, 6, bv);
-  
-  return x;    
+
+  return x;
 }
 
-SCM 
-scribbu::scheme_serde_dispatcher::de_unknown_frame_2_4(const scribbu::id3v2_4_frame &f, 
+SCM
+scribbu::scheme_serde_dispatcher::de_unknown_frame_2_4(const scribbu::id3v2_4_frame &f,
                                               bool unsync) const
 {
-  typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation 
+  typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation
     tag_alter_preservation;
-  typedef scribbu::id3v2_3_plus_frame::file_alter_preservation 
+  typedef scribbu::id3v2_3_plus_frame::file_alter_preservation
     file_alter_preservation;
   typedef scribbu::id3v2_3_plus_frame::read_only read_only;
 
@@ -1834,27 +1834,27 @@ scribbu::scheme_serde_dispatcher::de_unknown_frame_2_4(const scribbu::id3v2_4_fr
 
   SCM args = scm_list_1(cls);
   SCM x = scm_make(args);
-  
+
   SCM_SET_SLOT(x, 0, sym_unknown_frame);
-  SCM_SET_SLOT(x, 1, f.tag_alter_preserve() == 
+  SCM_SET_SLOT(x, 1, f.tag_alter_preserve() ==
                tag_alter_preservation::preserve ? SCM_BOOL_T : SCM_BOOL_F);
-  SCM_SET_SLOT(x, 2, f.file_alter_preserve() == 
+  SCM_SET_SLOT(x, 2, f.file_alter_preserve() ==
                file_alter_preservation::preserve ? SCM_BOOL_T : SCM_BOOL_F);
-  SCM_SET_SLOT(x, 3, f.readonly() == read_only::set ? 
+  SCM_SET_SLOT(x, 3, f.readonly() == read_only::set ?
                SCM_BOOL_T : SCM_BOOL_F);
   SCM_SET_SLOT(x, 4, f.unsynchronised() ? SCM_BOOL_T : SCM_BOOL_F);
   SCM_SET_SLOT(x, 5, scm_from_locale_string(f.id().as_string().c_str()));
-  
+
   std::stringstream stm;
   f.write(stm, unsync);
   std::string s = stm.str();
-  
+
   SCM bv = scm_c_make_bytevector(s.length());
   memcpy(SCM_BYTEVECTOR_CONTENTS(bv), s.data(), s.length());
-  
+
   SCM_SET_SLOT(x, 6, bv);
-  
-  return x;    
+
+  return x;
 }
 
 std::unique_ptr<scribbu::id3v2_2_frame>
@@ -1868,10 +1868,10 @@ scribbu::scheme_serde_dispatcher::ser_unknown_frame_2_2(SCM scm) const
   frame_id3 id(ctx.free_locale_string(SCM_SLOT(scm, 5)));
 
   SCM scm_bv = SCM_SLOT(scm, 6);
-  
+
   size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
   signed char *p = SCM_BYTEVECTOR_CONTENTS(scm_bv);
-  
+
   // The unknown_id3v2_2_frame ctor assumes we've stripped off the
   // frame header-- that's six bytes in v2.2.
   return unique_ptr<id3v2_2_frame>(new unknown_id3v2_2_frame(id, p + 6, p + cb));
@@ -1883,10 +1883,10 @@ scribbu::scheme_serde_dispatcher::ser_unknown_frame_2_3(SCM scm) const
 {
   using namespace std;
   using namespace scribbu;
-    
-  typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+  typedef id3v2_3_plus_frame::tag_alter_preservation
     tag_alter_preservation;
-  typedef id3v2_3_plus_frame::file_alter_preservation 
+  typedef id3v2_3_plus_frame::file_alter_preservation
     file_alter_preservation;
   typedef id3v2_3_plus_frame::read_only read_only;
 
@@ -1908,10 +1908,10 @@ scribbu::scheme_serde_dispatcher::ser_unknown_frame_2_3(SCM scm) const
   }
 
   SCM scm_bv = SCM_SLOT(scm, 6);
-  
+
   size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
   signed char *p = SCM_BYTEVECTOR_CONTENTS(scm_bv);
-  
+
   return unique_ptr<id3v2_3_frame>(
     // The unknown_id3v2_3_frame ctor assumes we've stripped off the
     // frame header-- that's ten bytes in v2.3.
@@ -1926,10 +1926,10 @@ scribbu::scheme_serde_dispatcher::ser_unknown_frame_2_4(SCM scm) const
 {
   using namespace std;
   using namespace scribbu;
-    
-  typedef id3v2_3_plus_frame::tag_alter_preservation 
+
+  typedef id3v2_3_plus_frame::tag_alter_preservation
     tag_alter_preservation;
-  typedef id3v2_3_plus_frame::file_alter_preservation 
+  typedef id3v2_3_plus_frame::file_alter_preservation
     file_alter_preservation;
   typedef id3v2_3_plus_frame::read_only read_only;
   typedef id3v2_3_plus_frame::read_only read_only;
@@ -1956,15 +1956,15 @@ scribbu::scheme_serde_dispatcher::ser_unknown_frame_2_4(SCM scm) const
   }
 
   SCM scm_bv = SCM_SLOT(scm, 6);
-  
+
   size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
   signed char *p = SCM_BYTEVECTOR_CONTENTS(scm_bv);
-  
+
   return unique_ptr<id3v2_4_frame>(
     // The unknown_id3v2_4_frame ctor assumes we've stripped off the
     // frame header-- that's ten bytes in v2.4.
     new unknown_id3v2_4_frame(id, tap, fap, ro,
-                              boost::none, boost::none, 
+                              boost::none, boost::none,
                               false, unsync, boost::none,
                               p + 10, p + cb));
 }

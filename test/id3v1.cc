@@ -490,27 +490,27 @@ BOOST_AUTO_TEST_CASE( test_nan_tom_teaimin )
 BOOST_AUTO_TEST_CASE( test_maybe_remove_id3v1 )
 {
   using namespace scribbu;
-  
+
   static const fs::path LORCA("lorca.mp3");
-  
+
   fs::path tmp = fs::unique_path();
   fs::path src = get_data_directory() / LORCA;
 
   boost::system::error_code ec;
   fs::copy_file(src, tmp, ec);
-  
+
   // Ensure our tmp file is writable
   fs::permissions(tmp, fs::perms::add_perms|fs::perms::owner_write);
-  
+
   maybe_remove_id3v1(tmp);
-  
+
   size_t orig = fs::file_size(src);
   size_t aftr = fs::file_size(tmp);
-  
+
   BOOST_CHECK( orig == aftr + 128 );
 
   fs::remove(tmp);
-  
+
   // Test against a non-existent file
   BOOST_CHECK_NO_THROW( maybe_remove_id3v1( tmp / ".does-not-exist") );
 }
@@ -519,9 +519,9 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   static const fs::path LORCA("lorca.mp3");
-  
+
   fs::path tmp = fs::unique_path();
   fs::path lrc = get_data_directory() / LORCA;
   boost::system::error_code ec;
@@ -534,17 +534,17 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
 
   BOOST_CHECK(0xff == ptag->genre());
   ptag->set_genre(88);
-  
+
   // Ensure our tmp file is writable
   fs::permissions(tmp, fs::perms::add_perms|fs::perms::owner_write);
-  
+
   replace_id3v1(tmp, *ptag);
-  
+
   fs::ifstream ifs2(tmp, fs::ifstream::binary);
   unique_ptr<id3v1_tag> ptag2 = process_id3v1(ifs2);
   BOOST_CHECK( ptag2 );
   BOOST_CHECK( 88 == ptag2->genre() );
-  
+
   // Test against a non-existent file
   fs::path tmp2 = tmp.string() + ".really-does-not-exist";
   replace_id3v1(tmp2, *ptag);
@@ -554,7 +554,7 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
   unique_ptr<id3v1_tag> ptag3 = process_id3v1(ifs3);
   BOOST_CHECK( ptag3 );
   BOOST_CHECK( 88 == ptag3->genre() );
-  
+
   fs::remove(tmp);
-  fs::remove(tmp2);  
+  fs::remove(tmp2);
 }

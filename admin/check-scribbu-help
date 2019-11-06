@@ -178,20 +178,20 @@ test_cmd "scribbu --info" "Next: Introduction, Up: .dir." $cs_batch
 test_cmd "scribbu dump -h" "scribbu dump -- dump ID3 tags from one or more files to stdout USAGE: scribbu dump" $cs_batch
 test_cmd "scribbu dump --help" "NAME scribbu-dump - dump ID3 tags from one or more files" $cs_batch
 
-test_cmd "scribbu dump --info" "Up: The .scribbu. Program [0-9.]+ Invoking .scribbu dump." $cs_batch
+test_cmd "scribbu dump --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu dump." $cs_batch
 test_cmd "scribbu rename -h" "scribbu rename -- rename .mp3 files scribbu rename" $cs_batch
 test_cmd "scribbu rename --help" "NAME scribbu rename - Rename files according to the ID3 tag attributes" $cs_batch
-test_cmd "scribbu rename --info" "Up: The .scribbu. Program [0-9.]+ Invoking .scribbu rename." $cs_batch
+test_cmd "scribbu rename --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu rename." $cs_batch
 test_cmd "scribbu report -h" "scribbu report -- generate a report on one or more ID3-tagged files scribbu report"  $cs_batch
 test_cmd "scribbu report --help" "NAME scribbu-report - generate a report on one or more files. ID3 tags" $cs_batch
-test_cmd "scribbu report --info" "Up: The .scribbu. Program [0-9.]+ Invoking .scribbu report." $cs_batch
+test_cmd "scribbu report --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu report." $cs_batch
 test_cmd "scribbu split -h" "scribbu split -- split a file into ID3v2, track data, and ID3v1 tag scribbu split" $cs_batch
 test_cmd "scribbu split --help" "NAME scribbu-split - split a file into ID3v2, track & ID3v1 pieces" $cs_batch
 # `scribbu split' has no Info manual node
 # XFAIL: test_cmd "scribbu split --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu split." $cs_batch
 test_cmd "scribbu popm -h" "scribbu popm -- manage playcount and/or popularimeter frames scribbu popm" $cs_batch
 test_cmd "scribbu popm --help" "NAME scribbu popm - Manage the play count and/or popularimeter ID3v2 tags" $cs_batch
-test_cmd "scribbu popm --info" "Up: The .scribbu. Program [0-9.]+ Invoking .scribbu popm." $cs_batch
+test_cmd "scribbu popm --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu popm." $cs_batch
 test_cmd "scribbu text -h" "scribbu text -- manage text frames scrubbu text" $cs_batch
 test_cmd "scribbu text --help" "NAME scribbu-text - Manage ID3v2 text frames" $cs_batch
-test_cmd "scribbu text --info" "Up: The .scribbu. Program [0-9.]+ Invoking .scribbu text." $cs_batch
+test_cmd "scribbu text --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu text." $cs_batch

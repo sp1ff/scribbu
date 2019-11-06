@@ -655,7 +655,7 @@ namespace scribbu {
     virtual ~id3v2_tag()
     { }
     virtual id3v2_tag* clone() const = 0;
-    
+
     id3v2_tag& operator=(const id3v2_tag &that) {
       if (this != &that) {
         version_ = that.version_;
@@ -894,7 +894,7 @@ namespace scribbu {
          on_no_encoding rsp = on_no_encoding::fail,
          const boost::optional<encoding> &src = boost::none) const = 0;
     /// Set the contents of an arbitrary text frame
-    virtual 
+    virtual
     void
     text(id3v2_text_frames id,
          const std::string &text,

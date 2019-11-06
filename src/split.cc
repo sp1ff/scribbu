@@ -135,7 +135,7 @@ namespace {
   handle_split(int argc, char **argv)
   {
     using namespace std;
-    
+
     using boost::optional;
 
     int status = EXIT_SUCCESS;
@@ -192,7 +192,7 @@ namespace {
     popts.add("argument", 1);
 
     try {
-      
+
       vector<string> tokens;
       convert_tokens(argc, argv, back_inserter(tokens));
 
@@ -206,7 +206,7 @@ namespace {
                         "(scribbu) Invoking scribbu split");
 
       po::store(parsed, vm);
-      
+
       parsed = po::parse_environment(nocli, "SCRIBBU");
       po::store(parsed, vm);
 

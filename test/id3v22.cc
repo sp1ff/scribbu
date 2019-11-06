@@ -370,21 +370,21 @@ BOOST_AUTO_TEST_CASE( test_id3v22_text_frames )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   const fs::path TEST_DATA(get_data_directory() / "id3v2.2.tag");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 
   id3v2_2_tag tag(ifs);
-  
+
   BOOST_CHECK("Murley Braid Quartet" == tag.text(id3v2_text_frames::tpe1));
   tag.text(id3v2_text_frames::tpe1, "foo");
   BOOST_CHECK("foo" == tag.text(id3v2_text_frames::tpe1));
   tag.delete_frame(id3v2_text_frames::tpe1);
   BOOST_CHECK( 9 == tag.num_frames() );
-  
+
   BOOST_CHECK( !tag.has_artist() );
-  
+
   // https://github.com/sp1ff/scribbu/issues/4
   // BOOST_CHECK_THROW( tag.artist(), ... );
 

@@ -115,12 +115,12 @@ namespace scribbu {
     /// *or* if [x, y] = [0xff, 0x00]
     bool needs_unsync(unsigned char x, unsigned char y);
     /// Count the number of "syncs" in [p0, p1). The meaning of the term "sync"
-    /// depends upon \a false_only; if that parameter is true, only false 
+    /// depends upon \a false_only; if that parameter is true, only false
     /// syncs (i.e. MP3 sync words) will be counted, if false, all pairs
     /// requiring unsynchronisation will be counted
     template <typename forward_iterator>
-    std::size_t count_syncs(forward_iterator p0, 
-                            forward_iterator p1, 
+    std::size_t count_syncs(forward_iterator p0,
+                            forward_iterator p1,
                             bool false_only) {
       if (p0 == p1) return 0;
       std::size_t count = 0;
@@ -166,7 +166,7 @@ namespace scribbu {
 
       return cb;
     }
-    
+
   } // End namespace detail.
 
   /// Enumeration of expressiong a tri-state option: do not use Unicode,
@@ -186,7 +186,7 @@ namespace scribbu {
    * \todo produce an analagous enum for all frames
    *
    */
-  
+
   enum class id3v2_text_frames {
     talb, // Album/Movie/Show title [TAL]
     tbpm, // beats per minute [TBM]
@@ -227,10 +227,10 @@ namespace scribbu {
     tsse, // Software/Hardware and settings used for encoding [TSS]
     tyer, // Year [TYE]
   };
-  
+
   std::istream& operator>>(std::istream &is, id3v2_text_frames &x);
   std::ostream& operator<<(std::ostream &is, const id3v2_text_frames &x);
-  
+
   /// ID3v2.2 identifier-- a simple UDT representing a three-character,
   /// ASCII-encoded frame ID for use in hashed collections
   class frame_id3
@@ -776,7 +776,7 @@ namespace scribbu {
     }
 
     std::size_t count() const;
-    
+
     /// Set the count
     void count(std::size_t n)
     { reset_counter(n); }
@@ -843,7 +843,7 @@ namespace scribbu {
       std::copy(own.begin(), own.end(), std::back_inserter(email_));
       reset_counter(count);
     }
-    
+
   public:
 
     template <typename forward_output_iterator>
@@ -907,12 +907,12 @@ namespace scribbu {
    *
    *
    */
-  
+
   class tag_cloud
   {
   private:
     typedef std::map<std::string, std::set<std::string>> map_type;
-    
+
   public:
     typedef map_type::value_type value_type;
     typedef map_type::const_iterator const_iterator;
@@ -922,7 +922,7 @@ namespace scribbu {
     /// Construct from a raw buffer; forward_input_iterator shall dereference to
     /// an unsigned char
     template <typename forward_input_iterator>
-    tag_cloud(forward_input_iterator p0, 
+    tag_cloud(forward_input_iterator p0,
               forward_input_iterator p1)
     {
       using namespace std;
@@ -931,19 +931,19 @@ namespace scribbu {
 
       forward_input_iterator p = find(p0, p1, 0);
       copy(p0, p, back_inserter(own_));
-      
+
       p0 = ++p;
       while (p0 != p1) {
-      
+
         p = find(p0, p1, 0);
         string key;
         copy(p0, p, back_inserter(key));
-      
+
         unsigned char buf[4];
         copy(p + 1, p + 5, buf);
         const uint32_t *pb = (const uint32_t*)(buf);
         uint32_t cb = ntohl(*pb);
-      
+
         set<string> vals;
         p0 = p + 5;
         while (cb) {
@@ -954,9 +954,9 @@ namespace scribbu {
           vals.insert(val);
           cb -= val.length() + 1;
         }
-        
+
         tags_[key] = vals;
-      
+
       }
     }
     /// Construct "from scratch"-- the tags can be initialized using brace init
@@ -966,13 +966,13 @@ namespace scribbu {
     /// Construct "from scratch"-- [p0, p1) will be used to initialize the
     /// tag cloud, so the value_type shall be pair<const string, set<string>>
     template <typename forward_input_iterator>
-    tag_cloud(const std::string &own, 
+    tag_cloud(const std::string &own,
               forward_input_iterator p0,
               forward_input_iterator p1):
       own_(own), tags_(p0, p1)
     { }
     /// Construct "from scratch"-- text shall be a query-string style
-    /// representation of the tag cloud (i.e. that which is returned from 
+    /// representation of the tag cloud (i.e. that which is returned from
     /// urlencoded())
     tag_cloud(const std::string &owner, const std::string &text);
 
@@ -994,7 +994,7 @@ namespace scribbu {
     /// Re-set the tags
     void reset(std::initializer_list<value_type> init)
     { tags_ = init; }
-    
+
     iterator begin()
     { return tags_.begin(); }
     const_iterator begin() const
@@ -1003,14 +1003,14 @@ namespace scribbu {
     { return tags_.end(); }
     const_iterator end() const
     { return tags_.end(); }
-    
+
     /// Return an URL-encoded representation of the tag cloud
     std::string urlencoded() const;
     /// Merge an URL-coded representation of some tags into the cloud
     void merge(const std::string &merge);
     /// Update the tag cloud
     void update(const std::string &merge);
-    
+
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header
     std::size_t size() const;

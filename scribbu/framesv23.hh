@@ -623,7 +623,7 @@ namespace scribbu {
                        const id_type           &encmth,
                        const id_type           &gid,
                        const opt_sz_type       &decsz):
-      id3v2_3_text_frame(frame_id4(id), p0, p1, tap, fap, ro, 
+      id3v2_3_text_frame(frame_id4(id), p0, p1, tap, fap, ro,
                          encmth, gid, decsz)
     { }
 
@@ -658,11 +658,11 @@ namespace scribbu {
                        const id_type          &encmth  = boost::none,
                        const id_type          &gid     = boost::none,
                        const opt_sz_type      &decsz   = boost::none):
-      id3v2_3_text_frame(id, ucs2, 
-                         convert_encoding(text, src, 
+      id3v2_3_text_frame(id, ucs2,
+                         convert_encoding(text, src,
                                           ucs2 ? encoding::UCS_2LE :
                                           encoding::ISO_8859_1, add_bom, rsp),
-                         tap, fap, ro, 
+                         tap, fap, ro,
                          encmth, gid, decsz)
     { }
 
@@ -974,7 +974,7 @@ namespace scribbu {
       id3v2_3_frame("PCNT", tap, fap, ro, encmth, gid, decsz),
       play_count(p0, p1)
     { }
-    
+
     PCNT(std::size_t count,
          tag_alter_preservation  tap,
          file_alter_preservation fap,
@@ -1106,7 +1106,7 @@ namespace scribbu {
       id3v2_3_frame("XTAG", tap, fap, ro, encmth, gid, decsz),
       tag_cloud(p0, p1)
     { }
-    
+
     XTAG(const std::string &own,
          std::initializer_list<tag_cloud::value_type> init,
          tag_alter_preservation  tap = tag_alter_preservation::preserve,
@@ -1136,9 +1136,9 @@ namespace scribbu {
     { }
 
     /// Construct "from scratch"-- text shall be a query-string style
-    /// representation of the tag cloud (i.e. that which is returned from 
+    /// representation of the tag cloud (i.e. that which is returned from
     /// urlencoded())
-    XTAG(const std::string      &owner, 
+    XTAG(const std::string      &owner,
          const std::string      &text,
          tag_alter_preservation  tap,
          file_alter_preservation fap,

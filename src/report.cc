@@ -74,7 +74,7 @@ struct reporter {
              const std::unique_ptr<scribbu::id3v2_tag> &pid3v2,
              const scribbu::track_data                 &info,
              const std::unique_ptr<scribbu::id3v1_tag> &pid3v1) = 0;
-  virtual ~reporter() 
+  virtual ~reporter()
   { }
 };
 
@@ -509,7 +509,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-report",
-                        "(scribbu) Invoking `scribbu report'");
+                        "(scribbu) Invoking scribbu report");
 
       po::store(parsed, vm);
 
@@ -519,7 +519,7 @@ namespace {
       // That's it-- the list of files and/or directories to be processed
       // should be waiting for us in 'arguments'...
       po::notify(vm);
-      
+
       // Don't enforce required arguments until we know we're not just
       // displaying help.
       po::notify(vm);

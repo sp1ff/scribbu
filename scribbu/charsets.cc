@@ -644,7 +644,7 @@ namespace scribbu {
     if (!scribbu::char_traits<char>::is_code_unit(dstenc)) {
       throw bad_code_unit(dstenc, sizeof(char));
     }
-    
+
     if (0 == cbbuf) {
       return std::string();
     }
@@ -737,10 +737,10 @@ namespace scribbu {
 				   encoding srcenc,
 				   encoding dstenc,
 				   on_no_encoding rsp /*= on_no_encoding::fail*/) {
-    return convert_encoding<std::string>((const unsigned char*)pbuf, cbbuf, 
+    return convert_encoding<std::string>((const unsigned char*)pbuf, cbbuf,
                                          srcenc, dstenc, rsp);
   }
-  
+
     /// Convert encodings from C strings to buffers of unsigned char
   template <>
   std::vector<unsigned char>
@@ -761,7 +761,7 @@ namespace scribbu {
     if (!scribbu::char_traits<char>::is_code_unit(srcenc)) {
       throw bad_code_unit(dstenc, sizeof(char));
     }
-    
+
     if (0 == strlen(text)) {
       return std::vector<unsigned char>();
     }
@@ -858,7 +858,7 @@ namespace scribbu {
   {
     return convert_encoding<char const*>(text, srcenc, dstenc, add_bom, rsp);
   }
-  
+
   std::vector<unsigned char>
   convert_encoding(const char *ptext,
                    encoding srcenc,
@@ -868,7 +868,7 @@ namespace scribbu {
   {
     return convert_encoding<char const*>(ptext, srcenc, dstenc, add_bom, rsp);
   }
-  
+
   template <>
   std::vector<unsigned char>
   convert_encoding(const std::string &text,
@@ -877,7 +877,7 @@ namespace scribbu {
                    bool add_bom /*= false*/,
                    on_no_encoding rsp /*= on_no_encoding::fail*/)
   {
-    return convert_encoding<const char*>(text.c_str(), srcenc, dstenc, add_bom, 
+    return convert_encoding<const char*>(text.c_str(), srcenc, dstenc, add_bom,
                                          rsp);
   }
 

@@ -47,7 +47,7 @@
 
   \endcode
   *
-  * ID3v1 defined a set of genres denoted by numerical codes (see 
+  * ID3v1 defined a set of genres denoted by numerical codes (see
   * \ref scribbu_id3v1_genres "below"). Winamp extended that list, but support
   * for the extended Winamp list is not universal. In some cases, only the first
   * 80 genres are supported.
@@ -62,7 +62,7 @@
   * fields with zero bytes, it's a good bet that readers will stop when they
   * encounter any NULL value. Therefore, if the second-to-last byte of a field
   * is zero, a value may be stored in the last byte. He specifically proposed
-  * adding the album track in this way to the comment field 
+  * adding the album track in this way to the comment field
   * \ref scribbu_id3v1_refs_1 "[1]". This modification is known as ID3 v1.1.
   *
   * Here is an example ID3v1 tag:
@@ -104,7 +104,7 @@
   * this tag padded out each field with NULLs.
   *
   * The thirty byte limitation in the ID3v1 fields soon became apparent,
-  * leading to the Enhanced, or Extended (ID3v1) Tag 
+  * leading to the Enhanced, or Extended (ID3v1) Tag
   * \ref scribbu_id3v1_refs_3 "[3]". The ID3v1 Enhanced tag is even more loosely
   * specified than the ID3v1; it is formed by prepending an additional 227 bytes
   * to the ID3v1 tag (so the entire tag is a block of 355 bytes \em appended to
@@ -227,60 +227,60 @@
   * Genre                     | Genre
   * ------------------------- | -----------------
   * 80 Folk                   | 136 Christian Gangsta Rap
-  * 81 Folk-Rock              | 137 Heavy Metal              
-  * 82 National Folk          | 138 Black Metal              
-  * 83 Swing                  | 139 Crossover                
-  * 84 Fast Fusion            | 140 Contemporary Christian   
-  * 85 Bebob                  | 141 Christian rock           
-  * 86 Latin                  | 142 Merengue                 
-  * 87 Revival                | 143 Salsa                    
-  * 88 Celtic                 | 144 Thrash Metal             
-  * 89 Bluegrass              | 145 Anime                    
-  * 90 Avantgarde             | 146 Jpop                     
-  * 91 Gothic Rock            | 147 Synthpop                 
-  * 92 Progressive Rock       | 148 Abstract                 
-  * 93 Psychedelic Rock       | 149 Art Rock                 
-  * 94 Symphonic Rock         | 150 Baroque                  
-  * 95 Slow Rock              | 151 Bhangra                  
-  * 96 Big Band               | 152 Big beat                 
-  * 97 Chorus                 | 153 Breakbeat                
-  * 98 Easy Listening         | 154 Chillout                 
-  * 99 Acoustic               | 155 Downtempo                
-  * 100 Humour                | 156 Dub                      
-  * 101 Speech                | 157 EBM                      
-  * 102 Chanson               | 158 Eclectic                      
-  * 103 Opera                 | 159 Electro                  
-  * 104 Chamber Musice        | 160 Electroclash             
-  * 105 Sonata                | 161 Emo                      
-  * 106 Symphony              | 162 Experimental             
-  * 107 Booty Brass           | 163 Garage                   
-  * 108 Primus                | 164 Global                   
-  * 109 Porn Groove           | 165 IDM                      
-  * 110 Satire                | 166 Illbient                 
-  * 111 Slow Jam              | 167 Industro-Goth            
-  * 112 Club                  | 168 Jam Band                 
-  * 113 Tango                 | 169 Krautrock                
-  * 114 Samba                 | 170 Leftfield                
-  * 115 Folklore              | 171 Lounge                   
-  * 116 Ballad                | 172 Math Rock                
-  * 117 Power Ballad          | 173 New Romantic             
-  * 118 Rhytmic Soul          | 174 Nu-Breakz                
-  * 119 Freestyle             | 175 Post-Punk                
-  * 120 Duet                  | 176 Post-Rock                
-  * 121 Punk Rock             | 177 Psytrance                
-  * 122 Drum Solo             | 178 Shoegaze                 
-  * 123 A Capela              | 179 Space Rock               
-  * 124 Euro-House            | 180 Trop Rock                
-  * 125 Dance Hall            | 181 World Music              
-  * 126 Goa                   | 182 Neoclassical             
-  * 127 Drum & Bass           | 183 Audiobook                
-  * 128 Club-House            | 184 Audio theatre            
-  * 129 Hardcore Techno       | 185 Neue Deutsche Welle      
-  * 130 Terror                | 186 Podcast                  
-  * 131 Indie                 | 187 Indie-Rock               
-  * 132 BritPop               | 188 G-Funk                   
-  * 133 Negerpunk             | 189 Dubstep                  
-  * 134 Polsk Punk            | 190 Garage Rock              
+  * 81 Folk-Rock              | 137 Heavy Metal
+  * 82 National Folk          | 138 Black Metal
+  * 83 Swing                  | 139 Crossover
+  * 84 Fast Fusion            | 140 Contemporary Christian
+  * 85 Bebob                  | 141 Christian rock
+  * 86 Latin                  | 142 Merengue
+  * 87 Revival                | 143 Salsa
+  * 88 Celtic                 | 144 Thrash Metal
+  * 89 Bluegrass              | 145 Anime
+  * 90 Avantgarde             | 146 Jpop
+  * 91 Gothic Rock            | 147 Synthpop
+  * 92 Progressive Rock       | 148 Abstract
+  * 93 Psychedelic Rock       | 149 Art Rock
+  * 94 Symphonic Rock         | 150 Baroque
+  * 95 Slow Rock              | 151 Bhangra
+  * 96 Big Band               | 152 Big beat
+  * 97 Chorus                 | 153 Breakbeat
+  * 98 Easy Listening         | 154 Chillout
+  * 99 Acoustic               | 155 Downtempo
+  * 100 Humour                | 156 Dub
+  * 101 Speech                | 157 EBM
+  * 102 Chanson               | 158 Eclectic
+  * 103 Opera                 | 159 Electro
+  * 104 Chamber Musice        | 160 Electroclash
+  * 105 Sonata                | 161 Emo
+  * 106 Symphony              | 162 Experimental
+  * 107 Booty Brass           | 163 Garage
+  * 108 Primus                | 164 Global
+  * 109 Porn Groove           | 165 IDM
+  * 110 Satire                | 166 Illbient
+  * 111 Slow Jam              | 167 Industro-Goth
+  * 112 Club                  | 168 Jam Band
+  * 113 Tango                 | 169 Krautrock
+  * 114 Samba                 | 170 Leftfield
+  * 115 Folklore              | 171 Lounge
+  * 116 Ballad                | 172 Math Rock
+  * 117 Power Ballad          | 173 New Romantic
+  * 118 Rhytmic Soul          | 174 Nu-Breakz
+  * 119 Freestyle             | 175 Post-Punk
+  * 120 Duet                  | 176 Post-Rock
+  * 121 Punk Rock             | 177 Psytrance
+  * 122 Drum Solo             | 178 Shoegaze
+  * 123 A Capela              | 179 Space Rock
+  * 124 Euro-House            | 180 Trop Rock
+  * 125 Dance Hall            | 181 World Music
+  * 126 Goa                   | 182 Neoclassical
+  * 127 Drum & Bass           | 183 Audiobook
+  * 128 Club-House            | 184 Audio theatre
+  * 129 Hardcore Techno       | 185 Neue Deutsche Welle
+  * 130 Terror                | 186 Podcast
+  * 131 Indie                 | 187 Indie-Rock
+  * 132 BritPop               | 188 G-Funk
+  * 133 Negerpunk             | 189 Dubstep
+  * 134 Polsk Punk            | 190 Garage Rock
   * 135 Beat                  | 191 Psybient
   *
   *
@@ -372,7 +372,7 @@ namespace scribbu {
     id3v1_tag(std::istream &is, bool enhanced);
     /// Construct "from scratch"-- all fields wil be zeroed
     id3v1_tag(bool v11, bool enh):
-      extended_(enh), v1_1_(v11), 
+      extended_(enh), v1_1_(v11),
       album_(enh ? 90 : 30),
       artist_(enh ? 90 : 30),
       genre_(0),
@@ -384,7 +384,7 @@ namespace scribbu {
       } else {
         comment_.resize(30);
       }
-      
+
       std::fill(start_time_.data(), start_time_.data() + 6, 0);
       std::fill(end_time_.data(), end_time_.data() + 6, 0);
       std::fill(year_.data(), year_.data() + 4, 0);
@@ -406,7 +406,7 @@ namespace scribbu {
 
     /// retrieve the 'album' field (raw bytes)
     template <typename forward_output_iterator>
-    forward_output_iterator album(forward_output_iterator p) const 
+    forward_output_iterator album(forward_output_iterator p) const
     {
       return std::copy(album_.begin(), album_.end(), p);
     }
@@ -438,7 +438,7 @@ namespace scribbu {
 
     /// retrieve the 'artist' field (raw bytes)
     template <typename forward_output_iterator>
-    forward_output_iterator artist(forward_output_iterator p) const 
+    forward_output_iterator artist(forward_output_iterator p) const
     {
       return std::copy(artist_.begin(), artist_.end(), p);
     }
@@ -469,7 +469,7 @@ namespace scribbu {
 
     /// retrieve the 'comment' field (raw bytes)
     template <typename forward_output_iterator>
-    forward_output_iterator comment(forward_output_iterator p) const 
+    forward_output_iterator comment(forward_output_iterator p) const
     {
       return std::copy(comment_.begin(), comment_.end(), p);
     }
@@ -499,23 +499,23 @@ namespace scribbu {
     ////////////////////////////////////////////////////////////////////////////
 
     /// retrieve the one-byte genre field
-    unsigned char genre() const 
+    unsigned char genre() const
     {
       return genre_;
     }
     // set the one-byte genre field; named it set_ for consistency with other
     // setters
-    void set_genre(unsigned char genre) 
+    void set_genre(unsigned char genre)
     {
       genre_ = genre;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////
     //                             enhanced genre                             //
     ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator enh_genre(forward_output_iterator p) const 
+    forward_output_iterator enh_genre(forward_output_iterator p) const
     {
       return std::copy(ext_genre_.begin(), ext_genre_.end(), p);
     }
@@ -545,7 +545,7 @@ namespace scribbu {
     //                                 speed                                  //
     ////////////////////////////////////////////////////////////////////////////
 
-    std::pair<bool, unsigned char> speed() const 
+    std::pair<bool, unsigned char> speed() const
     {
       return std::make_pair(extended(), speed_);
     }
@@ -554,13 +554,13 @@ namespace scribbu {
       speed_ = speed;
       extended_ = true;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////
     //                               start time                               //
     ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator start_time(forward_output_iterator p) const 
+    forward_output_iterator start_time(forward_output_iterator p) const
     {
       return std::copy(start_time_.begin(), start_time_.end(), p);
     }
@@ -589,7 +589,7 @@ namespace scribbu {
     ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator end_time(forward_output_iterator p) const 
+    forward_output_iterator end_time(forward_output_iterator p) const
     {
       return std::copy(end_time_.begin(), end_time_.end(), p);
     }
@@ -613,13 +613,13 @@ namespace scribbu {
       }
       extended_ = true;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////
     //                                 title                                  //
     ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator title(forward_output_iterator p) const 
+    forward_output_iterator title(forward_output_iterator p) const
     {
       return std::copy(title_.begin(), title_.end(), p);
     }
@@ -648,22 +648,22 @@ namespace scribbu {
     //                            track number                                //
     ////////////////////////////////////////////////////////////////////////////
 
-    std::pair<bool, unsigned char> track_number() const 
+    std::pair<bool, unsigned char> track_number() const
     {
       return std::make_pair(v1_1(), track_number_);
     }
-    void set_track_number(unsigned char track) 
+    void set_track_number(unsigned char track)
     {
       track_number_ = track;
       v1_1_ = true;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////
     //                                  year                                  //
     ////////////////////////////////////////////////////////////////////////////
 
     template <typename forward_output_iterator>
-    forward_output_iterator year(forward_output_iterator p) const 
+    forward_output_iterator year(forward_output_iterator p) const
     {
       return std::copy(year_.begin(), year_.end(), p);
     }
@@ -685,27 +685,27 @@ namespace scribbu {
       }
       // extended_ = true;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////
     //                             miscellaneous                              //
     ////////////////////////////////////////////////////////////////////////////
 
-    bool enhanced() const 
+    bool enhanced() const
     {
       return extended();
     }
 
-    bool extended() const 
+    bool extended() const
     {
       return extended_;
     }
-    
-    size_t size() const 
+
+    size_t size() const
     {
       return extended() ? ID3V1_EXT_TAG_SIZE : ID3V1_TAG_SIZE;
     }
 
-    bool v1_1() const 
+    bool v1_1() const
     {
       return v1_1_;
     }
@@ -803,7 +803,7 @@ namespace scribbu {
    */
 
   void maybe_remove_id3v1(const boost::filesystem::path &pth);
-  
+
 /**
  * \brief Replace any ID3v1 tag that may be present
  *

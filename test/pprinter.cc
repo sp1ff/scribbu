@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE( test_pprint_xtag )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   const string GOLDEN(R"(XTAG: sp1ff@pobox.com
 tags:
 tag1: has %, has ,
@@ -201,10 +201,10 @@ tag2: 你好
 
   XTAG tc01("sp1ff@pobox.com",
 	    { { "tag1", { "has ,", "has %" } },
-	      { "tag2", { "你好" } } }); 
+	      { "tag2", { "你好" } } });
   stringstream stm01;
   stm01 << tc01;
-  
+
   string text01 = stm01.str();
   BOOST_TEST_MESSAGE( text01 );
   BOOST_CHECK( GOLDEN == text01 );

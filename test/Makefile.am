@@ -37,10 +37,8 @@ AM_LDFLAGS  = $(BOOST_LDFLAGS)
 unit_LDADD = ../scribbu/libscribbu.la    \
 	$(GUILE_LIBS)                    \
 	$(OPENSSL_LIBS)                  \
-	-ldl                             \
 	$(BOOST_IOSTREAMS_LIB)           \
 	$(BOOST_FILESYSTEM_LIB)          \
 	$(BOOST_PROGRAM_OPTIONS_LIB)     \
 	$(BOOST_UNIT_TEST_FRAMEWORK_LIB) \
-	$(BOOST_SYSTEM_LIB)              \
-	-lpthread
+	$(BOOST_SYSTEM_LIB)

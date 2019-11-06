@@ -47,7 +47,7 @@ help_level_for_parsed_opts(const po::parsed_options &opts)
 
   help_level out = help_level::none;
   optional<verbose_flavor> flav = boost::none;
-  
+
   for (auto o: opts.options) {
     for (auto t: o.original_tokens) {
       if (t == "-h") {
@@ -64,9 +64,9 @@ help_level_for_parsed_opts(const po::parsed_options &opts)
       }
     }
   }
-  
+
   return make_tuple(out, flav);
-  
+
 }
 
 void
@@ -117,13 +117,13 @@ maybe_handle_help(const po::parsed_options      &opts,
                   const std::string             &node)
 {
   using namespace std;
-  
+
   using boost::optional;
-  
+
   help_level level;
   optional<verbose_flavor> flav;
   tie(level, flav) = help_level_for_parsed_opts(opts);
-  
+
   if (help_level::none == level) {
     return;
   } else if (help_level::regular == level) {
@@ -136,7 +136,7 @@ maybe_handle_help(const po::parsed_options      &opts,
       show_info_node(node);
     }
   }
-  
+
 }
 
 

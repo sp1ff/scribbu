@@ -47,7 +47,7 @@ namespace scribbu {
    * - \anchor error_refs_2 [2] unknown. Boost Exception
    *   http://www.boost.org/doc/libs/1_57_0/libs/exception/doc/boost-exception.html
    *   (updated March 18, 2016)
-   *   
+   *
    *
    * - \anchor error_refs_3 [3] multiple authors. How to design exception
    *   “types” in C++?"

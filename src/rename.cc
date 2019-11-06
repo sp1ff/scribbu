@@ -235,7 +235,7 @@ namespace {
     popts.add("arguments", -1);
 
     try {
-      
+
       vector<string> tokens;
       convert_tokens(argc, argv, back_inserter(tokens));
 
@@ -246,7 +246,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-rename",
-                        "(scribbu) Invoking `scribbu rename'");
+                        "(scribbu) Invoking scribbu rename");
 
       po::store(parsed, vm);
 

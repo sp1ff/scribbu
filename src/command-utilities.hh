@@ -84,7 +84,7 @@ show_info_node(const std::string &node);
  * \param node [in] name of this (sub-)command's info node
  *
  *
- * If this function returns, help was not requested-- the implementation 
+ * If this function returns, help was not requested-- the implementation
  * should carry out it's work. If help was requested at any level, this
  * function will never return.
  *
@@ -149,11 +149,11 @@ namespace detail {
 
 /// Retrieve the names of all sub-commands
 template <typename forward_output_iterator>
-forward_output_iterator 
+forward_output_iterator
 get_sub_command_names(forward_output_iterator pout)
 {
   const detail::handler_map &H = detail::get_handler_map();
-  
+
   for (auto x: H) {
     *pout++ = x.first;
   }
@@ -163,7 +163,7 @@ get_sub_command_names(forward_output_iterator pout)
 
 /// Convert (argc, argv) style parameters to a collection of tokens
 template <typename forward_output_iterator>
-forward_output_iterator convert_tokens(int argc, 
+forward_output_iterator convert_tokens(int argc,
                                        char **argv,
                                        forward_output_iterator pout,
                                        bool skip_first = false)

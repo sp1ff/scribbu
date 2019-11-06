@@ -253,7 +253,7 @@ namespace scribbu {
   class PCNT_2_4;
   class POPM_2_4;
   class XTAG_2_4;
-  
+
   /// The interface to which pretty-printers shall conform
   struct pprinter
   {

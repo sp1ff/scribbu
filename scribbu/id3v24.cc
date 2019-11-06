@@ -482,13 +482,13 @@ scribbu::id3v2_4_tag::id3v2_4_tag(std::istream     &is,
   parse(is, H.size_, H.flags_ & 0x40);
 }
 
-scribbu::id3v2_4_tag::id3v2_4_tag(std::size_t cbpad /*= 0*/, 
+scribbu::id3v2_4_tag::id3v2_4_tag(std::size_t cbpad /*= 0*/,
                                   bool fexp /*= false*/):
   id3v2_tag(4, 0),
   experimental_(fexp),
   footer_(false),
   padding_(cbpad)
-{ 
+{
   get_default_generic_frame_parsers(
     std::inserter(generic_parsers_, generic_parsers_.begin()));
   get_default_text_frame_parsers(
@@ -540,7 +540,7 @@ scribbu::id3v2_4_tag& scribbu::id3v2_4_tag::operator=(const id3v2_4_tag &that)
       }
     }
   }
-  
+
   return *this;
 }
 
@@ -793,7 +793,7 @@ scribbu::id3v2_4_tag::text(
 }
 
 /// Set the contents of an arbitrary text frame
-/*virtual*/ 
+/*virtual*/
 void
 scribbu::id3v2_4_tag::text(
     id3v2_text_frames  id,

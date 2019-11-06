@@ -677,28 +677,28 @@ BOOST_AUTO_TEST_CASE( test_play_count )
   using namespace std;
   using namespace scribbu;
 
-  
+
   //////////////////////////////////////////////////////////////////////////
   // happy case: play count as a four-byte, big-endian unsigned
   //////////////////////////////////////////////////////////////////////////
 
   vector<unsigned char> buf01 = { 0x00, 0x00, 0x00, 0x0b };
   play_count p01(buf01.begin(), buf01.end());
-  
+
   BOOST_CHECK( 11 == p01.count() );
   BOOST_CHECK( 4 == p01.size() );
   BOOST_CHECK( 4 == p01.serialized_size(true) );
   BOOST_CHECK( !p01.needs_unsynchronisation() );
-  
+
   stringstream stm01;
   p01.write(stm01);
   unsigned char out01[4];
   stm01.read((char*)out01, 4);
-  BOOST_CHECK( buf01[0] == out01[0] && 
-               buf01[1] == out01[1] && 
-               buf01[2] == out01[2] && 
+  BOOST_CHECK( buf01[0] == out01[0] &&
+               buf01[1] == out01[1] &&
+               buf01[2] == out01[2] &&
                buf01[3] == out01[3] );
-  
+
   p01.inc();
   BOOST_CHECK( 12 == p01.count() );
   p01.count(13);
@@ -707,15 +707,15 @@ BOOST_AUTO_TEST_CASE( test_play_count )
   //////////////////////////////////////////////////////////////////////////
   // happy case: play count as an unsigned
   //////////////////////////////////////////////////////////////////////////
-  
+
   unsigned x = 11;
   play_count p02(x);
-  
+
   BOOST_CHECK( 11 == p02.count() );
   BOOST_CHECK( 1 == p02.size() );
   BOOST_CHECK( 1 == p02.serialized_size(true) );
   BOOST_CHECK( !p02.needs_unsynchronisation() );
-  
+
   //////////////////////////////////////////////////////////////////////////
   // interesting case: play count of zero
   //////////////////////////////////////////////////////////////////////////
@@ -730,13 +730,13 @@ BOOST_AUTO_TEST_CASE( test_popularimeter )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   //////////////////////////////////////////////////////////////////////////
   // happy case
   //////////////////////////////////////////////////////////////////////////
 
   popularimeter p01("sp1ff@pobox.com", 255, 11);
-  
+
   BOOST_CHECK( p01.count() == 11 );
   BOOST_CHECK( p01.rating() == 255 );
 
@@ -746,7 +746,7 @@ BOOST_AUTO_TEST_CASE( test_tag_cloud )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   //////////////////////////////////////////////////////////////////////////
   // happy case
   //////////////////////////////////////////////////////////////////////////
@@ -760,7 +760,7 @@ BOOST_AUTO_TEST_CASE( test_tag_cloud )
   BOOST_CHECK( c01.has_value("sub-genres", "rock") );
   BOOST_CHECK( c01.add_key("speed") );
   BOOST_CHECK( !c01.add_value("sub-genres", "alt-rock") );
-  
+
   string text = c01.urlencoded();
   BOOST_TEST_MESSAGE( text );
   BOOST_CHECK( text == "90s&mood=mellow&speed&sub-genres=alt-rock,rock" );
@@ -771,8 +771,8 @@ BOOST_AUTO_TEST_CASE( test_tag_cloud )
 
   tag_cloud c02("sp1ff@pobox.com",
                 { { "tag1", { "has ,", "has %" } },
-                  { "tag2", { "你好" } } }); 
-  
+                  { "tag2", { "你好" } } });
+
   text = c02.urlencoded();
   BOOST_TEST_MESSAGE( text );
   BOOST_CHECK( text == "tag1=has%20%25,has%20%2c&tag2=%e4%bd%a0%e5%a5%bd" );
@@ -794,19 +794,19 @@ BOOST_AUTO_TEST_CASE( test_id3v2_text_frames )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   {
     stringstream stm("artist");
     id3v2_text_frames x;
     stm >> x;
     BOOST_CHECK( id3v2_text_frames::tpe1 == x );
-    
+
     frame_id3 id3(x);
     BOOST_CHECK( id3 == "TP1" );
-    
+
     frame_id4 id4(x);
     BOOST_CHECK( id4 == "TPE1" );
-    
+
     stringstream out;
     out << x;
     BOOST_CHECK( out.str() == "tpe1" );

@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( test_charsets )
   string s;
 
   // Let's test some edge cases, first...
-  s = convert_encoding<string>((const char*)0, 0, encoding::UTF_8, 
+  s = convert_encoding<string>((const char*)0, 0, encoding::UTF_8,
                                encoding::ISO_8859_1);
   BOOST_CHECK(s.empty());
 

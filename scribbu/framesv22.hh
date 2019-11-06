@@ -73,7 +73,7 @@ namespace scribbu {
 
   public:
 
-    id3v2_2_frame(const frame_id3 &id): 
+    id3v2_2_frame(const frame_id3 &id):
       id3v2_frame(id.experimental()), id_(id)
     { }
     id3v2_2_frame(unsigned char id0, unsigned char id1, unsigned char id2):
@@ -706,16 +706,16 @@ namespace scribbu {
     virtual std::size_t serialize(std::ostream &os) const;
 
   }; // End class POP.
-  
+
   /// ID2v2.2 tag cloud
   class XTG: public id3v2_2_frame, public tag_cloud {
 
   public:
-    /// Construct from a serialized frame (forward_input_iterator shall 
+    /// Construct from a serialized frame (forward_input_iterator shall
     /// dereference to unsigned char)
     template <typename forward_input_iterator>
     XTG(forward_input_iterator p0, forward_input_iterator p1):
-      id3v2_2_frame("XTG"), 
+      id3v2_2_frame("XTG"),
       tag_cloud(p0, p1)
     { }
     /// Construct "from scratch"
@@ -726,14 +726,14 @@ namespace scribbu {
     /// Construct "from scratch"-- [p0, p1) will be used to initialize the
     /// tag cloud, so the value_type shall be pair<const string, set<string>>
     template <typename forward_input_iterator>
-    XTG(const std::string &own, 
+    XTG(const std::string &own,
         forward_input_iterator p0,
         forward_input_iterator p1):
       id3v2_2_frame("XTG"),
       tag_cloud(own, p0, p1)
     { }
     /// Construct "from scratch"-- text shall be a query-string style
-    /// representation of the tag cloud (i.e. that which is returned from 
+    /// representation of the tag cloud (i.e. that which is returned from
     /// urlencoded())
     XTG(const std::string &owner, const std::string &text):
       id3v2_2_frame("XTG"),
@@ -744,7 +744,7 @@ namespace scribbu {
     { return new XTG(*this); }
     static std::unique_ptr<id3v2_2_frame>
     create(const frame_id3& id, const unsigned char *p, std::size_t cb);
-    
+
   public:
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
     /// compression, and/or encryption exclusive of the header

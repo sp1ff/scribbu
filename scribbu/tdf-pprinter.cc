@@ -353,9 +353,9 @@ scribbu::tdf_pprinter::pprint_XTG(const XTG &f, std::ostream &os)
   std::tie(dst, rsp) = encoding_from_stream(os);
 
   string own = f.owner(), tags = f.urlencoded();
-  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8, 
-                                 dst, rsp) << sep_ << 
-    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8, 
+  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8,
+                                 dst, rsp) << sep_ <<
+    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8,
                              dst, rsp);
 
   return os;
@@ -501,9 +501,9 @@ scribbu::tdf_pprinter::pprint_XTAG(const XTAG &f, std::ostream &os)
   std::tie(dst, rsp) = encoding_from_stream(os);
 
   string own = f.owner(), tags = f.urlencoded();
-  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8, 
-                                 dst, rsp) << sep_ << 
-    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8, 
+  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8,
+                                 dst, rsp) << sep_ <<
+    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8,
                              dst, rsp);
 
   return os;
@@ -651,9 +651,9 @@ scribbu::tdf_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &f, std::ostream &os)
   std::tie(dst, rsp) = encoding_from_stream(os);
 
   string own = f.owner(), tags = f.urlencoded();
-  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8, 
-                                 dst, rsp) << sep_ << 
-    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8, 
+  os << convert_encoding<string>(own.c_str(), own.length(), encoding::UTF_8,
+                                 dst, rsp) << sep_ <<
+    convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8,
                              dst, rsp);
 
   return os;

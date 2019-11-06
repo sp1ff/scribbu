@@ -326,7 +326,7 @@ scribbu::csv_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
-  
+
   return os;
 }
 
@@ -398,13 +398,13 @@ scribbu::csv_pprinter::pprint_XTG(const XTG &f, std::ostream &os)
   encoding dst;
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
-  
+
   string own = f.owner(), tags = f.urlencoded();
-  os << escape(convert_encoding<string>(own.c_str(), own.length(), 
-                                        encoding::UTF_8, dst, rsp)) << 
-    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(), 
+  os << escape(convert_encoding<string>(own.c_str(), own.length(),
+                                        encoding::UTF_8, dst, rsp)) <<
+    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(),
                                             encoding::UTF_8, dst, rsp));
-  
+
   return os;
 
 }
@@ -450,7 +450,7 @@ scribbu::csv_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
-  
+
   return os;
 }
 
@@ -549,13 +549,13 @@ scribbu::csv_pprinter::pprint_XTAG(const XTAG &f, std::ostream &os)
   encoding dst;
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
-  
+
   string own = f.owner(), tags = f.urlencoded();
-  os << escape(convert_encoding<string>(own.c_str(), own.length(), 
-                                        encoding::UTF_8, dst, rsp)) << 
-    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(), 
+  os << escape(convert_encoding<string>(own.c_str(), own.length(),
+                                        encoding::UTF_8, dst, rsp)) <<
+    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(),
                                             encoding::UTF_8, dst, rsp));
-  
+
   return os;
 
 }
@@ -601,7 +601,7 @@ scribbu::csv_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
-  
+
   return os;
 }
 
@@ -701,13 +701,13 @@ scribbu::csv_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &f, std::ostream &os)
   encoding dst;
   on_no_encoding rsp;
   std::tie(dst, rsp) = encoding_from_stream(os);
-  
+
   string own = f.owner(), tags = f.urlencoded();
-  os << escape(convert_encoding<string>(own.c_str(), own.length(), 
-                                        encoding::UTF_8, dst, rsp)) << 
-    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(), 
+  os << escape(convert_encoding<string>(own.c_str(), own.length(),
+                                        encoding::UTF_8, dst, rsp)) <<
+    sep_ << escape(convert_encoding<string>(tags.c_str(), tags.length(),
                                             encoding::UTF_8, dst, rsp));
-  
+
   return os;
 
 }

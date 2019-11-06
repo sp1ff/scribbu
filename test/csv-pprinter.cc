@@ -149,14 +149,14 @@ BOOST_AUTO_TEST_CASE( test_csv_pprinting_xtag )
 {
   using namespace std;
   using namespace scribbu;
-  
+
   XTAG tc01("sp1ff@pobox.com",
 	    { { "tag1", { "has ,", "has %" } },
-	      { "tag2", { "你好" } } }); 
-  
+	      { "tag2", { "你好" } } });
+
   stringstream stm01;
   stm01 << print_as_csv(1, encoding::ASCII, boost::none) << tc01;
-  
+
   string text01 = stm01.str();
   BOOST_TEST_MESSAGE( text01 );
   BOOST_CHECK( "sp1ff@pobox.com,\"tag1=has%20%25,has%20%2c&"

@@ -27,7 +27,7 @@
 //                        class invalid_tagset_request                       //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*virtual*/ 
+/*virtual*/
 const char * scribbu::invalid_tagset_request::what() const noexcept
 {
   if (!pwhat_) {

@@ -7,11 +7,10 @@ AM_LDFLAGS  = $(BOOST_LDFLAGS) $(LIBUNISTRING)
 scribbu_LDADD = ../scribbu/libscribbu.la \
 	$(GUILE_LIBS)                    \
 	$(OPENSSL_LIBS)                  \
-	-ldl                             \
 	$(BOOST_IOSTREAMS_LIB)           \
 	$(BOOST_FILESYSTEM_LIB)          \
 	$(BOOST_LOG_LIB)                 \
 	$(BOOST_PROGRAM_OPTIONS_LIB)     \
 	$(BOOST_REGEX_LIB)               \
-	$(BOOST_SYSTEM_LIB)              \
-	-lpthread -lltdl -lgmp
+	$(BOOST_SYSTEM_LIB)
+

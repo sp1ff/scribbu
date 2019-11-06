@@ -75,13 +75,13 @@ namespace {
   /// convenience typedef for a mapping from text frame identifier to the
   /// text to be added or updated
   typedef std::map<scribbu::id3v2_text_frames, std::string> text_map;
-  
+
   /**
    * \brief Process one tag
    *
    *
    */
-  
+
   void
   process_tag(scribbu::id3v2_tag *ptag,
               const frames_vec   &dels,
@@ -91,7 +91,7 @@ namespace {
     for (auto id: dels) {
       ptag->delete_frame(id);
     }
-    
+
     for (const auto& val: strings) {
       ptag->text(val.first, val.second, srcenc);
     }
@@ -103,28 +103,28 @@ namespace {
    *
    *
    */
-  
+
   void
   process_file(const fs::path   &pth,
                idx_deque        &tags,
                const frames_vec &dels,
                const text_map   &strings,
                scribbu::encoding srcenc,
-               bool              make_bu, 
+               bool              make_bu,
                bool              adj_unsync)
   {
     using namespace std;
     using namespace scribbu;
-    
+
     vector<unique_ptr<id3v2_tag>> T;
 
     {
       fs::ifstream ifs(pth, fs::ifstream::binary);
       read_all_id3v2(ifs, back_inserter(T));
     }
-    
+
     for (size_t i = 0, n = T.size(); i < n; ++i) {
-      
+
       if (tags.front() == i) {
         process_tag(T[i].get(), dels, strings, srcenc);
         tags.pop_front();
@@ -134,7 +134,7 @@ namespace {
 
     apply_unsync au = adj_unsync ? apply_unsync::as_needed :
       apply_unsync::never;
-        
+
     if (make_bu) {
       replace_tagset_copy(pth, T.begin(), T.end(), au);
     } else {
@@ -149,14 +149,14 @@ namespace {
    *
    *
    */
-  
+
   void
   process_dirent(const fs::path   &pth,
                  idx_deque        &tags,
                  const frames_vec &dels,
                  const text_map   &strings,
                  scribbu::encoding srcenc,
-                 bool              make_bu, 
+                 bool              make_bu,
                  bool              adj_unsync)
   {
     if (fs::is_directory(pth)) {
@@ -183,9 +183,9 @@ namespace {
     using scribbu::encoding;
     using scribbu::encoding_from_system_locale;
     using scribbu::id3v2_text_frames;
-    
+
     int status = EXIT_SUCCESS;
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //                                                                       //
     //                       C O M M A N D   O P T I O N S                   //
@@ -261,9 +261,9 @@ namespace {
 
     po::positional_options_description popts;
     popts.add("arguments", -1);
-    
+
     try {
-      
+
       vector<string> tokens;
       convert_tokens(argc, argv, back_inserter(tokens));
 
@@ -274,7 +274,7 @@ namespace {
         run();
 
       maybe_handle_help(parsed, docopts, USAGE, "scribbu-text",
-                        "(scribbu) Invoking `scribbu text'");
+                        "(scribbu) Invoking scribbu text");
 
       po::store(parsed, vm);
 
@@ -284,7 +284,7 @@ namespace {
       // That's it-- the list of files and/or directories to be processed
       // should be waiting for us in 'arguments'...
       po::notify(vm);
-  
+
       ////////////////////////////////////////////////////////////////////
       //                       process arguments                        //
       ////////////////////////////////////////////////////////////////////
@@ -295,9 +295,9 @@ namespace {
           dels.push_back(lexical_cast<id3v2_text_frames>(s));
         }
       }
-      
+
       text_map strings;
-      
+
       if (vm.count("album")) {
         strings[id3v2_text_frames::talb] = vm["album"].as<string>();
       }
@@ -319,7 +319,7 @@ namespace {
       if (vm.count("year")) {
         strings[id3v2_text_frames::tyer] = vm["year"].as<string>();
       }
-      
+
       idx_deque tags;
       if (vm.count("tag")) {
         vector<size_t> tmp = vm["tag"].as<vector<size_t>>();
@@ -327,10 +327,10 @@ namespace {
       } else {
         tags.push_back(0);
       }
-      
-      encoding srcenc = vm.count("encoding") ? 
+
+      encoding srcenc = vm.count("encoding") ?
         vm["encoding"].as<encoding>() : encoding_from_system_locale();
-      
+
       bool adj_unsync = vm["adjust-unsync" ].as<bool>();
       bool make_bu    = vm["create-backups"].as<bool>();
 
@@ -368,5 +368,5 @@ namespace {
   }
 
   register_command r("text", handle_text);
-      
+
 }

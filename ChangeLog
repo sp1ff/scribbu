@@ -1,4 +1,8 @@
-2019-11-04  Michael Herstine  <sp1ff@pobox.com>
+2019-11-06  Michael Herstine  <sp1ff@pobox.com>
+
+	Release 0.5 of scribbu.
+
+2019-11-05  Michael Herstine  <sp1ff@pobox.com>
 
 	This commit makes a few minor changes prior to releasing:
 	    1. new verbiage in the Texinfo manual on string character

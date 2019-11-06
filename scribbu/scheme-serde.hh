@@ -34,7 +34,7 @@
 #include <scribbu/framesv24.hh>
 
 namespace scribbu {
-  
+
   /**
    * \brief take a C++ range & make a Scheme list out of it
    *
@@ -51,7 +51,7 @@ namespace scribbu {
    */
 
   template <typename forward_input_iterator>
-  SCM 
+  SCM
   scm_list_for_range(forward_input_iterator p0,
                      forward_input_iterator p1)
   {
@@ -59,12 +59,12 @@ namespace scribbu {
     while (p0 != p1) {
       SCM args = scm_list_2(lst, scm_list_1(*p0++));
       lst = scm_append(args);
-      
+
     }
-    return lst;    
+    return lst;
   }
-  
-  inline 
+
+  inline
   SCM
   sym_for_utf8(const char *s)
   {
@@ -107,7 +107,7 @@ namespace scribbu {
       };
       de_2_2_[id] = &local::trampoline;
     }
-  
+
     template <typename parameter,
               SCM (*pfn)(const parameter&, bool)>
     void reg_de_2_3(const scribbu::frame_id4 &id) {
@@ -117,7 +117,7 @@ namespace scribbu {
       };
       de_2_3_[id] = &local::trampoline;
     }
-  
+
     template <typename parameter,
               SCM (*pfn)(const parameter&, bool)>
     void reg_de_2_4(const scribbu::frame_id4 &id) {
@@ -127,19 +127,19 @@ namespace scribbu {
       };
       de_2_4_[id] = &local::trampoline;
     }
-  
+
     void reg_ser_2_2(const std::string &id,
                      pfn_from_scm_2_2   pfn)
     { ser_2_2_[id] = pfn; }
-  
+
     void reg_ser_2_3(const std::string &id,
                      pfn_from_scm_2_3   pfn)
     { ser_2_3_[id] = pfn; }
-  
+
     void reg_ser_2_4(const std::string &id,
                      pfn_from_scm_2_4   pfn)
     { ser_2_4_[id] = pfn; }
-  
+
     //////////////////////////////////////////////////////////////////////////////
     //                              SERDE functions                             //
     //////////////////////////////////////////////////////////////////////////////
@@ -151,15 +151,15 @@ namespace scribbu {
     /// Deserialize an id3v2_34_frame to an <id3v2-frame>
     SCM de_2_4(const scribbu::id3v2_4_frame& frm, bool unsync) const;
     /// Serialize \a scm to an id3v2_2_frame
-    std::unique_ptr<scribbu::id3v2_2_frame> 
+    std::unique_ptr<scribbu::id3v2_2_frame>
     ser_2_2(SCM scm) const;
     /// Serialize \a scm to an id3v2_3_frame
-    std::unique_ptr<scribbu::id3v2_3_frame> 
+    std::unique_ptr<scribbu::id3v2_3_frame>
     ser_2_3(SCM scm) const;
     /// Serialize \a scm to an id3v2_4_frame
-    std::unique_ptr<scribbu::id3v2_4_frame> 
+    std::unique_ptr<scribbu::id3v2_4_frame>
     ser_2_4(SCM scm) const;
-  
+
   private:
 
     /// Fallback deserialization function
@@ -183,7 +183,7 @@ namespace scribbu {
     std::unordered_map<scribbu::frame_id3, pfn_to_scm_2_2> de_2_2_;
     std::unordered_map<scribbu::frame_id4, pfn_to_scm_2_3> de_2_3_;
     std::unordered_map<scribbu::frame_id4, pfn_to_scm_2_4> de_2_4_;
-  
+
     std::unordered_map<std::string, pfn_from_scm_2_2> ser_2_2_;
     std::unordered_map<std::string, pfn_from_scm_2_3> ser_2_3_;
     std::unordered_map<std::string, pfn_from_scm_2_4> ser_2_4_;

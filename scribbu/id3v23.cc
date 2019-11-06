@@ -570,7 +570,7 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
   }
 
   // return any_of(begin(), end(), [](const id3v2_3_frame &F) { return F.needs_unsynchronisation(); });
-  return any_of(begin(), end(), [](const id3v2_3_frame &F) { 
+  return any_of(begin(), end(), [](const id3v2_3_frame &F) {
                                   bool f = F.needs_unsynchronisation();
                                   return f;
                                 });
@@ -721,7 +721,7 @@ scribbu::id3v2_3_tag::text(
 }
 
 /// Set the contents of an arbitrary text frame
-/*virtual*/ 
+/*virtual*/
 void
 scribbu::id3v2_3_tag::text(
     id3v2_text_frames  id,

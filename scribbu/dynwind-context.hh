@@ -39,7 +39,7 @@ namespace scribbu {
     { scm_dynwind_free(p); }
     char* free_locale_string(SCM scm);
     char* free_utf8_string(SCM scm);
-    
+
     dynwind_context(const dynwind_context&)            = delete;
     dynwind_context(dynwind_context&&)                 = delete;
     dynwind_context& operator=(const dynwind_context&) = delete;

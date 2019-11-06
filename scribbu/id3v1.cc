@@ -170,14 +170,14 @@ namespace scribbu {
       throw bad_code_unit(dst, sizeof(char));
     }
 
-    return convert_encoding<string>(&(album_[0]), 
+    return convert_encoding<string>(&(album_[0]),
                                     album_.size(),
                                     src ? src.get() :
                                         encoding_from_system_locale(),
-                                    dst, 
+                                    dst,
                                     rsp);
   }
-  
+
   template<>
   std::string
   scribbu::id3v1_tag::artist(const boost::optional<encoding> &src,
@@ -669,40 +669,40 @@ scribbu::process_id3v1(std::istream &is)
   return p;
 }
 
-void 
+void
 scribbu::maybe_remove_id3v1(const fs::path &pth)
 {
-  const std::ios::iostate EXC_MASK = std::ios::eofbit  | 
-                                     std::ios::failbit | 
+  const std::ios::iostate EXC_MASK = std::ios::eofbit  |
+                                     std::ios::failbit |
                                      std::ios::badbit;
 
   fs::ifstream ifs;
   ifs.exceptions(EXC_MASK);
-  
+
   try {
     ifs.open(pth, fs::ifstream::binary);
   } catch (const std::ios_base::failure&) {
     return;
   }
-           
+
   auto p = process_id3v1(ifs);
-  
+
   ifs.close();
-  
+
   if (!p) {
     return;
   }
-  
+
   fs::resize_file(pth, fs::file_size(pth) - p->size());
 }
 
-void 
+void
 scribbu::replace_id3v1(const fs::path &pth, const id3v1_tag &tag)
 {
-  const std::ios::iostate EXC_MASK = std::ios::eofbit  | 
-                                     std::ios::failbit | 
+  const std::ios::iostate EXC_MASK = std::ios::eofbit  |
+                                     std::ios::failbit |
                                      std::ios::badbit;
-  
+
   maybe_remove_id3v1(pth);
   fs::ofstream ofs(pth, fs::ofstream::binary|fs::ofstream::app);
   ofs.exceptions(EXC_MASK);

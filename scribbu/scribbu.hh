@@ -28,14 +28,14 @@
  *
  * \section scribbu_intro Introduction
  *
- * scribbu is a C++ library & associated command-line tool for working with 
+ * scribbu is a C++ library & associated command-line tool for working with
  * <a href="http://id3.org">ID3</a> tags. It was born when I retired my last
- * Windows machine & could no longer use 
+ * Windows machine & could no longer use
  * <a href="https://en.wikipedia.org/wiki/Winamp">Winamp</a> to manage my library
  * of digital music. The scribbu library offers classes & methods for reading,
  * editing & writing ID3v1 & ID3v2 tags. The scribbu program provides assorted
  * sub-commands for working with ID3-tagged files (e.g. re-naming files based on
- * their tags), but its real power lies in its embedded Scheme 
+ * their tags), but its real power lies in its embedded Scheme
  * <a href="https://www.gnu.org/software/guile/">interpreter</a> in which scribbu
  * library features are exported as a Scheme module (on which more below).
  *
@@ -60,13 +60,13 @@
  * Napster, they soon discovered they needed a way to embed metadata in the MP3
  * files themselves.
  *
- * \par 
+ * \par
  * Because the MP3 standard was already codified and a fair bit of
  * software and hardware had already been written that knew how to decode the
  * existing MP3 format, any scheme for embedding information in an MP3 file
  * would have to be invisible to MP3 decoders. Enter ID3.
  *
- * \par 
+ * \par
  * The original ID3 format, invented by programmer Eric Kemp, consisted
  * of 128 bytes stuck on the end of an MP3 file where it'd be ignored by most
  * MP3 software. It consisted of four 30-character fields, one each for the song
@@ -75,7 +75,7 @@
  * first 80 genre codes. Nullsoft, the makers of Winamp, a popular MP3 player,
  * later supplemented this list with another 60 or so genres.
  *
- * \par 
+ * \par
  * This format was easy to parse but obviously quite limited. It had no
  * way to encode names longer than 30 characters; it was limited to 256 genres,
  * and the meaning of the genre codes had to be agreed upon by all users of
@@ -86,14 +86,14 @@
  * to the first null in each of the text fields, would ignore it. Kemp's version
  * is now called ID3v1, and Mutschler's is ID3v1.1.
  *
- * \par 
+ * \par
  * Limited as they were, the version 1 proposals were at least a
  * partial solution to the metadata problem, so they were adopted by many MP3
  * ripping programs (which had to put the ID3 tag into the MP3 files) and MP3
  * players (which would extract the information in the ID3 tag to display to the
  * user).1
  *
- * \par 
+ * \par
  * By 1998, however, the limitations were really becoming annoying, and
  * a new group, led by Martin Nilsson, started work on a completely new tagging
  * scheme, which came to be called ID3v2. The ID3v2 format is extremely
@@ -102,16 +102,16 @@
  * format to allow ID3v2 tags to be placed at the beginning of an MP3 file."
  *
  * You can still find the specs on-line at \ref ref_05 "[5]" and
- * \ref ref_06 "[6]". I've also downloaded them into the \c doc 
+ * \ref ref_06 "[6]". I've also downloaded them into the \c doc
  * sub-directory in the project root. You can find much more detail
  * at the pages for \ref scribbu_id3v1 "ID3v1" & \ref scribbu_id3v2 "ID3v2."
- * 
+ *
  *
  * \section scribbu_discuss Discussion
  *
  * scribbu is currently a hobby project for working with ID3 tags. A few years
  * ago, I excised Windows from my life, and was therefore left without Winamp
- * for managing my mp3 library. There are packages out there, 
+ * for managing my mp3 library. There are packages out there,
  * <a href="http://taglib.org/">TagLib</a> e.g., but nothing that did everything
  * I wanted. Necessity being the mother of invention, I started on my own
  * solution.
@@ -123,7 +123,7 @@
  * default) and a command built using the library (the \c scribbu executable,
  * generally installed into ${prefix}/${bindir}, or \c /usr/local/bin by
  * default). To get started using the \c scribbu program, start with the
- * Info manual: \c info \c scribbu. To get started coding against the 
+ * Info manual: \c info \c scribbu. To get started coding against the
  * library, or hacking on the library itself, read on.
  *
  * \todo write the "Getting Started" section
@@ -140,7 +140,7 @@
  * 3. \anchor ref_03 [3] Meyer, Bertrand, Object Oriented Software
  *    Construction, Prentice Hall, 1997.
  *
- * 4. \anchor ref_04 [4] Seibel, Peter, Practical Common Lisp, 
+ * 4. \anchor ref_04 [4] Seibel, Peter, Practical Common Lisp,
  *    Chapter 25. Practical: An ID3 Parser, 2005.
  *
  * 5. \anchor ref_05 [5] unknown. ID3v1. http://id3.org/ID3v1 (updated September

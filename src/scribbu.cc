@@ -61,7 +61,7 @@ GLOBAL-OPTION may be:
     --help                display the scribbu man page
     -v, --version         display this package's version information and exit
                           with status zero
-    -L DIRECTORY          add DIRECTORY to the front of the Guile module load 
+    -L DIRECTORY          add DIRECTORY to the front of the Guile module load
                           path
     -C DIRECTORY          like -L, but for compiled files
     -x EXTENSION          add EXTENSION to the front of the load extensions
@@ -95,7 +95,7 @@ arguments as the value of `(command-line)'. If FILE begins with `-' the
 
 For detailed help, say `scribbu --help'. To see the scribbu manual, say `info scribbu'.
 )");
-  
+
   /**
    * \brief Parse options until we encounter something we don't understand; copy
    * Guile options & return any scribbu-specific options; consume argc & argv
@@ -138,7 +138,7 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
     while (*argc > 0) {
 
       const char *cmd = (*argv)[0];
-      
+
       if (!strcmp("-h", cmd)) {
 
         help = help_level::regular; // short help
@@ -161,16 +161,16 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
         version = true;       // version requested
         (*argv)++; (*argc)--; // consume `argv'
 
-      } else if (!strcmp("-L", cmd) || 
+      } else if (!strcmp("-L", cmd) ||
                  !strcmp("-C", cmd) ||
-                 !strcmp("-x", cmd) || 
+                 !strcmp("-x", cmd) ||
                  !strcmp("-l", cmd) ||
                  !strcmp("-e", cmd)) {
 
-        // all (short) Guile options accepting a second argument 
+        // all (short) Guile options accepting a second argument
         gargv[n++] = (*argv)[0];          // copy to `gargv'
         (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
-        
+
         // There *should* be an option value waiting for us
         if (0 == *argc) {
           throw po::required_option(cmd);
@@ -182,15 +182,15 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
       } else if (!strncmp("--language", cmd, 10)      ||
                  !strncmp("--listen", cmd, 8)         ||
                  !strncmp("--use-srfi", cmd, 10)      ||
-                 !strcmp("-ds", cmd)                  || 
+                 !strcmp("-ds", cmd)                  ||
                  !strcmp("--debug", cmd)              ||
-                 !strcmp("--no-debug", cmd)           || 
+                 !strcmp("--no-debug", cmd)           ||
                  !strcmp("--auto-compile", cmd)       ||
                  !strcmp("--fresh-auto-compile", cmd) ||
                  !strcmp("--no-auto-compile", cmd)    ||
-                 !strcmp("-q", cmd)                   || 
+                 !strcmp("-q", cmd)                   ||
                  !strcmp("\\", cmd)) {
-        
+
         // Guile options that either take no values, or that are
         // long options that take their values in a single argument
         // (i.e. "--foo=bar")
@@ -211,41 +211,41 @@ For detailed help, say `scribbu --help'. To see the scribbu manual, say `info sc
         }
 
       } else if (!strcmp("--", cmd)) {
-        
+
         // Everything else goes to `gargv'
         copy_rest = true;
         break;
 
       } else {
-        
+
         // If we're here, we've encountered something we don't understand-- bail
         break;
 
       }
 
     } // End while on *argc.
-    
+
     if (copy_rest) {
-      
+
       while (*argc) {
         gargv[n++] = (*argv)[0];          // copy to `gargv'
         (*gargc)++; (*argv)++; (*argc)--; // consume `argv'
       }
 
     }
-    
+
     return std::make_tuple(version, help, flav);
   }
-  
+
   void
-  print_usage(std::ostream      &os, 
-              const std::string &usage, 
+  print_usage(std::ostream      &os,
+              const std::string &usage,
               const std::string  pname)
   {
     using namespace std;
 
     os << pname << usage << "\n" << std::endl;
-    
+
     vector<string> sub_cmd_names;
     get_sub_command_names(back_inserter(sub_cmd_names));
 
@@ -335,7 +335,7 @@ main(int argc, char * argv[])
 
   //  carry out scribbu library initialization...
   scribbu::static_initialize();
-  
+
   // and, finally, parse the command line:
 
   //////////////////////////////////////////////////////////////////////////
@@ -344,7 +344,7 @@ main(int argc, char * argv[])
 
   // This task is complicated by the multiple ways in which scribbu can be
   // invoked:
-  
+
   //     1. scribbu (-h|--help|--version) : just display the requested
   //        information & exit
   //     2. scribbu [GLOBAL-OPTION...] SUBCMD [OPTION...] [ARGUMENT...]: parse
@@ -352,10 +352,10 @@ main(int argc, char * argv[])
   //        option parsing-- do _not_ parse any options or arguments for
   //        the sub-command.
   //     3. scribbu [(GLOBAL-OPTION|GUILE-OPTION)...] [-s FILE|-e EXPR|--]
-  //        [ARGUMENT...]: parse the global options and the Guile options; 
-  //        handle the global options & pass all the Guile options to 
+  //        [ARGUMENT...]: parse the global options and the Guile options;
+  //        handle the global options & pass all the Guile options to
   //        `scm_shell' for processing there
-  
+
   // Constraints:
   //
   //     1. I can't just pass on all unknown options to Guile; if I do that,
@@ -365,7 +365,7 @@ main(int argc, char * argv[])
   //     2. Whatever option parsing framework I use, I need to _stop_ parsing at
   //     the first non-global: suppose a sub-command also defines an option with
   //     the same name as a global? There's no way to do that in a general way.
-  
+
   // boost::program_options really isn't suited for this. For instance, it's
   // inconvenient to distinguish between `-h' (for which I want to directly
   // print a short usage message on stdout) and `--help' (for which I want to
@@ -375,7 +375,7 @@ main(int argc, char * argv[])
   // found some Stack Overflow answers that involved using undocumented
   // features, but it seemed to me like hammering a square peg into a round
   // hole.
-  
+
   // I thought about getopt-long, but then perused the Git source
   // (https://github.com/git/git/blob/master/git.c) and just doing it "by hand"
   // didn't look so bad...
@@ -388,21 +388,21 @@ main(int argc, char * argv[])
 
     typedef char *argv_t;
     unique_ptr<argv_t[]> gargv(new argv_t[argc + 1]);
-    
+
     int gargc = 1;
     gargv[0] = argv[0];
-    
+
     argv++; argc--;
 
     bool version;
     help_level help;
     optional<verbose_flavor> flav;
     tie(version, help, flav) = handle_options(&argc, &argv, &gargc, &(gargv[1]));
-    
+
     // At this point, we have a few possibilities. Our our caller could be
     // asking for help/version information; version "wins":
     if (version) {
-      
+
       cout << PACKAGE_STRING << endl;
 
     } else if (help_level::verbose == help) {
@@ -428,22 +428,22 @@ main(int argc, char * argv[])
       status = f(argc, argv);
 
     } else {
-  
-      // Otherwise, _if_ there is still something waiting for us on `argv', 
-      // it must be a file to be handed to the Scheme interpreter, or it's 
+
+      // Otherwise, _if_ there is still something waiting for us on `argv',
+      // it must be a file to be handed to the Scheme interpreter, or it's
       // just garbage. Impossible to tell from here, of course, but I'm giong
       // to say that if the argument begins with a '-', it is a mis-typed
       // option.
       if (argc) {
-      
+
         if ('-' == argv[0][0]) {
-        
+
           throw po::unknown_option(argv[0]);
 
         } else {
-        
+
           // Consume everything-- there may be options & arguments for the
-          // script as well.      
+          // script as well.
           while (argc) {
             gargv[gargc++] = argv[0]; // copy to `gargv'
             argv++; argc--;           // consume `argv'
@@ -452,9 +452,9 @@ main(int argc, char * argv[])
         }
 
       } // End if on `argc'.
-    
+
       // Per C11 5.1.2.2.1 Program startup:
-    
+
       //     "If they are declared, the parameters to the main function shall
       //     obey the following constraints: The value of argc shall be
       //     nonnegative. argv[argc] shall be a null pointer."

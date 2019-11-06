@@ -139,8 +139,8 @@ namespace scribbu {
                          scribbu::on_no_encoding::fail,
                        const boost::optional<scribbu::encoding> &force =
                          boost::none);
-    
-    bool unsynchronised() const 
+
+    bool unsynchronised() const
     { return unsynchronised_; }
 
   protected:
@@ -957,9 +957,9 @@ namespace scribbu {
     { }
 
     /// Construct "from scratch"-- text shall be a query-string style
-    /// representation of the tag cloud (i.e. that which is returned from 
+    /// representation of the tag cloud (i.e. that which is returned from
     /// urlencoded())
-    XTAG_2_4(const std::string                    &owner, 
+    XTAG_2_4(const std::string                    &owner,
              const std::string                    &text,
              tag_alter_preservation                tap,
              file_alter_preservation               fap,

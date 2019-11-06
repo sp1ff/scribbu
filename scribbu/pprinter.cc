@@ -591,7 +591,7 @@ scribbu::standard_pprinter::pprint_XTG(const XTG &frame, std::ostream &os)
 
   os << sin_ << frame.id() << ": " << frame.owner() << "\n" <<
     sin_ << "tags:\n";
-  
+
   for (auto x: frame) {
     os << sin_ << x.first << ": ";
     bool first = true;
@@ -738,7 +738,7 @@ scribbu::standard_pprinter::pprint_XTAG(const XTAG &frame, std::ostream &os)
 
   os << sin_ << frame.id() << ": " << frame.owner() << "\n" <<
     sin_ << "tags:\n";
-  
+
   for (auto x: frame) {
     os << sin_ << x.first << ": ";
     bool first = true;
@@ -878,14 +878,14 @@ scribbu::standard_pprinter::pprint_POPM_2_4(const POPM_2_4 &frame, std::ostream 
 }
 
 /*virtual*/ std::ostream&
-scribbu::standard_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &frame, 
+scribbu::standard_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &frame,
                                             std::ostream &os)
 {
   using namespace std;
 
   os << sin_ << frame.id() << ": " << frame.owner() << "\n" <<
     sin_ << "tags:\n";
-  
+
   for (auto x: frame) {
     os << sin_ << x.first << ": ";
     bool first = true;

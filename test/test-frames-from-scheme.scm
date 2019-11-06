@@ -30,7 +30,7 @@
 
 (define (test-play-count dir)
   "Run some smoke tests for reading & writing tags, including PCNT."
-  
+
   (let ((tags (read-tagset (string-join (list dir "id3v2.3.tag") "/" 'infix))))
     (unless (eq? 1 (length tags))
       (throw 'failure
@@ -161,7 +161,7 @@
                 (throw 'failure "did not expect experimental tag"))
               (unless (eq? 0 pad)
                 (throw 'failure (format #f "expected no padding, got ~d" pad))))
-            
+
             (let ((frames (slot-ref tag 'frames)))
               (let* ((F (car frames))
                      (frames (cdr frames)))
@@ -259,7 +259,7 @@
                 (throw 'failure "did not expect experimental tag"))
               (unless (eq? 0 pad)
                 (throw 'failure (format #f "expected no padding, got ~d" pad))))
-            
+
             (let ((frames (slot-ref tag 'frames)))
               (let* ((F (car frames))
                      (frames (cdr frames)))
@@ -292,7 +292,7 @@
     ;; 000010 00 41 00 00
     ;; 000014             01                                   version 1
     ;; 000015                73 70 31 66 66 40 70 6f 62 6f 78  sp1ff@pobox.com
-    ;; 000020 2e 63 6f 6d 00 
+    ;; 000020 2e 63 6f 6d 00
     ;; 000025                39 30 73 00 00 00 00 00           "90s", no values
     ;; 00002d                                        6d 6f 6f  "mood", 12 bytes, "sentimental"
     ;; 000030 64 00 00 00 00 0c 73 65 6e 74 69 6d 65 6e 74 61

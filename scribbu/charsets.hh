@@ -235,7 +235,7 @@ namespace scribbu {
                                encoding srcenc,
                                encoding dstenc,
                                on_no_encoding rsp = on_no_encoding::fail);
-  
+
   /**
    * \brief Convert encodings from std strings to buffers of char
    *

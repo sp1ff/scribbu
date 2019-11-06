@@ -375,7 +375,7 @@ TIT2: Lorca's Novena
 TPE1: The Pogues
 TALB: Hell's Ditch [Expanded] (US Version)
 TCON: Pop
-TCOM: 
+TCOM:
 TPE3:
 TRCK: 5
 TYER: 1990
@@ -408,14 +408,14 @@ COMM (<no description>):
 Ripped by Winamp on Pimpernel
 TPUB: Opium Music
 TPOS: 1/1
-TYER: 2003 
+TYER: 2003
 TCON: General Club Dance
 TALB: Opium Gardens
 TPE2: Opium Garden
 TPE1: Stephan Luke
 UFID: http://www.cddb.com/id3/taginfo1.html
       334344334e33395235383037313937335532343836364232394336314239364139333341424332363945364531454642444233445032
-TIT2: Opium Chant Intro 
+TIT2: Opium Chant Intro
 1522 bytes of padding
 1191874 bytes of track data:
 MD5: 690194f49592c7d8ccfbfe8a157d4c1e
@@ -427,7 +427,7 @@ unknown genre 255
 "orlando.mp3":
 ID3v2.3(.0) Tag:
 607 bytes, synchronised
-flags: 0x40 
+flags: 0x40
 Bill LeFaive - Orlando
 http://music.download.com (track 1), <no year>
 TALB: http://music.download.com
@@ -452,7 +452,7 @@ unknown genre 255
 
 We see we have three files, all of which have both ID3v1 & ID3v2 tags.
 The output also contains some basic information on the MP3 data in
-between the tags. 
+between the tags.
 
 @command{scribbu dump} takes as arguments one or more files and/or
 directories, and prints information about all files listed, or in the
@@ -488,7 +488,7 @@ that task.
 
 That said, one can do some basic querying at the command line, for
 which tab-delimited format can be convenient. For example, this
-little @command{awk} program will show the ID3v2 version for 
+little @command{awk} program will show the ID3v2 version for
 each file:
 
 @example
@@ -507,7 +507,7 @@ We notice that none of these files contain a @code{PCNT} or
 a @code{POPM} frame; let's add them now:
 
 @example
-$>: scribbu popm -a -o foo@@bar.com -r oooo *.mp3 
+$>: scribbu popm -a -o foo@@bar.com -r oooo *.mp3
 $>: scribbu dump *.mp3
 ...
 PCNT: 0
@@ -573,7 +573,7 @@ field happens to use the ISO-8859-1 character encoding, we could
 say:
 
 @example
-%(artist:v1-only&v1-encoding=iso-8859-1) 
+%(artist:v1-only&v1-encoding=iso-8859-1)
 @end example
 
 Let us accept the default settings, but see what would happen
@@ -623,13 +623,13 @@ therein, and pretty-print what it finds to @code{stdout}.
 
 @enumerate
 
-@item 
+@item
 @option{-1|--id3v1-tags} display only ID3v1 tags
 
 @item
 @option{-D|--track-data} display track data only
 
-@item 
+@item
 @option{-2|--id3v2-tags} display only ID3v2 tags
 
 @item
@@ -780,7 +780,7 @@ this directory, rather than renaming in-place.
 @option{--dry-run} is given)
 
 @item
-@option{-t TEMPLATE,--template=TEMPLATE} The template by which to 
+@option{-t TEMPLATE,--template=TEMPLATE} The template by which to
 rename ID3-tagged files in the arguments (defaults to ``%A - %T.mp3''
 
 @item
@@ -808,7 +808,7 @@ Tag-based replacement parameters take the following options:
 
 @enumerate
 
-@item 
+@item
 Source of the replacement text:
 @enumerate
 @item
@@ -821,7 +821,7 @@ v2-only
 v1-only
 @end enumerate
 
-@item 
+@item
 character encoding when the ID3v1 tag is used: @code{v1-encoding=}...
 
 @enumerate
@@ -933,7 +933,7 @@ Popularimeter frames will not be created in the absence of the
 can be inhibited via the @option{--popularimeter-only} and
 @option{--playcount-only} flags, respectively.
 
-The popularimeter rating field can be set using the 
+The popularimeter rating field can be set using the
 @option{--rating} option. Ratings can be specified explicitly
 as an integer between 0 & 255, or as one-to-five stars. ``Stars''
 would most naturally be expressed as @verb{.*.}s (asterisks), but
@@ -980,7 +980,7 @@ instead of incrementing
 
 @item
 @option{-o OWNER,--owner=OWNER} Specify the owner field for popularimeter
-frames. If incrementing count fields, only popularimeter frames with an 
+frames. If incrementing count fields, only popularimeter frames with an
 owner of @verb{.OWNER.} will be updated. When creating popularimeter frames,
 the owner field will be set to @verb{.OWNER.}.
 
@@ -1094,7 +1094,7 @@ you will want to do something you can't accomplish via a sub-command.
 For that reason, the bulk of the work on @command{scribbu} has been
 exposing the library's functionality to a first-class language like
 LISP (@xref{Top,,, Guile, The Guile Reference Manual}.), to enable
-@command{scribbu} users to build their own solutions. 
+@command{scribbu} users to build their own solutions.
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
@@ -1167,7 +1167,7 @@ comment frame. We begin by reading in the ID3v2 tagset:
 
 @lisp
 scheme@@(guile-user)> (use-modules (oop goops) (scribbu))
-scheme@@(guile-user)> (define tags (read-tagset "opium.mp3")) 
+scheme@@(guile-user)> (define tags (read-tagset "opium.mp3"))
 scheme@@(guile-user)> tags
 $4 = ((#<<id3v2-tag> 1ccf780> 3 #f))
 @end lisp
@@ -1323,7 +1323,7 @@ References:
 
 @enumerate
 
-@item 
+@item
 @xref{Introduction,,, Guile, The Guile Reference Manual}.
 
 @item
@@ -1496,7 +1496,7 @@ when reading a tag with the unsynchronisation flag set, we have no way to
 know whether that was a false sync that was unsynchronised (and so the three
 bytes should be interpreted as @code{11111111 111xxxxx} or whether those three
 bytes had occurred naturally in the tag when it was written. To resolve
-this, on applying unsynchronisation all two-byte sequences of the form 
+this, on applying unsynchronisation all two-byte sequences of the form
 @code{$FF 00} should also be written as @code{$FF 00 00}.
 
 ID3v2.4 introduced unsynchronisation at a frame level; the
@@ -1551,7 +1551,7 @@ without taking the proper means to compensate, e.g. recalculating the
 signature, the bit should be cleared.'' Sec 3.3.1
 
 @item
-@code{unsync} Unsynchronisation 
+@code{unsync} Unsynchronisation
 In ID3v2.2 & ID3v2.3, a value of @code{#t} for this flag indicates that
 the unsynchronisation scheme @xref{The Unsynchronisation Scheme}, has been
 applied to this tag. In ID3v2.4, it indicates that it has been applied to
@@ -1851,7 +1851,7 @@ frame settings themselves).
 @cindex Using @code{libscribbu}
 
 The third way in which to use scribbu is to link against the library
-@code{libscribbu}. Detailed documentation can be found in the 
+@code{libscribbu}. Detailed documentation can be found in the
 @code{libscribbu} source itself (Doxygen documentation can be
 produced by doing @code{cd doc && make doxygen-doc}).
 
@@ -1888,7 +1888,7 @@ entire string. We will call this program @code{az-tags}.
 @cindex Implementing @code{az-tags}
 
 The complete source for the program can be found in
-@file{examples/az-tags/main.cc} in the source distribution. The logic 
+@file{examples/az-tags/main.cc} in the source distribution. The logic
 is simple enough to fit completely in @code{main}. The usage is:
 
 @example
@@ -1902,7 +1902,7 @@ Skipping command line parsing, we begin by initializing the library:
 #include <scribbu/scribbu.hh>
 // ...
 int
-main(int argc, char * argv[]) 
+main(int argc, char * argv[])
 @{
     // Parse command-line options...
     scribbu::static_initialize()
@@ -1947,7 +1947,7 @@ way to consume the track data is to construct a @code{track_data}
 isntace with it. This will collect some data about the track and
 advance the file pointer to the one-past-the-end point.
 
-There may or may not be some kind of ID3v1 tag waiting for us. That 
+There may or may not be some kind of ID3v1 tag waiting for us. That
 is why @code{process_id3v1} returns a @code{unique_ptr}-- if there
 is no ID3v1 tag, a null pointer will be returned.
 
@@ -2007,7 +2007,7 @@ void
 process_tag(tag_type &T)
 @{
  ...
-  
+
   for (auto fp: T) @{ // 1
     if (traits_type::COMMID == fp->id()) @{ // 2
 
@@ -2033,7 +2033,7 @@ loops like 1. @code{fp} is actually a mutable proxy for an
 ID3v2-version-specific @code{id3v2_frame} subclass. At 2 we have
 factored out the precise frame ID to select for comments frames.
 
-Each ID3v2 version has a concrete comment frame type, to which 
+Each ID3v2 version has a concrete comment frame type, to which
 we again dynamically cast (I really need to re-evaluate this interface)
 at 3.
 
@@ -2115,7 +2115,7 @@ distro into @file{macros}. Let us add the following lines to
 
 @example
 PKG_CHECK_MODULES([GUILE], [guile-2.2])
-AX_BOOST_BASE([1.58], [], 
+AX_BOOST_BASE([1.58], [],
     [AC_MSG_ERROR([Scribbu requires boost_base 1.58 or later.])])
 echo "Checkpoint 3: BOOST_LDFLAGS is $BOOST_LDFLAGS;" >&AS_MESSAGE_LOG_FD
 
@@ -2152,13 +2152,13 @@ follow):
 
 @example
 AC_ARG_WITH([scribbu],
-    AS_HELP_STRING([--with-scribbu=DIR], 
+    AS_HELP_STRING([--with-scribbu=DIR],
                    [root directory of scribbu installation]),
     [
         case "$withval" in
 	"" | y | ye | yes | n | no)
 	    AC_MSG_ERROR([--with-scribbu takes a root directory]);;
-	*) 
+	*)
 	    scribbu_dirs="$withval";;
 	esac
     ],
@@ -2264,7 +2264,7 @@ the build to find the @code{libscribbu} headers
 enable the build to link against @code{libscribbu}
 
 @item
-@code{SCRIBBU_LDLAGS} to hold any linker required flags 
+@code{SCRIBBU_LDLAGS} to hold any linker required flags
 
 @end enumerate
 
@@ -2359,43 +2359,43 @@ unknown genre 255
 @headitem Symbol @tab 2.3 @tab 2.4+
 @item 'album-frame @tab TAL @tab TALB
 @item 'artist-frame @tab TP1 @tab TPE1
-@item 'band-frame @tab TP2 @tab TPE2 
-@item 'bpm-frame @tab TBP @tab TBPM 
+@item 'band-frame @tab TP2 @tab TPE2
+@item 'bpm-frame @tab TBP @tab TBPM
 @item 'comment-frame @tab COM @tab COMM
-@item 'composer-frame @tab TCM @tab TCOM 
-@item 'conductor-frame @tab TP3 @tab TPE3 
-@item 'content-group-frame @tab TT1 @tab TIT1 
-@item 'copyright-frame @tab TCR @tab TCOP 
-@item 'date-frame @tab TDA @tab TDAT 
+@item 'composer-frame @tab TCM @tab TCOM
+@item 'conductor-frame @tab TP3 @tab TPE3
+@item 'content-group-frame @tab TT1 @tab TIT1
+@item 'copyright-frame @tab TCR @tab TCOP
+@item 'date-frame @tab TDA @tab TDAT
 @item 'encoded-by-frame @tab TEN @tab TENC
-@item 'file-owner-frame @tab N/A @tab TOWN     
-@item 'file-type-frame @tab TFT @tab TFLT 
+@item 'file-owner-frame @tab N/A @tab TOWN
+@item 'file-type-frame @tab TFT @tab TFLT
 @item 'genre-frame @tab TCO @tab TCON
-@item 'initial-key-frame @tab TKE @tab TKEY 
-@item 'interpreted-by-frame @tab TP4 @tab TPE4 
-@item 'isrc-frame @tab TRC @tab TSRC 
+@item 'initial-key-frame @tab TKE @tab TKEY
+@item 'interpreted-by-frame @tab TP4 @tab TPE4
+@item 'isrc-frame @tab TRC @tab TSRC
 @item 'langs-frame @tab TLA @tab TLAN
-@item 'length-frame @tab TLE @tab TLEN 
-@item 'lyricist-frame @tab TXT @tab TEXT 
-@item 'media-type-frame @tab TMT @tab TMED 
-@item 'original-album-frame @tab TOT @tab TOAL 
-@item 'original-artist-frame @tab TOA @tab TOPE 
-@item 'original-filename-frame @tab TOF @tab TOFN 
-@item 'original-lyricist-frame @tab TOL @tab TOLY 
-@item 'original-release-year-frame @tab TOR @tab TORY 
-@item 'part-of-a-set-frame @tab TPA @tab TPOS 
+@item 'length-frame @tab TLE @tab TLEN
+@item 'lyricist-frame @tab TXT @tab TEXT
+@item 'media-type-frame @tab TMT @tab TMED
+@item 'original-album-frame @tab TOT @tab TOAL
+@item 'original-artist-frame @tab TOA @tab TOPE
+@item 'original-filename-frame @tab TOF @tab TOFN
+@item 'original-lyricist-frame @tab TOL @tab TOLY
+@item 'original-release-year-frame @tab TOR @tab TORY
+@item 'part-of-a-set-frame @tab TPA @tab TPOS
 @item 'play-count-frame @tab CNT @tab PCNT
-@item 'playlist-delay-frame @tab TDY @tab TDLY 
+@item 'playlist-delay-frame @tab TDY @tab TDLY
 @item 'pop-frame @tab POP @tab POPM
-@item 'publisher-frame @tab TPB @tab TPUB 
-@item 'recording-dates-frame @tab TRD @tab TRDA 
+@item 'publisher-frame @tab TPB @tab TPUB
+@item 'recording-dates-frame @tab TRD @tab TRDA
 @item 'settings-frame @tab TSS @tab TSSE
-@item 'size-frame @tab TSI @tab TSIZ 
-@item 'station-name-frame @tab N/A @tab TRSN     
-@item 'station-owner-frame @tab N/A @tab TRSO     
-@item 'subtitle-frame @tab TT3 @tab TIT3 
+@item 'size-frame @tab TSI @tab TSIZ
+@item 'station-name-frame @tab N/A @tab TRSN
+@item 'station-owner-frame @tab N/A @tab TRSO
+@item 'subtitle-frame @tab TT3 @tab TIT3
 @item 'tag-cloud-frame @tab XTG @tab XTAG
-@item 'time-frame @tab TIM @tab TIME 
+@item 'time-frame @tab TIM @tab TIME
 @item 'title-frame @tab TT2 @tab TIT2
 @item 'track-frame @tab TRK @tab TRCK
 @item 'udt-frame @tab TXX @tab TXXX
