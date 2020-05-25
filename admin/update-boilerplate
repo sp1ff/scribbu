@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile \                                                              -*- scheme -*-
+#!/usr/bin/guile \                                                              -*- scheme -*-
 -e main -s
 !#
 
@@ -22,11 +22,13 @@
 ;; regex for matching copyright statements; sub-matches:
 ;; 1. start year (may be #f, will have a trailing #\- else)
 ;; 2. end year
-;; 3. copyright holder name
+;; 3. copyright holder name; do *not* match "Free"
 ;; 4. copyright holder e-mail (may be #f, will have a leading space else)
 (define COPYRIGHT-REGEXP "Copyright \\(C\\) ([0-9]{4}-)?\
 ([0-9]{4})\\s+\
-([^<]+)(\\s+<([-_.@a-zA-Z0-9]+)>)?")
+(([^F]+|(F([^r]|$)|Fr([^e]|$)|Fre([^e]|$)))+)(\\s+<([-_.@a-zA-Z0-9]+)>)?")
+;; Trick for not matching a word using just Posix Extended regular expressions:
+;; <https://stackoverflow.com/questions/38928863/posix-regex-not-match-a-word>
 
 (define LICENSE "This file is part of scribbu.
 
@@ -86,7 +88,7 @@ It should only be run in a \"clean\" git repository (and yours is not).")))
     (exit 1))
    (#t
     (error (format #f "unknown error ~a|~a" key args)))))
-  
+
 (define (guess-missing-input input)
   "Guess values for any missing inputs; fail if we are unable to do so."
 
@@ -125,7 +127,7 @@ It should only be run in a \"clean\" git repository (and yours is not).")))
     (if (string= "here" "/")
         (error "couldn't find scribbu root-- are you in the scribbu project?"))
     here))
-  
+
 (define (parse-input-file input)
   "Parse the input file to an association list."
 
@@ -227,7 +229,7 @@ replacements."
      file-read-handler))
 
 (define (replace-file-contents filename lines make-backups dry-run)
-    "Replace the contents of FILENAME with LINES. 
+    "Replace the contents of FILENAME with LINES.
 
 If MAKE-BACKUPS is true, leave a backup copy of the original file.  If DRY-RUN is true, don't
 actually change anything; just print what would be done."
@@ -546,8 +548,15 @@ This function will update boilerplate in a few places in man pages:
          (today (date->string todays-date "~Y-~m-~d"))
          (re1 (make-regexp COPYRIGHT-REGEXP))
          (sb1 (lambda (what)
-                (list 'pre "Copyright (C) " (if (match:substring what 1) 1 "")
-                      (format #f "~a ~a <~a>" year author email))))
+                (let* ((matched-year (string->number (match:substring what 2)))
+                       (range-begin
+                        (cond
+                         ((match:substring what 1) 1)
+                         ((not (eq? matched-year year)) (format #f "~d-" matched-year))
+                         (#t ""))))
+                  (list 'pre "Copyright (C) "
+                        range-begin
+                        (format #f "~a ~a <~a>" year author email)))))
          (re2 (make-regexp "^.TH (scribbu(-[a-zA-Z0-9]+)?) 1 [-0-9]+ \"scribbu [-_a-zA-Z0-9.]+\" \"scribbu Manual\"$"))
          (sb2 (list ".TH " 1 " 1 " today (format #f " \"scribbu ~a\" \"scribbu Manual\"" version)))
          (repls (list (list re1 sb1) (list re2 sb2)))
@@ -626,10 +635,13 @@ and updates them with VER, AUTHOR, and the current year."
     (let* ((year (date-year (current-date)))
            (re1 (make-regexp "Copyright @copyright\\{\\} ([0-9]{4}-)?([0-9]{4})\
 \\s+([^<]+)(\\s+<([-_.@a-zA-Z0-9]+)>)?"))
+           (escaped-email
+            (let ((idx (string-index email #\@)))
+              (format #f "~a@@~a" (substring email 0 idx) (substring email (1+ idx)))))
            (sb1 (lambda (what)
                   (list 'pre (format #f "Copyright @copyright{} ~a~a ~a <~a>"
                                      (if (match:substring what 1) (match:substring what 1) "")
-                                     year author email) 'post)))
+                                     year author escaped-email) 'post)))
            (re2 (make-regexp (format #f "This manual corresponds to scribbu version ~a" VERSION-REGEXP)))
            (sb2 (list 'pre (format #f "This manual corresponds to scribbu version ~a" version) 'post))
            (filename (format #f "~a/doc/scribbu.texi" root-dir))
@@ -674,7 +686,7 @@ and updates them with VER, AUTHOR, and the current year."
 (define (main args)
   (let* ((options-spec '((help         (single-char #\h) (value #f))
                          (version      (single-char #\v) (value #f))
-                         (input        (single-char #\f) (value #t))
+                         (input        (single-char #\i) (value #t))
                          (make-backups (single-char #\b) (value #f))
                          (root-dir     (single-char #\d) (value #t))
                          (dry-run      (single-char #\n) (value #f))
@@ -698,16 +710,16 @@ and updates them with VER, AUTHOR, and the current year."
                              below)-- mandatory
         -b, --make-backups   make backups of all files before edit-
                              ing
-        -d, --root-dir=ROOT  specify the scribbu root directory (the 
+        -d, --root-dir=ROOT  specify the scribbu root directory (the
                              script will try to guess it, otherwise)
         -D, --debug          turn on verbose debug output (implies
                              dry-run)
         -n, --dry-run        do not modify any files; just print
                              what *would* be done
 
-    scribbu files share various boilerplate (the project version 
-    number, copyright statements, &c). This program will take 
-    that information from a single source & propagate it 
+    scribbu files share various boilerplate (the project version
+    number, copyright statements, &c). This program will take
+    that information from a single source & propagate it
     throughout.
 
     That single source is the file specified through the --input
@@ -725,9 +737,9 @@ and updates them with VER, AUTHOR, and the current year."
 
     The following items may be supplied:
 
-        1. AUTHOR: the author name *without* an e-mail address 
+        1. AUTHOR: the author name *without* an e-mail address
            (i.e. *not* something like \"John Doe <jdoe@gmail.com>\",
-           but rather just \"John Doe\"); this will be used 
+           but rather just \"John Doe\"); this will be used
            in documentation
 
         2. EMAIL: the e-mail address of the author; again used
@@ -751,7 +763,7 @@ and updates them with VER, AUTHOR, and the current year."
             (debug        (option-ref options 'debug        #f))
             (args         (option-ref options '()           '())))
         (unless (null? args)
-          (format (current-error-port) "~a does not take argumetns\n" (car (command-line)))
+          (format (current-error-port) "~a does not take arguments\n" (car (command-line)))
           (exit 2))
         (if debug (set! dry-run #t))
         (if input

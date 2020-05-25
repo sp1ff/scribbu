@@ -1,7 +1,7 @@
 /**
  * \file dynwind-context.cc
  *
- * Copyright (C) 2019 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2019-2020 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *

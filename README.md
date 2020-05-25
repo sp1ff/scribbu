@@ -1,7 +1,7 @@
 scribbu - The extensible tool for tagging your music collection
 ===============================================================
 
-This directory contains the 0.5 release of [scribbu](https://github.com/sp1ff/scribbu).
+This directory contains the 0.6.1 release of [scribbu](https://github.com/sp1ff/scribbu).
 
 See the file [NEWS]() for the user-visible changes from previous releases.
 
@@ -64,8 +64,8 @@ scribbu can be invoked in a few ways:
   - with no arguments at all. In this case, scribbu will drop into a Scheme shell in which the user can evaluate arbitrary Scheme expressions. For instance:
 
 	    scribbu
-		scribbu 0.5
-		Copyright (C) 2017-2019 Michael Herstine <sp1ff@pobox.com>
+		scribbu 0.6.1
+		Copyright (C) 2017-2020 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
 
@@ -333,4 +333,4 @@ Notes
   - I got the project name from this cool project name [generater](http://mrsharpoblunto.github.io/foswig.js/).
 
 -------------------------------------------------------------------------------
-Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
+Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>

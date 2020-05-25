@@ -4,7 +4,7 @@
  * \brief Assorted utilities for scribbu & its sub-commands
  *
  *
- * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
