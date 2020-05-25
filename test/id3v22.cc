@@ -385,8 +385,7 @@ BOOST_AUTO_TEST_CASE( test_id3v22_text_frames )
 
   BOOST_CHECK( !tag.has_artist() );
 
-  // https://github.com/sp1ff/scribbu/issues/4
-  // BOOST_CHECK_THROW( tag.artist(), ... );
+  BOOST_CHECK_THROW( tag.artist(), id3v2_tag::unknown_frame_error );
 
   // Check to be sure all the other text frames still work
   BOOST_CHECK( "(8)"           == tag.content_type() );

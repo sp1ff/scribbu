@@ -421,7 +421,8 @@ namespace scribbu {
          encoding dst = encoding::UTF_8,
          on_no_encoding rsp = on_no_encoding::fail,
          const boost::optional<encoding> &src = boost::none) const;
-    /// Set the contents of an arbitrary text frame
+    /// Set the contents of an arbitrary text frame; will add the relevant
+    /// frame to this tag if it doesn't already exist
     virtual
     void
     text(id3v2_text_frames id,

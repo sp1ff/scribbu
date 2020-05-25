@@ -1573,7 +1573,11 @@ scribbu::id3v2_3_tag::text_frame_as_str(
   on_no_encoding rsp /*= on_no_encoding::fail*/,
   const boost::optional<encoding> &src /*= boost::none*/) const
 {
-  return text_map_.find(id)->second->as_str<std::string>(dst, rsp, src);
+  auto p = text_map_.find(id);
+  if (p == text_map_.end()) {
+    throw unknown_frame_error(id);
+  }
+  return p->second->as_str<std::string>(dst, rsp, src);
 }
 
 /// Replace a text frame if it exists, append it otherwise
