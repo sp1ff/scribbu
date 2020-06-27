@@ -33,6 +33,13 @@
 #include <boost/optional/optional.hpp>
 #include <boost/program_options.hpp>
 
+#include <scribbu/id3v1.hh>
+#include <scribbu/id3v2.hh>
+#include <scribbu/id3v22.hh>
+#include <scribbu/id3v23.hh>
+#include <scribbu/id3v24.hh>
+#include <scribbu/tagset.hh>
+#include <scribbu/winamp-genres.hh>
 
 /// Like EXIT_SUCCESS & EXIT_FAILURE, but reflecting the convention that
 /// calling with incorrect parameters shall exit with status code 2
@@ -59,15 +66,17 @@ enum class verbose_flavor {
 std::tuple<help_level, boost::optional<verbose_flavor>>
 help_level_for_parsed_opts(const boost::program_options::parsed_options &opts);
 
-/// Print a usage message-- this is help ast level `regular'
+/// Print a usage message-- this is help at level `regular'
 void
 print_usage(std::ostream                              &os,
     const boost::program_options::options_description &opts,
     const std::string                                 &usage);
 
+/// exec `man' with argument \a page
 void
 show_man_page(const std::string &page);
 
+/// exec `info' with argument \a node
 void
 show_info_node(const std::string &node);
 
@@ -161,7 +170,348 @@ get_sub_command_names(forward_output_iterator pout)
   return pout;
 }
 
-/// Convert (argc, argv) style parameters to a collection of tokens
+////////////////////////////////////////////////////////////////////////////////
+//                           class tagset_processor                           //
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * \class tagset_processor
+ *
+ * \brief ABC for compliant functors that process tagsets as part of sub-command
+ * implementation
+ *
+ * \sa process_dirent_args
+ *
+ *
+ * This class defines the interface to which functors passed to
+ * process_dirent_args shall comply. IOW, to implement a sub-command that:
+ *
+ * - accepts one or more file-or-directory names defining the files on
+ *   which to operate
+ * - processes the tags therein in some way
+ *
+ * subclass tagset_processor, implement the pure virtuals, and in your
+ * sub-command implementation, instantiate it & invoke process_dirent_args
+ * supplying your instance as the third parameter.
+ *
+ *
+ */
+
+class tagset_processor
+{
+public:
+  /// Policy governing when a new ID3v2 tag shall be created if there are none
+  enum class v2_creation_policy { never, when_v1_present, always };
+  /// Policy governing when a new ID3v1 tag shall be created if there are none
+  enum class v1_creation_policy { never, when_v2_present, always };
+  /// Policy governing whether the ID3v1 tag shall be processed when present
+  enum class v1_tag_scope_policy { yes, no };
+  /// Policy governing whether the ID3v2 tag shall be processed when present
+  enum class v2_tag_scope_policy { all, none, some };
+  /// If specifying that "some" ID3v2 tags should be processed, a range of
+  /// indicies needs to be passed-- this enum can be passed to the ctor that
+  // does *not* accept such a range
+  enum class v2_simple_tag_scope_policy { all, none };
+
+public:
+  tagset_processor(v2_simple_tag_scope_policy v2sp,
+                   v1_tag_scope_policy v1tsp,
+                   v2_creation_policy v2c,
+                   v1_creation_policy v1c,
+                   bool dry_run,
+                   bool verbose,
+                   bool adjust_unsync,
+                   bool create_backups):
+    tagset_processor(v2_simple_tag_scope_policy::all == v2sp ?
+                     v2_tag_scope_policy::all :
+                     v2_tag_scope_policy::none,
+                     v1tsp, v2c, v1c, dry_run, verbose_, adjust_unsync,
+                     create_backups)
+  { }
+  template <typename FII>
+  tagset_processor(FII p0, FII p1,
+                   v1_tag_scope_policy v1tsp,
+                   v2_creation_policy v2c,
+                   v1_creation_policy v1c,
+                   bool dry_run,
+                   bool verbose,
+                   bool adjust_unsync,
+                   bool create_backups) :
+    tagset_processor(v2_tag_scope_policy::some, v1tsp, v2c, v1c, dry_run,
+                     verbose_, adjust_unsync, create_backups)
+  {
+    std::copy(p0, p1, std::back_inserter(v2_tags_));
+  }
+
+private:
+  // For internal use through delegation
+  tagset_processor(v2_tag_scope_policy v2tsp,
+                   v1_tag_scope_policy v1tsp,
+                   v2_creation_policy v2c,
+                   v1_creation_policy v1c,
+                   bool dry_run,
+                   bool verbose,
+                   bool adjust_unsync,
+                   bool create_backups);
+
+public:
+  v1_creation_policy get_v1_creation_policy() const
+  { return v1_creation_policy_; }
+  v1_tag_scope_policy get_v1_tag_scope_policy() const
+  { return v1_tag_scope_policy_; }
+  v2_creation_policy get_v2_creation_policy () const
+  { return v2_creation_policy_; }
+  v2_tag_scope_policy get_v2_tag_scope_policy() const
+  { return v2_tag_scope_policy_; }
+  bool verbose() const
+  { return verbose_; }
+
+  /// Process the tagset contained in \a pth; in an implementation-specific
+  /// manner
+  void
+  process_file(const boost::filesystem::path &pth);
+
+private:
+  /**
+   * \brief Perhaps write a tagset out to disk
+   *
+   *
+   * \param dirty [in] the caller shall set this to true IFF the tagset is
+   * different than that already on-disk in \a pth
+   *
+   * \parm p0 [in] a forward input iterator referencing the first element in a
+   * range of unique_ptr-s to id3v2_tag-s to be written to \a pth
+   *
+   * \parm p1 [in] a forward input iterator referencing the "one-past-the-end"
+   * element in a range of unique_ptr-s to id3v2_tag-s to be written to \a pth
+   *
+   * \param pv1 [in] a unique_ptr to an id3v1_tag that may or may not contain an
+   * ID3v1 tag to be written to \a pth
+   *
+   * \param pth [in] filesystem path (absolute or relative to the present
+   * working directory) to which the tagset shall be written
+   *
+   *
+   * If dry_run_ is true, this method shall print a message on stdout describing
+   * whether or not the tagset would be written to \a pth.
+   *
+   * Else, if \a dirty is true, this method shall write the tagset to \a
+   * pth. The unsynchronisation flag will be set according to adj_unsync_. If
+   * create_backups_ is true, the entire file shall be copied, and the new
+   * tagset written (along with track data) to \a pth. If false, this method
+   * will attempt to emplace the new tagset, if possible.
+   *
+   *
+   */
+
+  template <typename FII> // Forward Input Iterator => id3v2_tag
+  void
+  write_tagset(bool dirty, FII p0, FII p1,
+               const std::unique_ptr<scribbu::id3v1_tag> &pv1,
+               const boost::filesystem::path &pth) const
+  {
+    using namespace std;
+    using scribbu::apply_unsync;
+    using scribbu::emplace_strategy;
+    using scribbu::padding_strategy;
+    if (dirty) {
+      if (dry_run_) {
+        cout << "the dry-run flag was given-- nothing written";
+        if (create_backups_) {
+          cout << " (with backup).";
+        }
+        cout << endl;
+      } else {
+        apply_unsync au = adjust_unsync_ ? apply_unsync::as_needed :
+          apply_unsync::never;
+
+        if (create_backups_) {
+          replace_tagset_copy(pth, p0, p1, au);
+        } else {
+          maybe_emplace_tagset(pth, p0, p1, au,
+                               emplace_strategy::only_with_full_padding,
+                               padding_strategy::adjust_padding_evenly);
+        } // End if on `create_backups'.
+        if (pv1) {
+          replace_id3v1(pth, *pv1);
+        }
+      } // End if on `dry_run'.
+    } else if (dry_run_) {
+      cout << "the tagset wasn't updated, so nothing would be written" << endl;
+    }
+  }
+
+public:
+  /// Create a new ID3v1 tag when there are ID3v2 tags present
+  virtual
+  std::unique_ptr<scribbu::id3v1_tag>
+  create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &v2) = 0;
+  /// Create a new ID3v1 tag when there are no other tags present
+  virtual std::unique_ptr<scribbu::id3v1_tag> create_v1() = 0;
+  /// Create a new ID3v2 tag when there's an ID3v1 tag present
+  virtual std::unique_ptr<scribbu::id3v2_tag>
+  create_v2(const scribbu::id3v1_tag &v1) = 0;
+  /// Create a new ID3v2 tag when there are no other tags present
+  virtual std::unique_ptr<scribbu::id3v2_tag> create_v2() = 0;
+  /// Process the ID3v1 tag
+  virtual bool process_v1(scribbu::id3v1_tag &v1) = 0;
+  /// Process an ID3v2.2 tag
+  virtual bool process_v2(scribbu::id3v2_2_tag &v2) = 0;
+  /// Process an ID3v2.3 tag
+  virtual bool process_v2(scribbu::id3v2_3_tag &v2) = 0;
+  /// Process an ID3v2.4 tag
+  virtual bool process_v2(scribbu::id3v2_4_tag &v2) = 0;
+
+private:
+  v1_creation_policy v1_creation_policy_;
+  v2_creation_policy v2_creation_policy_;
+  v1_tag_scope_policy v1_tag_scope_policy_;
+  v2_tag_scope_policy v2_tag_scope_policy_;
+  bool dry_run_;
+  bool verbose_;
+  bool adjust_unsync_;
+  bool create_backups_;
+  std::deque<size_t> v2_tags_;
+
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//                  utilities for implementing sub-commands                   //
+////////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+  template <typename FII> // Forward Input Iterator => id3v2_tag
+  std::tuple<bool, std::string>
+  find_frame(scribbu::id3v2_text_frames frm, FII p0, FII p1)
+  {
+    bool hit = false;
+    std::string text;
+    for ( ; p0 != p1; ++p0) {
+      // TODO(sp1ff): awful
+      text = (*p0)->text(frm);
+      if (text.length()) {
+        hit = true;
+        break;
+      }
+    }
+    return std::make_tuple(hit, text);
+  }
+
+  template <typename FII> // Forward Input Iterator => id3v2_tag
+  std::tuple<bool, std::array<char, 4>>
+  find_year(FII p0, FII p1)
+  {
+    std::array<char, 4> year = {{ 0, 0, 0, 0 }};
+    bool hit = false;
+    std::string text;
+    for ( ; p0 != p1; ++p0) {
+      // TODO(sp1ff): awful
+      text = (*p0)->year();
+      if (4 == text.length()) {
+        hit = true;
+        break;
+      }
+    }
+    if (hit) {
+      copy_n(text.begin(), 4, year.data());
+    }
+    return std::make_tuple(hit, year);
+  }
+
+  template <typename FII> // Forward Input Iterator => id3v2_tag
+  std::tuple<bool, std::string, unsigned char>
+  find_content_type(FII p0, FII p1)
+  {
+    using namespace std;
+
+    bool hit = false;
+    // TODO(sp1ff): correct?
+    size_t best_dl = 22; // longest Winamp genre
+    std::string best_text_match;
+    unsigned char best_numeric_match;
+    for ( ; p0 != p1; ++p0) {
+      // TODO(sp1ff): awful
+      std::string text = (*p0)->content_type();
+      if (text.length()) {
+        size_t dl;
+        std::string textual_genre;
+        unsigned char numeric_genre;
+        tie(textual_genre, numeric_genre, dl) = scribbu::match_winamp_genre(text);
+        if (dl < best_dl) {
+          hit = true;
+          best_dl = dl;
+          best_text_match = textual_genre;
+          best_numeric_match = numeric_genre;
+        }
+      }
+    }
+    if (hit) {
+      return make_tuple(true, best_text_match, best_numeric_match);
+    } else {
+      return make_tuple<bool, string, unsigned char>(false, "", 255);
+    }
+  }
+}
+
+/// Create a new ID3v1 tag from a collection of ID3v2 tags
+template <typename FII> // Forward Input Iterator => unique_ptr<id3v2_tag>
+std::unique_ptr<scribbu::id3v1_tag>
+copy_id3_v2(FII p0, FII p1)
+{
+  using namespace std;
+  using namespace scribbu;
+
+  auto p = make_unique<id3v1_tag>(false, false);
+
+  bool hit;
+  string text;
+  tie(hit, text) = ::detail::find_frame(id3v2_text_frames::talb, p0, p1);
+  if (hit) p->set_album(text, encoding::UTF_8, encoding::UTF_8);
+  tie(hit, text) = ::detail::find_frame(id3v2_text_frames::tpe1, p0, p1);
+  if (hit) p->set_artist(text, encoding::UTF_8, encoding::UTF_8);
+  tie(hit, text) = ::detail::find_frame(id3v2_text_frames::tit2, p0, p1);
+  p->set_title(text, encoding::UTF_8, encoding::UTF_8);
+
+  array<char, 4> year;
+  tie(hit, year) = ::detail::find_year(p0, p1);
+  if (hit) p->set_year(year.data());
+
+  unsigned char g;
+  tie(hit, text, g) = ::detail::find_content_type(p0, p1);
+  if (hit) p->set_genre(g);
+
+  return p;
+}
+
+/// Create a new ID3v2 tag given an ID3v1 tag
+std::unique_ptr<scribbu::id3v2_tag>
+copy_id3_v1(const scribbu::id3v1_tag &v1);
+
+// TODO(sp1ff): IN-PROGRESS
+
+// template <typename Functor>
+// void
+// process_dirent_arg(const boost::filesystem::path &pth, Functor &F)
+// {
+//   using namespace std;
+
+//   using boost::filesystem::directory_iterator;
+//   using boost::filesystem::is_directory;
+//   using boost::filesystem::path;
+
+//   if (is_directory(pth)) {
+//     for_each(directory_iterator(pth), directory_iterator(),
+//              [=](const path &p) { process_dirent_arg(p, F); });
+//   } else if (is_regular_file(pth)) {
+//     F.process_file(pth);
+//   } else if (F.verbose()) {
+//     cout << "skipping non-file `" << pth << "'" << endl;
+//   }
+// }
+
+// Convert (argc, argv) style parameters to a collection of tokens
 template <typename forward_output_iterator>
 forward_output_iterator convert_tokens(int argc,
                                        char **argv,

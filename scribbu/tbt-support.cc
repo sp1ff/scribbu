@@ -26,6 +26,8 @@
 #include <numeric>
 #include <boost/algorithm/string.hpp>
 
+#include <scribbu/winamp-genres.hh>
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //                    all_source_preference-related code                     //
@@ -501,7 +503,7 @@ scribbu::tbt_support::content_type::evaluate(const file_info  & /*fi    */,
     pid3v1->enh_genre(back_inserter(v1));
     if (v1.empty()) {
       // but if we can't get that, fall back to ID3v1 genre.
-      boost::optional<std::string> text = id3v1_tag::text_for_genre(pid3v1->genre());
+      boost::optional<std::string> text = text_for_genre(pid3v1->genre());
       if (text) {
         for (auto c: *text) {
           v1.push_back((unsigned char)c);

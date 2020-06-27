@@ -33,6 +33,7 @@
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/framesv2.hh>
+#include <scribbu/winamp-genres.hh>
 
 namespace fs = boost::filesystem;
 
@@ -484,7 +485,7 @@ BOOST_AUTO_TEST_CASE( test_nan_tom_teaimin )
   BOOST_CHECK("An Buachaillín Múinte" == text);
 
   BOOST_CHECK(88 == ptag->genre());
-  BOOST_CHECK("Celtic" == id3v1_tag::text_for_genre(ptag->genre()).get());
+  BOOST_CHECK("Celtic" == scribbu::text_for_genre(ptag->genre()).get());
 }
 
 BOOST_AUTO_TEST_CASE( test_maybe_remove_id3v1 )

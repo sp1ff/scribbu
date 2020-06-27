@@ -1,3 +1,17 @@
+2020-06-27  Michael Herstine  <sp1ff@pobox.com>
+
+	Initial commit for the `genre' sub-command.
+	This commit adds a new sub-command: `git genre' that allows the
+	user to update the "genre" in ID3v1 and/or v2 tags.
+
+2020-05-25  Michael Herstine  <sp1ff@pobox.com>
+
+	Assorted bug fixes:
+	    - https://github.com/sp1ff/scribbu/issues/4: "id3v2_tag text frame
+	      virtuals will SEGV if the relevant frame isn't there"
+
+	Initial commit for the 0.6 release; updating package version along with boilerplate throughout.
+
 2019-11-06  Michael Herstine  <sp1ff@pobox.com>
 
 	Release 0.5 of scribbu.

@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+export GUILE_AUTO_COMPILE=0
+
+if [ -z "$srcdir" ]; then
+    echo >&2 "the \`srcdir' variable needs to be set to this script's location"
+    exit 1
+fi
+
+source ${srcdir}/test-util
+
+
+# run `scribbu genre ...'
+# usage: run_genre var_to_rcv_stdout var_to_rcv_stderr var_to_rcv_status args...
+# for instance:
+#     run_genre out err stat foo bar splat
+# will execute `scribbu genre foo bar splat'; on return the process'
+# stdout will be in `out', stderr in `err', and exit status in `stat'. Note
+# that due to quoting issues, any `'' or ``' characters will have been
+# replaced with `:'.
+function run_genre()
+{
+    local __stdout=$1
+    local __stderr=$2
+    local __status=$3
+    shift 3
+
+    verbose `pwd`
+    verbose ${genre_scribbu_dir}/scribbu -L ${srcdir}/../scheme genre $@
+    # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
+    local t_std
+    local t_err
+    local t_stat
+    eval "$(${genre_scribbu_dir}/scribbu -L ${srcdir}/../scheme genre $@ \
+    2> >(t_err=$(cat); typeset -p t_err) \
+     > >(t_std=$(cat); typeset -p t_std) ); t_stat=$?"
+
+    eval "$__stdout='$(echo $t_std|tr \' :|tr \` :)'"
+    eval "$__stderr='$(echo $t_err|tr \' :|tr \` :)'"
+    eval "$__status='$t_stat'"
+
+    verbose $t_stat
+    printf '=%.0s' $(seq 1 $genre_cols) >&3
+    verbose "$t_std"
+    printf '=%.0s' $(seq 1 $genre_cols) >&3
+	echo "$t_err"
+    printf '=%.0s' $(seq 1 $genre_cols) >&3
+}
+
+###########################################################################
+# tests
+###########################################################################
+
+function smoke_tests()
+{
+    local out
+    local err
+    local stat
+
+    # can we get a help message?
+    run_genre out err stat -h
+
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -h"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr for -h"
+    [ -n "$out" ] || fail "smoke_tests: empty stdout for -h"
+
+    here=`pwd`
+    set_testdir ${srcdir} $genre_testdir smoke_tests id3v2.3.tag
+
+    # id3v2.3.tag has a TCON frame of "Pop", no ID3v1 tag
+    run_genre out err stat -c -C -g alternativ id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -g"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr for -g"
+    [ -z "$out" ] || fail "smoke_tests: non-nil stdout for -g"
+    tcon=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TCON)
+    [ "$tcon" = "TCON: Alternative" ] || fail "smoke_tests: wrong TCON: $tcon"
+    v1=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F ID3v1:)
+    stat=$?
+    [ $stat -eq 0 ] || fail "smoke_tests: failed to add ID3v1 tag"
+
+    run_genre out err stat -c -C -w 40 id3v2.3.tag
+    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -w"
+    [ -z "$err" ] || fail "smoke_tests: non-nil stderr for -w"
+    [ -z "$out" ] || fail "smoke_tests: non-nil stdout for -w"
+    tcon=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TCON)
+    [ "$tcon" = "TCON: AlternRock" ] || fail "smoke_tests: wrong TCON: $tcon"
+    v1=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -E '^AlternRock')
+    stat=$?
+    [ $stat -eq 0 ] || fail "smoke_tests: bad ID3v1 genre"
+
+    clean_testdir $here $genre_testdir smoke_tests
+}
+
+###########################################################################
+
+genre_builddir=../src
+genre_cols=$(tput cols)
+genre_debug=false
+genre_help=false
+genre_nargs=0
+genre_scribbu_dir=../src
+genre_testdir=./test-genre-tmp
+genre_verbose=false
+genre_prev_option=
+for genre_option
+do
+    # If the previous option required an argument, assign it now.
+    if test -n "$genre_prev_option"; then
+        eval $genre_prev_option=\$genre_option
+        genre_prev_option=
+        genre_nargs=$(($genre_nargs+1))
+        continue
+    fi
+
+    # Parse out the argument option in $genre_option, if present.
+    case $genre_option in
+        *=?*) genre_optarg=$(expr "X$genre_option" : '[^=]*=\(.*\)') ;;
+        *=)   genre_optarg= ;;
+        *)    genre_optarg=yes ;;
+    esac
+
+    # Options are handled here:
+    case $genre_option in
+        -d | --de | --deb | --debu | --debug)
+            genre_debug=true;;
+        -h | --he | --hel | --help)
+            genre_help=true;;
+        -v | --ve | --ver | --verb | --verbo | --verbose)
+            genre_verbose=true;;
+        *)
+            cat >&2 <<EOF
+Unrecognized option \`$genre_option'.
+Try \`$0 --help' for more information.
+EOF
+            exit 2;;
+    esac
+
+done
+
+if test "$genre_help" == "true"; then
+    cat <<EOF
+\`$0' -- test the \`genre' sub-command
+
+TODO(sp1ff): write me!
+EOF
+fi
+
+if test "$genre_verbose" == "true"; then
+    exec 3>&1
+else
+    exec 3> /dev/null
+fi
+
+if test "$genre_debug" == "true"; then
+    set -x
+fi
+
+# Both must be absolute in order for `make-distcheck' to work
+genre_scribbu_dir=`cd "$genre_scribbu_dir"; pwd`
+[ -d "$genre_testdir" ] || mkdir -p "$genre_testdir"
+genre_testdir=`cd "$genre_testdir"; pwd`
+smoke_tests
+# test_issue_1

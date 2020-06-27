@@ -23,8 +23,12 @@
 
 #ifndef ID3V1_HH_INCLUDED
 #define ID3V1_HH_INCLUDED 1
+
 /**
  * \page scribbu_id3v1 ID3v1 Tags
+ *
+ * \sa scribbu_winamp_genres
+ *
  *
  * \section scribbu_id3v1_discuss Discussion
  *
@@ -48,7 +52,7 @@
   \endcode
   *
   * ID3v1 defined a set of genres denoted by numerical codes (see
-  * \ref scribbu_id3v1_genres "below"). Winamp extended that list, but support
+  * \ref scribbu_winamp_genres "here"). Winamp extended that list, but support
   * for the extended Winamp list is not universal. In some cases, only the first
   * 80 genres are supported.
   *
@@ -149,7 +153,7 @@
   * characters, which to me suggests ASCII. However, as arrays of char, they are
   * in principle capable of containing text in any encoding whose code unit is
   * one octet, and there are certainly other character encodings to be found in
-  * the wild (generally the Windowx ANSI code page in use on the computer on
+  * the wild (generally the Window ANSI code page in use on the computer on
   * which the tags were written).
   *
   * Furthermore, it is impossible to detect the encoding reliably. A BOM, when
@@ -173,115 +177,6 @@
   * When writing text we use the identical hierarchy for the \em destination
   * encoding (i.e. if the caller says nothing, then we'll attempt to write
   * ASCII, if the caller passes a member of the encoding enum...).
-  *
-  *
-  * \section scribbu_id3v1_genres ID3v1 Genres
-  *
-  * The original proposal defined 80 genres:
-  *
-  * Genre           | Genre
-  * --------------- | -------------------
-  * 0 Blues         | 40 AlternRock
-  * 1 Classic Rock  | 41 Bass
-  * 2 Country       | 42 Soul
-  * 3 Dance         | 43 Punk
-  * 4 Disco         | 44 Space
-  * 5 Funk          | 45 Meditative
-  * 6 Grunge        | 46 Instrumental Pop
-  * 7 Hip-Hop       | 47 Instrumental Rock
-  * 8 Jazz          | 48 Ethnic
-  * 9 Metal         | 49 Gothic
-  * 10 New Age      | 50 Darkwave
-  * 11 Oldies       | 51 Techno-Industrial
-  * 12 Other        | 52 Electronic
-  * 13 Pop          | 53 Pop-Folk
-  * 14 R&B          | 54 Eurodance
-  * 15 Rap          | 55 Dream
-  * 16 Reggae       | 56 Southern Rock
-  * 17 Rock         | 57 Comedy
-  * 18 Techno       | 58 Cult
-  * 19 Industrial   | 59 Gangsta
-  * 20 Alternative  | 60 Top 40
-  * 21 Ska          | 61 Christian Rap
-  * 22 Death Metal  | 62 Pop/Funk
-  * 23 Pranks       | 63 Jungle
-  * 24 Soundtrack   | 64 Native American
-  * 25 Euro-Techno  | 65 Cabaret
-  * 26 Ambient      | 66 New Wave
-  * 27 Trip-Hop     | 67 Psychadelic
-  * 28 Vocal        | 68 Rave
-  * 29 Jazz+Funk    | 69 Showtunes
-  * 30 Fusion       | 70 Trailer
-  * 31 Trance       | 71 Lo-Fi
-  * 32 Classical    | 72 Tribal
-  * 33 Instrumental | 73 Acid Punk
-  * 34 Acid         | 74 Acid Jazz
-  * 35 House        | 75 Polka
-  * 36 Game         | 76 Retro
-  * 37 Sound Clip   | 77 Musical
-  * 38 Gospel       | 78 Rock & Roll
-  * 39 Noise        | 79 Hard Rock
-  *
-  * Winamp added the following additional genres:
-  *
-  * Genre                     | Genre
-  * ------------------------- | -----------------
-  * 80 Folk                   | 136 Christian Gangsta Rap
-  * 81 Folk-Rock              | 137 Heavy Metal
-  * 82 National Folk          | 138 Black Metal
-  * 83 Swing                  | 139 Crossover
-  * 84 Fast Fusion            | 140 Contemporary Christian
-  * 85 Bebob                  | 141 Christian rock
-  * 86 Latin                  | 142 Merengue
-  * 87 Revival                | 143 Salsa
-  * 88 Celtic                 | 144 Thrash Metal
-  * 89 Bluegrass              | 145 Anime
-  * 90 Avantgarde             | 146 Jpop
-  * 91 Gothic Rock            | 147 Synthpop
-  * 92 Progressive Rock       | 148 Abstract
-  * 93 Psychedelic Rock       | 149 Art Rock
-  * 94 Symphonic Rock         | 150 Baroque
-  * 95 Slow Rock              | 151 Bhangra
-  * 96 Big Band               | 152 Big beat
-  * 97 Chorus                 | 153 Breakbeat
-  * 98 Easy Listening         | 154 Chillout
-  * 99 Acoustic               | 155 Downtempo
-  * 100 Humour                | 156 Dub
-  * 101 Speech                | 157 EBM
-  * 102 Chanson               | 158 Eclectic
-  * 103 Opera                 | 159 Electro
-  * 104 Chamber Musice        | 160 Electroclash
-  * 105 Sonata                | 161 Emo
-  * 106 Symphony              | 162 Experimental
-  * 107 Booty Brass           | 163 Garage
-  * 108 Primus                | 164 Global
-  * 109 Porn Groove           | 165 IDM
-  * 110 Satire                | 166 Illbient
-  * 111 Slow Jam              | 167 Industro-Goth
-  * 112 Club                  | 168 Jam Band
-  * 113 Tango                 | 169 Krautrock
-  * 114 Samba                 | 170 Leftfield
-  * 115 Folklore              | 171 Lounge
-  * 116 Ballad                | 172 Math Rock
-  * 117 Power Ballad          | 173 New Romantic
-  * 118 Rhytmic Soul          | 174 Nu-Breakz
-  * 119 Freestyle             | 175 Post-Punk
-  * 120 Duet                  | 176 Post-Rock
-  * 121 Punk Rock             | 177 Psytrance
-  * 122 Drum Solo             | 178 Shoegaze
-  * 123 A Capela              | 179 Space Rock
-  * 124 Euro-House            | 180 Trop Rock
-  * 125 Dance Hall            | 181 World Music
-  * 126 Goa                   | 182 Neoclassical
-  * 127 Drum & Bass           | 183 Audiobook
-  * 128 Club-House            | 184 Audio theatre
-  * 129 Hardcore Techno       | 185 Neue Deutsche Welle
-  * 130 Terror                | 186 Podcast
-  * 131 Indie                 | 187 Indie-Rock
-  * 132 BritPop               | 188 G-Funk
-  * 133 Negerpunk             | 189 Dubstep
-  * 134 Polsk Punk            | 190 Garage Rock
-  * 135 Beat                  | 191 Psybient
   *
   *
   * \section scribbu_id3v1_refs References
@@ -389,8 +284,6 @@ namespace scribbu {
       std::fill(end_time_.data(), end_time_.data() + 6, 0);
       std::fill(year_.data(), year_.data() + 4, 0);
     }
-
-    static boost::optional<std::string> text_for_genre(unsigned char genre);
 
     static const boost::optional<encoding> DEF_SRC_ENCODING;
     static const encoding                  DEF_DST_ENCODING;
@@ -804,20 +697,20 @@ namespace scribbu {
 
   void maybe_remove_id3v1(const boost::filesystem::path &pth);
 
-/**
- * \brief Replace any ID3v1 tag that may be present
- *
- *
- * \param pth [in] path naming the file of interest
- *
- * \param tag [in] ID3v1 tag to be written
- *
- *
- * This method will replace theID3v1 tag at the end of \a pth (if any), and
- * replace it with \a tag.
- *
- *
- */
+  /**
+   * \brief Replace any ID3v1 tag that may be present
+   *
+   *
+   * \param pth [in] path naming the file of interest
+   *
+   * \param tag [in] ID3v1 tag to be written
+   *
+   *
+   * This method will replace theID3v1 tag at the end of \a pth (if any), and
+   * replace it with \a tag.
+   *
+   *
+   */
 
   void replace_id3v1(const boost::filesystem::path &pth, const id3v1_tag &tag);
 

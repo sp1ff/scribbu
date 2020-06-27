@@ -47,7 +47,7 @@ const std::string USAGE(R"(scribbu popm -- manage playcount and/or popularimeter
 scribbu popm [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
 By default, increment the play count in all PCNT & POPM frames in all tags
-in the files named on the command line. If an argument is a file, increment
+in the files named on the command line. If an argument is a directory, increment
 the play count in all files in the directory tree rooted at that argument
 containing ID3v2 tags.
 
@@ -67,7 +67,7 @@ will only modify POPM frames (not PCNT). Many options can be combined:
 
     scribbu popm -t 0 -o sp1ff@pbox.com -c 111
 
-will set the play count to 111 if the first ID3v2 tag in the POPM
+will set the play count to 111 in the first ID3v2 tag in the POPM
 frame with owner sp1ff@pobox.com.
 
 For detailed help, say `scribbu popm --help'. To see the manual, say

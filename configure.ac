@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror dist-bzip2 dist-xz])
 
 # Checks for programs.
 AC_PROG_CXX
+AC_C_VARARRAYS
 AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_CPP

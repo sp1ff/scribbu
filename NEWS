@@ -1,5 +1,19 @@
 scribbu News -- history of user-visible changes -*- outline -*-
 
+* Changes in scribbu 0.6
+
+** Bug Fixes
+
+*** id3v2_tag text frame virtuals will SEGV if the relevant frame isn't there
+
+https://github.com/sp1ff/scribbu/issues/4
+
+** New Features
+
+*** New Sub-command `genre'
+
+`scribbu genre' lets you set the "genre" for your file by updating the relevant fields in the file's ID3v1 and/or -2 tags.
+
 * Changes in scribbu 0.5
 
 ** Bug Fixes

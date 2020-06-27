@@ -35,6 +35,7 @@
 #include <scribbu/framesv22.hh>
 #include <scribbu/framesv23.hh>
 #include <scribbu/framesv24.hh>
+#include <scribbu/winamp-genres.hh>
 
 using scribbu::pprinter;
 
@@ -447,7 +448,7 @@ scribbu::standard_pprinter::pprint_v1_tag(const id3v1_tag &tag,
   if (tag.enhanced()) {
     os << tag.enh_genre<string>(v1enc_, dst, rsp) << "/";
     if (expand_genre_) {
-      boost::optional<string> x = id3v1_tag::text_for_genre(tag.genre());
+      boost::optional<string> x = text_for_genre(tag.genre());
       if (x) {
         os << x.get();
       } else {
@@ -467,7 +468,7 @@ scribbu::standard_pprinter::pprint_v1_tag(const id3v1_tag &tag,
   }
   else {
     if (expand_genre_) {
-      boost::optional<string> x = id3v1_tag::text_for_genre(tag.genre());
+      boost::optional<string> x = text_for_genre(tag.genre());
       if (x) {
         os << x.get();
       } else {

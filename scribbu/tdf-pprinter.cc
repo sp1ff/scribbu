@@ -281,6 +281,8 @@ scribbu::tdf_pprinter::pprint_UFI(const UFI &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
+
+  return os;
 }
 
 /*virtual*/ std::ostream&
@@ -402,6 +404,8 @@ scribbu::tdf_pprinter::pprint_UFID(const UFID &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
+
+  return os;
 }
 
 /*virtual*/ std::ostream&
@@ -551,6 +555,8 @@ scribbu::tdf_pprinter::pprint_UFID_2_4(const UFID_2_4 &f, std::ostream &os)
   for (auto x: buf) {
     os << setw(2) << setfill('0') << x;
   }
+
+  return os;
 }
 
 /*virtual*/ std::ostream&

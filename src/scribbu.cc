@@ -397,7 +397,7 @@ main(int argc, char * argv[])
     bool version;
     help_level help;
     optional<verbose_flavor> flav;
-    tie(version, help, flav) = handle_options(&argc, &argv, &gargc, &(gargv[1]));
+    std::tie(version, help, flav) = handle_options(&argc, &argv, &gargc, &(gargv[1]));
 
     // At this point, we have a few possibilities. Our our caller could be
     // asking for help/version information; version "wins":
@@ -431,7 +431,7 @@ main(int argc, char * argv[])
 
       // Otherwise, _if_ there is still something waiting for us on `argv',
       // it must be a file to be handed to the Scheme interpreter, or it's
-      // just garbage. Impossible to tell from here, of course, but I'm giong
+      // just garbage. Impossible to tell from here, of course, but I'm going
       // to say that if the argument begins with a '-', it is a mis-typed
       // option.
       if (argc) {

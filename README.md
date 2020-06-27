@@ -33,6 +33,8 @@ scribbu can be invoked in a few ways:
 
 	+ `scribbu text` will create, update, or delete various text frames
 
+    + `scribbu genre` will update the genre-related fields of ID3v1 and/or -v2 tags
+
   - with a Scheme expression (`-e`, `--expression`) or Scheme file (`-f`, `--file`). E.g.
 
         srcibbu -e '(with-track-in <path> (lambda (v2 pth v1) (format #t "~s: ~a\n" pth v1)))'
@@ -260,12 +262,12 @@ General instructions may be found in [INSTALL](). MacOS support is experimental,
 
 ``` shell
 cd /tmp
-curl -O https://github.com/sp1ff/scribbu/archive/v0.5.tar.gz
+curl -O https://github.com/sp1ff/scribbu/archive/v0.6.tar.gz
 xcode-select --install
 brew install openssl libiconv
 brew install -vf --build-from-source --cc=clang boost@1.60
-tar -zxvf scribbu-0.5.tar.gz
-cd scribbu-0.5
+tar -zxvf scribbu-0.6.tar.gz
+cd scribbu-0.6
 ./configure --with-boost=/usr/local/opt/boost@1.60 \
     --with-openssl=/usr/local/opt/openssl \
     CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
