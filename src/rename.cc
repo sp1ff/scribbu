@@ -250,7 +250,15 @@ namespace {
 
       po::store(parsed, vm);
 
-      parsed = po::parse_environment(nocli, "SCRIBBU");
+      const map<string, string> ENV_OPTS {
+        make_pair("SCRIBBU_DRY_RUN", "dry-run"),
+        make_pair("SCRIBBU_OUTPUT", "output"),
+        make_pair("SCRIBBU_VERBOSE", "verbose"),
+      };
+      parsed = po::parse_environment(opts, [&ENV_OPTS](const string &var) {
+        auto p = ENV_OPTS.find(var);
+        return ENV_OPTS.end() == p ? "" : p->second.c_str();
+      });
       po::store(parsed, vm);
 
       // That's it-- the list of files and/or directories to be processed

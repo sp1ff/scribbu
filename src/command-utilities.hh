@@ -214,6 +214,39 @@ public:
   enum class v2_simple_tag_scope_policy { all, none };
 
 public:
+  enum class unknown_op {
+    create_v1_from_v2,
+    create_v1,
+    create_v2_from_v1,
+    create_v2,
+    process_v1,
+    process_v2_2,
+    process_v2_3,
+    process_v2_4,
+  };
+  /// subclasses will throw in response to un-implemented virtuals being invoked
+  class bad_operation: public scribbu::error {
+  public:
+    bad_operation(unknown_op op): op_(op)
+    { }
+    virtual const char * what() const noexcept(true);
+  private:
+    unknown_op op_;
+    mutable std::shared_ptr<std::string> pwhat_;
+  };
+
+  /// Thrown in response to an unknown ID3v2 version
+  class bad_id3v2_version: public scribbu::error {
+  public:
+    bad_id3v2_version(unsigned char ver): ver_(ver)
+    { }
+    virtual const char * what() const noexcept(true);
+  private:
+    unsigned char ver_;
+    mutable std::shared_ptr<std::string> pwhat_;
+  };
+
+public:
   tagset_processor(v2_simple_tag_scope_policy v2sp,
                    v1_tag_scope_policy v1tsp,
                    v2_creation_policy v2c,
@@ -225,7 +258,7 @@ public:
     tagset_processor(v2_simple_tag_scope_policy::all == v2sp ?
                      v2_tag_scope_policy::all :
                      v2_tag_scope_policy::none,
-                     v1tsp, v2c, v1c, dry_run, verbose_, adjust_unsync,
+                     v1tsp, v2c, v1c, dry_run, verbose, adjust_unsync,
                      create_backups)
   { }
   template <typename FII>
@@ -238,10 +271,14 @@ public:
                    bool adjust_unsync,
                    bool create_backups) :
     tagset_processor(v2_tag_scope_policy::some, v1tsp, v2c, v1c, dry_run,
-                     verbose_, adjust_unsync, create_backups)
+                     verbose, adjust_unsync, create_backups)
   {
     std::copy(p0, p1, std::back_inserter(v2_tags_));
   }
+
+protected:
+  /// Default ID3v2 tag padding, in bytes
+  const size_t DEFAULT_PADDING = 1024;
 
 private:
   // For internal use through delegation
@@ -255,6 +292,8 @@ private:
                    bool create_backups);
 
 public:
+  bool dry_run() const
+  { return dry_run_; }
   v1_creation_policy get_v1_creation_policy() const
   { return v1_creation_policy_; }
   v1_tag_scope_policy get_v1_tag_scope_policy() const
@@ -329,8 +368,9 @@ private:
           replace_tagset_copy(pth, p0, p1, au);
         } else {
           maybe_emplace_tagset(pth, p0, p1, au,
-                               emplace_strategy::only_with_full_padding,
-                               padding_strategy::adjust_padding_evenly);
+                               emplace_strategy::reduce_padding_evenly,
+                               padding_strategy::adjust_padding_evenly,
+                               false);
         } // End if on `create_backups'.
         if (pv1) {
           replace_id3v1(pth, *pv1);
@@ -386,57 +426,53 @@ namespace detail {
   std::tuple<bool, std::string>
   find_frame(scribbu::id3v2_text_frames frm, FII p0, FII p1)
   {
-    bool hit = false;
-    std::string text;
-    for ( ; p0 != p1; ++p0) {
-      // TODO(sp1ff): awful
-      text = (*p0)->text(frm);
-      if (text.length()) {
-        hit = true;
-        break;
-      }
-    }
-    return std::make_tuple(hit, text);
+    using namespace std;
+    using namespace scribbu;
+    string text;
+    auto p = find_if(p0, p1, [&](const unique_ptr<id3v2_tag> &p) {
+      text = p->text(frm);
+      return !text.empty();
+    });
+    return make_tuple(p == p1, text);
   }
 
   template <typename FII> // Forward Input Iterator => id3v2_tag
   std::tuple<bool, std::array<char, 4>>
   find_year(FII p0, FII p1)
   {
+    using namespace std;
+    using namespace scribbu;
     std::array<char, 4> year = {{ 0, 0, 0, 0 }};
-    bool hit = false;
-    std::string text;
-    for ( ; p0 != p1; ++p0) {
-      // TODO(sp1ff): awful
-      text = (*p0)->year();
-      if (4 == text.length()) {
-        hit = true;
-        break;
-      }
-    }
-    if (hit) {
+    string text;
+
+    typedef typename FII::value_type T;
+    auto p = find_if(p0, p1, [&](const T &p) {
+      text = p->year();
+      return 4 == text.length();
+    });
+    if (p != p1) {
       copy_n(text.begin(), 4, year.data());
     }
-    return std::make_tuple(hit, year);
+    return make_tuple(p != p1, year);
   }
 
-  template <typename FII> // Forward Input Iterator => id3v2_tag
+  template <typename FII> // Forward Input Iterator => id3v2_tag*
   std::tuple<bool, std::string, unsigned char>
   find_content_type(FII p0, FII p1)
   {
     using namespace std;
 
     bool hit = false;
-    // TODO(sp1ff): correct?
-    size_t best_dl = 22; // longest Winamp genre
+    size_t best_dl = SIZE_MAX;
     std::string best_text_match;
     unsigned char best_numeric_match;
-    for ( ; p0 != p1; ++p0) {
-      // TODO(sp1ff): awful
-      std::string text = (*p0)->content_type();
+
+    typedef typename FII::value_type T;
+    for_each(p0, p1, [&](const T &p) {
+      string text = p->content_type();
       if (text.length()) {
         size_t dl;
-        std::string textual_genre;
+        string textual_genre;
         unsigned char numeric_genre;
         tie(textual_genre, numeric_genre, dl) = scribbu::match_winamp_genre(text);
         if (dl < best_dl) {
@@ -446,7 +482,8 @@ namespace detail {
           best_numeric_match = numeric_genre;
         }
       }
-    }
+    });
+
     if (hit) {
       return make_tuple(true, best_text_match, best_numeric_match);
     } else {
@@ -486,30 +523,30 @@ copy_id3_v2(FII p0, FII p1)
 }
 
 /// Create a new ID3v2 tag given an ID3v1 tag
-std::unique_ptr<scribbu::id3v2_tag>
+std::unique_ptr<scribbu::id3v2_3_tag>
 copy_id3_v1(const scribbu::id3v1_tag &v1);
 
-// TODO(sp1ff): IN-PROGRESS
+template <typename FII,  // Forward Input Iterator => fs::path
+          typename Functor>
+void
+process_dirent_args(FII p0, FII p1, Functor &F)
+{
+  using namespace std;
 
-// template <typename Functor>
-// void
-// process_dirent_arg(const boost::filesystem::path &pth, Functor &F)
-// {
-//   using namespace std;
+  using boost::filesystem::directory_iterator;
+  using boost::filesystem::is_directory;
+  using boost::filesystem::path;
 
-//   using boost::filesystem::directory_iterator;
-//   using boost::filesystem::is_directory;
-//   using boost::filesystem::path;
-
-//   if (is_directory(pth)) {
-//     for_each(directory_iterator(pth), directory_iterator(),
-//              [=](const path &p) { process_dirent_arg(p, F); });
-//   } else if (is_regular_file(pth)) {
-//     F.process_file(pth);
-//   } else if (F.verbose()) {
-//     cout << "skipping non-file `" << pth << "'" << endl;
-//   }
-// }
+  for_each(p0, p1, [&F](const boost::filesystem::path &pth) {
+    if (is_directory(pth)) {
+      process_dirent_args(directory_iterator(pth), directory_iterator(), F);
+    } else if (is_regular_file(pth)) {
+      F.process_file(pth);
+    } else if (F.verbose()) {
+      cout << "skipping non-file `" << pth << "'" << endl;
+    }
+  });
+}
 
 // Convert (argc, argv) style parameters to a collection of tokens
 template <typename forward_output_iterator>

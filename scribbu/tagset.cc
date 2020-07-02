@@ -46,13 +46,9 @@ const char * scribbu::invalid_tagset_request::what() const noexcept
       // LATER(sp1ff): how to architect an exception class where this isn't
       // necessary
     default:
-      // Should never happen
-      throw std::logic_error("you didn't keep invalid_tagset_request::"
-                             "cause up-to-date");
+      pwhat_.reset(new std::string("you didn't keep invalid_tagset_request::"
+                                   "cause up-to-date"));
     }
   }
   return pwhat_->c_str();
 }
-
-
-

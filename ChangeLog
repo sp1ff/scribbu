@@ -1,3 +1,17 @@
+2020-07-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Final commit of the `genre' sub-command.
+	This commit completes the implementation of the `genre' sub-
+	command:
+
+	    1. add'nl tests & fixes for the bugs found therefrom
+
+	    2. moved the `xtag' sub-command over to the tagset_processor
+	       framework
+
+	    3. moved the `popm' sub-command over to the tagset_processor
+	       framework
+
 2020-06-27  Michael Herstine  <sp1ff@pobox.com>
 
 	Initial commit for the `genre' sub-command.

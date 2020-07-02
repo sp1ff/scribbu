@@ -1007,10 +1007,6 @@ namespace scribbu {
     /// compression, and/or encryption exclusive of the header
     virtual std::size_t size() const;
 
-    // TODO(sp1ff): why?
-    // std::size_t count() const
-    // { return play_count::count(); }
-
   protected:
     /// Serialize this frame to \a os, exclusive of any compression, encryption
     /// or unsynchronisation; return the number of bytes written

@@ -27,6 +27,10 @@
 
 #include <memory>
 
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
+#include <scribbu/errors.hh>
 #include <scribbu/winamp-genres.hh>
 
 namespace fs = boost::filesystem;
@@ -108,6 +112,8 @@ For detailed help, say `scribbu genre --help'. To see the manual, say
 `info "scribbu (genre)"'.
 )usage");
 
+using scribbu::UNDEFINED_GENRE;
+
 ////////////////////////////////////////////////////////////////////////////////
 //                      functor for processing tagsets                        //
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +137,19 @@ For detailed help, say `scribbu genre --help'. To see the manual, say
 class set_genre: public tagset_processor
 {
 public:
+
+  class bad_numeric_genre: public scribbu::error
+  {
+  public:
+    bad_numeric_genre(unsigned char bad_genre): bad_genre_(bad_genre)
+    { }
+    virtual const char * what() const noexcept(true);
+  private:
+    unsigned char bad_genre_;
+    mutable std::shared_ptr<std::string> pwhat_;
+  };
+
+public:
   // There are three ways to specify the genre; they are mutually
   // exlcusive & exactly one must be given:
   //
@@ -153,13 +172,13 @@ public:
             bool verbose,
             bool adjust_unsync,
             bool create_backups):
-    tagset_processor(v2sp, v1tsp, v2c, v1c, dry_run, verbose, adjust_unsync,
-                     create_backups),
+    tagset_processor(v2sp, v1tsp, v2c, v1c, dry_run, verbose,
+                     adjust_unsync, create_backups),
     genre_(genre)
   {
     auto x = scribbu::text_for_genre(genre_);
     if (!x) {
-      // TODO(sp1ff): logical error-- what to throw?
+      throw bad_numeric_genre(genre);
     }
     content_type_ = *x;
 
@@ -171,6 +190,7 @@ public:
             v1_tag_scope_policy v1tsp,
             v2_creation_policy v2c,
             v1_creation_policy v1c,
+            unsigned char v1_genre,
             bool dry_run,
             bool verbose,
             bool adjust_unsync,
@@ -178,16 +198,16 @@ public:
     tagset_processor(v2sp, v1tsp, v2c, v1c, dry_run, verbose, adjust_unsync,
                      create_backups)
   {
-    unsigned char v1genre;
-    std::string content_type;
     size_t dist;
-    tie(content_type, v1genre, dist) = scribbu::match_winamp_genre(genre);
+    unsigned char v1_match;
+    std::string content_type;
+    tie(content_type, v1_match, dist) = scribbu::match_winamp_genre(genre);
     if (best_match) {
       content_type_ =  content_type;
-      genre_ = v1genre;
+      genre_ = v1_match;
     } else {
       content_type_ = genre;
-      genre_ = v1genre;
+      genre_ = v1_genre == UNDEFINED_GENRE ? v1_match : v1_genre;
     }
   }
   /// winamp-genre, some ID3v2 tags processed
@@ -208,7 +228,7 @@ public:
   {
     auto x = scribbu::text_for_genre(genre_);
     if (!x) {
-      // TODO(sp1ff): logical error-- what to throw?
+      throw bad_numeric_genre(genre);
     }
     content_type_ = *x;
 
@@ -222,6 +242,7 @@ public:
             v1_tag_scope_policy v1tsp,
             v2_creation_policy v2c,
             v1_creation_policy v1c,
+            unsigned char v1_genre,
             bool dry_run,
             bool verbose,
             bool adjust_unsync,
@@ -230,15 +251,15 @@ public:
                      create_backups)
   {
     std::string content_type;
-    unsigned char v1genre;
+    unsigned char v1_match;
     size_t dist;
-    tie(content_type, v1genre, dist) = scribbu::match_winamp_genre(genre);
+    tie(content_type, v1_match, dist) = scribbu::match_winamp_genre(genre);
     if (best_match) {
       content_type_ =  content_type;
-      genre_ = v1genre;
+      genre_ = v1_match;
     } else {
       content_type_ = genre;
-      genre_ = v1genre;
+      genre_ = v1_genre == UNDEFINED_GENRE ? v1_match : v1_genre;
     }
   }
 
@@ -267,6 +288,18 @@ private:
   unsigned char genre_;
   std::string content_type_;
 };
+
+/*virtual*/
+const char *
+set_genre::bad_numeric_genre::what() const noexcept(true)
+{
+  if (!pwhat_) {
+    std::stringstream stm;
+    stm << "invalid ID3v1 numeric genre " << (int)bad_genre_;
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
 
 /// Create a new ID3v1 tag when there are ID3v2 tags present
 /*virtual*/
@@ -301,8 +334,7 @@ set_genre::create_v2(const scribbu::id3v1_tag &v1)
 /*virtual*/ std::unique_ptr<scribbu::id3v2_tag>
 set_genre::create_v2()
 {
-  // TODO(sp1ff): numeric literal
-  auto p = std::make_unique<scribbu::id3v2_3_tag>(1024);
+  auto p = std::make_unique<scribbu::id3v2_3_tag>(DEFAULT_PADDING);
   p->content_type(content_type_);
   return p;
 }
@@ -313,7 +345,10 @@ set_genre::process_v1(scribbu::id3v1_tag &v1)
 {
   v1.set_genre(genre_);
   if (v1.enhanced()) {
-    // TODO(sp1ff): set enhanced genre?
+    auto opt = scribbu::text_for_genre(genre_);
+    if (opt) {
+      v1.set_enh_genre(*opt);
+    }
   }
   return true;
 }
@@ -353,8 +388,7 @@ set_genre::process_v2(scribbu::id3v2_4_tag &v2)
 
 namespace {
 
-  /// Print the Winamp genre list on stdout
-  void print_winamp_genres()
+  void print_winamp_genres(std::ostream &os)
   {
     using namespace std;
 
@@ -364,8 +398,102 @@ namespace {
     scribbu::get_id3v1_genre_list(scribbu::id3v1_genre_generation::winamp_5_6, back_inserter(genres));
     for (auto t: genres) {
       tie(num, text) = t;
-      cout << setw(3) << setfill(' ') << num << ": " << text << endl;
+      os << setw(3) << setfill(' ') << (unsigned int)num << ": " << text << endl;
     }
+  }
+
+  /**
+   * \brief Print the Winamp genre list on stdout, perhaps piped through a pager
+   *
+   *
+   * \param no_pager [in] if the caller sets this to true, the list of Winamp-
+   * defined genres will just be printed to stdout (rather than piped through
+   * a pager)
+   *
+   *
+   * This method will display the list of 192 Winamp-defined genres. By default,
+   * this will be piped through a pager. The pager shall be determined by, in
+   * order of precedence:
+   *
+   * 1. the environment variable SCRIBBU_PAGER
+   *
+   * 2. the environment variable PAGER
+   *
+   * 3. less
+   *
+   *
+   */
+
+  void winamp_genres(bool no_pager)
+  {
+    using namespace std;
+    using namespace boost::algorithm;
+
+    static const char * const LESS = "less";
+
+    const ios::iostate EXC_MASK = ios::eofbit  |
+                                  ios::failbit |
+                                  ios::badbit;
+    if (no_pager) {
+      print_winamp_genres(cout);
+      return;
+    }
+
+    // Figure out what pager to use...
+    const char * pager = getenv("SCRIBBU_PAGER");
+    if (!pager) {
+      pager = getenv("PAGER");
+      if (!pager) {
+        pager = LESS;
+      }
+    }
+
+    // `pager' will generally be something like "less", but may point to
+    // something like "less -FRX", or worse "/foo/bar\ splat/my-less -xyz" or
+    // "'/foo/bar splat/my-less' -xyz" or God knows what sort of shell-escaped
+    // string. I'm going to punt for now and just break up the command by space.
+    std::vector<std::string> args;
+    split(args, pager, is_any_of(" \t"));
+
+    // Ideally, I'd be using std::tmpfile or mkstmp; functions that determine the
+    // temporary name & open it atomically, to avoid the race condition (and
+    // threat vector) of having a process determine the name, a second process
+    // create open a file by that name, and the first then opening it. The
+    // problem is that such implementations will delete the temp file as
+    // soon as I close my handle to it, and I'm not sure what will happen
+    // when I exec another process.
+
+    // My (admittedly poor) solution is to live with the race condition &
+    // trucnate on open, hoping to merely stomp on the other process' file in
+    // the event I hit it (the race condition).
+    fs::path tmpnam = fs::temp_directory_path() / fs::unique_path();
+    fs::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
+    tmpfs.exceptions(EXC_MASK);
+    print_winamp_genres(tmpfs);
+    tmpfs.close();
+
+    // The next step is to exec the pager, with an input file of `tmpnam'. I
+    // want to use the PATH, and I don't know at compile-time how many arguments
+    // I have, so I have to call `execvp', which takes a (const) array of
+    // pointers to char (not pointers to const char)-- that means I need to
+    // either call `c_str()' on each member of `args' & cast away the const-ness,
+    // or `strdup' 'em.
+
+    // I chose the later, and, even worse, don't bother freeing the memory,
+    // since I'm about to kill this process, anyway.
+    char **argv = new char*[args.size() + 2];
+    for (size_t i = 0; i < args.size(); ++i) {
+      argv[i] = strdup(args[i].c_str());
+    }
+    argv[args.size()] = strdup(tmpnam.c_str());
+    argv[args.size() + 1] = 0;
+
+    execvp(args[0].c_str(), argv);
+
+    // If we're here, `execvp' failed.
+    stringstream stm;
+    stm << "Failed to exec man: [" << errno << "]: " << strerror(errno);
+    throw runtime_error(stm.str());
   }
 
   /// Take the three command line args that specify the genre, return a
@@ -387,8 +515,7 @@ namespace {
     //   3. Genre (-G GENRE): take GENRE unconditionally
 
     unsigned char scratch = 0;
-    // TODO(sp1ff): numeric literal
-    if (255 != winamp_genre) {
+    if (UNDEFINED_GENRE != winamp_genre) {
       scratch |= 1;
     }
     if (!winamp_text_genre.empty()) {
@@ -403,8 +530,7 @@ namespace {
 
     switch (scratch) {
     case 0:
-      // TODO(sp1ff): EXCEPTION
-      throw std::runtime_error("at least one of -w, -g or -G must be given");
+      throw po::error("at least one of -w, -g or -G must be given");
     case 1:
       /* OK */
       break;
@@ -417,8 +543,7 @@ namespace {
       best_match = false;
       break;
     default:
-      // TODO(sp1ff): EXCEPTION
-      throw std::runtime_error("at most one of -w, -g or -G may be given");
+      throw po::error("at most one of -w, -g or -G may be given");
     }
 
     return make_tuple(textual_genre, best_match);
@@ -447,7 +572,6 @@ namespace {
       scratch |= 4;
     }
 
-    scratch = 0;
     switch (scratch) {
     case 0: // nothing specified-- defaults
       v1tsp = tagset_processor::v1_tag_scope_policy::yes;
@@ -470,8 +594,7 @@ namespace {
       v2tsp = tagset_processor::v2_tag_scope_policy::some;
       break;
     default:
-      // TODO(sp1ff): EXCEPTION
-      throw std::runtime_error("invalid combination of -1, -2 & -t");
+      throw po::error("invalid combination of -1, -2 & -t");
     }
 
     return std::make_tuple(v2tsp, v1tsp);
@@ -541,43 +664,23 @@ namespace {
       v2cp = tagset_processor::v2_creation_policy::always;
       break;
     default:
-      throw po::validation_error(po::validation_error::multiple_values_not_allowed,
-                                 "Only one each of -a & -A, -c & -C may be given");
+      throw po::error("Only one each of -a & -A, -c & -C may be given");
     }
 
     return std::make_tuple(v2cp, v1cp);
   }
 
-  void
-  process_dirent_arg(const boost::filesystem::path &pth, set_genre &F)
-  {
-    using namespace std;
-
-    using boost::filesystem::directory_iterator;
-    using boost::filesystem::is_directory;
-    using boost::filesystem::path;
-
-    if (is_directory(pth)) {
-      for_each(directory_iterator(pth), directory_iterator(),
-               [&](const path &p) { process_dirent_arg(p, F); });
-    } else if (is_regular_file(pth)) {
-      F.process_file(pth);
-    } else if (F.verbose()) {
-      cout << "skipping non-file `" << pth << "'" << endl;
-    }
-  }
-
-  /// Set the genre for some files--
+  /// Set the genre for some files
   void genre(unsigned char winamp_genre,
              const std::string &winamp_text_genre,
              const std::string &free_form_genre,
+             unsigned char v1_genre,
              bool v1_only,
              bool v2_only,
              bool create_v2,
              bool create_v2_always,
              bool create_v1,
              bool create_v1_always,
-             // TODO(sp1ff): pass a range instead?
              const std::vector<size_t> &tags,
              bool dry_run,
              bool verbose,
@@ -587,63 +690,55 @@ namespace {
   {
     using namespace std;
 
+    typedef tagset_processor::v2_tag_scope_policy v2_tag_scope_policy;
+    typedef tagset_processor::v2_simple_tag_scope_policy v2_simple_tag_scope_policy;
+    typedef tagset_processor::v2_tag_scope_policy v2_tag_scope_policy;
+    typedef tagset_processor::v1_tag_scope_policy v1_tag_scope_policy;
+    typedef tagset_processor::v2_creation_policy v2_creation_policy;
+    typedef tagset_processor::v1_creation_policy v1_creation_policy;
+
     bool best_match;
     string textual_genre;
     tie(textual_genre, best_match) = textual_genre_for_args(winamp_genre,
                                                             winamp_text_genre,
                                                             free_form_genre);
-    tagset_processor::v2_tag_scope_policy v2tsp;
-    tagset_processor::v1_tag_scope_policy v1tsp;
+    v2_tag_scope_policy v2tsp;
+    v1_tag_scope_policy v1tsp;
     tie(v2tsp, v1tsp) = tag_scope_policies_for_args(v2_only, v1_only, tags);
 
-    tagset_processor::v2_creation_policy v2cp;
-    tagset_processor::v1_creation_policy v1cp;
+    v2_creation_policy v2cp;
+    v1_creation_policy v1cp;
     tie(v2cp, v1cp) = tag_creation_policies_for_args(create_v2, create_v2_always,
                                                      create_v1, create_v1_always);
 
-    // TODO(sp1ff): in-progress
-    typedef tagset_processor::v2_tag_scope_policy v2_tag_scope_policy;
-    typedef tagset_processor::v2_simple_tag_scope_policy v2_simple_tag_scope_policy;
-    typedef tagset_processor::v2_tag_scope_policy v2_tag_scope_policy;
-
     // Ho-kay: let's build-up the functor that will actually set the genre...
     std::unique_ptr<set_genre> pF;
-    // TODO(sp1ff): numeric literal
-    if (winamp_genre != 255 && v2_tag_scope_policy::some != v2tsp) {
+    if (winamp_genre != UNDEFINED_GENRE && v2_tag_scope_policy::some != v2tsp) {
       pF.reset(new set_genre(winamp_genre,
                              v2_tag_scope_policy::all == v2tsp ?
                              v2_simple_tag_scope_policy::all :
                              v2_simple_tag_scope_policy::none,
                              v1tsp, v2cp, v1cp, dry_run, verbose,
                              adjust_unsync, create_backups));
-    } else if (winamp_genre == 255 && v2_tag_scope_policy::some != v2tsp) {
-    // TODO(sp1ff): numeric literal
+    } else if (winamp_genre == UNDEFINED_GENRE && v2_tag_scope_policy::some != v2tsp) {
       pF.reset(new set_genre(textual_genre, best_match,
                              v2_tag_scope_policy::all == v2tsp ?
                              v2_simple_tag_scope_policy::all :
                              v2_simple_tag_scope_policy::none,
-                             v1tsp, v2cp, v1cp, dry_run, verbose,
+                             v1tsp, v2cp, v1cp, v1_genre, dry_run, verbose,
                              adjust_unsync, create_backups));
-    // TODO(sp1ff): numeric literal
-    } else if (winamp_genre != 255 && v2_tag_scope_policy::some == v2tsp) {
+    } else if (winamp_genre != UNDEFINED_GENRE && v2_tag_scope_policy::some == v2tsp) {
       pF.reset(new set_genre(winamp_genre, tags.begin(), tags.end(),
                              v1tsp, v2cp, v1cp, dry_run, verbose,
                              adjust_unsync, create_backups));
-    // TODO(sp1ff): numeric literal
-    } else if (winamp_genre == 255 && v2_tag_scope_policy::some == v2tsp) {
+    } else { // (winamp_genre == UNDEFINED_GENRE && v2_tag_scope_policy::some == v2tsp)
       pF.reset(new set_genre(textual_genre, best_match,
                              tags.begin(), tags.end(),
-                             v1tsp, v2cp, v1cp, dry_run, verbose,
+                             v1tsp, v2cp, v1cp, v1_genre, dry_run, verbose,
                              adjust_unsync, create_backups));
-    } else {
-      // TODO(sp1ff): should never be here-- provide more information?
-      throw std::logic_error("");
     }
 
-    for_each(args.begin(), args.end(), [&pF](const fs::path &pth) {
-      set_genre &F = const_cast<set_genre&>(*pF);
-      process_dirent_arg(pth, F);
-    });
+    process_dirent_args(args.begin(), args.end(), *pF);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -657,8 +752,8 @@ namespace {
    * \sa register_command
    *
    *
-   * `winamp genre' is a sub-command that takes a lot of options governing a lot
-   * of behavior (fifteen options not including help at the time of this
+   * `scribbu genre' is a sub-command that takes a lot of options governing a
+   * lot of behavior (fifteen options not including help at the time of this
    * writing, and they interact in various ways). It's about as complex as I can
    * make a scribbu sub-command and still have it be usable via the command-line
    * interface (as opposed to exposing it via the Scheme library).
@@ -670,6 +765,7 @@ namespace {
   handle_genre(int argc, char **argv)
   {
     using namespace std;
+    using namespace scribbu;
 
     int status = EXIT_SUCCESS;
 
@@ -727,6 +823,8 @@ namespace {
       ("Genre,G", po::value<string>(), "Genre, free-form text")
       ("list-winamp-genres,W", po::bool_switch(), "Display all 192 Winamp genres"
        " by number & name on stdout & exit")
+      ("no-pager,P", po::bool_switch(), "Do not pipe the output of --list-winam"
+       "p-genres through a pager")
       ("tag,t", po::value<vector<size_t>>(), "Zero-based index of the ID3v2 "
        "tag on which to operate; may be given more than once to select "
        "multiple tags")
@@ -742,15 +840,12 @@ namespace {
     po::options_description xopts("hidden options");
     xopts.add_options()
       // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      ("arguments", po::value<std::vector<string>>()->required(), "one or more "
+      ("arguments", po::value<std::vector<string>>(), "one or more "
        "files or directories to be examined; if a directory is given, it will "
        "be searched recursively");
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
-
-    po::options_description nocli;
-    nocli.add(opts).add(xopts);
 
     po::options_description all;
     all.add(clopts).add(xclopts).add(opts).add(xopts);
@@ -774,7 +869,22 @@ namespace {
 
       po::store(parsed, vm);
 
-      parsed = po::parse_environment(nocli, "SCRIBBU");
+      const map<string, string> ENV_OPTS {
+        make_pair("SCRIBBU_ADJUST_UNSYNC","adjust-unsync"),
+        make_pair("SCRIBBU_ALWAYS_CREATE_V2","always-create-v2"),
+        make_pair("SCRIBBU_ALWAYS_CREATE_V1","always-create-v1"),
+        make_pair("SCRIBBU_CREATE_BACKUPS","create-backups"),
+        make_pair("SCRIBBU_CREATE_V1","create-v1"),
+        make_pair("SCRIBBU_CREATE_V2","create-v2"),
+        make_pair("SCRIBBU_DRY_RUN","dry-run"),
+        make_pair("SCRIBBU_V1_ONLY","v1-only"),
+        make_pair("SCRIBBU_V2_ONLY","v2-only"),
+        make_pair("SCRIBBU_VERBOSE","verbose"),
+      };
+      parsed = po::parse_environment(opts, [&ENV_OPTS](const string &var) {
+        auto p = ENV_OPTS.find(var);
+        return ENV_OPTS.end() == p ? "" : p->second.c_str();
+      });
       po::store(parsed, vm);
 
       // That's it-- the list of files and/or directories to be processed
@@ -793,41 +903,45 @@ namespace {
       bool create_v1          = vm["create-v1"         ].as<bool>();
       bool dry_run            = vm["dry-run"           ].as<bool>();
       bool list_winamp_genres = vm["list-winamp-genres"].as<bool>();
+      bool no_pager           = vm["no-pager"          ].as<bool>();
       bool v1_only            = vm["v1-only"           ].as<bool>();
       bool v2_only            = vm["v2-only"           ].as<bool>();
       bool verbose            = vm["verbose"           ].as<bool>();
 
-      unsigned char winamp_int_genre = 255;
+      unsigned char winamp_int_genre = UNDEFINED_GENRE;
       if (vm.count("winamp")) {
         unsigned int scratch = vm["winamp"].as<unsigned int>();
         if (192 > scratch) {
           winamp_int_genre = (unsigned char) scratch;
         } else {
-          // TODO(sp1ff): exceptoin
-          throw std::runtime_error("bad integer winamp genre");
+          throw po::invalid_option_value("winamp");
         }
       }
 
       string winamp_text_genre;
       if (vm.count("genre")) {
         winamp_text_genre = vm["genre"].as<string>();
-        // TODO(sp1ff): convert to UTF-8
+        winamp_text_genre = convert_encoding<string>(winamp_text_genre.c_str(),
+                                                     winamp_text_genre.length(),
+                                                     encoding_from_system_locale(),
+                                                     encoding::UTF_8);
       }
 
       string free_form_genre;
       if (vm.count("Genre")) {
-        // TODO(sp1ff): convert to UTF-8
         free_form_genre = vm["Genre"].as<string>();
+        free_form_genre = convert_encoding<string>(free_form_genre.c_str(),
+                                                   free_form_genre.length(),
+                                                   encoding_from_system_locale(),
+                                                   encoding::UTF_8);
       }
 
-      // TODO(sp1ff): numeric literal
-      // TODO(sp1ff): used? I think there's a bug lurking here
-      unsigned char v1_genre = 255;
+      unsigned char v1_genre = UNDEFINED_GENRE;
       if (vm.count("v1")) {
         v1_genre = vm["v1"].as<unsigned char>();
       }
 
-      vector<size_t> tags = {{ 0 }};
+      vector<size_t> tags;
       if (vm.count("tag")) {
         tags = vm["tag"].as<vector<size_t>>();
       }
@@ -849,12 +963,16 @@ namespace {
       // we wouldn't start processing `arguments' is if the Winamp genre list
       // was requested:
       if (list_winamp_genres) {
-        print_winamp_genres();
+        winamp_genres(no_pager);
       }
       else {
-        genre(winamp_int_genre, winamp_text_genre, free_form_genre, v1_only, v2_only,
-              create_v2, always_create_v2, create_v1, always_create_v1, tags,
-              dry_run, verbose, adj_unsync, create_backups, args);
+        if (args.empty()) {
+          throw po::error("no inputs given");
+        }
+        genre(winamp_int_genre, winamp_text_genre, free_form_genre, v1_genre,
+              v1_only, v2_only, create_v2, always_create_v2, create_v1,
+              always_create_v1, tags, dry_run, verbose, adj_unsync,
+              create_backups, args);
       }
 
     } catch (const po::error &ex) {

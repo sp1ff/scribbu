@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+
 #include "command-utilities.hh"
 
 #include <queue>
@@ -29,6 +30,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
 
@@ -37,7 +39,6 @@
 #include <scribbu/id3v24.hh>
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/tagset.hh>
-
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -51,7 +52,7 @@ in the files named on the command line. If an argument is a directory, increment
 the play count in all files in the directory tree rooted at that argument
 containing ID3v2 tags.
 
-This operation can be scoped in a number of ways:
+This operation can be scoped in a few ways:
 
     scribbu popm -t=1 ...
 
@@ -63,239 +64,281 @@ will only modify PCNT frames (not POPM).
 
     scribbu popm -m
 
-will only modify POPM frames (not PCNT). Many options can be combined:
+will only modify POPM frames (not PCNT).
 
-    scribbu popm -t 0 -o sp1ff@pbox.com -c 111
+    scribbu popm -o sp1ff@pobox.com
 
-will set the play count to 111 in the first ID3v2 tag in the POPM
-frame with owner sp1ff@pobox.com.
+will only modify POPM frames with an owner field of "sp1ff@pobox.com".
+
+While the default effect on the play count(s) is to increment by one, this can
+also be modified in a few ways:
+
+      --count=C,-c C: explicitly set the play count to C
+  --increment=I,-i I: increment the play count by I (instead of 1)
+
+This command can also be used to set the rating. The ID3v2 POPM frame expresses
+the rating as an unsigned int from 0 to 255 inclusive. The user may specify that
+rating in one of two ways:
+
+    1. by simply providing such a number: e.g. --rating=128
+
+    2. in terms of "stars"; many applications express ratings in terms of one to
+       five stars. The most natural way to express this would seem to be the
+       asterisk, but since that would likely be inconvenient in the shell,
+       scribbu will accept almost any character, repeated one-to-five times, as
+       "stars": --rating=###
+
+In the second case, scribbu will map from "stars" to POPM ratings as follows:
+
+    | "stars" | numeric |
+    +---------+---------|
+    | *       |       1 |
+    | **      |      64 |
+    | ***     |     128 |
+    | ****    |     196 |
+    | *****   |     255 |
+
+Readers of a certain age may recognize that as Winamp's scheme.
+
+The question arises: what if a given frame (PCNT, say) doesn't exist in a tag
+selected for procesing? By default, nothing. That can be changed with the
+--create flag, which will create the missing frame if possible.
+
+If no ID3v2 tag exists whatsoever, by default no action will be taken. This
+behavior can be changed with the following two flags:
+
+         -c,--create-v2  create an ID3v2.3 tag & add the relevant frame(s) to
+                         it for any file that has an ID3v1 tag, but no ID3v2 tag
+  -a,--always-create-v2  create an ID3v2.3 tag & add the relevant frame(s) to
+                         it for any file that does not have an ID3v2.3 tag,
+                         regardless of the presence or absence of an ID3v1 tag;
+                         use this with caution when operating on directories,
+                         or you may find assorted non-musical files have had
+                         an ID3v2 tag prepended to them
+
+
+Finally, serialization of new or updated tags can be modified with the following
+options:
+
+          -n,--dry-run  don't actually modify any files; just print what *would*
+                        be done on stdout
+    -u,--adjust-unsync  update the unsynchronisatoin flag as needed on write
+                        (the default is to just never use it)
+   -b,--create-backups  create a backup copy of each file before writing new or
+                        updated tags (this is good for experimenting or gaining
+                        confidence with the tool)
 
 For detailed help, say `scribbu popm --help'. To see the manual, say
 `info "scribbu (popm) "'.
 )");
 
+/**
+ * \struct rating_tag
+ *
+ * \brief represents a POPM rating; exists as a separate type only to
+ * participate in boost program options validation
+ *
+ *
+ * Cf. <a href="https://www.boost.org/doc/libs/1_58_0/doc/html/program_options/howto.html#idp337860416">
+ * here</a> for the documentation on this system, and
+ * <a href="https://github.com/boostorg/program_options/blob/develop/example/regex.cpp">
+ * here</a> for an example.
+ *
+ *
+ */
 
 ////////////////////////////////////////////////////////////////////////////////
-//                             handler                                        //
+//                       functor for processing tagsets                       //
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace {
+/**
+ * \brief process_dirent_args-compliant functor for adjusting the ratings and/or
+ * playcount
+ *
+ * \sa process_dirent_args
+ * \sa tagset_processor
+ *
+ *
+ * Since a lot of the logic of processing one or more "file-or-directory"
+ * sub-command arguments, reading their tags & making adjustments is
+ * boilerplate, I've factored it out into the process_dirent_args template free
+ * function & the tagset_processor functor. The logic specific to the `popm'
+ * sub-command resides here.
+ *
+ *
+ */
 
-  /// interpret \a text as a rating
-  unsigned char
-  rating_for_text(const std::string &text, bool linear)
-  {
-    using boost::regex;
-    using boost::smatch;
+class set_pcnt_popm: public tagset_processor
+{
+public:
+  /// Which frames shall we update?
+  enum class frame_policy { both, pcnt_only, popm_only };
+  /// Is the playcount an increment or an absolute number?
+  enum class pc_policy { increment, absolute };
 
-    using namespace std;
+  const size_t DEFAULT_PADDING = 1024;
 
-    // let's try to interpret `text' as an unsigned integer...
-    try {
-      unsigned long ul = stoul(text);
-      // less than or equal to 255...
-      if (255 < ul) {
-        throw std::out_of_range("rating too large");
-      }
-      // done.
-      return (unsigned char) ul;
-    } catch (const std::exception&) {
-      /* swallow */
-    }
+public:
+  set_pcnt_popm(boost::optional<unsigned char> rating,
+                frame_policy fp,
+                const boost::optional<std::string> &owner,
+                size_t pc,
+                pc_policy pc_pol,
+                bool create_frame,
+                v2_creation_policy v2c,
+                bool dry_run,
+                bool verbose,
+                bool adjust_unsync,
+                bool create_backups):
+    tagset_processor(v2_simple_tag_scope_policy::all,
+                     v1_tag_scope_policy::no,
+                     v2c,
+                     v1_creation_policy::never,
+                     dry_run, verbose, adjust_unsync, create_backups),
+    rating_(rating),
+    frame_policy_(fp),
+    owner_(owner),
+    play_count_(pc),
+    play_count_policy_(pc_pol),
+    create_frame_(create_frame)
+  { }
+  template <typename FII>
+  set_pcnt_popm(boost::optional<unsigned char> rating,
+                frame_policy fp,
+                const boost::optional<std::string> &owner,
+                size_t pc,
+                pc_policy pc_pol,
+                bool create_frame,
+                v2_creation_policy v2c,
+                FII p0, FII p1,
+                bool dry_run,
+                bool verbose,
+                bool adjust_unsync,
+                bool create_backups):
+    tagset_processor(p0, p1,
+                     v1_tag_scope_policy::no,
+                     v2c,
+                     v1_creation_policy::never,
+                     dry_run, verbose, adjust_unsync, create_backups),
+    rating_(rating),
+    frame_policy_(fp),
+    owner_(owner),
+    play_count_(pc),
+    play_count_policy_(pc_pol),
+    create_frame_(create_frame)
+  { }
 
-    // OK-- that didn't work. Let's match `text' against a regex
-    // selecting a single character repeated between one & five times.
-    smatch what;
-    regex re1(".{1,5}");
-    if (! regex_match(text, what, re1)) {
-      // Well, that didn't work-- give up: maybe the user fat-fingered
-      // the option?
-      throw po::invalid_option_value("bad rating");
-    }
+public:
+  /// Create a new ID3v1 tag when there are ID3v2 tags present
+  virtual
+  std::unique_ptr<scribbu::id3v1_tag>
+  create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &v2);
+  /// Create a new ID3v1 tag when there are no other tags present
+  virtual std::unique_ptr<scribbu::id3v1_tag> create_v1();
+  /// Create a new ID3v2 tag when there's an ID3v1 tag present
+  virtual std::unique_ptr<scribbu::id3v2_tag>
+  create_v2(const scribbu::id3v1_tag &v1);
+  /// Create a new ID3v2 tag when there are no other tags present
+  virtual std::unique_ptr<scribbu::id3v2_tag> create_v2();
+  /// Process the ID3v1 tag
+  virtual bool process_v1(scribbu::id3v1_tag &v1);
+  /// Process an ID3v2.2 tag
+  virtual bool process_v2(scribbu::id3v2_2_tag &v2);
+  /// Process an ID3v2.3 tag
+  virtual bool process_v2(scribbu::id3v2_3_tag &v2);
+  /// Process an ID3v2.4 tag
+  virtual bool process_v2(scribbu::id3v2_4_tag &v2);
 
-    // So it's a single character repeated a number of times-- is it one we accept?
-    regex re2("[a-zA-Z@#%*+]{1,5}");
-    if (! regex_match(text, what, re1)) {
-      // Stranger, but still we give up:
-      throw po::invalid_option_value("bad rating");
-    }
-
-    size_t n = text.length();
-    if (linear) {
-
-      // Use a linear scale to map from 1-255 to 1-5 stars (0 doesn't matter,
-      // since 0 means "un-rated" & if we're here, the user is applying a
-      // rating.
-
-      // | range   | mid-point | stars |
-      // |---------+-----------+-------|
-      // | 1-51    | 26        | *     |
-      // | 52-102  | 77        | **    |
-      // | 103-153 | 128       | ***   |
-      // | 154-204 | 179       | ****  |
-      // | 205-255 | 230       | ***** |
-      if (1 == n) {
-        return 26;
-      } else if (2 == n) {
-        return 77;
-      } else if (3 == n) {
-        return 128;
-      } else if (4 == n) {
-        return 179;
-      } else {
-        return 230;
-      }
-
-    } else {
-
-      // Use the Winamp 5.666 scheme
-      if (1 == n) {
-        return 1;
-      } else if (2 == n) {
-        return 64;
-      } else if (3 == n) {
-        return 128;
-      } else if (4 == n) {
-        return 196;
-      } else {
-        return 255;
-      }
-
-    }
-
-  }
-
-  //////////////////////////////////////////////////////////////////////////
-  // The processing logic is largely identical for id3v2_{2,3,4}_tag, so it
-  // makes sense to factor it out into a function template.  The logic
-  // requires a set of related types, so I've grouped them into a traits
-  // type. I'm sure there's some kind of template metaprogramming
-  // wizardry that could do this more elegantly, but I'm tired, dirty
-  // & frustrated :)
-  //////////////////////////////////////////////////////////////////////////
-
+private:
   template <typename tag_type>
   struct tag_traits
-  { };
-
-  template <>
-  struct tag_traits<scribbu::id3v2_2_tag>
   {
-    typedef scribbu::id3v2_2_tag   tag_type;
-    typedef scribbu::id3v2_2_frame frame_type;
-    typedef scribbu::CNT           pcnt_type;
-    typedef scribbu::POP           popm_type;
-
-    static bool is_pcnt(const frame_type &F) {
-      static const scribbu::frame_id3 PCNT("CNT");
-      return F.id() == PCNT;
-    }
-
-    static bool is_popm(const frame_type &F) {
-      static const scribbu::frame_id3 POPM("POP");
-      return F.id() == POPM;
-    }
-
-    static pcnt_type make_pcnt(std::size_t n) {
-      return scribbu::CNT(n);
-    }
-
-    static popm_type make_popm(const std::string &email,
-                               unsigned char    rating,
-                               std::size_t      n) {
-      return scribbu::POP(email, rating, n);
-    }
+    // typename tag_type
+    // typename frame_type
+    // typename pcnt_type
+    // typename popm_type
+    // bool is_pcnt(const frame_type&);
+    // bool is_popm(const frame_type&);
+    // pcnt_type make_pcnt(size_t pc);
+    // popm_type make_popm(const string &email, unsigned char rating, size_t pc);
   };
 
-  template <>
-  struct tag_traits<scribbu::id3v2_3_tag>
+  /// Process a PCNT frame
+  template <typename tag_type>
+  size_t process_pcnt(typename tag_type::pcnt_type &G)
   {
-    typedef scribbu::id3v2_3_tag   tag_type;
-    typedef scribbu::id3v2_3_frame frame_type;
-    typedef scribbu::PCNT          pcnt_type;
-    typedef scribbu::POPM          popm_type;
+    using namespace std;
+    using namespace scribbu;
 
-    static bool is_pcnt(const frame_type &F) {
-      static const scribbu::frame_id4 PCNT("PCNT");
-      return F.id() == PCNT;
+    size_t new_pc = play_count_;
+    if (pc_policy::increment == play_count_policy_) {
+      new_pc += G.count();
     }
-
-    static bool is_popm(const frame_type &F) {
-      static const scribbu::frame_id4 POPM("POPM");
-      return F.id() == POPM;
+    if (dry_run() || verbose()) {
+      cout << "Setting PCNT to " << new_pc << "." << endl;
     }
-
-    static pcnt_type make_pcnt(std::size_t n) {
-      using namespace scribbu;
-      return PCNT(n, id3v2_3_plus_frame::tag_alter_preservation::preserve,
-                  id3v2_3_plus_frame::file_alter_preservation::preserve,
-                  id3v2_3_plus_frame::read_only::clear, boost::none,
-                  boost::none, boost::none);
+    if (!dry_run()) {
+      G.count(new_pc);
     }
+    return new_pc;
+  }
 
-    static popm_type make_popm(const std::string &email,
-                               unsigned char    rating,
-                               std::size_t      n) {
-      using namespace scribbu;
-      return POPM(email, rating, n,
-                  id3v2_3_plus_frame::tag_alter_preservation::preserve,
-                  id3v2_3_plus_frame::file_alter_preservation::preserve,
-                  id3v2_3_plus_frame::read_only::clear, boost::none,
-                  boost::none, boost::none);
-    }
-  };
-
-  template <>
-  struct tag_traits<scribbu::id3v2_4_tag>
+  /// Process a POPM frame
+  template <typename tag_type>
+  size_t process_popm(typename tag_type::popm_type &G,
+                      const std::string &email)
   {
-    typedef scribbu::id3v2_4_tag   tag_type;
-    typedef scribbu::id3v2_4_frame frame_type;
-    typedef scribbu::PCNT_2_4      pcnt_type;
-    typedef scribbu::POPM_2_4      popm_type;
+    using namespace std;
+    using namespace scribbu;
 
-    static bool is_pcnt(const frame_type &F) {
-      static const scribbu::frame_id4 PCNT("PCNT");
-      return F.id() == PCNT;
+    size_t new_pc = play_count_;
+    if (pc_policy::increment == play_count_policy_) {
+      new_pc += G.count();
+    }
+    unsigned char rating = rating_ ? *rating_ : 0;
+    if (dry_run() || verbose()) {
+      cout << "Setting POPM/" << email << "counter to " << new_pc <<
+        ", & rating to " << (unsigned int)rating << "." << endl;
+    }
+    if (!dry_run()) {
+      G.count(new_pc);
+      G.rating(rating);
     }
 
-    static bool is_popm(const frame_type &F) {
-      static const scribbu::frame_id4 POPM("POPM");
-      return F.id() == POPM;
-    }
-
-    static pcnt_type make_pcnt(std::size_t n) {
-      using namespace scribbu;
-      return PCNT_2_4(n, id3v2_3_plus_frame::tag_alter_preservation::preserve,
-                      id3v2_3_plus_frame::file_alter_preservation::preserve,
-                      id3v2_3_plus_frame::read_only::clear, boost::none,
-                      boost::none, false, false, boost::none);
-    }
-
-    static popm_type make_popm(const std::string &email,
-                               unsigned char    rating,
-                               std::size_t      n) {
-      using namespace scribbu;
-      return POPM_2_4(email, rating, n,
-                      id3v2_3_plus_frame::tag_alter_preservation::preserve,
-                      id3v2_3_plus_frame::file_alter_preservation::preserve,
-                      id3v2_3_plus_frame::read_only::clear, boost::none,
-                      boost::none, false, false, boost::none);
-    }
-  };
+    return new_pc;
+  }
+  /**
+   * \brief template member function for creating or updating the PCNT and/or
+   * POPM frames, in terms if id3v2_tag sub-classes
+   *
+   *
+   * \param tag [in,out] reference to an ID3v2 tag upon which to operate
+   *
+   * \return true if the tag was modified in any way, false else (NB this value
+   * ignores the "dry-run" flag; i.e. if `--dry-run' was given, and the tag
+   * *would* have been modified, this method will still return true
+   *
+   *
+   * At the time of this writing, class id3v2_tag doesn't offer virtual
+   * functions for handling playcounts or ratings so I need to work in terms of
+   * the concrete sub-class (i.e. class id3v2_2_tag, id3v2_3_tag, or
+   * id3v2_4_tag). Since the logic is the same in each case, I've written this
+   * template, and factored out type-specific information and logic into a
+   * traits class (tag_traits).
+   *
+   * \todo Consider adding playcount- and popularimeter-related virtuals to
+   * class id3v2_tag & cleaning-up the popm sub-command implementation
+   * considerably.
+   *
+   *
+   */
 
   template <typename tag_type>
   bool
-  process_tag(tag_type                             &tag,
-              bool                                  playcount_only,
-              bool                                  popularimeter_only,
-              const std::string                    &owner,
-              const boost::optional<size_t>        &increment,
-              const boost::optional<size_t>        &play_count,
-              const boost::optional<unsigned char> &rating,
-              bool                                  create,
-              bool                                  dry_run)
+  process_tag(tag_type &tag, bool create_frame)
   {
     using namespace std;
+    using namespace scribbu;
 
     typedef tag_traits<tag_type> traits_type;
 
@@ -303,291 +346,343 @@ namespace {
     typedef typename traits_type::pcnt_type  pcnt_type;
     typedef typename traits_type::popm_type  popm_type;
 
-    size_t num_pcnt = 0, num_popm = 0;
+    size_t num_pcnt = 0, // # PCNT frames processed so far
+           num_popm = 0, // # POPM frames processed so far
+           curr_pc  = 0; // maximal play count written so far
+    // Walk the tag, processing an PCNT and/or POPM frames we find, and
+    // which our configuration directs us to process:
     for (frame_type &F: tag) {
 
-      if (!popularimeter_only && traits_type::is_pcnt(F)){
-
-        // We have a playcount frame & we mean to process it
+      // PCNT
+      if ((create_frame || frame_policy::popm_only != frame_policy_) &&
+          traits_type::is_pcnt(F)) {
+        // Just ugh.
         pcnt_type &G = dynamic_cast<pcnt_type&>(F);
-        if (play_count) {
-          size_t cnt = *play_count;
-          G.count(cnt);
-          if (dry_run) {
-            cout << "setting PCNT to " << cnt << endl;
-          }
+        size_t new_pc;
+        if (frame_policy::popm_only == frame_policy_) {
+          new_pc = G.count();
         } else {
-          size_t inc = 1;
-          if (increment) {
-            inc = *increment;
-          }
-          if (dry_run) {
-            cout << "setting PCNT to " << G.count() + inc << endl;
-          }
-          G.count(G.count() + inc);
+          new_pc = process_pcnt<traits_type>(G);
+          ++num_pcnt;
         }
-        ++num_pcnt;
-
+        if (new_pc > curr_pc) curr_pc = new_pc;
       }
 
-      if (!playcount_only && traits_type::is_popm(F)) {
-
-        // We have a popularimeter frame...
+      // POPM
+      if ((create_frame || frame_policy::pcnt_only != frame_policy_) &&
+          traits_type::is_popm(F)) {
+        // Just ugh.
         popm_type &G = dynamic_cast<popm_type&>(F);
-        // do we scope it by owner?
-        std::string email = G.template email<std::string>();
-        if (owner.empty() || owner == email) {
-          if (play_count) {
-            size_t cnt = *play_count;
-            G.count(cnt);
-            if (dry_run) {
-              cout << "setting POPM (" << email << ") count to " << cnt << endl;
-            }
-          } else {
-            size_t inc = 1;
-            if (increment) {
-              inc = *increment;
-            }
-            if (dry_run) {
-              cout << "setting POPM (" << email << ") count to " <<
-                G.count() + inc << endl;
-            }
-            G.count(G.count() + inc);
-          }
-          if (rating) {
-            unsigned char r = *rating;
-            G.rating(r);
-            if (dry_run) {
-              cout << "setting POPM (" << email << ") rating to " << (int)r <<
-                endl;
-            }
-          }
+        string email = G.template email<string>();
+        size_t new_pc = G.count();
+        if (!owner_ || email == *owner_) {
+          new_pc = process_popm<traits_type>(G, email);
           ++num_popm;
+        }
+        if (new_pc > curr_pc) curr_pc = new_pc;
+      }
 
-        } // End if on `owner'.
+    } // End  iteration over the frames in `tag'.
 
-      } // End if on playcount or popularimeter frame.
+    // Ho-kay: at this point, we've updated any frames we needed to in `tag'
+    // (there may have been none), and `curr_pc' is the highest play count
+    // written to this tag (which could be zero).
 
-    } // End iteration over `tag''s frames.
-
+    // If we've found no frames of either type, and our configuration says
+    // we should be processing frames of that type, and `create_frame' is
+    // true, now's the time to do so.
     bool upd = (num_popm != 0) || (num_pcnt != 0);
 
-    if (create) {
+    if (create_frame) {
 
-      if (0 == num_pcnt && !popularimeter_only) {
-
-        if (dry_run) {
-          cout << "creating a new PCNT frame with a count of " <<
-            (play_count ? *play_count : 0) << endl;
+      if (frame_policy::popm_only != frame_policy_ && 0 == num_pcnt) {
+        if (dry_run() || verbose()) {
+          cout << "Creating a new PCNT frame with a play count of " << curr_pc <<
+            "." << endl;
         }
-
-        tag.push_back(traits_type::make_pcnt(play_count ? *play_count : 0));
+        if (!dry_run()) {
+          tag.push_back(traits_type::make_pcnt(curr_pc));
+        }
         upd = true;
-
       }
 
-      if (0 == num_popm && !playcount_only && rating) {
-
-        if (dry_run) {
-          cout << "creating a new POPM frame for " << owner <<
-            " with a count of " <<
-            (play_count ? *play_count : 0) << " and a rating of " <<
-            *rating << endl;
+      // Only create new POPM frames in the presence of a rating & an owner
+      if (frame_policy::pcnt_only != frame_policy_ && 0 == num_popm &&
+          owner_ && rating_) {
+        string email = *owner_;
+        unsigned char rating = *rating_ ;
+        if (dry_run() || verbose()) {
+          cout << "Creating a new POPM frame with an owner of " << email <<
+            " a rating of " << (unsigned int)rating << " and a play count of " <<
+            curr_pc << "." << endl;
         }
-
-        tag.push_back(traits_type::make_popm(owner, *rating,
-                                             play_count ? *play_count : 0));
+        if (!dry_run()) {
+          tag.push_back(traits_type::make_popm(email, rating, curr_pc));
+        }
         upd = true;
-
       }
 
-    } // End if on `create'.
+    } // End if on `create_frame'.
 
     return upd;
+  }
 
-  } // End free function template `process_tag'.
+private:
+  boost::optional<unsigned char> rating_;
+  frame_policy frame_policy_;
+  boost::optional<std::string> owner_;
+  size_t play_count_;
+  pc_policy play_count_policy_;
+  bool create_frame_;
+
+};
+
+/// Create a new ID3v1 tag when there are ID3v2 tags present
+/*virtual*/
+std::unique_ptr<scribbu::id3v1_tag>
+set_pcnt_popm::create_v1(
+    const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &v2)
+{
+  throw unknown_op(unknown_op::create_v1_from_v2);
+}
+
+/// Create a new ID3v1 tag when there are no other tags present
+/*virtual*/
+std::unique_ptr<scribbu::id3v1_tag>
+set_pcnt_popm::create_v1()
+{
+  throw unknown_op(unknown_op::create_v1);
+}
+
+/// Create a new ID3v2 tag when there's an ID3v1 tag present
+/*virtual*/
+std::unique_ptr<scribbu::id3v2_tag>
+set_pcnt_popm::create_v2(const scribbu::id3v1_tag &v1)
+{
+  auto p = copy_id3_v1(v1);
+  process_tag(*p, true);
+}
+
+/// Create a new ID3v2 tag when there are no other tags present
+/*virtual*/
+std::unique_ptr<scribbu::id3v2_tag>
+set_pcnt_popm::create_v2()
+{
+  auto p = std::make_unique<scribbu::id3v2_3_tag>(DEFAULT_PADDING);
+  process_tag(*p, true);
+}
+
+/// Process the ID3v1 tag
+/*virtual*/
+bool
+set_pcnt_popm::process_v1(scribbu::id3v1_tag &v1)
+{
+  throw unknown_op(unknown_op::process_v1);
+}
+
+/// Process an ID3v2.2 tag
+/*virtual*/
+bool
+set_pcnt_popm::process_v2(scribbu::id3v2_2_tag &v2)
+{
+  return process_tag(v2, create_frame_);
+}
+
+/// Process an ID3v2.3 tag
+/*virtual*/
+bool
+set_pcnt_popm::process_v2(scribbu::id3v2_3_tag &v2)
+{
+  return process_tag(v2, create_frame_);
+}
+
+/// Process an ID3v2.4 tag
+/*virtual*/
+bool
+set_pcnt_popm::process_v2(scribbu::id3v2_4_tag &v2)
+{
+  return process_tag(v2, create_frame_);
+}
+
+template <>
+struct set_pcnt_popm::tag_traits<scribbu::id3v2_2_tag>
+{
+  typedef scribbu::id3v2_2_tag   tag_type;
+  typedef scribbu::id3v2_2_frame frame_type;
+  typedef scribbu::CNT           pcnt_type;
+  typedef scribbu::POP           popm_type;
+
+  static bool is_pcnt(const frame_type &F) {
+    static const scribbu::frame_id3 PCNT("CNT");
+    return F.id() == PCNT;
+  }
+
+  static bool is_popm(const frame_type &F) {
+    static const scribbu::frame_id3 POPM("POP");
+    return F.id() == POPM;
+  }
+
+  static pcnt_type make_pcnt(std::size_t n) {
+    return scribbu::CNT(n);
+  }
+
+  static popm_type make_popm(const std::string &email,
+                             unsigned char    rating,
+                             std::size_t      n) {
+    return scribbu::POP(email, rating, n);
+  }
+};
+
+template <>
+struct set_pcnt_popm::tag_traits<scribbu::id3v2_3_tag>
+{
+  typedef scribbu::id3v2_3_tag   tag_type;
+  typedef scribbu::id3v2_3_frame frame_type;
+  typedef scribbu::PCNT          pcnt_type;
+  typedef scribbu::POPM          popm_type;
+
+  static bool is_pcnt(const frame_type &F) {
+    static const scribbu::frame_id4 PCNT("PCNT");
+    return F.id() == PCNT;
+  }
+
+  static bool is_popm(const frame_type &F) {
+    static const scribbu::frame_id4 POPM("POPM");
+    return F.id() == POPM;
+  }
+
+  static pcnt_type make_pcnt(std::size_t n) {
+    using namespace scribbu;
+    return PCNT(n, id3v2_3_plus_frame::tag_alter_preservation::preserve,
+                id3v2_3_plus_frame::file_alter_preservation::preserve,
+                id3v2_3_plus_frame::read_only::clear, boost::none,
+                boost::none, boost::none);
+  }
+
+  static popm_type make_popm(const std::string &email,
+                             unsigned char    rating,
+                             std::size_t      n) {
+    using namespace scribbu;
+    return POPM(email, rating, n,
+                id3v2_3_plus_frame::tag_alter_preservation::preserve,
+                id3v2_3_plus_frame::file_alter_preservation::preserve,
+                id3v2_3_plus_frame::read_only::clear, boost::none,
+                boost::none, boost::none);
+  }
+};
+
+template <>
+struct set_pcnt_popm::tag_traits<scribbu::id3v2_4_tag>
+{
+  typedef scribbu::id3v2_4_tag   tag_type;
+  typedef scribbu::id3v2_4_frame frame_type;
+  typedef scribbu::PCNT_2_4      pcnt_type;
+  typedef scribbu::POPM_2_4      popm_type;
+
+  static bool is_pcnt(const frame_type &F) {
+    static const scribbu::frame_id4 PCNT("PCNT");
+    return F.id() == PCNT;
+  }
+
+  static bool is_popm(const frame_type &F) {
+    static const scribbu::frame_id4 POPM("POPM");
+    return F.id() == POPM;
+  }
+
+  static pcnt_type make_pcnt(std::size_t n) {
+    using namespace scribbu;
+    return PCNT_2_4(n, id3v2_3_plus_frame::tag_alter_preservation::preserve,
+                    id3v2_3_plus_frame::file_alter_preservation::preserve,
+                    id3v2_3_plus_frame::read_only::clear, boost::none,
+                    boost::none, false, false, boost::none);
+  }
+
+  static popm_type make_popm(const std::string &email,
+                             unsigned char    rating,
+                             std::size_t      n) {
+    using namespace scribbu;
+    return POPM_2_4(email, rating, n,
+                    id3v2_3_plus_frame::tag_alter_preservation::preserve,
+                    id3v2_3_plus_frame::file_alter_preservation::preserve,
+                    id3v2_3_plus_frame::read_only::clear, boost::none,
+                    boost::none, false, false, boost::none);
+  }
+};
+
+namespace {
+
+  /// Overload po::validate
+  unsigned char
+  rating_from_text(const std::string &text)
+  {
+    using namespace std;
+    using namespace boost;
+
+    // Now try to interpret `text' as an unsigned char...
+    try {
+      unsigned short rating = lexical_cast<unsigned short>(text);
+      if (rating <= 255) {
+        return (unsigned char)rating;
+      }
+    } catch (bad_lexical_cast&) {
+    }
+
+    // OK-- that didn't work. Let's match `text' against a regex
+    // selecting a single character repeated between one & five times.
+    smatch what;
+    regex re1("[a-zA-Z@#%*+]{1,5}");
+    if (! regex_match(text, what, re1)) {
+      // Strange, but still we give up:
+      throw po::error("Couldn't interpret '" + text + "' as a rating.");
+    }
+
+    // It is-- the length of `text' is the number of "stars"
+    unsigned char rating;
+    switch (text.length()) {
+    case 1:
+      rating = 1;
+      break;
+    case 2:
+      rating = 64;
+      break;
+    case 3:
+      rating = 128;
+      break;
+    case 4:
+      rating = 196;
+      break;
+    default:
+      rating = 255;
+      break;
+    }
+
+    return rating;
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  //                                  handler                                 //
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * \brief Process a single file
+   * \brief `popm' sub-command handler
+   *
+   * \sa handler_type
+   * \sa register_command
    *
    *
-   * \param pth [in] path to the file to be processed
-   *
-   * \param tags [in] vector of indicies naming tags to be processed
-   *
-   * \param playcount_only [in] if true, only process PCNT frames; only one of
-   * \a playcount_only & \a popularimeter only may be true
-   *
-   * \param popularimeter_only [in] if true, only process POPM frames; only one
-   * of \a playcount_only & \a popularimeter only may be true
-   *
-   * \param owner [in] if we're processing POPM frames, only processes POPM
-   * frames owned by \a owner
-   *
-   * \param increment [in] number by which to increment the playcount (in either
-   * PCNT or POPM frames); only one of \a increment & \a play_count may be not
-   * none
-   *
-   * \param play_count [in] number to which to set the playcount (in either PCNT
-   * or POPM frames); only one of \a increment & \a play_count may be not none
-   *
-   * \param rating [in] rating to use if we're setting POPM frames
-   *
-   * \param create [in] if true, create the PCNT and/or POPM frames if they
-   * don't exist
-   *
-   * \param create_backups [in] if true, create backup files before writing
-   *
-   * \param dry_run [in] if true, don't actually do anything; just print what
-   * *would* be done
-   *
-   * \param adj_unsync [in] if true, apply the unsynchronisation scheme when
-   * needed (deafult is to never use it)
+   * `scribbu popm' is a sub-command that can create & update PCNT & POPM
+   * ID3v2 frames in a number of ways. This is the command handler for it
+   * invoked directly from main.
    *
    *
    */
-
-  void
-  process_file(const fs::path                       &pth,
-               const std::deque<size_t>             &dtags,
-               bool                                  playcount_only,
-               bool                                  popularimeter_only,
-               const std::string                    &owner,
-               const boost::optional<size_t>        &increment,
-               const boost::optional<size_t>        &play_count,
-               const boost::optional<unsigned char> &rating,
-               bool                                  create,
-               bool                                  create_backups,
-               bool                                  dry_run,
-               bool                                  adj_unsync)
-  {
-    using namespace std;
-    using namespace scribbu;
-
-    // TODO(sp1ff): Why convert here? Why not higher up the call stack?
-    queue<size_t> tags(dtags);
-
-    vector<unique_ptr<id3v2_tag>> T;
-
-    {
-      fs::ifstream ifs(pth, fs::ifstream::binary);
-      read_all_id3v2(ifs, back_inserter(T));
-    }
-
-    bool any_upd = false;
-    for (size_t i = 0, n = T.size(); i < n; ++i) {
-
-      if (tags.front() == i) {
-
-        bool upd = false;
-        id3v2_tag *ptag = T[i].get();
-        unsigned char version = ptag->version();
-        if (2 == version) {
-          id3v2_2_tag &tag = dynamic_cast<id3v2_2_tag&>(*ptag);
-          upd = process_tag(tag, playcount_only, popularimeter_only,
-                            owner, increment, play_count, rating,
-                            create, dry_run);
-        } else if (3 == version) {
-          id3v2_3_tag &tag = dynamic_cast<id3v2_3_tag&>(*ptag);
-          upd = process_tag(tag, playcount_only, popularimeter_only,
-                            owner, increment, play_count, rating,
-                            create, dry_run);
-        } else if (4 == version) {
-          id3v2_4_tag &tag = dynamic_cast<id3v2_4_tag&>(*ptag);
-          upd = process_tag(tag, playcount_only, popularimeter_only,
-                            owner, increment, play_count, rating,
-                            create, dry_run);
-        } else {
-
-          // TODO(sp1ff): throw something more specific?
-          throw std::logic_error("unknown ID3v2 version!");
-
-        }
-
-        any_upd = any_upd || upd;
-
-        tags.pop();
-      }
-
-    } // End loop over all ID3v2 tags in `pth'.
-
-    if (any_upd) {
-
-      if (dry_run) {
-
-        cout << "the dry-run flag was given-- nothing written";
-
-        if (create_backups) {
-
-          cout << " (with backup)";
-
-        }
-
-        cout << endl;
-
-      } else {
-
-        apply_unsync au = adj_unsync ? apply_unsync::as_needed :
-          apply_unsync::never;
-
-        if (create_backups) {
-
-          replace_tagset_copy(pth, T.begin(), T.end(), au);
-
-        } else {
-
-          maybe_emplace_tagset(pth, T.begin(), T.end(), au,
-                               emplace_strategy::only_with_full_padding,
-                               padding_strategy::adjust_padding_evenly);
-
-        } // End if on `create_backups'.
-
-      } // End if on `dry_run'.
-
-    } else if (dry_run) {
-
-      cout << "the tagset wasn't updated, so nothing would be written" << endl;
-
-    }
-
-  } // End free function template `process_file'.
-
-  /// Handle a single filesystem entity
-  void
-  process_dirent(const fs::path                       &pth,
-                 const std::deque<size_t>             &tags,
-                 bool   	                           playcount_only,
-                 bool   	                           popularimeter_only,
-                 const std::string                    &owner,
-                 const boost::optional<size_t>        &increment,
-                 const boost::optional<size_t>        &play_count,
-                 const boost::optional<unsigned char> &rating,
-                 bool   	                           create,
-                 bool   	                           create_backups,
-                 bool   	                           dry_run,
-                 bool                                  adj_unsync)
-  {
-    if (fs::is_directory(pth)) {
-      std::for_each(fs::directory_iterator(pth), fs::directory_iterator(),
-                    [=] (const fs::path &p) {
-                      if (!fs::is_directory(p)) {
-                        process_file(p, tags, playcount_only,
-                                     popularimeter_only, owner, increment,
-                                     play_count, rating, create,
-                                     create_backups, dry_run, adj_unsync);
-                      }
-                    });
-    } else {
-      process_file(pth, tags, playcount_only, popularimeter_only,
-                   owner, increment, play_count, rating,
-                   create, create_backups, dry_run, adj_unsync);
-    }
-  }
 
   int
   handle_popm(int argc, char **argv)
   {
     using namespace std;
+    using namespace scribbu;
 
     int status = EXIT_SUCCESS;
 
@@ -613,7 +708,9 @@ namespace {
 
     po::options_description clopts("command-line only options");
     clopts.add_options()
-      ("help,h", po::bool_switch(), "Display help & exit")
+      ("help,h", po::bool_switch(), "Display help & exit; `--help' will display"
+       "the man page for this sub-command & `-h' will display this sub-"
+       "command's usage message")
       ("info", po::bool_switch(), "Display help in Info format & exit");
 
     po::options_description xclopts("command-line only developer options");
@@ -624,29 +721,30 @@ namespace {
     opts.add_options()
       ("adjust-unsync,u", po::bool_switch(), "Update the unsynchronisation "
        "flag as needed on write (default is to never use it).")
-      ("count,c", po::value<size_t>(), "Set the play count "
-       "to this value")
-      ("create,a", po::bool_switch(), "Create a new frame; if only -c is "
-       "given, create a new PCNT frame; if -c, -o and -r are given, create "
-       "a POPM frame")
+      ("always-create-v2,a", po::bool_switch(), "Always create an ID3v2 tag"
+       "with the relevant frame(s) for any file that has no ID3v2 tag")
+      ("count,C", po::value<size_t>(), "Set the play count to this value")
+      ("create-v2,c", po::bool_switch(), "Create an ID3v2.3 tag containing "
+       "the relevant frames for any file that has an ID3v1 tag, but no v2")
+      ("create-frame,A", po::bool_switch(), "Create a new frame when directed "
+       "to process frames of a given sort and none are present in the tag")
       ("create-backups,b", po::bool_switch(), "Create backup copies of all "
        "files before modifying them.")
       ("dry-run,n", po::bool_switch(), "Don't do anything; just print what "
        "*would* be done")
-      ("increment,i", po::value<size_t>(), "Increment by "
-       "which to increment the play count")
+      ("increment,i", po::value<size_t>(), "Increment the play count by this"
+       "amount")
       ("owner,o", po::value<string>(), "Operate only on POPM frames with "
        "this owner, or specify the owner in case a POPM frame is being created")
       ("playcount-only,p", po::bool_switch(), "Operate only on PCNT frames")
       ("popularimeter-only,m", po::bool_switch(), "Operate only on POPM frames")
       ("rating,r", po::value<string>(), "Set the rating in popularimeter "
-       "tag (s); either 0-255, or X{1,5} for X in [a-zA-Z@#%*+]")
+       "tag (s); either 0-255, or [a-zA-Z@#%*+]{1,5}")
       ("tag,t", po::value<vector<size_t>>(), "Zero-based index of the tag "
        "on which to operate; may be given more than once to select "
        "multiple tags")
-      ("linear-scale,L", po::bool_switch(), "Use a linear scale when mapping "
-       "stars to the 0-255 popularimeter scale; by default the Winamp 5.666 "
-       "scheme is used");
+      ("verbose,v", po::bool_switch(), "Produce more verbose output during "
+       "operation");
 
     po::options_description xopts("hidden options");
     xopts.add_options()
@@ -657,9 +755,6 @@ namespace {
 
     po::options_description docopts;
     docopts.add(clopts).add(opts);
-
-    po::options_description nocli;
-    nocli.add(opts).add(xopts);
 
     po::options_description all;
     all.add(clopts).add(xclopts).add(opts).add(xopts);
@@ -683,28 +778,37 @@ namespace {
 
       po::store(parsed, vm);
 
-      parsed = po::parse_environment(nocli, "SCRIBBU");
+      const map<string, string> ENV_OPTS {
+        make_pair("SCRIBBU_ADJUST_UNSYNC", "adjust-unsync"),
+        make_pair("SCRIBBU_CREATE", "create"),
+        make_pair("SCRIBBU_CREATE_BACKUPS", "create-backups"),
+        make_pair("SCRIBBU_DRY_RUN", "dry-run"),
+        make_pair("SCRIBBU_OWNER", "owner"),
+        make_pair("SCRIBBU_VERBOSE","verbose"),
+      };
+      parsed = po::parse_environment(opts, [&ENV_OPTS](const string &var) {
+        auto p = ENV_OPTS.find(var);
+        return ENV_OPTS.end() == p ? "" : p->second.c_str();
+      });
       po::store(parsed, vm);
 
       // That's it-- the list of files and/or directories to be processed
       // should be waiting for us in 'arguments'...
       po::notify(vm);
 
-      // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      std::vector<fs::path> args;
-      if (vm.count("arguments")) {
-        for (auto s: vm["arguments"].as<std::vector<string>>()) {
-          args.push_back(fs::path(s));
-        }
-      }
+      //////////////////////////////////////////////////////////////////////////
+      //                     process our arguments                            //
+      //////////////////////////////////////////////////////////////////////////
 
       bool adj_unsync         = vm["adjust-unsync"     ].as<bool>();
+      bool always_create_v2   = vm["always-create-v2"  ].as<bool>();
+      bool create_backups     = vm["create-backups"    ].as<bool>();
+      bool create_frame       = vm["create-frame"      ].as<bool>();
+      bool create_v2          = vm["create-v2"         ].as<bool>();
+      bool dry_run            = vm["dry-run"           ].as<bool>();
       bool playcount_only     = vm["playcount-only"    ].as<bool>();
       bool popularimeter_only = vm["popularimeter-only"].as<bool>();
-      bool create             = vm["create"            ].as<bool>();
-      bool create_backups     = vm["create-backups"    ].as<bool>();
-      bool dry_run            = vm["dry-run"           ].as<bool>();
-      bool linear             = vm["linear-scale"      ].as<bool>();
+      bool verbose            = vm["verbose"           ].as<bool>();
 
       boost::optional<size_t> increment = boost::none;
       if (vm.count("increment")) {
@@ -716,31 +820,36 @@ namespace {
         play_count = vm["count"].as<size_t>();
       }
 
-      string owner;
+      boost::optional<string> owner;
       if (vm.count("owner")) {
         owner = vm["owner"].as<string>();
+        // I considered also checking the environment variables EMAIL &
+        // DEBEMAIL, but that seemed too opaque for my tastes.
       }
 
-      deque<size_t> tags;
+      vector<size_t> tags;
       if (vm.count("tag")) {
         vector<size_t> V = vm["tag"].as<vector<size_t>>();
-        tags.insert(tags.begin(), V.begin(), V.end());
-      } else {
-        tags.push_back(0);
       }
 
       boost::optional<unsigned char> rating;
       if (vm.count("rating")) {
-        string s = vm["rating"].as<string>();
-        rating = rating_for_text(s, linear);
+        rating = rating_from_text(vm["rating"].as<string>());
       }
 
       // Validate our options:
 
       // 1. At most one of `playcount_only' & `popularimeter_only' may be true
+      typedef set_pcnt_popm::frame_policy frame_policy;
       if (playcount_only && popularimeter_only) {
         throw po::invalid_option_value("at most one of `playcount-only' & "
                                        "`popularimeter-only' may be given");
+      }
+      frame_policy fp = frame_policy::both;
+      if (playcount_only) {
+        fp = frame_policy::pcnt_only;
+      } else if (popularimeter_only) {
+        fp = frame_policy::popm_only;
       }
 
       // 2. `playcount' & `increment' may not both be given
@@ -748,14 +857,57 @@ namespace {
         throw po::invalid_option_value("at most one of `playcount' & "
                                        "`increment' may be given");
       }
+      typedef set_pcnt_popm::pc_policy pc_policy;
+      size_t pc = 1;
+      pc_policy pc_pol = pc_policy::increment;
+      if (increment) {
+        pc = *increment;
+      } else if (play_count) {
+        pc = *play_count;
+        pc_pol = pc_policy::absolute;
+      }
 
-      for_each(args.begin(), args.end(),
-               [=] (const fs::path &pth) {
-                 process_dirent(pth, tags, playcount_only, popularimeter_only,
-                                owner, increment, play_count, rating, create,
-                                create_backups, dry_run, adj_unsync);
-               }
-             );
+      // 3. at most one of `create-v2' and `always-create-v2' may be given
+      if (create_v2 && always_create_v2) {
+        throw po::invalid_option_value("at most one of `create-v2' and "
+                                       "`always-create-v2' may be given");
+      }
+
+      typedef tagset_processor::v2_creation_policy v2_creation_policy;
+      v2_creation_policy v2c = v2_creation_policy::never;
+      if (always_create_v2) {
+        v2c = v2_creation_policy::always;
+      } else if (create_v2) {
+        v2c = v2_creation_policy::when_v1_present;
+      }
+
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      std::vector<fs::path> args;
+      if (vm.count("arguments")) {
+        for (auto s: vm["arguments"].as<std::vector<string>>()) {
+          args.push_back(fs::path(s));
+        }
+      }
+
+      //////////////////////////////////////////////////////////////////////////
+      //                           implementation                             //
+      //////////////////////////////////////////////////////////////////////////
+
+      // At this point, we've un-packed all the options & arguments
+      // successfully. Help-replated commands have been handled. Now we just
+      // create our functor & hand-off to `process_dirent_args'.
+      unique_ptr<set_pcnt_popm> pF;
+      if (! tags.empty()) {
+        pF.reset(new set_pcnt_popm(rating, fp, owner, pc, pc_pol, create_frame,
+                                   v2c, tags.begin(), tags.end(), dry_run,
+                                   verbose, adj_unsync, create_backups));
+      } else {
+        pF.reset(new set_pcnt_popm(rating, fp, owner, pc, pc_pol, create_frame,
+                                   v2c, dry_run, verbose, adj_unsync,
+                                   create_backups));
+      }
+
+      process_dirent_args(args.begin(), args.end(), *pF);
 
     } catch (const po::error &ex) {
 

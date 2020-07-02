@@ -314,9 +314,6 @@ namespace {
     po::options_description docopts;
     docopts.add(clopts).add(opts);
 
-    po::options_description nocli;
-    nocli.add(opts).add(xopts);
-
     po::options_description all;
     all.add(clopts).add(xclopts).add(opts).add(xopts);
 
@@ -339,7 +336,14 @@ namespace {
 
       po::store(parsed, vm);
 
-      parsed = po::parse_environment(nocli, "SCRIBBU");
+      const map<string, string> ENV_OPTS {
+        make_pair("SCRIBBU_NUM_COMMENTS", "num-comments"),
+        make_pair("SCRIBBU_V1_ENCODING", "v1-encoding"),
+      };
+      parsed = po::parse_environment(opts, [&ENV_OPTS](const string &var) {
+        auto p = ENV_OPTS.find(var);
+        return ENV_OPTS.end() == p ? "" : p->second.c_str();
+      });
       po::store(parsed, vm);
 
       // That's it-- the list of files and/or directories to be processed

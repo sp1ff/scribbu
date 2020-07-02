@@ -173,6 +173,62 @@ namespace {
 
 }
 
+/*virtual*/
+const char *
+tagset_processor::bad_operation::what() const noexcept(true)
+{
+  if (!pwhat_) {
+    std::stringstream stm;
+    stm << "A tagset_processor virtual was invoked on a subclass for which "
+      "it makes no sense: ";
+    switch (op_) {
+    case unknown_op::create_v1_from_v2:
+      stm << "creating an ID3v1 tag from one or more ID3v2";
+      break;
+    case unknown_op::create_v1:
+      stm << "creating an ID3v1 tag from scratch";
+      break;
+    case unknown_op::create_v2_from_v1:
+      stm << "creating an ID3v2 tag from an ID3v1";
+      break;
+    case unknown_op::create_v2:
+      stm << "creating an ID3v2 tag from scratch";
+      break;
+    case unknown_op::process_v1:
+      stm << "processing an ID3v1 tag";
+      break;
+    case unknown_op::process_v2_2:
+      stm << "processing an ID3v2.2 tag";
+      break;
+    case unknown_op::process_v2_3:
+      stm << "processing an ID3v2.3 tag";
+      break;
+    case unknown_op::process_v2_4:
+      stm << "processing an ID3v2.4 tag";
+      break;
+    default:
+      stm << "<unknown operation>";
+      break;
+    }
+    stm << ", This is almost certainly a bug; please consider reporting it to "
+      "sp1ff@pobox.com";
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
+/*virtual*/
+const char *
+tagset_processor::bad_id3v2_version::what() const noexcept(true)
+{
+  if (!pwhat_) {
+    std::stringstream stm;
+    stm << "unknown ID3v2 version " << (int) ver_;
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
 // For internal use through delegation
 tagset_processor::tagset_processor(v2_tag_scope_policy v2tsp,
                                    v1_tag_scope_policy v1tsp,
@@ -278,8 +334,7 @@ tagset_processor::process_file(const fs::path &pth)
           id3v2_4_tag &tag = dynamic_cast<id3v2_4_tag&>(*ptag);
           upd = process_v2(tag);
         } else {
-          // TODO(sp1ff): throw something more specific?
-          throw std::logic_error("unknown ID3v2 version!");
+          throw bad_id3v2_version(version);
         }
 
         tags.pop_front();
@@ -309,8 +364,6 @@ tagset_processor::process_file(const fs::path &pth)
 
   // OK-- processing logic done. Update our tagset with any newly created tags:
   if (pnv2) {
-    // TODO(sp1ff): realy!?
-    // v2.resize(1);
     v2.push_back(std::move(pnv2));
   }
   if (pnv1) {
@@ -353,14 +406,13 @@ handler_type get_sub_command(const char *s)
 
 
 /// Create a new ID3v2 tag given an ID3v1 tag
-std::unique_ptr<scribbu::id3v2_tag>
+std::unique_ptr<scribbu::id3v2_3_tag>
 copy_id3_v1(const scribbu::id3v1_tag &v1)
 {
   using namespace std;
   using namespace scribbu;
 
-  // TODO(sp1ff): numeric literal
-  unique_ptr<id3v2_tag> p(new id3v2_3_tag(1024));
+  unique_ptr<id3v2_3_tag> p(new id3v2_3_tag(1024));
 
   string text = v1.artist<string>();
   if (text.length()) p->text(id3v2_text_frames::tpe1, text);
@@ -368,8 +420,8 @@ copy_id3_v1(const scribbu::id3v1_tag &v1)
   if (text.length()) p->text(id3v2_text_frames::tit2, text);
   text = v1.album<string>();
   if (text.length()) p->text(id3v2_text_frames::talb, text);
-
-  // TODO(sp1ff): bring over the comment field, if any
+  text = v1.comment<string>();
+  if (text.length()) p->add_comment(text);
 
   unsigned char genre = v1.genre();
   if (192 > genre) {

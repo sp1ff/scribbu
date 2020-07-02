@@ -297,22 +297,47 @@ namespace scribbu {
    * \brief Replace an ID3v2 tagset by making a copy of the entire file
    *
    *
-   * \param pth [in] boost filesystem path naming the file whose tagset
-   * shall be replaced
+   * \param pth [in] boost filesystem path naming the file whose tagset shall be
+   * replaced
    *
-   * \param p0 [in] a forward input iterator marking the beginning of a
-   * range of pointers to id3v2_tag (or a type supporting operator->)
-   * which shall be written to \a pth
+   * \param p0 [in] a forward input iterator marking the beginning of a range of
+   * pointers to id3v2_tag (or a type supporting operator->) which shall be
+   * written to \a pth
    *
    * \param p1 [in] a forward input iterator marking the one-past-the-end
    * element of a range of pointers to id3v2_tag (or a type supporting
    * operator->) which shall be written to \a pth
    *
-   * \param unsync [in] a boolean indicating whether or not to apply
-   * the unsynchronisation scheme while writing out [p0,p1)
+   * \param unsync [in] a boolean indicating whether or not to apply the
+   * unsynchronisation scheme while writing out [p0,p1)
+   *
+   * \param keep_backup [in] if the caller sets this to true, the original
+   * file will be kept in a backup named by appending a unique, sequential
+   * integer to the original name
    *
    *
    * \todo Support applying unsynchronisation on a tag-by-tag basis
+   *
+   *
+   * If the new tagset is larger than the extant tagset, and the difference
+   * cannot be taken up by padding, or the caller would prefer not to reduce the
+   * padding, then we're left with no choice but to write the new tagset to disk
+   * in a new file & copy the remainder of the old file after that into the new.
+   *
+   * This function works in a way that may seem unneccessarily complex at first:
+   *
+   * 1. open a temporary file & write the new tagset to it
+   *
+   * 2. copy the contents of \a pth \em after its tagset to the temporary file
+   *
+   * 3. if \a keep_backup is true, copy the original file to the backup name
+   *
+   * 4. copy the temporary file over the original file
+   *
+   * This expends more disk I/O for the benefit of not writing the original file
+   * until the very end (in what I would *think* would be an atomic
+   * operation). If, say, I worked on \a pth in place, and encountered an error
+   * partway through, I would have corrupted the original file.
    *
    *
    */
@@ -321,27 +346,43 @@ namespace scribbu {
   void replace_tagset_copy(const boost::filesystem::path &pth,
                            forward_input_iterator p0,
                            forward_input_iterator p1,
-                           apply_unsync unsync)
+                           apply_unsync unsync,
+                           // LATER(sp1ff): would like this to be defaulted to false
+                           bool keep_backup = true)
   {
-    const std::ios::iostate EXC_MASK = std::ios::eofbit  |
-                                       std::ios::failbit |
-                                       std::ios::badbit;
+    using namespace std;
+
+    // TODO(sp1ff): this is re-used all over the place-- factor out?
+    const ios::iostate EXC_MASK = ios::eofbit  |
+                                  ios::failbit |
+                                  ios::badbit;
 
     namespace fs = boost::filesystem;
 
-    fs::path cp = detail::get_backup_name(pth);
+    // Ideally, I'd using std::tmpfile or mkstmp; functions that determine the
+    // temporary name & open it atomically, to avoid the race condition (and
+    // threat vector) of having a process determine the name, a second process
+    // create open a file by that name, and the first then opening it. The
+    // problem is that such implementations will delete the temp file as
+    // soon as I close my handle to it, making it impossible for me to
+    // write, close & copy it.
 
-    // This is a race condition (`cp' could be created in between the call to
-    // `exists' and `copy'), but in that unlikely event the worst that will
-    // happen is the call to `copy' will fail.
-    if (fs::exists(cp)) {
-      fs::remove(cp);
-    }
+    // My (admittedly poor) solution is to live with the race condition &
+    // trucnate on open, hoping to merely stomp on the other process' file in
+    // the event I hit it (the race condition).
+    fs::path tmpnam = fs::temp_directory_path() / fs::unique_path();
+    fs::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
+    tmpfs.exceptions(EXC_MASK);
 
-    boost::system::error_code ec;
-    fs::copy(pth, cp, ec);
+    // for_each(p0, p1, [&](unique_ptr<id3v2_tag> &p) {
+    typedef typename forward_input_iterator::value_type T;
+    for_each(p0, p1, [&](T &p) {
+      bool do_unsync = detail::compute_apply_unsync(unsync, *p);
+      p->write(tmpfs, do_unsync);
+    });
 
-    fs::ifstream ifs(cp, fs::ifstream::binary);
+    // At this point, the new tagset has been written to the temp file.
+    fs::ifstream ifs(pth, fs::ifstream::binary);
     ifs.exceptions(EXC_MASK);
 
     scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
@@ -351,26 +392,39 @@ namespace scribbu {
     }
 
     // `ifs'' get ptr is now located at the beginning of it's track data
-    fs::ofstream ofs(pth, fs::ofstream::binary|fs::ofstream::trunc);
-    ofs.exceptions(EXC_MASK);
 
-    for ( ; p0 != p1; ++p0) {
-      bool do_unsync = detail::compute_apply_unsync(unsync, **p0);
-      (*p0)->write(ofs, do_unsync);
-    }
-
-    // Surely not the most efficient implementation, but until I have
-    // some data I'm going to defer to the implementation...
-    std::streampos here = ifs.tellg();
+    // Surely not the most efficient implementation, but until I have some data
+    // I'm going to defer to the std implementation...
+    streampos here = ifs.tellg();
     ifs.seekg(0, fs::ifstream::end);
-    std::streampos there = ifs.tellg();
+    streampos there = ifs.tellg();
     ifs.seekg(here, fs::ifstream::beg);
 
-    std::size_t cb = there - here;
-    std::vector<char> buf(cb);
+    size_t cb = there - here;
+    vector<char> buf(cb);
     ifs.read(&(buf[0]), cb);
-    ofs.write(&(buf[0]), cb);
+    tmpfs.write(&(buf[0]), cb);
 
+    // Write complete-- close all file handles & shuffle the files.
+    tmpfs.close();
+    ifs.close();
+
+    if (keep_backup) {
+
+      fs::path cp = detail::get_backup_name(pth);
+
+      // This is a race condition (`cp' could be created in between the call to
+      // `exists' and `copy'), but in that unlikely event the worst that will
+      // happen is the call to `copy' will fail.
+      if (fs::exists(cp)) {
+        fs::remove(cp);
+      }
+
+      boost::system::error_code ec;
+      fs::copy(pth, cp, ec);
+    }
+
+    fs::rename(tmpnam, pth);
   }
 
   /**
@@ -613,7 +667,9 @@ namespace scribbu {
                             forward_input_iterator p1,
                             apply_unsync unsync,
                             emplace_strategy estrat,
-                            padding_strategy pstrat)
+                            padding_strategy pstrat,
+                            // TODO(sp1ff): would like this to be false
+                            bool keep_backup_on_copy = true)
   {
     namespace fs = boost::filesystem;
 
@@ -645,7 +701,7 @@ namespace scribbu {
     }
     else {
       // no way-- we need to copy
-      replace_tagset_copy(pth, p0, p1, unsync);
+      replace_tagset_copy(pth, p0, p1, unsync, keep_backup_on_copy);
     }
 
   }

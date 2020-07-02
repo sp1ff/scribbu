@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 export GUILE_AUTO_COMPILE=0
 
+if [ -z "$srcdir" ]; then
+    echo >&2 "the \`srcdir' environment variable needs to be set to this script's location"
+    exit 1
+fi
 
 source ${srcdir}/test-util
-
 
 # run `scribbu popm ...'
 # usage: run_popm var_to_rcv_stdout var_to_rcv_stderr var_to_rcv_status args...
@@ -43,9 +46,10 @@ function run_popm()
 }
 
 ###########################################################################
-# tests
+#                                   tests                                 #
 ###########################################################################
 
+# "smoke tests"-- if these don't pass, something's very wrong
 function smoke_tests()
 {
     local out
@@ -70,14 +74,14 @@ function smoke_tests()
     stat=$?
     [ $stat -ne 0 ] || fail "smoke_tests: should not have PCNT frame"
 
-    run_popm out err stat --dry-run --create id3v2.3.tag
+    run_popm out err stat --dry-run --create-frame id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on dry-run"
-    echo $out|grep -F "creating a new PCNT frame with a count of 0">/dev/null
+    echo $out|grep -F "Creating a new PCNT frame with a play count of 0.">/dev/null
     stat=$?
     [ $stat -eq 0 ] || fail "smoke_tests: failed to find PCNT (dry-run)"
 
     # run it again-- should be there now
-    run_popm out err stat --create id3v2.3.tag
+    run_popm out err stat --create-frame id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: non-zero exit status on create"
     ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT
     stat=$?
@@ -87,11 +91,13 @@ function smoke_tests()
     pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|awk '{print $2}')
     [ $pcnt = "1" ] || fail "smoke_tests: PCNT is $pcnt; should be 1"
 
-    run_popm out err stat --popularimeter-only -a -o "sp1ff@pobox.com" -r 192 id3v2.3.tag
+    run_popm out err stat --popularimeter-only -A -o "sp1ff@pobox.com" -r 192 id3v2.3.tag
     popm=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F POPM|awk '{print $2}')
     [ "$popm" = "sp1ff@pobox.com" ] || fail "smoke_tests: no POPM"
     rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
     [ "$rating" = "192" ] || fail "smoke_tests: rating is $rating; should be 192"
+    pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F counter|awk '{print $2}')
+    [ "$pcnt" = "01" ] || fail "smoke_tests: PCNT is $pcnt; should be 01 (2)"
 
     run_popm out err stat --count=11 id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on pc => 11"
@@ -110,10 +116,16 @@ function smoke_tests()
     rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
     [ "$rating" = "1" ] || fail "smoke_tests: rating is $rating; should be 1"
 
-    run_popm out err stat --rating=x -L id3v2.3.tag
-    [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on linear rating"
+    # Let's test recursion
+    mkdir -p sub1/sub2 || fail "smoke_tests: failed to make test sub-directories"
+    cp  id3v2.3.tag sub1/sub2 || fail "smoke_tests: failed to copy test file"
+
+    run_popm out err stat --rating=##### id3v2.3.tag sub1
+    test $stat -eq 0 || fail "smoke_tests: non-zero status on star rating (2)"
     rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
-    [ "$rating" = "26" ] || fail "smoke_tests: rating is $rating; should be 1"
+    test "$rating" = "255" || fail "smoke_tests: rating is $rating; should be 255"
+    rating=$(${popm_scribbu_dir}/scribbu dump sub1/sub2/id3v2.3.tag|grep -F rating|awk '{print $2}')
+    test "$rating" = "255" || fail "smoke_tests: rating is $rating; should be 255 (2)"
 
     clean_testdir $here $popm_testdir smoke_tests
 
@@ -139,20 +151,17 @@ function test_issue_1
     here=`pwd`
     set_testdir ${srcdir} $popm_testdir test_issue_1 id3v2.3.tag
 
-    run_popm out err stat --create --owner=sp1ff@pobox.com --rating=255 id3v2.3.tag
-    stat=$?
+    run_popm out err stat --create-frame --owner=sp1ff@pobox.com --rating=255 id3v2.3.tag
+    # stat=$?
     [ $stat -eq 0 ] || fail "test_issue_1: non-zero exit status on create"
 
     ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT
-    stat=$?
     [ $stat -eq 0 ] || fail "test_issue_1: should have PCNT frame"
 
     ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F POPM
-    stat=$?
     [ $stat -eq 0 ] || fail "test_issue_1: should have POPM frame"
 
     run_popm out err stat id3v2.3.tag
-    stat=$?
     [ $stat -eq 0 ] || fail "test_issue_1: non-zero exit status on update"
 
     pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|sed ${sed_regex} 's/PCNT: ([0-9]+)/\1/'`
@@ -165,12 +174,48 @@ function test_issue_1
     clean_testdir $here $popm_testdir test_issue_1
 }
 
-###########################################################################
+# Make sure that when creating a PCNT or a POPM frame, when a such a frame is
+# already present, picks up the play count from the extant frame.
+function test_extant_frames()
+{
+    local out
+    local err
+    local stat
 
-if [ -z "$srcdir" ]; then
-    echo >&2 "the \`srcdir' variable needs to be set to this script's location"
-    exit 1
-fi
+    case `uname` in
+        Linux)
+            sed_regex="-r";;
+        Darwin)
+            sed_regex="-E";;
+        *)
+            echo "Unknown system" 2>&1;
+            exit 1;;
+    esac
+
+    here=`pwd`
+    set_testdir ${srcdir} $popm_testdir test_extant_frames cerulean.mp3
+
+    # This file has a POPM frame with a play count of zero-- bump that.
+    run_popm out err stat cerulean.mp3
+    test $stat -eq 0 || fail "test_extant_frames: failed to increment counter"
+    pcnt=`${popm_scribbu_dir}/scribbu dump cerulean.mp3|grep -F counter|sed ${sed_regex} 's/counter: ([0-9]+)/\1/'`
+    test "$pcnt" == "01" || fail "test_extant_frames: POPM counter should be one, got $pcnt"
+
+    # Now create a PCNT frame, see if it picks up the counter from the existing
+    # POPM
+    run_popm out err stat --create-frame --owner=sp1ff@pobox.com --rating=255 cerulean.mp3
+    test $stat -eq 0 || fail "test_extant_frames: failed to create POPM"
+    pcnt=`${popm_scribbu_dir}/scribbu dump cerulean.mp3|grep -F PCNT|sed ${sed_regex} 's/PCNT: ([0-9]+)/\1/'`
+    test "$pcnt" == "1" || fail "test_extant_frames: PCNT should be one, got $pcnt"
+
+    clean_testdir $here $popm_testdir test_extant_frames
+}
+
+
+###########################################################################
+# parse options; `make check' will pass none, so be sure no options means
+# execute test suite normally
+###########################################################################
 
 popm_builddir=../src
 popm_cols=$(tput cols)
@@ -240,3 +285,4 @@ popm_scribbu_dir=`cd "$popm_scribbu_dir"; pwd`
 popm_testdir=`cd "$popm_testdir"; pwd`
 smoke_tests
 test_issue_1
+test_extant_frames

@@ -76,6 +76,7 @@ function smoke_tests()
     v1=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F ID3v1:)
     stat=$?
     [ $stat -eq 0 ] || fail "smoke_tests: failed to add ID3v1 tag"
+    test -f id3v2.3.tag.1 && fail "Ooops-- backup copy was made (1)"
 
     run_genre out err stat -c -C -w 40 id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: non-zero status for -w"
@@ -86,20 +87,133 @@ function smoke_tests()
     v1=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -E '^AlternRock')
     stat=$?
     [ $stat -eq 0 ] || fail "smoke_tests: bad ID3v1 genre"
+    test -f id3v2.3.tag.1 && fail "Ooops-- backup copy was made (2)"
+
+    run_genre out err stat -c -C -b -G Alt-Rock id3v2.3.tag
+    test $stat -eq 0 || fail "smoke_tests: non-zero status for -G"
+    test -z "$err" || fail "smoke_tests: non-nil stderr for -G"
+    test -z "$out" || fail "smoke_tests: non-nil stdout for -G"
+    tcon=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TCON)
+    [ "$tcon" = "TCON: Alt-Rock" ] || fail "smoke_tests: wrong TCON: $tcon"
+    v1=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F ID3v1:)
+    stat=$?
+    test $stat -eq 0 || fail "smoke_tests: failed to add ID3v1 tag"
+    # "Art Rock" is the closest match to "Alt-Rock"-- the ID3v1 genre
+    # should have been set to this (unfortunately)
+    art_rock=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F 'Art Rock')
+    stat=$?
+    test $stat -eq 0 || fail "smoke_tests: wrong ID3v1 genre(?)"
+    test -f id3v2.3.tag.1 || fail "Ooops-- backup copy was not made"
+
+    #######################################################################
+    # test tag scoping
+    #######################################################################
+
+    # -2 should leave the ID3v1 genre
+    run_genre out err stat -2 -w 0 id3v2.3.tag
+    test $stat -eq 0 || fail "smoke_tests: non-zero status for -2"
+    art_rock=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F 'Art Rock')
+    stat=$?
+    test $stat -eq 0 || fail "smoke_tests: non-zero -2 changed ID31"
+
+    # TCON is now Blues
+    # genre is Art Rock
+
+    # -1 should leave out the TCON
+    run_genre out err stat -1 -w 2 id3v2.3.tag
+    test $stat -eq 0 || fail "smoke_tests: non-zero status for -1"
+    tcon=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TCON)
+    test "$tcon" = "TCON: Blues" || fail "smoke_tests: changed ID3v2"
+    country=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F 'Country')
+    stat=$?
+    test $stat -eq 0 || fail "smoke_tests: wrong ID3v1 genre"
+
+    # TCON is Blues
+    # genre is now Country
+
+    # scope by ID3v2 tag
+    run_genre out err stat -t 0 -w 6 id3v2.3.tag
+    test $stat -eq 0 || fail "smoke_tests: non-zero status for -t"
+    tcon=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F TCON)
+    test "$tcon" = "TCON: Grunge" || fail "smoke_tests: wrong TCON: $tcon"
+    grunge=$(${genre_scribbu_dir}/scribbu dump id3v2.3.tag|grep -E '^Grunge')
+    stat=$?
+    test $stat -eq 0 || fail "smoke_tests: wrong ID3v1 genre"
+
+    # finally, check on -W
+    run_genre out err stat genre -W
+    test $stat -eq 0 || fail "smoke_tests: non-zero status for -W"
 
     clean_testdir $here $genre_testdir smoke_tests
 }
 
+function negative_tests
+{
+    local out
+    local err
+    local stat
+
+    here=`pwd`
+    set_testdir ${srcdir} $genre_testdir negative_tests id3v2.3.tag
+
+    # exactly one of -w, -g & -G must be given;
+    # give none
+    run_genre out err stat -c -b id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: none of -w, -g & -G given should fail"
+    test -n "$err" || fail "negative_tests: none of -w, -g & -G given should produce an eror message"
+    test -z "$out" || fail "negative_tests: none of -w, -g & -G given should produce no output"
+
+    # give two
+    run_genre out err stat -c -b -w 0 -g Alternative id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: two of -w, -g & -G given should fail (1)"
+    test -n "$err" || fail "negative_tests: two of -w, -g & -G given should produce an eror message (1)"
+    test -z "$out" || fail "negative_tests: two of -w, -g & -G given should produce no output (1)"
+
+    # give two
+    run_genre out err stat -c -b -w 0 -G Alternative id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: two of -w, -g & -G given should fail (2)"
+    test -n "$err" || fail "negative_tests: two of -w, -g & -G given should produce an eror message (2)"
+    test -z "$out" || fail "negative_tests: two of -w, -g & -G given should produce no output (2)"
+
+    # give two
+    run_genre out err stat -c -b -g Alt-Rock -G Alternative id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: two of -w, -g & -G given should fail (3)"
+    test -n "$err" || fail "negative_tests: two of -w, -g & -G given should produce an eror message (3)"
+    test -z "$out" || fail "negative_tests: two of -w, -g & -G given should produce no output (3)"
+
+    # give three
+    run_genre out err stat -c -b -w 0 -g Alt-Rock -G Alternative id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: three of -w, -g & -G given should fail"
+    test -n "$err" || fail "negative_tests: three of -w, -g & -G given should produce an eror message"
+    test -z "$out" || fail "negative_tests: three of -w, -g & -G given should produce no output"
+
+    # -t & -1
+    run_genre out err stat -w 8 -1 -t 2 id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: -1 & -t should fail"
+    test -n "$err" || fail "negative_tests: -1 & -t should produce an eror message"
+    test -z "$out" || fail "negative_tests: -1 & -t should produce no output"
+
+    # -c & -a
+    run_genre out err stat -w 8 -a -c id3v2.3.tag
+    test $stat -ne 0 || fail "negative_tests: -a & -A should fail"
+    test -n "$err" || fail "negative_tests: -a & -A should produce an eror message"
+    test -z "$out" || fail "negative_tests: -a & -A should produce no output"
+
+    clean_testdir $here $genre_testdir negative_tests
+}
+
+###########################################################################
+#                          parse options & run tests                      #
 ###########################################################################
 
 genre_builddir=../src
 genre_cols=$(tput cols)
-genre_debug=false
-genre_help=false
+genre_debug=no
+genre_help=no
 genre_nargs=0
 genre_scribbu_dir=../src
 genre_testdir=./test-genre-tmp
-genre_verbose=false
+genre_verbose=no
 genre_prev_option=
 for genre_option
 do
@@ -121,11 +235,11 @@ do
     # Options are handled here:
     case $genre_option in
         -d | --de | --deb | --debu | --debug)
-            genre_debug=true;;
+            genre_debug=yes;;
         -h | --he | --hel | --help)
-            genre_help=true;;
+            genre_help=yes;;
         -v | --ve | --ver | --verb | --verbo | --verbose)
-            genre_verbose=true;;
+            genre_verbose=yes;;
         *)
             cat >&2 <<EOF
 Unrecognized option \`$genre_option'.
@@ -136,21 +250,21 @@ EOF
 
 done
 
-if test "$genre_help" == "true"; then
+if test "$genre_help" == "yes"; then
     cat <<EOF
 \`$0' -- test the \`genre' sub-command
 
-TODO(sp1ff): write me!
+Tests for \`scribbu genre'; part of the scribbu test suite.
 EOF
 fi
 
-if test "$genre_verbose" == "true"; then
+if test "$genre_verbose" == "yes"; then
     exec 3>&1
 else
     exec 3> /dev/null
 fi
 
-if test "$genre_debug" == "true"; then
+if test "$genre_debug" == "yes"; then
     set -x
 fi
 
@@ -159,4 +273,4 @@ genre_scribbu_dir=`cd "$genre_scribbu_dir"; pwd`
 [ -d "$genre_testdir" ] || mkdir -p "$genre_testdir"
 genre_testdir=`cd "$genre_testdir"; pwd`
 smoke_tests
-# test_issue_1
+negative_tests

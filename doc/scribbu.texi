@@ -333,6 +333,7 @@ Display this manual by saying @code{scribbu --info}.
 @menu
 * Example::
 * Invoking @command{scribbu dump}::
+* Invoking @command{scribbu genre}::
 * Invoking @command{scribbu report}::
 * Invoking @command{scribbu rename}::
 * Invoking @command{scribbu popm}::
@@ -667,6 +668,187 @@ for ID3v1 tags: v1.1, extended, artist, title, album, year, comment & genre.
 @option{-c ENC|--v1-encoding=ENC} specify an encoding for ID3v1 tags
 (@verb{.CP1252.} by default). See @xref{Character Encodings}. for a
 complete list of the encodings supported and their identifiers.
+
+@end enumerate
+
+@node Invoking @command{scribbu genre}
+@section Invoking @command{scribbu genre}
+@cindex Invoking @command{scribbu genre}
+
+@code{scribbu genre} will set the genre (i.e. the TCON frame for ID3v2
+tags and the genre byte for ID3v1) for all tags in all files named on
+the command line. If an argument is a file, operate on the tags in
+that file. If the argument is a directory, operate recursively on all
+files containing ID3 tags therein.
+
+The genre can be specified in a few ways:
+
+@example
+scribbu genre -w N
+@end example
+
+will interpret @code{N} as one of the genres defined by Winamp
+@xref{Winamp}, specified as an integer between 0 & 191
+(inclusive). Run @code{scribbu genre -W} to print a list of the Winamp
+genres.
+
+@example
+scribbu genre -g GENRE
+@end example
+
+will attempt to map to map the string @code{GENRE} to one of the
+Winamp genres using Damerau-Levenshtein distance, but disregarding
+case.  For instance @code{scribbu genre -g rok} will be interpreted as
+Winamp genre 17: "Rock".
+
+@example
+scribbu genre -G GENRE
+@end example
+
+will accept GENRE uncritically as the TCON to be used for ID3v2
+tags. ID3v1 tags, if present, will have their genre field mapped to
+one of the Winamp values again by case-insensitive Damerau-Levenshtein
+distance (or just set to 255 if that fails). To explicitly set the
+ID3v1 version when specifying genre in this way, add the @option{--v1}
+flag (e.g. @code{scribbu genre -G foo --v1 17}).
+
+This brings up the question of what to do if there is no ID3v1 and/or
+no ID3v2 tag(s) in a given file. By default, in the absence of a tag,
+nothing will be done (so if invoked, for instance, on a file with
+neither an ID3v1 nor an ID3v2 tag, this sub-command would do
+nothing). This behavior can be customized in two ways. If
+@option{--create-v2} or @option{--create-v1} are given, an ID3v2
+(ID3v1, resp.) tag will be created for any file which already possess
+an ID3v1 (ID3v2, resp.) tag. If @option{--always-create-v2} or
+@option{--always-create-v1} are given, an ID3v2 (ID3v1, resp.) tag
+will always be created if it doesn't exist.
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu genre} Behavior on Write::
+* @code{scribbu genre} Options::
+@end menu
+
+@node @code{scribbu genre} Behavior on Write
+@subsection @code{scribbu genre} Behavior on Write
+@cindex @code{scribbu genre} Behavior on Write
+
+If the command didn't change the tagset for a given file, that file
+will not be modified. More generally, the tagset will have been
+changed, and we need to write out the new tagset. Since ID3v1 tags are
+fixed-size blocks appended to the file, writing them out is trivial.
+
+The default behavior for ID3v2 tags is to first try to emplace them;
+that is, write them over the current set of ID3v2 tags without
+touching track data, adjusting the padding if needed. If that is
+impossible (i.e. the new tagset can't be fit into the space occupied
+by the old, even when adjusting padding) a full copy will be made by
+writing the new tagset to a temporary file, copying the track data
+from the extant file to the temporary file, and finally appending the
+ID3v1 tag, if any, to the temporary file. Only then is the temporary
+file renamed ot the original (which is hopefully atomic).
+
+This behavior can be modified by the @option{--create-backups}
+option @xref{@code{scribbu genre} Options}, which will create a backup
+of the original file before renaming the temporary file.
+
+
+@node @code{scribbu genre} Options
+@subsection @code{scribbu genre} Options
+@cindex @code{scribbu genre} Options
+
+@enumerate
+
+@item
+@option{-n|--dry-run} dry-run mode; only print what @emph{would} happen
+
+@item
+@option{-u|--adjust-unsync} adjust each ID3v2 tag's use of the
+unsynchronisation scheme on write (by default, it's never used)
+
+@item
+@option{-a|--always-create-v2} always create an ID3v2 tag with a TCON
+frame for any file that does not possess one (whether or not there's
+an ID3v1 tag present); may be combined with
+@option{--always-create-v1} or @option{--create-v1}, but not with
+@option{--create-v2}.
+
+@item
+@option{-A|--always-create-v1} always create an ID3v1 tag with the
+genre field set appropriately for any file that does not possess one
+(whether or not there's an ID3v2 tag present); may be combined with
+@option{--always-create-v2} or @option{--create-v2}, but not with
+@option{--create-v1}.
+
+@item
+@option{-b|--create-backups} by default, the new tagset will be
+written in-place (emplacing ID3v2 tags, if feasible); this option will
+cause a backup file to be made before changing the original
+@xref{@code{scribbu genre} Behavior on Write}
+
+@item
+@option{-c|--create-v2} create an ID3v2 tag with a TCON frame for any
+file that has an ID3v1 tag but does not have an ID3v2 tag (fields from
+the ID3v1 tag will be copied over); may be combined with
+@option{--always-create-v1} or @option{--create-v1}, but not with
+@option{--always-crate-v2}
+
+@item
+@option{-C|--craete-v1} create an ID3v1 tag with the genre field set
+appropriately for any file that has an ID3v2 tag, but no ID3v1 tag;
+may be combined with @option{--always-create-v2} or
+@option{--create-v2}, but not with @option{--always-crate-v1}
+
+@item
+@option{-g GENRE|--genre=GENRE} specify @code{GENRE} as the textual
+name of one of the 192 Winamp-defined genres ("Rock", e.g.); if
+@code{GENRE} doesn't exactly match case-insensitively one of the
+Winamp genres, it it will be matched to the official list by minimal
+Damerau-Levenshtein distance (again without regard to case). The genre
+field for ID3v1 tags will be the corresponding numeric value
+
+See also @option{--list-winamp-genres}.
+
+@item
+@option{-G GENRE|--Genre=GENRE} specify @code{GENRE} as the verbatim
+text to be used for ID3v2 TCON frames (i.e. no matching to the
+Winamp-defined list will be done). The value for the genre field in
+ID3v1 tags @emph{will} however be determined by the closest match to
+the Winamp-defined list. See also @option{--v1} below for how to turn
+off that behavior.
+
+@item
+@option{-W,--list-winamp-genres} list the Winamp-defined genres, piped
+through your pager if @code{scribbu} can determine that (the
+environment variables @code{SCRIBBU_PAGER} & then @code{PAGER} are
+checked first, then any program named @code{less} on @code{PATH} will
+be used. See also @option{--no-pager}.
+
+@item
+@option{-P,--no-pager} do not use any pager when printing the Winamp
+genre list; just print to @code{stdout}
+
+@item
+@option{-t INDEX,--tag=INDEX} specify a zero-based index describing
+which ID3v2 tag to alter, in the case of multiple ID3v2 tags in a
+given file; may be given more than once to select multiple tags-- if
+not given, all tags present will be modified
+
+@item
+@option{-v N,--v1=N} numeric genre to use for ID3v1 tags when
+@option{G} is given
+
+@item
+@option{-1,--v1-only} only update ID3v1 tags; ignore any ID3v2 tags
+found
+
+@item
+@option{-2,--v2-only} only update ID3v2 tags; ignore any ID3v1 tags
+found.
+
+@item
+@option{-w N,--winamp=N} specify the genre numerically in terms of the
+192 Winamp-defined genres.
 
 @end enumerate
 

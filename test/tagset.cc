@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_copy )
   // its tagset repalced with `tagset'-- it won't be an emplace operation, since
   // we specifically requested a copy.
   BOOST_CHECK_NO_THROW(
-                       replace_tagset_copy(test, tagset.begin(), tagset.end(), apply_unsync::as_needed) );
+    replace_tagset_copy(test, tagset.begin(), tagset.end(), apply_unsync::as_needed) );
 
   fs::path bu(test.string() + ".1");
   BOOST_CHECK( fs::exists(bu) );
