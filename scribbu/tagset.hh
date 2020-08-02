@@ -358,6 +358,7 @@ namespace scribbu {
                                   ios::badbit;
 
     namespace fs = boost::filesystem;
+    namespace sys = boost::system;
 
     // Ideally, I'd using std::tmpfile or mkstmp; functions that determine the
     // temporary name & open it atomically, to avoid the race condition (and
@@ -409,9 +410,10 @@ namespace scribbu {
     tmpfs.close();
     ifs.close();
 
+    fs::path cp;
     if (keep_backup) {
 
-      fs::path cp = detail::get_backup_name(pth);
+      cp = detail::get_backup_name(pth);
 
       // This is a race condition (`cp' could be created in between the call to
       // `exists' and `copy'), but in that unlikely event the worst that will
@@ -420,11 +422,41 @@ namespace scribbu {
         fs::remove(cp);
       }
 
-      boost::system::error_code ec;
-      fs::copy(pth, cp, ec);
+      fs::copy(pth, cp);
     }
 
-    fs::rename(tmpnam, pth);
+    // Attempt a rename
+    sys::error_code ec;
+    fs::rename(tmpnam, pth, ec);
+    if (ec) {
+      if (sys::errc::cross_device_link == ec.value()) {
+        // `rename()' doesn't work across filesystems-- fallback to copy + rm.
+
+        // Thing is, `copy' fails when the destination exists (sigh). So, copy
+        // `pth' off to a backup (if we haven't already)...
+        if (cp.empty()) {
+          cp = detail::get_backup_name(pth);
+          if (fs::exists(cp)) {
+            fs::remove(cp);
+          }
+          fs::copy(pth, cp);
+        }
+        // remove the original...
+        fs::remove(pth);
+        // and attempt the copy & remmove
+        try {
+          fs::copy_file(tmpnam, pth);
+          fs::remove(tmpnam);
+        } catch (const std::exception &ex) {
+          // Well, we're kind of screwed. At least attempt to put the original
+          // file back.
+          fs::copy(cp, pth, ec); // `ec' ignored intentionally on return
+          throw;
+        }
+      } else {
+        throw sys::system_error(ec);
+      }
+    }
   }
 
   /**

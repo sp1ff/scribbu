@@ -8,6 +8,8 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 https://github.com/sp1ff/scribbu/issues/4
 
+*** handle problems when renaming across filesystems
+
 ** New Features
 
 *** New Sub-command `genre'

@@ -1,3 +1,7 @@
+2020-08-02  Michael Herstine  <sp1ff@pobox.com>
+
+	Bugfix: handle rename errors when renaming across filestystems.
+
 2020-07-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Final commit of the `genre' sub-command.
