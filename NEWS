@@ -12,6 +12,8 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
+*** Builds on MacOS
+
 *** New Sub-command `genre'
 
 `scribbu genre' lets you set the "genre" for your file by updating the relevant fields in the file's ID3v1 and/or -2 tags.

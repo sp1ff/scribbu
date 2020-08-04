@@ -461,6 +461,7 @@ set_pcnt_popm::create_v2(const scribbu::id3v1_tag &v1)
 {
   auto p = copy_id3_v1(v1);
   process_tag(*p, true);
+  return p;
 }
 
 /// Create a new ID3v2 tag when there are no other tags present
@@ -470,6 +471,7 @@ set_pcnt_popm::create_v2()
 {
   auto p = std::make_unique<scribbu::id3v2_3_tag>(DEFAULT_PADDING);
   process_tag(*p, true);
+  return p;
 }
 
 /// Process the ID3v1 tag

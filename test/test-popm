@@ -211,6 +211,34 @@ function test_extant_frames()
     clean_testdir $here $popm_testdir test_extant_frames
 }
 
+# Test my fix to a bug I found found while running `mppopmd' & a file with just
+# an ID3v1 tag
+function test_id3v1_only
+{
+    local out
+    local err
+    local stat
+
+    case `uname` in
+        Linux)
+            sed_regex="-r";;
+        Darwin)
+            sed_regex="-E";;
+        *)
+            echo "Unknown system" 2>&1;
+            exit 1;;
+    esac
+
+    here=`pwd`
+    set_testdir ${srcdir} $popm_testdir test_id3v1_only v1-only.mp3
+
+    run_popm out err stat -a -A -b -o sp1ff@pobox.com -r 196 v1-only.mp3
+    test $stat -eq 0 || fail "test_id3v1_only: failed to set rating"
+
+    rating=$(${popm_scribbu_dir}/scribbu dump v1-only.mp3|grep -F rating|awk '{print $2}')
+    [ "$rating" = "196" ] || fail "test_id3v1_only: rating is $rating; should be 196"
+
+}
 
 ###########################################################################
 # parse options; `make check' will pass none, so be sure no options means
@@ -286,3 +314,4 @@ popm_testdir=`cd "$popm_testdir"; pwd`
 smoke_tests
 test_issue_1
 test_extant_frames
+test_id3v1_only

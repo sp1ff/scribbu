@@ -1,3 +1,7 @@
+2020-08-03  Michael Herstine  <sp1ff@pobox.com>
+
+	Fixed a SEGV when creating new ID3v2 tags. Repaired the MacOS build.
+
 2020-08-02  Michael Herstine  <sp1ff@pobox.com>
 
 	Bugfix: handle rename errors when renaming across filestystems.

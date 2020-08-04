@@ -303,8 +303,10 @@ tagset_processor::process_file(const fs::path &pth)
     //         |-----+-------+-------------------+------------------|
     if (pv1 && v2_creation_policy_ != v2_creation_policy::never) {
       pnv2 = create_v2(*pv1);
+      dirty = true;
     } else if (!pv1 && v2_creation_policy_ == v2_creation_policy::always) {
       pnv2 = create_v2();
+      dirty = true;
     }
   } else if (v2_tag_scope_policy_ != v2_tag_scope_policy::none) {
     // `tags' will contain the indicies of the ID3v2 tags to be processed
@@ -355,8 +357,10 @@ tagset_processor::process_file(const fs::path &pth)
     //          |-----+-------+--------------------+--------------------+
     if (!v2.empty() && v1_creation_policy_ != v1_creation_policy::never) {
       pnv1 = create_v1(v2);
+      dirty = true;
     } else if (v2.empty() && v1_creation_policy_ == v1_creation_policy::always) {
       pnv1 = create_v1();
+      dirty = true;
     }
   } else if (v1_tag_scope_policy_ != v1_tag_scope_policy::no) {
     dirty |= process_v1(*pv1);

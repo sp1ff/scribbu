@@ -422,7 +422,17 @@ namespace scribbu {
         fs::remove(cp);
       }
 
-      fs::copy(pth, cp);
+      // WORKAROUND(boost): I should be able to call `fs::copy(pth, cp)' and
+      // have it throw on failure. For reasons I have not yet figured out, doing
+      // this on MacOS/clang causes a SEGV somewhere in
+      // `boost::filesystem::detail::copy'.  If I do this instead, the unit
+      // tests pass(!?). I'm hoping that when I upgrade to a more recent version
+      // of boost, this problem will just go away.
+      sys::error_code ec;
+      fs::copy(pth, cp, ec);
+      if (ec) {
+        throw sys::system_error(ec);
+      }
     }
 
     // Attempt a rename
@@ -446,7 +456,9 @@ namespace scribbu {
         // and attempt the copy & remmove
         try {
           fs::copy_file(tmpnam, pth);
-          fs::remove(tmpnam);
+          if (! keep_backup) {
+            fs::remove(tmpnam);
+          }
         } catch (const std::exception &ex) {
           // Well, we're kind of screwed. At least attempt to put the original
           // file back.

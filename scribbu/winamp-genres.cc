@@ -26,6 +26,7 @@
 
 #include <codecvt>
 #include <locale>
+#include <string>
 
 const char32_t *GENRESW[] = {
   /*  0*/ U"blues",
@@ -600,5 +601,4 @@ scribbu::match_winamp_genre(const std::string &text)
   }
 
   return make_tuple(text_for_genre(best_genre).get(), best_genre, least_dl);
-
 }

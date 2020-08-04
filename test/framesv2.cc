@@ -23,6 +23,8 @@
 
 #include <scribbu/framesv2.hh>
 
+#include <sstream>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -148,14 +150,17 @@ BOOST_AUTO_TEST_CASE( test_unique_file_id )
   BOOST_CHECK_EQUAL_COLLECTIONS(EMAIL, EMAIL + NEMAIL,
                                 outbuf.begin(), outbuf.end());
   outbuf.erase(outbuf.begin(), outbuf.end());
-  id2.idb(back_inserter(outbuf));
+  id3.idb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
-  // LATER(sp1ff): test the following
-  // - size()
-  // - serialized_size()
-  // - needs_unsynchronisation()
-  // - write()
+  BOOST_CHECK(id3.size() == NEMAIL + 1);
+  BOOST_CHECK(id3.serialized_size(true) == NEMAIL + 1);
+  BOOST_CHECK(!id3.needs_unsynchronisation());
+
+  stringstream stm;
+  id3.write(stm);
+  string text = stm.str();
+  BOOST_CHECK(0 == strcmp(EMAIL, text.c_str()));
 
 } // End test_unique_file_id.
 

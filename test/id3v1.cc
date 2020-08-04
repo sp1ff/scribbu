@@ -559,3 +559,25 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
   fs::remove(tmp);
   fs::remove(tmp2);
 }
+
+BOOST_AUTO_TEST_CASE( test_funny_id3v1 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  const fs::path TEST_DATA(get_data_directory() / "v1-only.mp3");
+
+  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+
+  id3v1_tag tag(ifs);
+  BOOST_CHECK(!tag.enhanced());
+  BOOST_CHECK(!tag.extended());
+  BOOST_CHECK(!tag.v1_1());
+
+  string text = tag.title<string>();
+  BOOST_CHECK("Here She Comes Now (live)" == text);
+
+  text = tag.artist<string>();
+  BOOST_CHECK("Pearl Jam & Nirvana" == text);
+
+}
