@@ -295,7 +295,7 @@ private:
     if (pc_policy::increment == play_count_policy_) {
       new_pc += G.count();
     }
-    unsigned char rating = rating_ ? *rating_ : 0;
+    unsigned char rating = rating_ ? *rating_ : G.rating();
     if (dry_run() || verbose()) {
       cout << "Setting POPM/" << email << "counter to " << new_pc <<
         ", & rating to " << (unsigned int)rating << "." << endl;

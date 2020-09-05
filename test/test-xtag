@@ -92,6 +92,25 @@ function smoke_tests()
     clean_testdir $here $popm_testdir xtag_smoke_tests
 }
 
+# Test my fix to a problem I found while running scribbu under `mpd' where the
+# owner wasn't being written out
+function test_owner_bug()
+{
+    local out
+    local err
+    local stat
+
+    here=`pwd`
+    set_testdir ${srcdir} $xtag_testdir xtag_smoke_tests id3v2.3.tag
+
+    run_xtag out err stat -A -a -T 'decade=90s&subgenres=Rock&move-to-cali' -o sp1ff@pobox.com id3v2.3.tag
+    test $stat -eq 0 || fail "smoke_owner_bug: incorrect status"
+    xtag=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG|awk '{print $2}')
+    test "$xtag" = "sp1ff@pobox.com" || fail "smoke_test_owner_bug: failed to write owner!"
+
+    clean_testdir $here $popm_testdir xtag_smoke_tests
+}
+
 ###########################################################################
 
 if [ -z "$srcdir" ]; then
@@ -166,3 +185,4 @@ xtag_scribbu_dir=`cd "$xtag_scribbu_dir"; pwd`
 [ -d "$xtag_testdir" ] || mkdir -p "$xtag_testdir"
 xtag_testdir=`cd "$xtag_testdir"; pwd`
 smoke_tests
+test_owner_bug

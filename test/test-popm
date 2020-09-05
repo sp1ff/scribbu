@@ -238,6 +238,40 @@ function test_id3v1_only
     rating=$(${popm_scribbu_dir}/scribbu dump v1-only.mp3|grep -F rating|awk '{print $2}')
     [ "$rating" = "196" ] || fail "test_id3v1_only: rating is $rating; should be 196"
 
+    clean_testdir $here $popm_testdir test_id3v1_only
+}
+
+# Test another bug I found with `mppopmd'
+function test_rate_then_count
+{
+    local out
+    local err
+    local stat
+
+    case `uname` in
+        Linux)
+            sed_regex="-r";;
+        Darwin)
+            sed_regex="-E";;
+        *)
+            echo "Unknown system" 2>&1;
+            exit 1;;
+    esac
+
+    here=`pwd`
+    set_testdir ${srcdir} $popm_testdir test_rate_then_count life.mp3
+
+    run_popm out err stat -a -A -b -o sp1ff@pobox.com -r 196 life.mp3
+    test $stat -eq 0 || fail "test_rate_then_count: failed to set rating"
+    rating=$(${popm_scribbu_dir}/scribbu dump life.mp3|grep -F rating|awk '{print $2}')
+    [ "$rating" = "196" ] || fail "test_rate_then_count: rating is $rating; should be 196"
+
+    # Now set the playcount to 1
+    run_popm out err stat -a -A -b -o sp1ff@pobox.com -C 1 life.mp3
+    rating=$(${popm_scribbu_dir}/scribbu dump life.mp3|grep -F rating|awk '{print $2}')
+    [ "$rating" = "196" ] || fail "test_rate_then_count: rating is $rating; should be 196 (2)"
+
+    clean_testdir $here $popm_testdir test_rate_then_count
 }
 
 ###########################################################################
@@ -315,3 +349,4 @@ smoke_tests
 test_issue_1
 test_extant_frames
 test_id3v1_only
+test_rate_then_count

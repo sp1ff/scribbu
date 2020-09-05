@@ -4,6 +4,8 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** owner not being written out by `scribbu popm'
+
 *** id3v2_tag text frame virtuals will SEGV if the relevant frame isn't there
 
 https://github.com/sp1ff/scribbu/issues/4

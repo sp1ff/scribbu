@@ -164,7 +164,7 @@ fi
 
 test_cmd "man scribbu" "NAME scribbu - The extensible tool for tagging your music collection" $cs_batch
 test_cmd "man scribbu-dump" "NAME scribbu-dump - dump ID3 tags from one or more files" $cs_batch
-test_cmd "man scribbu-genre" "NAME scribbu-genre - Set the genre for one or more files" $cs_batch
+test_cmd "man scribbu-genre" "NAME scribbu genre - Set the genre for one or more files" $cs_batch
 test_cmd "man scribbu-rename" "NAME scribbu rename - Rename files according to the ID3 tag attributes" $cs_batch
 test_cmd "man scribbu-report" 'NAME scribbu-report - generate a report on one or more files.*ID3 tags' $cs_batch
 test_cmd "man scribbu-split" "NAME scribbu-split - split a file into ID3v2, track & ID3v1 pieces" $cs_batch
@@ -181,7 +181,7 @@ test_cmd "scribbu dump --help" "NAME scribbu-dump - dump ID3 tags from one or mo
 
 test_cmd "scribbu dump --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu dump." $cs_batch
 test_cmd "scribbu genre -h" "scribbu genre -- set the genre for one or more files" $cs_batch
-test_cmd "scribbu genre --help" "NAME scribbu-genre - Set the genre for one or more files" $cs_batch
+test_cmd "scribbu genre --help" "NAME scribbu genre - Set the genre for one or more files" $cs_batch
 
 test_cmd "scribbu genre --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu genre." $cs_batch
 test_cmd "scribbu rename -h" "scribbu rename -- rename .mp3 files scribbu rename" $cs_batch

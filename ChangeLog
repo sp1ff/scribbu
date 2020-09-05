@@ -1,4 +1,13 @@
-2020-08-03  Michael Herstine  <sp1ff@pobox.com>
+2020-09-05  Michael Herstine  <sp1ff@pobox.com>
+
+	BUGFIX: owner was not being written out correctly for `popm'.
+	This commit contains a few changes:
+
+	    - a fix to the bug mentioned above
+	    - maintenance: renamed autogen.sh, got rid of libtool.m4
+	    - fixed a compilation bug on MacOS
+
+2020-08-04  Michael Herstine  <sp1ff@pobox.com>
 
 	Fixed a SEGV when creating new ID3v2 tags. Repaired the MacOS build.
 

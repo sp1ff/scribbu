@@ -32,7 +32,7 @@ AC_ARG_WITH([scribbu],
 dnl One way or another, we have one or more candidates in ${scribbu_dirs}
 found=no
 for scribbu_home in ${scribbu_dirs}; do
-    AC_MSG_CHECKING([for scribbu/scribbu.h under ${scribbu_home}])
+    AC_MSG_CHECKING([for scribbu/scribbu.hh under ${scribbu_home}])
     if test -f "${scribbu_home}/include/scribbu/scribbu.hh"; then
         SCRIBBU_CPPFLAGS="-I${scribbu_home}/include"
 	SCRIBBU_LDFLAGS="-L${scribbu_home}/lib"
