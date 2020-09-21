@@ -89,7 +89,7 @@ function smoke_tests()
     grog=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F grog|awk '{print $2, $3, $4, $5}')
     [ "$grog" = "a, b, c, d" ] || fail "smoke_tests: bad grog"
 
-    clean_testdir $here $popm_testdir xtag_smoke_tests
+    clean_testdir $here $xtag_testdir xtag_smoke_tests
 }
 
 # Test my fix to a problem I found while running scribbu under `mpd' where the
@@ -101,14 +101,32 @@ function test_owner_bug()
     local stat
 
     here=`pwd`
-    set_testdir ${srcdir} $xtag_testdir xtag_smoke_tests id3v2.3.tag
+    set_testdir ${srcdir} $xtag_testdir xtag_owner_bug id3v2.3.tag
 
     run_xtag out err stat -A -a -T 'decade=90s&subgenres=Rock&move-to-cali' -o sp1ff@pobox.com id3v2.3.tag
     test $stat -eq 0 || fail "smoke_owner_bug: incorrect status"
     xtag=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG|awk '{print $2}')
     test "$xtag" = "sp1ff@pobox.com" || fail "smoke_test_owner_bug: failed to write owner!"
 
-    clean_testdir $here $popm_testdir xtag_smoke_tests
+    clean_testdir $here $xtag_testdir xtag_owner_bug
+}
+
+# Test my fix to a bug I found setting the XTAG frame
+function test_set_xtag_0()
+{
+    local out
+    local err
+    local stat
+
+    here=`pwd`
+    set_testdir ${srcdir} $xtag_testdir set_xtag_0 wy.mp3
+
+    run_xtag out err stat -A -a -o 'sp1ff@pobox.com' -T 'decade=aughts&C' wy.mp3
+    test $stat -eq 0 || fail "test_set_xtag_0: incorrect status"
+    xtag=$(${xtag_scribbu_dir}/scribbu dump wy.mp3|grep -F XTAG|awk '{print $2}')
+    test "$xtag" = "sp1ff@pobox.com" || fail "test_set_xtag_0: failed to write owner!"
+
+    clean_testdir $here $xtag_testdir set_xtag_0
 }
 
 ###########################################################################
@@ -186,3 +204,4 @@ xtag_scribbu_dir=`cd "$xtag_scribbu_dir"; pwd`
 xtag_testdir=`cd "$xtag_testdir"; pwd`
 smoke_tests
 test_owner_bug
+test_set_xtag_0

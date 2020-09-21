@@ -14,7 +14,10 @@ if [ ! -z "$t_err" ]; then
 	exit 1
 fi
 
-../src/scribbu dump test-audacity.tag > test-cleanup-from-audacity.out || exit 1
+../src/scribbu dump test-audacity.tag > test-cleanup-from-audacity.$$.out || exit 1
+# Get rid of the "Last Modified" line
+sed -e '/^Last Modified/d' test-cleanup-from-audacity.$$.out > test-cleanup-from-audacity.out
+rm test-cleanup-from-audacity.$$.out
 diff test-cleanup-from-audacity.out ${srcdir}/data/golden-test-cleanup-from-audacity.out || exit 1
 rm -f test-audacity.tag
 exit $t_stat

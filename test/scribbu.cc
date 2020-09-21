@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE( test_track_data )
 "TPOS: 1/1\n"
 "frame APIC (286673 bytes)\n"
 "82 bytes of padding\n"
-"7760096 bytes of track data:\n"
-"MD5: 32e73c84659bcf729333d7dd2efca044\n"
+"0 bytes of track data:\n"
+"MD5: d41d8cd98f00b204e9800998ecf8427e\n"
 "ID3v1.1: The Ocean Blue - Questions Of Travel (LP Versio\n"
 "Cerulean (US Release) (track 6), 2005\n"
 "tags=90s,sub-genres=shoegaze\n"
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( test_track_data )
   BOOST_TEST_MESSAGE( text );
   BOOST_CHECK( GOLD1 == text );
 
-  static const string GOLD2("3,0,295607,0x00,0,The Ocean Blue,Questions Of Travel (LP Version),Cerulean (US Release),Alternative Rock,,2005,,0,,1,\"tags=90s,sub-genres=shoegazer\",,,,7760096,32e73c84659bcf729333d7dd2efca044");
+  static const string GOLD2("3,0,295607,0x00,0,The Ocean Blue,Questions Of Travel (LP Version),Cerulean (US Release),Alternative Rock,,2005,,0,,1,\"tags=90s,sub-genres=shoegazer\",,,,0,d41d8cd98f00b204e9800998ecf8427e");
 
   stringstream stm2;
   stm2 << print_as_csv(4, encoding::ASCII, boost::none) << *pid3v2 << "," << td;

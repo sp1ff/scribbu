@@ -83,7 +83,8 @@ namespace {
     /// Print in CSV format
     dumper(const boost::regex &file_regex, dump_id3v2 d0, dump_track d1,
            dump_id3v1 d2, scribbu::encoding v1enc, std::size_t ncomm);
-    void operator()(const fs::path &pth);
+    /// Process one directory entitty
+    void operator()(const fs::path &pth, bool explict = false);
 
   private:
     boost::regex file_regex_;
@@ -152,15 +153,38 @@ namespace {
     cout << print_as_csv(ncomm_, v1enc_);
   }
 
+  /**
+   * \brief Process one directory entitty
+   *
+   *
+   * \param pth [in] file to be dumped
+   *
+   * \param explict [in] the caller shall set this to true if \a pth was
+   * explicitly requested (rather than, say, produced by an automated traversal
+   * of a directory)
+   *
+   *
+   */
+
   void
-  dumper::operator()(const fs::path &pth)
+  dumper::operator()(const fs::path &pth, bool explict /*= false*/)
   {
     using namespace std;
     using namespace boost;
     using namespace scribbu;
 
+    const char * const TMFMT = "%a, %d %b %y %H:%M:%S %Z";
+
+    // If we were invoked on `pth' as part of some kind of automated directory
+    // traversal, it is likely desirable to just silently skip, say,
+    // sockets. However, if the user explicitly requested `pth', and it's not a
+    // file (for instance, they fat-fingered a filename), then they probably
+    // want to know about it.
     if (!fs::is_regular_file(pth)) {
-      return;
+      if (!explict) {
+        return;
+      }
+      throw file_not_found(pth);
     }
 
     if (!file_regex_.empty() && !regex_match(pth.string(), file_regex_)) {
@@ -171,12 +195,14 @@ namespace {
 
       fs::ifstream ifs(pth, ios_base::binary);
 
+      time_t mtime = fs::last_write_time(pth);
+
       vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
       scribbu::read_all_id3v2(ifs, back_inserter(id3v2));
       scribbu::track_data td((istream&)ifs);
       unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(ifs);
 
-      cout << pth << ":" << endl;
+      cout << pth << ":\nLast Modified: " << put_time(localtime(&mtime), TMFMT) << endl;
 
       if (dump_id3v2_) {
         for (ptrdiff_t i = 0, n = id3v2.size(); i < n; ++i) {
@@ -365,7 +391,7 @@ namespace {
       typedef dumper::dump_track dump_track;
       typedef dumper::dump_id3v1 dump_id3v1;
 
-      format fmt = vm["format"    ].as<format>();
+      format fmt = vm["format"].as<format>();
       dump_id3v2 f0 = vm["id3v2-tags"].as<bool>() ? dump_id3v2::yes :
         dump_id3v2::no;
       dump_track f1 = vm["track-data"].as<bool>() ? dump_track::yes :

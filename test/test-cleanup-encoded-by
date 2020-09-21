@@ -15,7 +15,10 @@ if [ ! -z "$t_err" ]; then
 	exit 1
 fi
 
-../src/scribbu dump elliot-goldenthal.id3v1.tag.out > test-cleanup-encoded-by.out || exit 1
+../src/scribbu dump elliot-goldenthal.id3v1.tag.out > test-cleanup-encoded-by.$$.out || exit 1
+# Get rid of the "Last Modified" line
+sed -e '/^Last Modified/d' test-cleanup-encoded-by.$$.out > test-cleanup-encoded-by.out
+rm test-cleanup-encoded-by.$$.out
 diff test-cleanup-encoded-by.out ${srcdir}/data/golden-test-cleanup-encoded-by.out || exit 1
 
 exit $t_stat

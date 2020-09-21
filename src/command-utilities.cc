@@ -45,6 +45,22 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 ////////////////////////////////////////////////////////////////////////////////
+//                                   errors                                   //
+////////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+const char *
+file_not_found::what() const noexcept(true)
+{
+  if (!pwhat_) {
+    std::stringstream stm;
+    stm << "``" << pth_ << "'' not found";
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //                      types & methods related to help                       //
 ////////////////////////////////////////////////////////////////////////////////
 

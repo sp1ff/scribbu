@@ -1,7 +1,7 @@
 scribbu - The extensible tool for tagging your music collection
 ===============================================================
 
-This directory contains the 0.6.2 release of [scribbu](https://github.com/sp1ff/scribbu).
+This directory contains the 0.6.7 release of [scribbu](https://github.com/sp1ff/scribbu).
 
 See the file [NEWS]() for the user-visible changes from previous releases.
 

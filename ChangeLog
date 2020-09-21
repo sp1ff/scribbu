@@ -1,3 +1,16 @@
+2020-09-20  Michael Herstine  <sp1ff@pobox.com>
+
+	Improve 'scribbu dump'
+	This commit makes the following changes to 'scribbu dump'
+
+	    1. dump the file's mtime
+	    2. generates an error message on file-not-found
+
+	It also:
+
+	    - begins stripping track data from test mp3 files
+	    - adds a unit test to 'scribbu xtag'
+
 2020-09-05  Michael Herstine  <sp1ff@pobox.com>
 
 	BUGFIX: owner was not being written out correctly for `popm'.

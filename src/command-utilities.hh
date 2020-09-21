@@ -45,6 +45,19 @@
 /// calling with incorrect parameters shall exit with status code 2
 const int EXIT_INCORRECT_USAGE = 2;
 
+////////////////////////////////////////////////////////////////////////////
+//                                   errors                               //
+////////////////////////////////////////////////////////////////////////////
+
+class file_not_found: public scribbu::error {
+public:
+  file_not_found(const boost::filesystem::path &pth): pth_(pth)
+  { }
+  virtual const char * what() const noexcept(true);
+private:
+  boost::filesystem::path pth_;
+  mutable std::shared_ptr<std::string> pwhat_;
+};
 
 ////////////////////////////////////////////////////////////////////////////
 //                      types & methods related to help                   //

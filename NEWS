@@ -4,7 +4,9 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
-*** owner not being written out by `scribbu popm'
+*** `scribbu dump' fails silently on file-not-found
+
+*** owner not being written out by `scribbu popm' in some cases
 
 *** id3v2_tag text frame virtuals will SEGV if the relevant frame isn't there
 
@@ -14,9 +16,11 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
-*** Builds on MacOS
+*** `scribbu dump' will now list mtime
 
-*** New Sub-command `genre'
+*** builds on MacOS
+
+*** new sub-command `genre'
 
 `scribbu genre' lets you set the "genre" for your file by updating the relevant fields in the file's ID3v1 and/or -2 tags.
 
