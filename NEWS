@@ -4,6 +4,8 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** `scribbu text' will now, optionally, create an ID3v2 tag if there isn't one already
+
 *** `scribbu dump' fails silently on file-not-found
 
 *** owner not being written out by `scribbu popm' in some cases

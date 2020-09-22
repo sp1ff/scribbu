@@ -1,4 +1,11 @@
-2020-09-20  Michael Herstine  <sp1ff@pobox.com>
+2020-09-21  Michael Herstine  <sp1ff@pobox.com>
+
+	Update the 'text' sub-command.
+	This commit re-implements the 'text' sub-command in terms of
+	'tagset_processor'. In so doing, it opens up the options of
+	creating an ID3v2 tag if none exist.
+
+2020-09-21  Michael Herstine  <sp1ff@pobox.com>
 
 	Improve 'scribbu dump'
 	This commit makes the following changes to 'scribbu dump'

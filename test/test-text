@@ -83,8 +83,29 @@ function smoke_tests()
     [ $stat -eq 0 ] || fail "smoke_tests: failed to find TIT2"
     [ "$artist" == "TIT2: 三三" ] || fail "smoke_tests: failed to set title"
 
+    clean_testdir $here $text_testdir smoke_tests
+}
 
-    clean_testdir $here $popm_testdir smoke_tests
+# Test that an ID3v2 tag is created when the input file has none
+function test_create
+{
+    local out
+    local err
+    local stat
+
+    here=`pwd`
+    set_testdir ${srcdir} ${text_testdir} test_create v1-only.mp3
+
+    run_text out err stat -c --artist=Nirvana v1-only.mp3
+    [ $stat -eq 0 ] || fail "test_create: non-zero status on set artist"
+    [ -z "$err" ] || fail "test_create: non-nil stderr on set artist ($err)"
+
+    artist=$(${text_scribbu_dir}/scribbu dump v1-only.mp3|grep -F TPE1)
+    stat=$?
+    [ $stat -eq 0 ] || fail "test_create: failed to find TPE1"
+    [ "$artist" == "TPE1: Nirvana" ] || fail "test_create: failed to set artist"
+
+    clean_testdir $here $text_testdir test_create
 }
 
 ###########################################################################
@@ -163,3 +184,4 @@ text_scribbu_dir=`cd "$text_scribbu_dir"; pwd`
 [ -d "$text_testdir" ] || mkdir -p "$text_testdir"
 text_testdir=`cd "$text_testdir"; pwd`
 smoke_tests
+test_create

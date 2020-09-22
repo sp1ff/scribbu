@@ -13,4 +13,3 @@ scribbu_LDADD = ../scribbu/libscribbu.la \
 	$(BOOST_PROGRAM_OPTIONS_LIB)     \
 	$(BOOST_REGEX_LIB)               \
 	$(BOOST_SYSTEM_LIB)
-

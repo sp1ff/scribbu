@@ -4,8 +4,8 @@ file	file size(MB)	ID3v2 version	ID3v2 revision	ID3v2 size(bytes)	ID3v2 flags	ID
 "duplicate_id3v2.mp3"	0.010	3	0	3933	0x00	0	ArtistXXXX	TitleXXXX	AlbumXXXX					0		0							6195	0bccbd7155f125ca958074d203c44587								
 "forbidden.mp3"	4.381	3	0	1392	0x00	0	Nina Simone	Forbidden Fruit	The Amazing	(8)				0		0							4592530	60eae24825c141853c62ed82571b502c	1	0	Nina Simone	Forbidden Fruit	The Amazing			8
 "id3v22-tda.mp3"	0.004	2	0	502	0x00	0								0		0							3584	58d9cde64c572a02fb5a272e1ff461ac								
-"joao.mp3"	3.797	4	0	1091	0x00	0	Joao Gilberto	Acapulco	Ela E Carioca					0		0							3979807	3fb81a36233e284c3e0764bd09789da6	0	0	Joao Gilberto	ACAPULCO	ELA E CARIOCA			12
-"life.mp3"	2.883	3	0	1397	0x00	0	Frank Sinatra	That's Life	The Very Good Years	Vocal				2	*	5		Pretty slow	Evening	1966			3021441	a800dc4ed8ba333eaab72c8777aaea3e								
+"joao.mp3"	0.001	4	0	1091	0x00	0	Joao Gilberto	Acapulco	Ela E Carioca					0		0							0	d41d8cd98f00b204e9800998ecf8427e	0	0	Joao Gilberto	ACAPULCO	ELA E CARIOCA			12
+"life.mp3"	0.001	3	0	1397	0x00	0	Frank Sinatra	That's Life	The Very Good Years	Vocal				2	*	5		Pretty slow	Evening	1966			0	d41d8cd98f00b204e9800998ecf8427e								
 "lorca.mp3"	9.421	3	0	452951	0x00	0	The Pogues	Lorca's Novena	Hell's Ditch [Expanded] (US Version)	Pop		1990		0		1	Amazon.com Song ID: 203558254						9425708	48ff9cadea7d842e9059db25159d2daa	1	0	The Pogues	Lorca's Novena	Hell's Ditch [Expanded] (US Ve	1990	Amazon.com Song ID: 20355825	255
 "lunch4bfast2.mp3"	5.883	3	0	1369	0x00	0				Electronic				0		1							6167069	81e1c6ac278a5c5ab93d66bdb267bf49	0	0						52
 "lunch4bfast.mp3"	5.883	3	0	1369	0x00	0				Electronic				0		1							6167069	58859c7655acae7689290474df482c7a	0	0						52

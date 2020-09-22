@@ -38,140 +38,249 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/lexical_cast.hpp>
 
-
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
-
 
 const std::string USAGE(R"(scribbu text -- manage text frames
 
 scrubbu text [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
-Create, update or delete one or more text frames in ID3v2 tags.
+Create, update or delete one or more text frames in ID3v2 tags. By
+default, update the specified frames in all tags in all files named
+on the command line. If an argument is a directory, operate on all
+tags in all files in the directory tree rooted at that argument.
+
+Examples:
 
 Set the artist & title in a given file:
 
     scribbu text --artist='Pogues, The' --title="Lorca's Novena" foo.mp3
 
-Set the artist in a group of files, but only in the first tag:
-
-    scribbu text --tag=0 --artist='Pogues, The' *.mp3
-
 Delete the "Encoded By" frame in a directory full of files:
 
     scribbu text --delete=TENC foo/
+
+The operation can be scoped in a few ways; for instance, to set the
+artist in a group of files, but only in the first tag:
+
+    scribbu text --tag=0 --artist='Pogues, The' *.mp3
+
+The --tag option can be given more than once to specify multiple indicies.
+
+By default, only existing ID3v2 tags will be processed. When setting
+a frame or frames, specify the -c flag to create a new ID3v2 tag to house
+them, but only if there's already an ID3v1 tag present (any information
+therein will be copied to the new ID3v2 tag). The -C flag will
+unconditioanlly create a new ID3v2 tag. This should be used with care
+when operating on directories, or you may find assorted, non-music
+files have had ID3v2 tags prepended to them.
 
 For detailed help, say `scribbu text --help'. To see the manual, say
 `info "scribbu (text) "'.
 )");
 
+////////////////////////////////////////////////////////////////////////////////
+//                       functor for processing tagsets                       //
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * \brief tagset_processor for creating, updating or deleting text frames
+ *
+ * \sa process_dirent_args
+ * \sa tagset_processor
+ *
+ *
+ * Since a lot of the logic of processing one or more "file-or-directory"
+ * sub-command arguments, reading their tags & making adjustments is
+ * boilerplate, I've factored it out into the process_dirent_args template free
+ * function & the tagset_processor functor. The logic specific to the `text'
+ * sub-command resides here.
+ *
+ *
+ */
+
+class set_text: public tagset_processor
+{
+public:
+  /// Use this ctor when no --tag options have been specified; it takes
+  /// a range of strings to create or update in the form of pairs of
+  /// id3v2_text_frames members and associated text, a range of frames
+  /// to delete in the form of id3v2_text_frames members, along with the
+  /// other usual parameters.
+  template <typename FIIS, // forward input iterator * => pair<id3v2_text_frames, string>
+            typename FIID> // forward input iterator * => id3v2_text_frames
+  set_text(FIIS ps0, FIIS ps1, FIID pd0, FIID pd1, scribbu::encoding srcenc,
+           v2_creation_policy v2cp, bool verbose, bool adj_unsync, bool create_backups):
+    tagset_processor(v2_simple_tag_scope_policy::all,
+                     v1_tag_scope_policy::no,
+                     v2cp,
+                     v1_creation_policy::never,
+                     false,
+                     verbose,
+                     adj_unsync,
+                     create_backups),
+    dels_(pd0, pd1),
+    adds_(ps0, ps1),
+    enc_(srcenc)
+  { }
+  /// Use this ctor when the --tag option has been given; it takes a range of
+  /// tag indicies, a range of strings to create or update in the form of pairs
+  /// of id3v2_text_frames members and associated text, a range of frames to
+  /// delete in the form of id3v2_text_frames members, along with the other
+  /// usual parameters.
+  template <typename FIIS, // forward input iterator * => pair<frame, string>
+            typename FIID, // forward input iterator * => frame
+            typename FIIT> // forward input iterator * => size_t
+    set_text(FIIS ps0, FIIS ps1, FIID pd0, FIID pd1, FIIT pt0, FIIT pt1,
+             scribbu::encoding srcenc, v2_creation_policy v2cp,
+             bool verbose, bool adj_unsync, bool create_backups):
+      tagset_processor(pt0, pt1,
+                       v1_tag_scope_policy::no,
+                       v2cp,
+                       v1_creation_policy::never,
+                       false,
+                       verbose,
+                       adj_unsync,
+                       create_backups),
+      dels_(pd0, pd1),
+      adds_(ps0, ps1),
+      enc_(srcenc)
+  { }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //                 tagset_processor interface for sub-classes               //
+  //////////////////////////////////////////////////////////////////////////////
+
+public:
+  /// Create a new ID3v1 tag when there are ID3v2 tags present
+  virtual
+  std::unique_ptr<scribbu::id3v1_tag>
+  create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &v2);
+  /// Create a new ID3v1 tag when there are no other tags present
+  virtual std::unique_ptr<scribbu::id3v1_tag> create_v1();
+  /// Create a new ID3v2 tag when there's an ID3v1 tag present
+  virtual std::unique_ptr<scribbu::id3v2_tag>
+  create_v2(const scribbu::id3v1_tag &v1);
+  /// Create a new ID3v2 tag when there are no other tags present
+  virtual std::unique_ptr<scribbu::id3v2_tag> create_v2();
+  /// Process the ID3v1 tag
+  virtual bool process_v1(scribbu::id3v1_tag &v1);
+  /// Process an ID3v2.2 tag
+  virtual bool process_v2(scribbu::id3v2_2_tag &v2);
+  /// Process an ID3v2.3 tag
+  virtual bool process_v2(scribbu::id3v2_3_tag &v2);
+  /// Process an ID3v2.4 tag
+  virtual bool process_v2(scribbu::id3v2_4_tag &v2);
+
+private:
+  /// This class works through virtuals, so all operations can be concentrated
+  /// here (in a method that just takes a ptr to id3v2_tag)
+  bool process_tag(scribbu::id3v2_tag *p);
+
+private:
+  typedef std::vector<scribbu::id3v2_text_frames> frames_type;
+  typedef std::map<scribbu::id3v2_text_frames, std::string> strings_type;
+
+  /// Collection of frame IDs to be deleted
+  frames_type dels_;
+  /// Collection of strings to be added/updated
+  strings_type adds_;
+  /// Character encoding used for all strings in `adds_'
+  scribbu::encoding enc_;
+
+};
+
+/*virtual*/
+std::unique_ptr<scribbu::id3v1_tag>
+set_text::create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &/*v2*/)
+{
+  throw bad_operation(unknown_op::create_v1_from_v2);
+}
+
+/// Create a new ID3v1 tag when there are no other tags present
+/*virtual*/
+std::unique_ptr<scribbu::id3v1_tag>
+set_text::create_v1()
+{
+  throw bad_operation(unknown_op::create_v1);
+}
+
+/// Create a new ID3v2 tag when there's an ID3v1 tag present
+/*virtual*/
+std::unique_ptr<scribbu::id3v2_tag>
+set_text::create_v2(const scribbu::id3v1_tag &v1)
+{
+  auto p = copy_id3_v1(v1);
+  process_tag(p.get());
+  return p;
+}
+
+/// Create a new ID3v2 tag when there are no other tags present
+/*virtual*/
+std::unique_ptr<scribbu::id3v2_tag>
+set_text::create_v2()
+{
+  auto p = std::make_unique<scribbu::id3v2_3_tag>(DEFAULT_PADDING);
+  process_tag(p.get());
+  return p;
+}
+
+/// Process the ID3v1 tag
+/*virtual*/ bool
+set_text::process_v1(scribbu::id3v1_tag &v1)
+{
+  throw bad_operation(unknown_op::process_v1);
+}
+
+/// Process an ID3v2.2 tag
+/*virtual*/ bool
+set_text::process_v2(scribbu::id3v2_2_tag &v2)
+{
+  return process_tag(&v2);
+}
+
+/// Process an ID3v2.3 tag
+/*virtual*/ bool
+set_text::process_v2(scribbu::id3v2_3_tag &v2)
+{
+  return process_tag(&v2);
+}
+
+/// Process an ID3v2.4 tag
+/*virtual*/ bool
+set_text::process_v2(scribbu::id3v2_4_tag &v2)
+{
+  return process_tag(&v2);
+}
+
+/// This class works through virtuals, so all operations can be concentrated
+/// here (in a method that just takes a ptr to id3v2_tag)
+bool
+set_text::process_tag(scribbu::id3v2_tag *ptag)
+{
+  using namespace std;
+  for_each(dels_.begin(), dels_.end(), [ptag, this](scribbu::id3v2_text_frames id) {
+    if (verbose()) {
+      cout << "Deleting " << id << "...";
+    }
+    ptag->delete_frame(id);
+    if (verbose()) {
+      cout << "done." << endl;
+    }
+  });
+  for_each(adds_.begin(), adds_.end(), [ptag, this](const strings_type::value_type &x) {
+    if (verbose()) {
+      cout << "Setting " << x.first << " to " << x.second << "...";
+    }
+    ptag->text(x.first, x.second, enc_);
+    if (verbose()) {
+      cout << "done." << endl;
+    }
+  });
+  return true;
+}
 
 namespace {
-
-  /// convenience typedef for a list of indicies
-  typedef std::deque<std::size_t> idx_deque;
-  /// convenience typedef for a list of text frames
-  typedef std::vector<scribbu::id3v2_text_frames> frames_vec;
-  /// convenience typedef for a mapping from text frame identifier to the
-  /// text to be added or updated
-  typedef std::map<scribbu::id3v2_text_frames, std::string> text_map;
-
-  /**
-   * \brief Process one tag
-   *
-   *
-   */
-
-  void
-  process_tag(scribbu::id3v2_tag *ptag,
-              const frames_vec   &dels,
-              const text_map     &strings,
-              scribbu::encoding   srcenc)
-  {
-    for (auto id: dels) {
-      ptag->delete_frame(id);
-    }
-
-    for (const auto& val: strings) {
-      ptag->text(val.first, val.second, srcenc);
-    }
-
-  }
-
-  /**
-   * \brief Process one file
-   *
-   *
-   */
-
-  void
-  process_file(const fs::path   &pth,
-               idx_deque        &tags,
-               const frames_vec &dels,
-               const text_map   &strings,
-               scribbu::encoding srcenc,
-               bool              make_bu,
-               bool              adj_unsync)
-  {
-    using namespace std;
-    using namespace scribbu;
-
-    vector<unique_ptr<id3v2_tag>> T;
-
-    {
-      fs::ifstream ifs(pth, fs::ifstream::binary);
-      read_all_id3v2(ifs, back_inserter(T));
-    }
-
-    for (size_t i = 0, n = T.size(); i < n; ++i) {
-
-      if (tags.front() == i) {
-        process_tag(T[i].get(), dels, strings, srcenc);
-        tags.pop_front();
-      }
-
-    } // End loop over all ID3v2 tags in `pth'.
-
-    apply_unsync au = adj_unsync ? apply_unsync::as_needed :
-      apply_unsync::never;
-
-    if (make_bu) {
-      replace_tagset_copy(pth, T.begin(), T.end(), au);
-    } else {
-      maybe_emplace_tagset(pth, T.begin(), T.end(), au,
-                           emplace_strategy::only_with_full_padding,
-                           padding_strategy::adjust_padding_evenly);
-    }
-  }
-
-  /**
-   * \brief Process one directory entity
-   *
-   *
-   */
-
-  void
-  process_dirent(const fs::path   &pth,
-                 idx_deque        &tags,
-                 const frames_vec &dels,
-                 const text_map   &strings,
-                 scribbu::encoding srcenc,
-                 bool              make_bu,
-                 bool              adj_unsync)
-  {
-    if (fs::is_directory(pth)) {
-      std::for_each(fs::directory_iterator(pth), fs::directory_iterator(),
-                    [=] (const fs::path &p) {
-                      if (!fs::is_directory(p)) {
-                        auto tmp = tags;
-                        process_file(p, tmp, dels, strings, srcenc, make_bu,
-                                     adj_unsync);
-                      }
-                    });
-    } else {
-      process_file(pth, tags, dels, strings, srcenc, make_bu, adj_unsync);
-    }
-  }
 
   int
   handle_text(int argc, char **argv)
@@ -221,10 +330,14 @@ namespace {
        "flag as needed on write (default is to never use it).")
       ("album,a", po::value<string>(), "Set the TALB, or Album/Movie/Show Title"
        " frame")
+      ("always-create-v2,C", po::bool_switch(), "Always create an ID3v2 tag"
+       "with the given tgext frames for any file that has no ID3v2 tag")
       ("artist,A", po::value<string>(), "Set the TPE1, or Lead artist(s)/Lead "
        "performer(s)/Soloist(s)/Performing group frame")
       ("create-backups,b", po::bool_switch(), "Create backup copies of all "
        "files before modifying them.")
+      ("create-v2,c", po::bool_switch(), "Create an ID3v2.3 tag containing "
+       "the given text frames for any file that an ID3v1 tag, but no ID3v2 tag")
       ("delete,d", po::value<vector<string>>(), "Specify a frame to remove, if"
        "present; this option may be given more than once to delete multiple "
        "frames. Frames may be named by either their option name (e.g. `artist')"
@@ -241,7 +354,8 @@ namespace {
        " description frame")
       ("track,k", po::value<string>(), "Set the TRCK, or Track number/Position "
        "in set frame")
-      ("year,y", po::value<string>(), "Set the TYER, or Year frame");
+      ("year,y", po::value<string>(), "Set the TYER, or Year frame")
+      ("verbose,v", po::bool_switch(), "Turn on verbose output");;
 
     po::options_description xopts("hidden options");
     xopts.add_options()
@@ -277,6 +391,9 @@ namespace {
 
       const map<string, string> ENV_OPTS {
         make_pair("SCRIBBU_ADJUST_UNSYNC", "adjust-unsync"),
+        make_pair("SCRIBBU_ALWAYS_CREATE_V2", "always-create-v2"),
+        make_pair("SCRIBBU_CREATE_BACKUPS", "create-backups"),
+        make_pair("SCRIBBU_CREATE_V2", "create-v2"),
         make_pair("SCRIBBU_ENCODING", "encoding"),
       };
       parsed = po::parse_environment(opts, [&ENV_OPTS](const string &var) {
@@ -285,74 +402,91 @@ namespace {
       });
       po::store(parsed, vm);
 
-      // That's it-- the list of files and/or directories to be processed
-      // should be waiting for us in 'arguments'...
       po::notify(vm);
 
-      ////////////////////////////////////////////////////////////////////
-      //                       process arguments                        //
-      ////////////////////////////////////////////////////////////////////
+      // That's it-- the list of files and/or directories to be processed
+      // should be waiting for us in 'arguments'...
 
-      frames_vec dels;
+      // Work around to https://svn.boost.org/trac/boost/ticket/8535
+      std::vector<fs::path> args;
+      if (vm.count("arguments")) {
+        for (auto s: vm["arguments"].as<std::vector<string>>()) {
+          args.push_back(fs::path(s));
+        }
+      }
+
+      bool adj_unsync       = vm["adjust-unsync"   ].as<bool>();
+      bool always_create_v2 = vm["always-create-v2"].as<bool>();
+      bool create_v2        = vm["create-v2"       ].as<bool>();
+      bool make_bu          = vm["create-backups"  ].as<bool>();
+      bool verbose          = vm["verbose"         ].as<bool>();
+
+      encoding srcenc = vm.count("encoding") ?
+        vm["encoding"].as<encoding>() : encoding_from_system_locale();
+
+      map<id3v2_text_frames, string> adds;
+      if (vm.count("album")) {
+        adds[id3v2_text_frames::talb] = vm["album"].as<string>();
+      }
+      if (vm.count("artist")) {
+        adds[id3v2_text_frames::tpe1] = vm["artist"].as<string>();
+      }
+      if (vm.count("encoded-by")) {
+        adds[id3v2_text_frames::tenc] = vm["encoded-by"].as<string>();
+      }
+      if (vm.count("genre")) {
+        adds[id3v2_text_frames::tcon] = vm["genre"].as<string>();
+      }
+      if (vm.count("title")) {
+        adds[id3v2_text_frames::tit2] = vm["title"].as<string>();
+      }
+      if (vm.count("track")) {
+        adds[id3v2_text_frames::trck] = vm["track"].as<string>();
+      }
+      if (vm.count("year")) {
+        adds[id3v2_text_frames::tyer] = vm["year"].as<string>();
+      }
+
+      vector<id3v2_text_frames> dels;
       if (vm.count("delete")) {
         for (auto s: vm["delete"].as<vector<string>>()) {
           dels.push_back(lexical_cast<id3v2_text_frames>(s));
         }
       }
 
-      text_map strings;
-
-      if (vm.count("album")) {
-        strings[id3v2_text_frames::talb] = vm["album"].as<string>();
-      }
-      if (vm.count("artist")) {
-        strings[id3v2_text_frames::tpe1] = vm["artist"].as<string>();
-      }
-      if (vm.count("encoded-by")) {
-        strings[id3v2_text_frames::tenc] = vm["encoded-by"].as<string>();
-      }
-      if (vm.count("genre")) {
-        strings[id3v2_text_frames::tcon] = vm["genre"].as<string>();
-      }
-      if (vm.count("title")) {
-        strings[id3v2_text_frames::tit2] = vm["title"].as<string>();
-      }
-      if (vm.count("track")) {
-        strings[id3v2_text_frames::trck] = vm["track"].as<string>();
-      }
-      if (vm.count("year")) {
-        strings[id3v2_text_frames::tyer] = vm["year"].as<string>();
-      }
-
-      idx_deque tags;
+      vector<size_t> tags;
       if (vm.count("tag")) {
-        vector<size_t> tmp = vm["tag"].as<vector<size_t>>();
-        tags.insert(tags.begin(), tmp.begin(), tmp.end());
+        tags = vm["tag"].as<vector<size_t>>();
+      }
+
+      typedef typename tagset_processor::v2_creation_policy v2_creation_policy;
+      v2_creation_policy v2cp;
+      if (always_create_v2 && create_v2) {
+        throw po::error("at most of of --create-v2 & --always-create-v2 may be "
+                        "given");
+      } else if (!always_create_v2 && create_v2) {
+        v2cp = v2_creation_policy::when_v1_present;
+      } else if (always_create_v2 && !create_v2) {
+        v2cp = v2_creation_policy::always;
       } else {
-        tags.push_back(0);
+        v2cp = v2_creation_policy::never;
       }
 
-      encoding srcenc = vm.count("encoding") ?
-        vm["encoding"].as<encoding>() : encoding_from_system_locale();
-
-      bool adj_unsync = vm["adjust-unsync" ].as<bool>();
-      bool make_bu    = vm["create-backups"].as<bool>();
-
-      // Work around to https://svn.boost.org/trac/boost/ticket/8535
-      // Convert all arguments to path-s here to catch invalid arguments
-      // before we start processing.
-      std::vector<fs::path> args;
-      for (auto s: vm["arguments"].as<std::vector<string>>()) {
-        args.push_back(fs::path(s));
+      unique_ptr<set_text> pF;
+      if (tags.empty()) {
+        pF.reset(new set_text(adds.begin(), adds.end(),
+                              dels.begin(), dels.end(),
+                              srcenc, v2cp, verbose,
+                              adj_unsync, make_bu));
+      } else {
+        pF.reset(new set_text(adds.begin(), adds.end(),
+                              dels.begin(), dels.end(),
+                              tags.begin(), tags.end(),
+                              srcenc, v2cp, verbose,
+                              adj_unsync, make_bu));
       }
 
-      ////////////////////////////////////////////////////////////////////
-      //                       modify text frames                       //
-      ////////////////////////////////////////////////////////////////////
-
-      for (auto p: args) {
-        process_dirent(p, tags, dels, strings, srcenc, make_bu, adj_unsync);
-      }
+      process_dirent_args(args.begin(), args.end(), *pF);
 
     } catch (const po::error &ex) {
 
