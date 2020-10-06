@@ -78,6 +78,10 @@ ID3v2 tags prepended to them.
 
 will "merge" the tags instead of overwriting.
 
+    scribbu xtag --get
+
+will display the tag cloud (if any); it may be scoped in the same ways.
+
 For detailed help, say `scribbu xtag --help'. To see the manual, say
 `info "scribbu (xtag) "'.
 )");
@@ -102,18 +106,18 @@ For detailed help, say `scribbu xtag --help'. To see the manual, say
  *
  */
 
-class set_xtag: public tagset_processor
+class xtag_processor: public tagset_processor
 {
 public:
   /// Ctor for processing all ID3v2 tags
-  set_xtag(const std::string &tag_cloud,
-           const std::string &owner,
-           bool               create_xtag,
-           bool               merge_xtag,
-           v2_creation_policy v2cp,
-           bool               create_backups,
-           bool               dry_run,
-           bool               adj_unsync):
+  xtag_processor(const std::string &tag_cloud,
+                 const std::string &owner,
+                 bool               create_xtag,
+                 bool               merge_xtag,
+                 v2_creation_policy v2cp,
+                 bool               create_backups,
+                 bool               dry_run,
+                 bool               adj_unsync):
     tagset_processor(v2_simple_tag_scope_policy::all,
                      v1_tag_scope_policy::no,
                      v2cp,
@@ -122,21 +126,22 @@ public:
                      create_backups),
     tag_cloud_(tag_cloud),
     owner_(owner),
+    get_(false),
     create_(create_xtag),
     merge_(merge_xtag)
   { }
   /// Ctor for processing only some ID3v2 tags
   template <typename FII> // Forward Input Iterator => size_t (tag index)
-  set_xtag(FII                p0,
-           FII                p1,
-           const std::string &tag_cloud,
-           const std::string &owner,
-           bool               create_xtag,
-           bool               merge_xtag,
-           v2_creation_policy v2cp,
-           bool               create_backups,
-           bool               dry_run,
-           bool               adj_unsync):
+  xtag_processor(FII                p0,
+                 FII                p1,
+                 const std::string &tag_cloud,
+                 const std::string &owner,
+                 bool               create_xtag,
+                 bool               merge_xtag,
+                 v2_creation_policy v2cp,
+                 bool               create_backups,
+                 bool               dry_run,
+                 bool               adj_unsync):
     tagset_processor(p0, p1,
                      v1_tag_scope_policy::no,
                      v2cp,
@@ -145,8 +150,36 @@ public:
                      create_backups),
     tag_cloud_(tag_cloud),
     owner_(owner),
+    get_(false),
     create_(create_xtag),
     merge_(merge_xtag)
+  { }
+  /// Ctor for dumping all ID3v2 tags
+  xtag_processor(const std::string &owner):
+    tagset_processor(v2_simple_tag_scope_policy::all,
+                     v1_tag_scope_policy::no,
+                     v2_creation_policy::never,
+                     v1_creation_policy::never,
+                     false, false, false, false),
+    owner_(owner),
+    get_(true),
+    create_(false),
+    merge_(true)
+  { }
+  /// Ctor for dumping only some ID3v2 tags
+  template <typename FII> // Forward Input Iterator => size_t (tag index)
+  xtag_processor(FII                p0,
+                 FII                p1,
+                 const std::string &owner):
+    tagset_processor(p0, p1,
+                     v1_tag_scope_policy::no,
+                     v2_creation_policy::never,
+                     v1_creation_policy::never,
+                     false, false, false, false),
+    owner_(owner),
+    get_(true),
+    create_(false),
+    merge_(true)
   { }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -234,7 +267,12 @@ private:
         continue;
       }
 
-      if (merge_) {
+      if (get_) {
+        string tag_cloud = G.urlencoded();
+        if (!tag_cloud.empty()) {
+          cout << tag_cloud << endl;
+        }
+      } else if (merge_) {
         if (dry_run()) {
           cout << "Merging " << tag_cloud_ << " into XTAG (" << email <<
             ")" << endl;
@@ -249,11 +287,11 @@ private:
           G.update(tag_cloud_);
         }
       }
-        num_xtag++;
+      num_xtag++;
     } // End iteration over `tag''s frames.
 
     bool upd = num_xtag != 0;
-    if (!num_xtag && create_) {
+    if (!num_xtag && create_ && !get_) {
       if (dry_run()) {
         cout << "creating a new XTAG frame for " << owner_ << ": " <<
           tag_cloud_ << endl;
@@ -269,12 +307,13 @@ private:
 private:
   std::string tag_cloud_;
   std::string owner_;
+  bool get_;
   bool create_;
   bool merge_;
 };
 
 template <>
-struct set_xtag::tag_traits<scribbu::id3v2_2_tag>
+struct xtag_processor::tag_traits<scribbu::id3v2_2_tag>
 {
   typedef scribbu::id3v2_2_tag   tag_type;
   typedef scribbu::id3v2_2_frame frame_type;
@@ -292,7 +331,7 @@ struct set_xtag::tag_traits<scribbu::id3v2_2_tag>
 };
 
 template <>
-struct set_xtag::tag_traits<scribbu::id3v2_3_tag>
+struct xtag_processor::tag_traits<scribbu::id3v2_3_tag>
 {
   typedef scribbu::id3v2_3_tag   tag_type;
   typedef scribbu::id3v2_3_frame frame_type;
@@ -315,7 +354,7 @@ struct set_xtag::tag_traits<scribbu::id3v2_3_tag>
 };
 
 template <>
-struct set_xtag::tag_traits<scribbu::id3v2_4_tag>
+struct xtag_processor::tag_traits<scribbu::id3v2_4_tag>
 {
   typedef scribbu::id3v2_4_tag   tag_type;
   typedef scribbu::id3v2_4_frame frame_type;
@@ -339,7 +378,7 @@ struct set_xtag::tag_traits<scribbu::id3v2_4_tag>
 
 /*virtual*/
 std::unique_ptr<scribbu::id3v1_tag>
-set_xtag::create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &/*v2*/)
+xtag_processor::create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &/*v2*/)
 {
   throw bad_operation(unknown_op::create_v1_from_v2);
 }
@@ -347,7 +386,7 @@ set_xtag::create_v1(const std::vector<std::unique_ptr<scribbu::id3v2_tag>> &/*v2
 /// Create a new ID3v1 tag when there are no other tags present
 /*virtual*/
 std::unique_ptr<scribbu::id3v1_tag>
-set_xtag::create_v1()
+xtag_processor::create_v1()
 {
   throw bad_operation(unknown_op::create_v1);
 }
@@ -355,7 +394,7 @@ set_xtag::create_v1()
 /// Create a new ID3v2 tag when there's an ID3v1 tag present
 /*virtual*/
 std::unique_ptr<scribbu::id3v2_tag>
-set_xtag::create_v2(const scribbu::id3v1_tag &v1)
+xtag_processor::create_v2(const scribbu::id3v1_tag &v1)
 {
   auto p = copy_id3_v1(v1);
   process_tag(*p);
@@ -365,7 +404,7 @@ set_xtag::create_v2(const scribbu::id3v1_tag &v1)
 /// Create a new ID3v2 tag when there are no other tags present
 /*virtual*/
 std::unique_ptr<scribbu::id3v2_tag>
-set_xtag::create_v2()
+xtag_processor::create_v2()
 {
   auto p = std::make_unique<scribbu::id3v2_3_tag>(DEFAULT_PADDING);
   process_tag(*p);
@@ -374,28 +413,28 @@ set_xtag::create_v2()
 
 /// Process the ID3v1 tag
 /*virtual*/ bool
-set_xtag::process_v1(scribbu::id3v1_tag &v1)
+xtag_processor::process_v1(scribbu::id3v1_tag &v1)
 {
   throw bad_operation(unknown_op::process_v1);
 }
 
 /// Process an ID3v2.2 tag
 /*virtual*/ bool
-set_xtag::process_v2(scribbu::id3v2_2_tag &v2)
+xtag_processor::process_v2(scribbu::id3v2_2_tag &v2)
 {
   return process_tag(v2);
 }
 
 /// Process an ID3v2.3 tag
 /*virtual*/ bool
-set_xtag::process_v2(scribbu::id3v2_3_tag &v2)
+xtag_processor::process_v2(scribbu::id3v2_3_tag &v2)
 {
   return process_tag(v2);
 }
 
 /// Process an ID3v2.4 tag
 /*virtual*/ bool
-set_xtag::process_v2(scribbu::id3v2_4_tag &v2)
+xtag_processor::process_v2(scribbu::id3v2_4_tag &v2)
 {
   return process_tag(v2);
 }
@@ -464,6 +503,8 @@ namespace {
        "files before modifying them.")
       ("dry-run,n", po::bool_switch(), "Don't do anything; just print what "
        "*would* be done")
+      ("get,g", po::bool_switch(), "Print the existing tag cloud, if any; "
+       "don't set or update.")
       ("merge,m", po::bool_switch(), "Merge the given tags, don't overwrite")
       ("owner,o", po::value<string>(), "Operate only on XTAG frames with "
        "this owner, or specify the owner in case an XTAG frame is being created")
@@ -537,9 +578,10 @@ namespace {
       bool adj_unsync       = vm["adjust-unsync"   ].as<bool>();
       bool always_create_v2 = vm["always-create-v2"].as<bool>();
       bool create           = vm["create"          ].as<bool>();
-      bool create_v2        = vm["create-v2"       ].as<bool>();
       bool create_backups   = vm["create-backups"  ].as<bool>();
+      bool create_v2        = vm["create-v2"       ].as<bool>();
       bool dry_run          = vm["dry-run"         ].as<bool>();
+      bool get              = vm["get"             ].as<bool>();
       bool merge            = vm["merge"           ].as<bool>();
 
       string owner;
@@ -551,11 +593,6 @@ namespace {
       if (vm.count("tag")) {
         tags = vm["tag"].as<vector<size_t>>();
       }
-
-      if (!vm.count("tags")) {
-        throw po::required_option("--tags");
-      }
-      string tag_cloud = vm["tags"].as<string>();
 
       typedef typename tagset_processor::v2_creation_policy v2_creation_policy;
       v2_creation_policy v2cp;
@@ -570,14 +607,30 @@ namespace {
         v2cp = v2_creation_policy::never;
       }
 
-      unique_ptr<set_xtag> pF;
+      unique_ptr<xtag_processor> pF;
       if (tags.empty()) {
-        pF.reset(new set_xtag(tag_cloud, owner, create, merge, v2cp,
-                              create_backups, dry_run, adj_unsync));
+        if (get) {
+          pF.reset(new xtag_processor(owner));
+        } else {
+          if (!vm.count("tags")) {
+            throw po::required_option("--tags");
+          }
+          string tag_cloud = vm["tags"].as<string>();
+          pF.reset(new xtag_processor(tag_cloud, owner, create, merge, v2cp,
+                                      create_backups, dry_run, adj_unsync));
+        }
       } else {
-        pF.reset(new set_xtag(tags.begin(), tags.end(), tag_cloud,
-                              owner, create, merge, v2cp, create_backups,
-                              dry_run, adj_unsync));
+        if (get) {
+          pF.reset(new xtag_processor(tags.begin(), tags.end(), owner));
+        } else {
+          if (!vm.count("tags")) {
+            throw po::required_option("--tags");
+          }
+          string tag_cloud = vm["tags"].as<string>();
+          pF.reset(new xtag_processor(tags.begin(), tags.end(), tag_cloud,
+                                      owner, create, merge, v2cp, create_backups,
+                                      dry_run, adj_unsync));
+        }
       }
 
       process_dirent_args(args.begin(), args.end(), *pF);

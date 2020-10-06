@@ -1,4 +1,13 @@
-2020-09-21  Michael Herstine  <sp1ff@pobox.com>
+2020-10-05  Michael Herstine  <sp1ff@pobox.com>
+
+	Work in progress.
+	This commit does the following:
+
+	    1. fixed a bug in 'find_frame' which inverted the "hit" portion
+	       of the return value
+	    2. added a --get option to the 'genre' sub-command
+
+2020-09-23  Michael Herstine  <sp1ff@pobox.com>
 
 	Update the 'text' sub-command.
 	This commit re-implements the 'text' sub-command in terms of

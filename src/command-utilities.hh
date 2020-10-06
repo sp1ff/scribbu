@@ -446,7 +446,7 @@ namespace detail {
       text = p->text(frm);
       return !text.empty();
     });
-    return make_tuple(p == p1, text);
+    return make_tuple(p != p1, text);
   }
 
   template <typename FII> // Forward Input Iterator => id3v2_tag
@@ -522,7 +522,7 @@ copy_id3_v2(FII p0, FII p1)
   tie(hit, text) = ::detail::find_frame(id3v2_text_frames::tpe1, p0, p1);
   if (hit) p->set_artist(text, encoding::UTF_8, encoding::UTF_8);
   tie(hit, text) = ::detail::find_frame(id3v2_text_frames::tit2, p0, p1);
-  p->set_title(text, encoding::UTF_8, encoding::UTF_8);
+  if (hit) p->set_title(text, encoding::UTF_8, encoding::UTF_8);
 
   array<char, 4> year;
   tie(hit, year) = ::detail::find_year(p0, p1);

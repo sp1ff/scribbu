@@ -89,6 +89,11 @@ function smoke_tests()
     grog=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F grog|awk '{print $2, $3, $4, $5}')
     [ "$grog" = "a, b, c, d" ] || fail "smoke_tests: bad grog"
 
+    run_xtag out err stat -g id3v2.3.tag
+    test $stat -eq 0 || fail "smoke_tests: failed to get xtag"
+    test -z "$err" || fail "smoke_tests: failed to get xtag: $err"
+    test "$out" = "bar=splat,splat2&foo&grog=a,b,c,d" || fail "smoke_tests: output was: $out"
+
     clean_testdir $here $xtag_testdir xtag_smoke_tests
 }
 

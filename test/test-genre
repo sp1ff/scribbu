@@ -202,6 +202,25 @@ function negative_tests
     clean_testdir $here $genre_testdir negative_tests
 }
 
+function test_id3v2_copy_bug()
+{
+    local out
+    local err
+    local stat
+
+    here=`pwd`
+    set_testdir ${srcdir} $genre_testdir id3v2_copy_bug la-mer.mp3
+
+    run_genre out err stat -a -C -g "Trip-Hop" la-mer.mp3
+    test $stat -eq 0 || fail "id3v2_copy_bug: failed to run scribbu genre"
+
+    grunge=$(${genre_scribbu_dir}/scribbu dump -1 la-mer.mp3|grep -E '^ID3v1: Lemongrass - La Mer')
+    stat=$?
+    test $stat -eq 0 || fail "id3v2_copy_bug: wrong ID3v1 artist & title"
+
+    clean_testdir $here $genre_testdir id3v2_copy_bug
+}
+
 ###########################################################################
 #                          parse options & run tests                      #
 ###########################################################################
@@ -274,3 +293,4 @@ genre_scribbu_dir=`cd "$genre_scribbu_dir"; pwd`
 genre_testdir=`cd "$genre_testdir"; pwd`
 smoke_tests
 negative_tests
+test_id3v2_copy_bug
