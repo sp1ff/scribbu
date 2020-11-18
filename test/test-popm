@@ -76,7 +76,7 @@ function smoke_tests()
 
     run_popm out err stat --dry-run --create-frame id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on dry-run"
-    echo $out|grep -F "Creating a new PCNT frame with a play count of 0.">/dev/null
+    echo $out|grep -F "Creating a new PCNT frame with a play count of 1.">/dev/null
     stat=$?
     [ $stat -eq 0 ] || fail "smoke_tests: failed to find PCNT (dry-run)"
 
@@ -89,7 +89,7 @@ function smoke_tests()
 
     run_popm out err stat id3v2.3.tag
     pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|awk '{print $2}')
-    [ $pcnt = "1" ] || fail "smoke_tests: PCNT is $pcnt; should be 1"
+    [ $pcnt = "2" ] || fail "smoke_tests: PCNT is $pcnt; should be 2"
 
     run_popm out err stat --popularimeter-only -A -o "sp1ff@pobox.com" -r 192 id3v2.3.tag
     popm=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F POPM|awk '{print $2}')
@@ -97,7 +97,7 @@ function smoke_tests()
     rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
     [ "$rating" = "192" ] || fail "smoke_tests: rating is $rating; should be 192"
     pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F counter|awk '{print $2}')
-    [ "$pcnt" = "01" ] || fail "smoke_tests: PCNT is $pcnt; should be 01 (2)"
+    [ "$pcnt" = "02" ] || fail "smoke_tests: PCNT is $pcnt; should be 02 (2)"
 
     run_popm out err stat --count=11 id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: non-zero status on pc => 11"
@@ -152,7 +152,6 @@ function test_issue_1
     set_testdir ${srcdir} $popm_testdir test_issue_1 id3v2.3.tag
 
     run_popm out err stat --create-frame --owner=sp1ff@pobox.com --rating=255 id3v2.3.tag
-    # stat=$?
     [ $stat -eq 0 ] || fail "test_issue_1: non-zero exit status on create"
 
     ${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT
@@ -165,11 +164,10 @@ function test_issue_1
     [ $stat -eq 0 ] || fail "test_issue_1: non-zero exit status on update"
 
     pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|sed ${sed_regex} 's/PCNT: ([0-9]+)/\1/'`
-    test "$pcnt" == "1" || fail "test_issue_1: PCNT should be one, got $pcnt"
+    test "$pcnt" == "2" || fail "test_issue_1: PCNT should be two, got $pcnt"
 
     pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F counter|sed ${sed_regex} 's/counter: ([0-9]+)/\1/'`
-    test "$pcnt" == "01" || fail "test_issue_1: POPM counter should be one, got $pcnt"
-
+    test "$pcnt" == "02" || fail "test_issue_1: POPM counter should be two, got $pcnt"
 
     clean_testdir $here $popm_testdir test_issue_1
 }
@@ -274,6 +272,36 @@ function test_rate_then_count
     clean_testdir $here $popm_testdir test_rate_then_count
 }
 
+# Exercise https://github.com/sp1ff/scribbu/issues/5
+function test_issue_5
+{
+    local out
+    local err
+    local stat
+
+    case `uname` in
+        Linux)
+            sed_regex="-r";;
+        Darwin)
+            sed_regex="-E";;
+        *)
+            echo "Unknown system" 2>&1;
+            exit 1;;
+    esac
+
+    here=`pwd`
+    set_testdir ${srcdir} $popm_testdir test_issue_5 id3v2.3.tag
+
+    # id3v2.3.tag has no PCNT frame-- try to add one with a non-zero value
+    run_popm out err stat -a -A -b -o sp1ff@pobox.com -C 11 id3v2.3.tag
+    test $stat -eq 0 || fail "test_issue_5: non-zero exit status on create"
+
+    pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|sed ${sed_regex} 's/PCNT: ([0-9]+)/\1/'`
+    test "$pcnt" == "11" || fail "test_issue_5: PCNT should be eleven, got $pcnt"
+
+    clean_testdir $here $popm_testdir test_issue_1
+}
+
 ###########################################################################
 # parse options; `make check' will pass none, so be sure no options means
 # execute test suite normally
@@ -350,3 +378,4 @@ test_issue_1
 test_extant_frames
 test_id3v1_only
 test_rate_then_count
+test_issue_5

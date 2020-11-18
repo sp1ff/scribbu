@@ -86,7 +86,7 @@ rating in one of two ways:
        five stars. The most natural way to express this would seem to be the
        asterisk, but since that would likely be inconvenient in the shell,
        scribbu will accept almost any character, repeated one-to-five times, as
-       "stars": --rating=###
+       "stars", e.g. --rating=###
 
 In the second case, scribbu will map from "stars" to POPM ratings as follows:
 
@@ -102,7 +102,7 @@ Readers of a certain age may recognize that as Winamp's scheme.
 
 The question arises: what if a given frame (PCNT, say) doesn't exist in a tag
 selected for procesing? By default, nothing. That can be changed with the
---create flag, which will create the missing frame if possible.
+--create-frame flag, which will create the missing frame if possible.
 
 If no ID3v2 tag exists whatsoever, by default no action will be taken. This
 behavior can be changed with the following two flags:
@@ -396,28 +396,50 @@ private:
     if (create_frame) {
 
       if (frame_policy::popm_only != frame_policy_ && 0 == num_pcnt) {
+
+        // We are to create a new PCNT frame, but what shall its value be?
+        //
+        // 1. if we found a POPM frame, then we should use curr_pc
+        // 2. else, if pc_policy_ is "absolute", we should use play_count_
+        // 3. finally, if pc_policy is "increment", we presently have a play
+        //    count of zero, so we should again use play_count_
+
+        size_t pc = curr_pc == 0 ? play_count_ : curr_pc;
+
         if (dry_run() || verbose()) {
-          cout << "Creating a new PCNT frame with a play count of " << curr_pc <<
+          cout << "Creating a new PCNT frame with a play count of " << pc <<
             "." << endl;
         }
         if (!dry_run()) {
-          tag.push_back(traits_type::make_pcnt(curr_pc));
+          tag.push_back(traits_type::make_pcnt(pc));
         }
         upd = true;
       }
 
       // Only create new POPM frames in the presence of a rating & an owner
-      if (frame_policy::pcnt_only != frame_policy_ && 0 == num_popm &&
-          owner_ && rating_) {
+      if (frame_policy::pcnt_only != frame_policy_ &&
+          0 == num_popm &&
+          owner_ &&
+          rating_) {
         string email = *owner_;
         unsigned char rating = *rating_ ;
+
+        // We are to create a new POPM frame, but what shall its value be?
+        //
+        // 1. if we found a PCNT frame, then we should use curr_pc
+        // 2. else, if pc_policy_ is "absolute", we should use play_count_
+        // 3. finally, if pc_policy is "increment", we presently have a play
+        //    count of zero, so we should again use play_count_
+
+        size_t pc = curr_pc == 0 ? play_count_ : curr_pc;
+
         if (dry_run() || verbose()) {
           cout << "Creating a new POPM frame with an owner of " << email <<
             " a rating of " << (unsigned int)rating << " and a play count of " <<
-            curr_pc << "." << endl;
+            pc << "." << endl;
         }
         if (!dry_run()) {
-          tag.push_back(traits_type::make_popm(email, rating, curr_pc));
+          tag.push_back(traits_type::make_popm(email, rating, pc));
         }
         upd = true;
       }
@@ -860,13 +882,17 @@ namespace {
                                        "`increment' may be given");
       }
       typedef set_pcnt_popm::pc_policy pc_policy;
-      size_t pc = 1;
+      size_t pc = 0;
       pc_policy pc_pol = pc_policy::increment;
       if (increment) {
         pc = *increment;
       } else if (play_count) {
         pc = *play_count;
         pc_pol = pc_policy::absolute;
+      } else {
+        // Treat as if --increment=1 was given, so that just running
+        // `scribbu popm' will bump the play count by one
+        pc = 1;
       }
 
       // 3. at most one of `create-v2' and `always-create-v2' may be given

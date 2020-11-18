@@ -22,7 +22,9 @@ CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	test-popm-tmp/test_issue_1/id3v2.3.tag.1 \
 	test-popm-tmp/test_id3v1_only/v1-only.mp3 \
 	test-popm-tmp/test_id3v1_only/v1-only.mp3.1 \
-	test-text-tmp/smoke_tests/id3v2.3.tag
+	test-text-tmp/smoke_tests/id3v2.3.tag \
+	test-popm-tmp/test_issue_5/id3v2.3.tag \
+	test-popm-tmp/test_issue_5/id3v2.3.tag.1 \
 TESTS = $(check_PROGRAMS) test-split test-rename test-report test-report-tdf \
 	test-dump test-with-track-in test-fs-generator \
 	test-cleanup-encoded-by test-cleanup-from-audacity \

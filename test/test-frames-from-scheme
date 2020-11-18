@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 export GUILE_AUTO_COMPILE=0
+export GUILE_WARN_DEPRECATED=detailed
+
 cols=$(tput cols)
 eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-frames-from-scheme.scm ${srcdir}/data \
         2> >(t_err=$(cat); typeset -p t_err) \

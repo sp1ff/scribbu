@@ -1,4 +1,9 @@
-2020-10-05  Michael Herstine  <sp1ff@pobox.com>
+2020-11-17  Michael Herstine  <sp1ff@pobox.com>
+
+	Address issue #5.
+	Also, upgrade to Guile 3.0 if it's available.
+
+2020-10-06  Michael Herstine  <sp1ff@pobox.com>
 
 	Work in progress.
 	This commit does the following:

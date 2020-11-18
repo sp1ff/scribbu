@@ -4,6 +4,9 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** fixed issue #5: `scribbu popm -C N` fails when there is no PCNT frame
+
+<https://github.com/sp1ff/scribbu/issues/5>
 *** fixed a bug in copying ID3v2 tags to ID3v1
 
 *** `scribbu text' will now, optionally, create an ID3v2 tag if there isn't one already

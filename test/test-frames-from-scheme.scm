@@ -142,8 +142,10 @@
                 (make <play-count-frame> #:id 'play-count-frame #:count 11))
                (list-head (slot-ref tag 'frames) 4)))
              (new-tag (make <id3v2-tag> #:frames new-frames))
-             (tmpf (tmpnam)))
+             (tmpfp (mkstemp! (string-copy "/tmp/test-play-count-XXXXXX")))
+             (tmpf (port-filename tmpfp)))
 
+        (close-port tmpfp)
         (write-tagset (list (list new-tag 3)) tmpf)
         ;; Read that file back in
         (let ((tags (read-tagset tmpf)))
@@ -241,7 +243,9 @@
                 (make <pop-frame> #:id 'pop-frame #:e-mail "sp1ff@pobox.com" #:rating 211 #:count 11))
                (list-head (slot-ref tag 'frames) 2)))
              (new-tag (make <id3v2-tag> #:frames new-frames))
-             (tmpf (tmpnam)))
+             (tmpfp (mkstemp! (string-copy "/tmp/test-popm-XXXXXX")))
+             (tmpf (port-filename tmpfp)))
+        (close-port tmpfp)
         (write-tagset (list (list new-tag 3)) tmpf)
         ;; Read that file back in
         (let ((tags (read-tagset tmpf)))
