@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([scribbu], [0.5], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
+AC_INIT([scribbu], [0.5.1], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
 AC_CONFIG_MACRO_DIR([macros])
 AC_CONFIG_SRCDIR([src/scribbu.cc])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -59,7 +59,7 @@ AC_CHECK_TYPES([ptrdiff_t])
 AC_FUNC_ERROR_AT_LINE
 AC_CHECK_FUNCS([memset strdup strerror])
 
-GUILE_PKG([2.2 2.0])
+GUILE_PKG([3.0 2.2 2.0])
 GUILE_FLAGS
 GUILE_PROGS
 GUILE_SITE_DIR

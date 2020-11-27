@@ -1,7 +1,7 @@
 /**
  * \file scribbu.hh
  *
- * Copyright (C) 2015-2019 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -155,6 +155,7 @@
 #include <iostream>
 
 #include <boost/filesystem.hpp>
+#include <boost/exception/exception.hpp>
 
 #include <openssl/err.h>
 
