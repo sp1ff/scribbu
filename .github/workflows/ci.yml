@@ -55,14 +55,14 @@ jobs:
       id: cache-boost-macos
       uses: actions/cache@v2
       with:
-        path: ${{ matrix.boost-ver }}/installdir
+        path: boost_${{ matrix.boost-ver }}/installdir
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
     - name: Cache boost (Ubuntu)
       if: matrix.os == 'ubuntu-20.04' && matrix.boost != 'pinned'
       id: cache-boost-ubuntu
       uses: actions/cache@v2
       with:
-        path: ${{ matrix.boost-ver }}/installdir
+        path: boost_${{ matrix.boost-ver }}/installdir
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
     - name: Get boost (MacOS)
       if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
@@ -135,6 +135,7 @@ jobs:
       run: |
         set -x
         pwd
+        ls
         ./autogen.sh
         PATH="/usr/local/opt/bison/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
     - name: Configure scribbu (Ubuntu, pinned)
@@ -143,6 +144,7 @@ jobs:
       run: |
         set -x
         pwd
+        ls
         ./autogen.sh
         ./configure
     - name: Configure scribbu (Ubuntu, non-pinned)
@@ -151,6 +153,7 @@ jobs:
       run: |
         set -x
         pwd
+        ls
         ./autogen.sh
         ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)
     - name: Make scribbu (MacOS)
