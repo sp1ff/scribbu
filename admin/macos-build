@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+test -h boost_1_58_0 || ln -s ../../../boost/boost_1_58_0 boost_1_58_0
+test -h boost_1_70_0 || ln -s ../../../boost/boost_1_70_0 boost_1_70_0
+test -h boost_1_71_0 || ln -s ../../../boost/boost_1_71_0 boost_1_71_0
+test -h boost_1_74_0 || ln -s ../../../boost/boost_1_74_0 boost_1_74_0
+export PATH=/usr/local/bin:$PATH
+# This worked with boost 1.71
+export boost_ver=1_71_0
+./bootstrap
+./configure --with-boost=$(cd boost_${boost_ver}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make && \
+install_name_tool -add_rpath $(cd boost_${boost_ver}/installdir/lib; pwd) src/.libs/scribbu
+cd test && make unit && cd .. && \
+install_name_tool -add_rpath $(cd boost_${boost_ver}/installdir/lib; pwd) test/.libs/unit
+make check

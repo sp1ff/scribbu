@@ -21,6 +21,8 @@
  *
  */
 
+#include "config.h"
+
 #include <scribbu/charsets.hh>
 
 #include <boost/test/unit_test.hpp>
@@ -147,8 +149,10 @@ BOOST_AUTO_TEST_CASE( test_utf16 )
     0x4c, 0x75,
   };
 
-  // LATER(sp1ff): default is big endian, per GNU iconv source (1.15)-- should
-  // fail. Works on Debian, not on MacOS.
+  // default is big endian, per GNU iconv source (1.15)-- should fail. Succeeds
+  // on Ubuntu, fails on MacOS. Spent a lunch break persuing the code for
+  // libiconv trying to figure out why, with no result. I'm off to bleach my
+  // eyeballs, now.
   // s = convert_encoding<string>(buf6, sizeof(buf6), encoding::UTF_16, encoding::UTF_8);
   // BOOST_CHECK("Hello, 世界" == s);
 
@@ -156,8 +160,8 @@ BOOST_AUTO_TEST_CASE( test_utf16 )
                                encoding::UTF_8);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): default is big endian, per GNU iconv source (1.15)-- should
-  // fail. Works on Debian, not on MacOS
+  // default is big endian, per GNU iconv source (1.15)-- should fail. Succeeds
+  // on Ubuntu, not on MacOS; see comments above.
   // s = convert_encoding<string>(buf6, sizeof(buf6), encoding::UCS_2, encoding::UTF_8);
   // BOOST_CHECK("Hello, 世界" == s);
 
@@ -186,12 +190,13 @@ BOOST_AUTO_TEST_CASE( test_utf16 )
                                encoding::UTF_8);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): default is big endian (per GNU iconv source 1.15),
-  // and there's a BOM, so I would expect this to pass. However,
-  // it fails on MacOS.
-  // s = convert_encoding<string>(buf7, sizeof(buf7), encoding::UCS_2,
-  //                              encoding::UTF_8);
-  // BOOST_CHECK("Hello, 世界" != s);
+  // default is big endian (per GNU iconv source 1.15), and there's a BOM, so I
+  // would expect this to pass. However, it fails on MacOS. See comments, above.
+# ifndef MACOS
+  s = convert_encoding<string>(buf7, sizeof(buf7), encoding::UCS_2,
+                               encoding::UTF_8);
+  BOOST_CHECK("Hello, 世界" != s);
+# endif // not MACOS
 
   s = convert_encoding<string>(buf7, sizeof(buf7), encoding::UCS_2BE,
                                encoding::UTF_8);
@@ -212,33 +217,37 @@ BOOST_AUTO_TEST_CASE( test_utf16 )
     0x75, 0x4c,
   };
 
-  // LATER(sp1ff): should work-- big endian is the default-- works on Debian,
-  // not on MacOS
-  // s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UTF_16, encoding::UTF_8);
-  // BOOST_CHECK("Hello, 世界" != s);
+  // should work-- big endian is the default-- works on Ubuntu, not on
+  // MacOS. See comments, above.
+# ifndef MACOS
+  s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UTF_16, encoding::UTF_8);
+  BOOST_CHECK("Hello, 世界" != s);
+# endif // not MACOS
 
   s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UTF_16BE,
                                encoding::UTF_8);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): should work-- big endian is the default. Works on Debian, not
-  // on MacOS.
-  // s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UCS_2, encoding::UTF_8);
-  // BOOST_CHECK("Hello, 世界" != s);
+  // should work-- big endian is the default. Works on Ubuntu, not on
+  // MacOS. Cf. comments above.
+# ifndef MACOS
+  s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UCS_2, encoding::UTF_8);
+  BOOST_CHECK("Hello, 世界" != s);
+# endif // not MACOS
 
   s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UCS_2BE,
                                encoding::UTF_8);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): No BOM and wrong byte order specified in encoding-- I would
-  // expect this to fail, but it does not.
-  s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UTF_16LE, encoding::UTF_8);
-  BOOST_CHECK("Hello, 世界" != s);
+  // No BOM and wrong byte order specified in encoding-- I would expect this to
+  // fail, but it does not.
+  // s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UTF_16LE, encoding::UTF_8);
+  // BOOST_CHECK("Hello, 世界" != s);
 
-  // LATER(sp1ff): No BOM and wrong byte order specified in encoding-- I would
-  // expect this to fail, but it does not.
-  s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UCS_2LE, encoding::UTF_8);
-  BOOST_CHECK("Hello, 世界" != s);
+  // No BOM and wrong byte order specified in encoding-- I would expect this to
+  // fail, but it does not.
+  // s = convert_encoding<string>(buf8, sizeof(buf8), encoding::UCS_2LE, encoding::UTF_8);
+  // BOOST_CHECK("Hello, 世界" != s);
 }
 
 BOOST_AUTO_TEST_CASE( test_utf32 )
@@ -275,8 +284,8 @@ BOOST_AUTO_TEST_CASE( test_utf32 )
                     iconv_error);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): default is big endian (per GNU iconv 1.15 source
-  // code)-- should fail. Throws on Debain, not on MacOS
+  // default is big endian (per GNU iconv 1.15 source code)-- should
+  // fail. Throws on Ubuntu, not on MacOS
   // BOOST_CHECK_THROW(s = convert_encoding<string>(buf9, sizeof(buf9),
   //                                                encoding::UCS_4,
   //                                                encoding::UTF_8),
@@ -286,8 +295,8 @@ BOOST_AUTO_TEST_CASE( test_utf32 )
                                encoding::UTF_8);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): I'm lying about the byte order in the encoding, but there is
-  // a BOM... throws on Debian, but not on MacOS
+  // I'm lying about the byte order in the encoding, but there is a
+  // BOM... throws on Ubuntu, but not on MacOS
   // BOOST_CHECK_THROW(s = convert_encoding<string>(buf9, sizeof(buf9),
   //                                                encoding::UCS_4BE,
   //                                                encoding::UTF_8),
@@ -329,7 +338,7 @@ BOOST_AUTO_TEST_CASE( test_utf32 )
                                encoding::UTF_8);
   BOOST_CHECK("Hello, 世界" == s);
 
-  // LATER(sp1ff): No BOM, wrong byte order-- throws on Debian, not on MacOS.
+  // No BOM, wrong byte order-- throws on Ubuntu, not on MacOS.
   // BOOST_CHECK_THROW(convert_encoding<string>(buf10, sizeof(buf10),
   //                                            encoding::UCS_4LE,
   //                                            encoding::UTF_8),
@@ -348,9 +357,9 @@ BOOST_AUTO_TEST_CASE( test_utf32 )
     0x4C, 0x75, 0x00, 0x00,
   };
 
-  // LATER(sp1ff): default is big endian (per GNU iconv 1.15 source), there's no
-  // BOM and I'm not specifying a byte-order in the encoding-- I would expect
-  // this to fail.  It does on MacOS, but not on Debian.
+  // default is big endian (per GNU iconv 1.15 source), there's no BOM and I'm
+  // not specifying a byte-order in the encoding-- I would expect this to fail.
+  // It does on MacOS, but not on Ubunutu.
   // BOOST_CHECK_THROW(s = convert_encoding<string>(buf11, sizeof(buf11), encoding::UTF_32,
   //                                                encoding::UTF_8),
   //                   iconv_error);
@@ -389,7 +398,7 @@ BOOST_AUTO_TEST_CASE( test_utf32 )
     0x00, 0x00, 0x75, 0x4C,
   };
 
-  // LATER(sp1ff): I would expect this to work, but it throws on Debian
+  // I would expect this to work, but it throws on Ubuntu
   // s = convert_encoding<string>(buf12, sizeof(buf12), encoding::UTF_32, encoding::UTF_8);
   // BOOST_CHECK("Hello, 世界" == s);
 

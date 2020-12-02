@@ -42,7 +42,8 @@ jobs:
       run: |
         set -x
         pwd
-        brew install autoconf automake libtool openssl guile doxygen flex bison graphviz
+        brew install autoconf automake libtool openssl guile doxygen flex bison graphviz texinfo
+        brew install --cask basictex
     - name: Install pre-requisites (Ubuntu)
       if: matrix.os == 'ubuntu-20.04'
       shell: bash
@@ -137,7 +138,7 @@ jobs:
         pwd
         ls
         ./autogen.sh
-        PATH="/usr/local/opt/bison/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
     - name: Configure scribbu (Ubuntu, pinned)
       if: matrix.os == 'ubuntu-20.04' && matrix.boost == 'pinned'
       shell: bash
@@ -162,7 +163,7 @@ jobs:
       run: |
         set -x
         pwd
-        PATH="/usr/local/opt/bison/bin:$PATH" make
+        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make
     - name: Make scribbu (Ubuntu)
       if: matrix.os == 'ubuntu-20.04'
       shell: bash
@@ -216,10 +217,11 @@ jobs:
         set -x
         pwd
         make check || cat test/test-suite.log
-    # TODO(sp1ff): IN-PROGRESS
-    # - name: Test the Autotools distribution
-    #   shell: bash
-    #   run: |
-    #     set -x
-    #     pwd
-    #     make distcheck
+    - name: Test the Autotools distribution
+      # I only make the Autotools distro on Ubuntu, so just test there
+      if: matrix.os == 'ubuntu-20.04'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        make distcheck

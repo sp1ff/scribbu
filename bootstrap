@@ -8,7 +8,7 @@ set -e
 # I could pass 'foreign' to AC_INIT_AUTOMAKE, but I don't want to
 # lose checking for *all* GNU compliance.
 echo "symlinking README"
-test -L README || ln -s README.md README
+test -L README || ln -s README.org README
 
 # No idea why...
 test -d build-aux || mkdir build-aux

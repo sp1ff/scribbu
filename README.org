@@ -1,48 +1,54 @@
-scribbu - The extensible tool for tagging your music collection
-===============================================================
+#+TITLE: scribbu
+#+DESCRIPTION: The extensible tool for tagging your music collection
+#+DATE: <2020-11-29 Sun 17:22>
+#+AUTHOR: sp1ff
+#+EMAIL: sp1ff@pobox.com
+#+AUTODATE: t
+#+OPTIONS: toc:nil org-md-headline-style:setext *:t ^:nil
 
-This directory contains the 0.6.7 release of [scribbu](https://github.com/sp1ff/scribbu).
 
-See the file [NEWS]() for the user-visible changes from previous releases.
+This directory contains the 0.6.7 release of [[https://github.com/sp1ff/scribbu][scribbu]].
+
+See the file [[NEWS]] for the user-visible changes from previous releases.
 
 Please check the system-specific notes below for any caveats related to your operating system.
 
-For general building and installation instructions, see the file [INSTALL]().
+For general building and installation instructions, see the file [[INSTALL]].
 
-scribbu is free software.  See the file [COPYING]() for copying conditions.  scribbu is copyrighted by Michael Herstine <sp1ff@pobox.com>. Copyright notices condense sequential years into a range; e.g. "1987-1994" means all years from 1987 to 1994 inclusive.
+scribbu is free software.  See the file [[COPYING]] for copying conditions.  scribbu is copyrighted by Michael Herstine <sp1ff@pobox.com>. Copyright notices condense sequential years into a range; e.g. "1987-1994" means all years from 1987 to 1994 inclusive.
 
-Introduction
-------------
+* Introduction
 
-scribbu is a C++ library & associated command-line tool for working with [ID3](http://id3.org) tags. It was born when I retired my last Windows machine & could no longer use [Winamp](https://en.wikipedia.org/wiki/Winamp) to manage my library of digital music. The scribbu library offers classes & methods for reading, editing & writing ID3v1 & ID3v2 tags. The scribbu program provides assorted sub-commands for working with ID3-tagged files (e.g. re-naming files based on their tags), but its real power lies in its embedded Scheme [interpreter](https://www.gnu.org/software/guile/) in which scribbu library features are exported as a Scheme module (on which more below).
+scribbu is a C++ library & associated command-line tool for working with [[http://id3.org][ID3]] tags. It was born when I retired my last Windows machine & could no longer use [[https://en.wikipedia.org/wiki/Winamp][Winamp]] to manage my library of digital music. The scribbu library offers classes & methods for reading, editing & writing ID3v1 & ID3v2 tags. The scribbu program provides assorted sub-commands for working with ID3-tagged files (e.g. re-naming files based on their tags), but its real power lies in its embedded Scheme [[https://www.gnu.org/software/guile/][interpreter]] in which scribbu library features are exported as a Scheme module (on which more below).
 
-Usage
------
+* Usage
 
 scribbu can be invoked in a few ways:
 
-  - with a sub-command & relevant options & arguments; i.e. `scribbu SUB-COMMAND OPTION...`. scribbu implements the following sub-commands:
+  - with a sub-command & relevant options & arguments; i.e. =scribbu SUB-COMMAND OPTION...=. scribbu implements the following sub-commands:
 
-	+ `scribbu dump` will write the contents of ID3 tags found in one or more files to stdout
+	+ =scribbu dump= will write the contents of ID3 tags found in one or more files to stdout
 
-    + `scribbu rename` will rename one or more files based on the content of their ID3 tags; e.g. `scribbu rename -t %A-%T.mp3 *.mp3` will rename all the files matching *.mp3 to <artist>-<title>.mp3 where "artist" and "title" are derived from their ID3 tags (if any).
+    + =scribbu rename= will rename one or more files based on the content of their ID3 tags; e.g. =scribbu rename -t %A-%T.mp3 *.mp3= will rename all the files matching *.mp3 to <artist>-<title>.mp3 where "artist" and "title" are derived from their ID3 tags (if any).
 
-    + `scribbu report` will generate a report listing ID3 attributes on one or more files on stdout. CSV & TDF formats are supported currently (on the basis that there are better querying/reporting tools out there already; they can just import the .csv or .tdf & do better than scribbu would)
+    + =scribbu report= will generate a report listing ID3 attributes on one or more files on stdout. CSV & TDF formats are supported currently (on the basis that there are better querying/reporting tools out there already; they can just import the .csv or .tdf & do better than scribbu would)
 
-	+ `scribbu popm` will create or update popularimeter & playcount frames. This can be used to keep up the play count, or set a rating.
+	+ =scribbu popm= will create or update popularimeter & playcount frames. This can be used to keep up the play count, or set a rating.
 
-	+ `scribbu text` will create, update, or delete various text frames
+	+ =scribbu text= will create, update, or delete various text frames
 
-    + `scribbu genre` will update the genre-related fields of ID3v1 and/or -v2 tags
+    + =scribbu genre= will update the genre-related fields of ID3v1 and/or -v2 tags
 
-  - with a Scheme expression (`-e`, `--expression`) or Scheme file (`-f`, `--file`). E.g.
-
+  - with a Scheme expression (=-e=, =--expression=) or Scheme file (=-f=, =--file=). E.g.
+    #+BEGIN_SRC bash
         srcibbu -e '(with-track-in <path> (lambda (v2 pth v1) (format #t "~s: ~a\n" pth v1)))'
+    #+END_SRC
 
-    will list (recursively) the ID3v1 tag for all files in `<path>`.
+    will list (recursively) the ID3v1 tag for all files in =<path>=.
 
   - as part of a script
 
+    #+BEGIN_SRC bash
         #!/home/vagrant/bin/scribbu \
 		--debug -L /home/vagrant/share/guile/site -e main -s
 		!#
@@ -62,9 +68,11 @@ scribbu can be invoked in a few ways:
 		         (options  (getopt-long args options-spec))
 		         (help     (option-ref options 'help   #f))
 				 ...
+    #+END_SRC
 
   - with no arguments at all. In this case, scribbu will drop into a Scheme shell in which the user can evaluate arbitrary Scheme expressions. For instance:
 
+    #+BEGIN_EXAMPLE
 	    scribbu
 		scribbu 0.6.1
 		Copyright (C) 2017-2020 Michael Herstine <sp1ff@pobox.com>
@@ -93,24 +101,25 @@ scribbu can be invoked in a few ways:
 		scheme@(guile-user)> (define A (car artists))
 		scheme@(guile-user)> (slot-ref A 'text)
 		$6 = "The Pogues"
+    #+END_EXAMPLE
 
-Any sub-command can be invoked with `--help` or `-h` for more information. Use the `--info` option to display the Info manual.
+Any sub-command can be invoked with =--help= or =-h= for more information. Use the =--info= option to display the Info manual.
 
-## More Scheme Examples
+** More Scheme Examples
 
 As I built out the program, it quickly became clear that I was never going to be able to implement a sub-command for every operation anyone might conceivably want to carry out. One could of course write a new program using the underlying library, but that seemed like too high a barrier for someone who, say, just wanted to print the contents of the "artist" frame for a bunch of files.
 
-That gave me the opportunity to use [Guile](https://www.gnu.org/software/guile/). Guile provides a [Scheme](https://groups.csail.mit.edu/mac/projects/scheme/) interpreter that can be embedded into your program, along with facilities for exposing your program's features to the interpreter (Scheme is a Lisp dialect).
+That gave me the opportunity to use [[https://www.gnu.org/software/guile/][Guile]]. Guile provides a [[https://groups.csail.mit.edu/mac/projects/scheme/][Scheme]] interpreter that can be embedded into your program, along with facilities for exposing your program's features to the interpreter (Scheme is a Lisp dialect).
 
-Let's demonstrate using a worked example.  Suppose that we have a directory full of .mp3 files ripped by Winamp some time ago & that we noted that fact by setting their ID3v1 comment to "Ripped by Winamp". We would like to update these files by ensuring that:
+Let's demonstrate using a worked example. Suppose that we have a directory full of .mp3 files ripped by Winamp some time ago & that we noted that fact by setting their ID3v1 comment to "Ripped by Winamp". We would like to update these files by ensuring that:
 
   - they have an ID3v2 tag
 
-  - that tag has a `TENC` ("encoded-by") frame set to "Winamp"
+  - that tag has a =TENC= ("encoded-by") frame set to "Winamp"
 
 We begin experimenting:
 
-```scheme
+#+BEGIN_SRC scheme
 scheme@(guile-user)> (use-modules (scribbu) (oop goops))
 scheme@(guile-user)> (define v1 (read-id3v1-tag "/vagrant/test/data/elliot-goldenthal.id3v1.tag"))
 scheme@(guile-user)> (slot-ref v1 'comment)
@@ -118,55 +127,55 @@ $1 = "Ripped by Winamp on Pimperne"
 scheme@(guile-user)> (define tags (read-tagset "/vagrant/test/data/elliot-goldenthal.id3v1.tag"))
 scheme@(guile-user)> (length tags)
 $2 = 0
-```
+#+END_SRC
 
 So this track has an ID3v1 tag with the comment we wrote when we ripped it using Winamp, but no ID3v2 tags. Let's fix that:
 
-``` scheme
+#+BEGIN_SRC scheme
 scheme@(guile-user)> (define frames (list (make <text-frame> #:id 'encoded-by-frame #:text "Winamp")))
 $1 = ()
 scheme@(guile-user)> (define tag (make <id3v2-tag> #:frames frames))
 $2 = ()
 scheme@(guile-user)> (write-tagset (list (list tag 3)) "test.out")
 $3 = 27
-```
+#+END_SRC
 
-The odd second argument to `write-tagset` is a list of pairs. Each pair represents an ID3v2 tag (files can have multiple ID3v2 tags): the first element is the Scheme `<id3v2-tag>` instance & the second is an `int` indicating what version of the ID3v2 spec shall be used to serialize it (we'll write the tag in ID3v2.3 format in this case). Because we have a single tag, the outer list has only one element. So one _could_ write out the same tag in different formats like so:
+The odd second argument to =write-tagset= is a list of pairs. Each pair represents an ID3v2 tag (files can have multiple ID3v2 tags): the first element is the Scheme =<id3v2-tag>= instance & the second is an =int= indicating what version of the ID3v2 spec shall be used to serialize it (we'll write the tag in ID3v2.3 format in this case). Because we have a single tag, the outer list has only one element. So one _could_ write out the same tag in different formats like so:
 
-``` scheme
+#+BEGIN_SRC scheme
 (write-tagset (list (list tag 2) (list tag 3) (list tag 4)))
-```
+#+END_SRC
 
 or write multiple ID3v2 tags:
 
-``` scheme
+#+BEGIN_SRC scheme
 (write-tagset (list (list tag1 2) (list tag1 3) (list tag2 3)))
-```
+#+END_SRC
 
 In a shell, we see that an ID3v2 tag has been written to "test.out":
 
-``` shell
-vagrant@@vagrant:~/build$ od -Ax -t x1z test.out
-000000 49 44 33 03 00 00 00 00 00 11 54 45 4e 43 00 00  >ID3.......TENC..<
-000010 00 07 00 00 00 57 69 6e 61 6d 70                 >.....Winamp<
-00001b
-```
+#+BEGIN_EXAMPLE
+  vagrant@@vagrant:~/build$ od -Ax -t x1z test.out
+  000000 49 44 33 03 00 00 00 00 00 11 54 45 4e 43 00 00  >ID3.......TENC..<
+  000010 00 07 00 00 00 57 69 6e 61 6d 70                 >.....Winamp<
+  00001b
+#+END_EXAMPLE
 
 But "test.out" is a new file containing *just* the new ID3v2 tag. Let's try adding this tag to an existing file. In the shell
 
-``` shell
+#+BEGIN_SRC bash
 cp -v /vagrant/test/data/elliot-goldenthal.id3v1.tag test.mp3
-```
+#+END_SRC
 
 and back in the interpreter:
 
-``` scheme
+#+BEGIN_SRC scheme
 scheme@(guile-user)> (write-tagset (list (list tag 3)) "test.mp3")
-```
+#+END_SRC
 
 Checking in the shell, we see that the entire track has been written out (this is a contrived example, so there's no audio data-- just the new ID3v2 tag & the old ID3v1 tag):
 
-``` shell
+#+BEGIN_EXAMPLE
 vagrant@@vagrant:~/build$ od -Ax -t x1z test.mp3
 000000 49 44 33 03 00 00 00 00 00 11 54 45 4e 43 00 00  >ID3.......TENC..<
 000010 00 07 00 00 00 57 69 6e 61 6d 70 54 41 47 45 61  >.....WinampTAGEa<
@@ -179,11 +188,11 @@ vagrant@@vagrant:~/build$ od -Ax -t x1z test.mp3
 000080 65 64 20 62 79 20 57 69 6e 61 6d 70 20 6f 6e 20  >ed by Winamp on <
 000090 50 69 6d 70 65 72 6e 65 00 01 ff                 >Pimperne...<
 00009b
-```
+#+END_EXAMPLE
 
-Having worked out the basics, we would now like to automate a solution. scribbu offers a utlity function `with-track-in`: given a directory, it will recursively traverse the tree rooted there, opening each file, parsing all tags, and invoking a caller-supplied function with a list ID3v2 tags, the path to the file, and the ID3v1 tag. This is actually a unit test (`test-cleanup-encoded-by`), but here's how one could do it. Note in particular the sh-bang line-- the script can be run directly:
+Having worked out the basics, we would now like to automate a solution. scribbu offers a utlity function =with-track-in=: given a directory, it will recursively traverse the tree rooted there, opening each file, parsing all tags, and invoking a caller-supplied function with a list ID3v2 tags, the path to the file, and the ID3v1 tag. This is actually a unit test (=test-cleanup-encoded-by=), but here's how one could do it. Note in particular the sh-bang line-- the script can be run directly:
 
-``` shell
+#+BEGIN_SRC scheme
 #!scribbu
 !#
 # cleanup-encoded-by
@@ -246,41 +255,18 @@ frames in the extant ID3v2 frames."
       (begin
         (format #t "Usage: clean-up-encoded-by ${srcdir}\n")
         (exit 2))))
-```
+#+END_SRC
 
-
-Downloading
------------
+* Downloading
 
 You can find the project at https://github.com/sp1ff/scribbu. You can clone it by typing `git clone https://github.com/sp1ff/scribbu.git`.
 
+* Installing
 
-Installing
-----------
+General instructions may be found in [[INSTALL]]. MacOS support is
+experimental. Patches, suggestions & more information are welcome.
 
-General instructions may be found in [INSTALL](). MacOS support is experimental, and limited to Mojave & later at this point. Patches, suggestions & more information are welcome.
-
-``` shell
-cd /tmp
-curl -O https://github.com/sp1ff/scribbu/archive/v0.6.tar.gz
-xcode-select --install
-brew install openssl libiconv
-brew install -vf --build-from-source --cc=clang boost@1.60
-tar -zxvf scribbu-0.6.tar.gz
-cd scribbu-0.6
-./configure --with-boost=/usr/local/opt/boost@1.60 \
-    --with-openssl=/usr/local/opt/openssl \
-    CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
-    -I/usr/local/opt/boost@1.60/include" \
-    CXXFLAGS="-Wno-register" \
-    LDFLAGS="-L/usr/local/opt/boost@1.60/lib -L/usr/local/opt/openssl/lib -liconv"
-make
-make check
-make install
-```
-
-Development
------------
+* Development
 
 You can obtain the code by doing `git clone https://github.com/sp1ff/scribbu.git`:
 
@@ -312,27 +298,20 @@ make check
 
 You can generate doxygen docs by cd'ing to doc & typing 'make doxygen-doc'
 
-Bug Reporting
--------------
+* Bug Reporting
 
 sp1ff@pobox.com
 
 
-System-specific Notes
----------------------
+* System-specific Notes
 
 Linux & Mac only
 
-Ports
------
+* Ports
 
 None.
 
-Notes
------
+* Notes
 
-  - Right now the project is only distributed as source.
-  - I got the project name from this cool project name [generater](http://mrsharpoblunto.github.io/foswig.js/).
-
--------------------------------------------------------------------------------
-Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>
+  - Right now the project is only distributed as source, but I'm working on generating pre-built binaries & packages.
+  - I got the project name from this cool project name [[http://mrsharpoblunto.github.io/foswig.js/][generater]]).

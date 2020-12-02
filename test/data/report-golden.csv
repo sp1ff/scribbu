@@ -1,7 +1,7 @@
 file,file size(MB),ID3v2 version,ID3v2 revision,ID3v2 size(bytes),ID3v2 flags,ID3v2 unsync,ID3v2 Artist,ID3v2 Title,ID3v2 Album,ID3v2 Content Type,ID3v2 Encoded By,ID3v2 Year,ID3v2 Langauges,# ID3v2 play count frames,Play Count,# ID3v2 comment frames,comment #0 text,comment #1 text,comment #2 text,comment #3 text,comment #4 text,comment #5 text,size (bytes),MD5,has ID3v1.1,has ID3v1 extended,ID3v1 Artist,ID3v1 Title,ID3v1 Album,ID3v1 Year,ID3v1 Comment,ID3v1 Genrre
 "cerulean.mp3",0.282,3,0,295607,0x00,0,The Ocean Blue,Questions Of Travel (LP Version),Cerulean (US Release),Alternative Rock,,2005,,0,,1,"tags=90s,sub-genres=shoegazer",,,,,,0,d41d8cd98f00b204e9800998ecf8427e,1,0,The Ocean Blue,Questions Of Travel (LP Versio,Cerulean (US Release),2005,"tags=90s,sub-genres=shoegaze",255
 "compressed.mp3",0.005,3,0,4990,0x00,0,Moby,Braveheart Theme (Techno remix,<Undefined>,Techno-Dance,,,,0,,1,,,,,,,0,d41d8cd98f00b204e9800998ecf8427e,,,,,,,,
-"duplicate_id3v2.mp3",0.010,3,0,3933,0x00,0,ArtistXXXX,TitleXXXX,AlbumXXXX,,,,,0,,0,,,,,,,6195,0bccbd7155f125ca958074d203c44587,,,,,,,,
+"duplicate_id3v2.mp3",0.008,3,0,3933,0x00,0,ArtistXXXX,TitleXXXX,AlbumXXXX,,,,,0,,0,,,,,,,4106,f7d51599383f11bf151fa855da3498b6,,,,,,,,
 "forbidden.mp3",4.381,3,0,1392,0x00,0,Nina Simone,Forbidden Fruit,The Amazing,(8),,,,0,,0,,,,,,,4592530,60eae24825c141853c62ed82571b502c,1,0,Nina Simone,Forbidden Fruit,The Amazing,,,8
 "id3v22-tda.mp3",0.004,2,0,502,0x00,0,,,,,,,,0,,0,,,,,,,3584,58d9cde64c572a02fb5a272e1ff461ac,,,,,,,,
 "joao.mp3",0.001,4,0,1091,0x00,0,Joao Gilberto,Acapulco,Ela E Carioca,,,,,0,,0,,,,,,,0,d41d8cd98f00b204e9800998ecf8427e,0,0,Joao Gilberto,ACAPULCO,ELA E CARIOCA,,,12

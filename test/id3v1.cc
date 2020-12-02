@@ -169,8 +169,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_a )
 
   fs::remove(tmp);
 
-  // LATER(sp1ff): make this work without the cast
-  tag.set_comment((const char*)"");
+  tag.set_comment("");
   comment.clear();
   tag.comment(back_inserter(comment));
   BOOST_CHECK(!comment.empty() && 0 == comment[0]);

@@ -383,7 +383,7 @@ namespace scribbu {
                      on_no_encoding rsp = on_no_encoding::fail)
     {
       encoding dst = dstenc ? dstenc.get() : encoding_from_system_locale();
-      comment_ = convert_encoding<string_type>(text, srcenc, dst, add_bom, rsp);
+      comment_ = convert_encoding(text, srcenc, dst, add_bom, rsp);
       comment_.resize(enhanced() ? TEXT_SZ_ENH : TEXT_SZ, 0);
     }
 

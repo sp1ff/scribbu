@@ -261,11 +261,21 @@ BOOST_AUTO_TEST_CASE( test_encryption_method )
   M4.datab(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
-  // LATER(sp1ff): test the following
-  // - size()
-  // - serialized_size()
-  // - needs_unsynchronisation()
-  // - write()
+  vector<unsigned char> B5 =
+    { 0x73, 0x70, 0x31, 0x66, 0x66, 0x40, 0x70, 0x6f,
+      0x62, 0x6f, 0x78, 0x2e, 0x63, 0x6f, 0x6d, 0x00, // "sp1ff@pobox.com"
+      0x0b,                                           // method
+      0xff, 0xfe, 0x03, 0x04 };                       // key
+
+  //////////////////////////////////////////////////////////////////////////////
+  // pathological case: false sync in the key data
+  //////////////////////////////////////////////////////////////////////////////
+
+  encryption_method M5(B5.begin(), B5.end());
+  BOOST_CHECK(M5.size() == 21);
+  BOOST_CHECK(M5.needs_unsynchronisation());
+  BOOST_CHECK(M5.size() == 21);
+  BOOST_CHECK(M5.serialized_size(true) == 22);
 
 } // End test_encryption_method.
 

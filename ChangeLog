@@ -1,4 +1,14 @@
-2020-11-17  Michael Herstine  <sp1ff@pobox.com>
+2020-12-01  Michael Herstine  <sp1ff@pobox.com>
+
+	This is a hygiene commit. It does a few things:
+	    1. pulled the 'ci' workflow from master to 0.6 & augmented it
+	       to run "make distcheck"
+	    2. moved README.md to README.org
+	    3. scripted my macOS builds
+	    4. stopped bothering to generate LaTeX docs
+	    5. cleaned up a bunch of "TODO" comments in the test suite
+
+2020-11-18  Michael Herstine  <sp1ff@pobox.com>
 
 	Address issue #5.
 	Also, upgrade to Guile 3.0 if it's available.

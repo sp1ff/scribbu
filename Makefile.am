@@ -2,9 +2,13 @@ SUBDIRS = scribbu src scheme test doc
 ACLOCAL_AMFLAGS = -I macros
 EXTRA_DIST = examples
 
+# No idea why, but the (empty) file 'config.rpath' is included in the
+# .tar.xz distro, but not the .tar.gz distro; this breaks 'make
+# distcheck'
 dist-hook:
 	chmod -R a+w $(distdir)/examples
 	rm -rf `find $(distdir)/examples -type f -name *~`
+	chmod u+w $(distdir)/build-aux && touch $(distdir)/build-aux/config.rpath
 
 # On Linux, "make install" suffers from a fairly severe problem, laid
 # out in detail here:
