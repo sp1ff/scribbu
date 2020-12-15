@@ -238,9 +238,6 @@ private:
    * more elegant solution, but the XTAG frame is, well, experimental & I'm not
    * quite ready to do that, yet.
    *
-   * \todo Consider adding xtag-related virtuals to class id3v2_tag &
-   * cleaning-up the xtag sub-command implementation considerably.
-   *
    *
    */
 

@@ -561,8 +561,6 @@ namespace {
       // - the crawler will handle each file by processing it &
       //   sending the results to the reporter
 
-      // LATER(sp1ff): Implement the multi-threaded option
-
       size_t ncomm = vm["num-comments"].as<size_t>();
       fs::path out = vm["output"].as<fs::path>();
       encoding v1enc = vm["v1-encoding"].as<encoding>();

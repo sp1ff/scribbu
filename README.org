@@ -1,13 +1,12 @@
 #+TITLE: scribbu
 #+DESCRIPTION: The extensible tool for tagging your music collection
-#+DATE: <2020-11-29 Sun 17:22>
+#+DATE: <2020-12-14 Mon 20:06>
 #+AUTHOR: sp1ff
 #+EMAIL: sp1ff@pobox.com
 #+AUTODATE: t
 #+OPTIONS: toc:nil org-md-headline-style:setext *:t ^:nil
 
-
-This directory contains the 0.6.7 release of [[https://github.com/sp1ff/scribbu][scribbu]].
+This directory contains the 0.6.12 release of [[https://github.com/sp1ff/scribbu][scribbu]].
 
 See the file [[NEWS]] for the user-visible changes from previous releases.
 
@@ -74,7 +73,7 @@ scribbu can be invoked in a few ways:
 
     #+BEGIN_EXAMPLE
 	    scribbu
-		scribbu 0.6.1
+		scribbu 0.6.12
 		Copyright (C) 2017-2020 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
@@ -301,7 +300,6 @@ You can generate doxygen docs by cd'ing to doc & typing 'make doxygen-doc'
 * Bug Reporting
 
 sp1ff@pobox.com
-
 
 * System-specific Notes
 

@@ -1,4 +1,8 @@
-2020-12-01  Michael Herstine  <sp1ff@pobox.com>
+2020-12-14  Michael Herstine  <sp1ff@pobox.com>
+
+	Now building on a bare-bones Debian Docker image. Wrapped up a few "TODO" comments in the source.
+
+2020-12-02  Michael Herstine  <sp1ff@pobox.com>
 
 	This is a hygiene commit. It does a few things:
 	    1. pulled the 'ci' workflow from master to 0.6 & augmented it

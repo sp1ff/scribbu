@@ -569,14 +569,14 @@ namespace scribbu {
     void set_year(const char* text)
     {
       size_t i = 0, ntext = strlen(text);
-      while (i < ntext && i < 4) {
+      ntext = ntext < 4 ? ntext : 4;
+      while (i < ntext) {
         year_[i] = (char)text[i];
         ++i;
       }
       while (i < 4) {
         year_[i++] = 0;
       }
-      // extended_ = true;
     }
 
     ////////////////////////////////////////////////////////////////////////////

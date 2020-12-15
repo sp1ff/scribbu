@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([scribbu], [0.6.11], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
+AC_INIT([scribbu], [0.6.12], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
 AC_CONFIG_MACRO_DIR([macros])
 AC_CONFIG_SRCDIR([src/scribbu.cc])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -26,7 +26,7 @@ AC_PROG_RANLIB
 AM_PROG_AR
 AC_PROG_LIBTOOL
 AC_PROG_YACC
-AM_PROG_LEX
+AC_PROG_LEX
 
 # Checks for libraries.
 AX_BOOST_BASE([1.58], [], [AC_MSG_ERROR([Scribbu requires boost_base 1.58 or later.])])

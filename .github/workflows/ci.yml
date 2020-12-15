@@ -96,7 +96,7 @@ jobs:
       if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
       run: |
         cd boost_${{ matrix.boost-ver }}
-        ./bootstrap.sh --prefix=./installdir || cat bootstrap.log
+        test -f bootstrap.sh && ./bootstrap.sh --prefix=./installdir || cat bootstrap.log
         ./b2 && ./b2 install
         cd installdir/lib
         pwd
@@ -137,7 +137,8 @@ jobs:
         set -x
         pwd
         ls
-        ./autogen.sh
+        test autogen.sh && ./autogen.sh
+        test bootstrap && ./bootstrap
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
     - name: Configure scribbu (Ubuntu, pinned)
       if: matrix.os == 'ubuntu-20.04' && matrix.boost == 'pinned'
@@ -146,7 +147,8 @@ jobs:
         set -x
         pwd
         ls
-        ./autogen.sh
+        test autogen.sh && ./autogen.sh
+        test bootstrap && ./bootstrap
         ./configure
     - name: Configure scribbu (Ubuntu, non-pinned)
       if: matrix.os == 'ubuntu-20.04' && matrix.boost != 'pinned'
@@ -155,7 +157,8 @@ jobs:
         set -x
         pwd
         ls
-        ./autogen.sh
+        test autogen.sh && ./autogen.sh
+        test bootstrap && ./bootstrap
         ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)
     - name: Make scribbu (MacOS)
       if: matrix.os == 'macos-10.15'

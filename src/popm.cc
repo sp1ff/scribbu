@@ -326,10 +326,6 @@ private:
    * template, and factored out type-specific information and logic into a
    * traits class (tag_traits).
    *
-   * \todo Consider adding playcount- and popularimeter-related virtuals to
-   * class id3v2_tag & cleaning-up the popm sub-command implementation
-   * considerably.
-   *
    *
    */
 
