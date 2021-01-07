@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# This script will build the scribbu Debian package in a Docker container.
+
+# It is assumed to be run from the scribbu-deb directory.
+
+set -ex
+scribbu_dev=$(cd ../scribbu && pwd)
+admin=${scribbu_dev}/admin
+docker build -t scribbu-debian:latest -f ${admin}/Dockerfile-debian .
+
+docker_args="-it"
+docker_args="$docker_args --mount type=bind,source=$(pwd),target=/scribbu-deb"
+docker_args="$docker_args -v ${admin}/build-debian-pkg-cnt:/build-pkg-cnt:ro"
+docker_args="$docker_args --privileged"
+
+cmd="docker run $docker_args scribbu-debian:latest /build-pkg-cnt"
+exec $cmd

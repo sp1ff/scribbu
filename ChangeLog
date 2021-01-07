@@ -1,4 +1,11 @@
-2020-12-14  Michael Herstine  <sp1ff@pobox.com>
+2021-01-07  Michael Herstine  <sp1ff@pobox.com>
+
+	Debian packaging commit.
+	This commit adds a few "admin" files for building Debian packages
+	for scribbu, as well as continuing to clean-up assorted "TODOs"
+	in the code.
+
+2020-12-15  Michael Herstine  <sp1ff@pobox.com>
 
 	Now building on a bare-bones Debian Docker image. Wrapped up a few "TODO" comments in the source.
 

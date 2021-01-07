@@ -160,7 +160,7 @@
 
 namespace scribbu {
 
-  class invalid_tagset_request: public error{
+  class invalid_tagset_request: public error {
 
   public:
     enum cause {

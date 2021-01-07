@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
-../src/scribbu dump ${srcdir}/data/{lorca,opium}.mp3 > dump1.$$.log
+../src/scribbu dump ${srcdir}/data/{lorca,opium}.mp3 > dump1.$$.1.log
 # This is irritating, but we need to strip out the paths above
 # "data" since we do a dumb diff, below.
-sed -e 's_^".*/data_"data_' dump1.$$.log > dump1.log
-rm dump1.$$.log
+sed -e 's_^".*/data_"data_' dump1.$$.1.log > dump1.$$.2.log
+# Similarly for timestamps-- when I pull releases into the Debian
+# packaging repo, they change
+sed -e '/^Last Modified/d' dump1.$$.2.log > dump1.log
+rm dump1.$$.1.log dump1.$$.2.log
 diff dump1.log ${srcdir}/data/dump1-golden.log || exit 1
-../src/scribbu dump --v1-encoding=CP1252 ${srcdir}/data/nan-1.mp3 > dump2.$$.log
-sed -e 's_^".*/data_"data_' dump2.$$.log > dump2.log
-rm dump2.$$.log
+../src/scribbu dump --v1-encoding=CP1252 ${srcdir}/data/nan-1.mp3 > dump2.$$.1.log
+sed -e 's_^".*/data_"data_' dump2.$$.1.log > dump2.$$.2.log
+# Similarly for timestamps-- when I pull releases into the Debian
+# packaging repo, they change
+sed -e '/^Last Modified/d' dump2.$$.2.log > dump2.log
+rm dump2.$$.1.log dump2.$$.2.log
 diff dump2.log ${srcdir}/data/dump2-golden.log || exit 1
 exit 0

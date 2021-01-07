@@ -217,9 +217,6 @@ namespace scribbu {
    \endcode
    *
    *
-   * \todo Implement a "no throw" version
-   *
-   *
    */
 
   template<typename string_type>

@@ -555,24 +555,14 @@ scribbu::match_winamp_genre(const std::string &text)
 
   // In testing, a naked 2D array far out-performed a vector of vectors. I'm not
   // entirely sure why; profiling showed a lot of time being spent in operator[]
-  // for the vector-of-vectors implementation. For development purposes, I'm
-  // going to use the C99 feature & gcc extension of Variable Length Array. Once
-  // I have a working implementation with unit tests, I'll replace it with an
-  // equivalent & standard-compliant 1D array into which I compute my own
-  // indexing.
-
-  // TODO(sp1ff): replace FKP with a one-dimensional array
-
-# ifdef HAVE_C_VARARRAYS
-  ptrdiff_t FKP[max_k][max_p];
-  for (ptrdiff_t i = 0; i < max_k; ++i) {
-    for (ptrdiff_t j = 0; j < max_p; ++j) {
-      FKP[i][j] = -inf;
-    }
+  // for the vector-of-vectors implementation. For development purposes, I used
+  // the C99 feature & gcc extension of Variable Length Array. Once I had a
+  // working implementation with unit tests, I replaced it with an equivalent &
+  // standard-compliant 1D array into which I compute my own indexing.
+  ptrdiff_t FKP[max_k*max_p];
+  for (ptrdiff_t i = 0; i < max_k*max_p; ++i) {
+    FKP[i] = -inf;
   }
-# else
-#   error "initial implementation requires Variable Length Array support"
-# endif
 
   for (ptrdiff_t k = - zero_k; k <= zero_k; ++k) {
     ptrdiff_t abs_k = k;
@@ -580,9 +570,9 @@ scribbu::match_winamp_genre(const std::string &text)
     for (ptrdiff_t p = -1; p <= (ptrdiff_t)inf; ++p) {
       if (p == abs_k - 1) {
         if (k < 0) {
-          FKP[k + zero_k][p+1] = abs_k - 1;
+          FKP[(k + zero_k)*max_p+p+1] = abs_k - 1; // FKP[k + zero_k][p+1]
         } else {
-          FKP[k + zero_k][p+1] = -1;
+          FKP[(k + zero_k)*max_p+p+1] = -1;        // FKP[k + zero_k][p+1]
         }
       }
     }

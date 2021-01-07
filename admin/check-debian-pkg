@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Test a Debian binary package in a Docker container
+
+# Presumably run from either scribbu or scribbu-dev
+
+# First argument is the binary package to be tested.
+
+scribbu_dev=$(cd ../scribbu && pwd)
+admin=${scribbu_dev}/admin
+deb=$(pwd)/$1
+
+set -ex
+docker build -t scribbu-debian:latest -f ${admin}/Dockerfile-debian .
+docker_args="-it"
+docker_args="$docker_args -v ${deb}:$1:ro"
+docker_args="$docker_args -v ${admin}/test-debian-pkg-cnt:/test-pkg:ro"
+docker_args="$docker_args --privileged"
+
+cmd="docker run $docker_args scribbu-debian:latest /test-pkg $1"
+exec $cmd
+

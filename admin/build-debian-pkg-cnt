@@ -1,0 +1,15 @@
+#!/bin/bash
+set -ex
+mkdir build-area
+cd scribbu-deb
+gbp buildpackage --git-export-dir=../build-area/
+cd ../build-area
+cp -v * ../scribbu-deb
+
+# TODO(sp1ff): PACKAGING
+# cp -v scribbu_0.6.13-1_amd64.deb /tmp && cd /tmp
+# chown -R $USER:$GROUP /build
+# dpkg -i scribbu_0.6.13-1_amd64.deb
+# dpkg --verify scribbu
+# dpkg --audit scribbu
+# dpkg -r scribbu

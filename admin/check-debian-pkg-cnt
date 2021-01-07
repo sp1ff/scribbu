@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# This script is meant to be run inside a docker container (presumably
+# scribbu-debian:latest).
+
+# The first argument should be the name of the Debian binary package to test.
+
+set -ex
+dpkg -r scribbu
+dpkg -i -D1 $1
+scribbu -v
+test -f /usr/include/scribbu/scribbu.hh
+test -f /usr/share/guile/site/scribbu.scm
+
+# TODO(sp1ff): other stuff to test?
+
+# test removal?
+

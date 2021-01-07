@@ -830,9 +830,6 @@ scribbu::id3v2_2_tag::parsing_is_reserved(const frame_id3 &id)
  * re-synchronise, then construct the frames in memory.
  *
  *
- * \todo Re-consider my approach to parsing tags once I have some performance data
- *
- *
  */
 
 void scribbu::id3v2_2_tag::parse(std::istream &is, std::size_t size)

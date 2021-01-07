@@ -179,15 +179,7 @@ namespace scribbu {
   /// three ID3v2 versions of which scribbuy is aware
   enum class id3v2_version { v2, v3, v4 };
 
-  /**
-   * \brief an ID3v2 version-independent way of naming text frames
-   *
-   *
-   * \todo produce an analagous enum for all frames
-   *
-   */
-
-
+  /// an ID3v2 version-independent way of naming text frames
   enum class id3v2_text_frames {
     talb, // Album/Movie/Show title [TAL]
     tbpm, // beats per minute [TBM]

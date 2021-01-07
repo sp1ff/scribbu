@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# This script is meant to be run inside a docker container (presumably
+# scribbu-debian:latest). It assumes that there is an Autotools tarball in /, and
+# that it can find the directory containing the debian package files in
+# /debian.
+set -ex
+base="$(basename $1 .tar.gz)"
+version="${base:8}"
+tar xf $1
+cp -v $1 scribbu_${version}.orig.tar.gz
+cd $base
+cp -vr /debian .
+debuild -us -uc -d

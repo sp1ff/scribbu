@@ -25,9 +25,6 @@
    * along with scribbu.  If not, see <http://www.gnu.org/licenses/>.
    *
    *
-   * \todo Improve the tbterror implementation
-   *
-   *
    */
 
   #include <scribbu/tbt-lexer.hh>

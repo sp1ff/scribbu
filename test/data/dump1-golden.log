@@ -1,5 +1,4 @@
 "data/lorca.mp3":
-Last Modified: Sat, 03 Jun 17 16:00:38 PDT
 ID3v2.3(.0) Tag:
 452951 bytes, synchronised
 flags: 0x00
@@ -22,15 +21,14 @@ TPOS: 1
 frame APIC (115554 bytes)
 frame PRIV (1122 bytes)
 335921 bytes of padding
-9425708 bytes of track data:
-MD5: 48ff9cadea7d842e9059db25159d2daa
+0 bytes of track data:
+MD5: d41d8cd98f00b204e9800998ecf8427e
 ID3v1.1: The Pogues - Lorca's Novena
 Hell's Ditch [Expanded] (US Ve (track 5), 1990
 Amazon.com Song ID: 20355825
 unknown genre 255
 
 "data/opium.mp3":
-Last Modified: Sat, 03 Jun 17 16:00:40 PDT
 ID3v2.3(.0) Tag:
 2038 bytes, synchronised
 flags: 0x00

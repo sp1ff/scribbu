@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# This script will take a scribbu Autotools tarball together with my current
+# debian directory from scribbu-deb and try to build the tarball as a Debian
+# package in a Docker container. It's meant for use during scribbu development,
+# as a check that my latest changes won't break anything in my Debian package
+# down the road.
+
+# It is presumably run from the root scribbu directory.
+
+# It takes a single argument: the name of the tarball to package.
+
+set -ex
+docker build -t scribbu-debian:latest -f admin/Dockerfile-debian .
+
+debdir=$(cd ../scribbu-deb/debian && pwd)
+script=$(pwd)/admin/build-dev-debian-pkg-cnt
+tarball=$(pwd)/$1
+docker_args="-it"
+docker_args="$docker_args --mount type=bind,source=${debdir},target=/debian"
+docker_args="$docker_args -v ${script}:/build-dev-pkg:ro"
+docker_args="$docker_args -v ${tarball}:/$1:ro"
+docker_args="$docker_args --privileged"
+cmd="docker run ${docker_args} scribbu-debian:latest /build-dev-pkg $1"
+exec $cmd
+

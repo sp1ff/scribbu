@@ -43,8 +43,8 @@ const char * scribbu::invalid_tagset_request::what() const noexcept
                                    "padding to satisfy the requested "
                                    "size"));
       break;
-      // LATER(sp1ff): how to architect an exception class where this isn't
-      // necessary
+      // LATER(sp1ff): this is awful-- how to architect an exception class where
+      // this isn't necessary
     default:
       pwhat_.reset(new std::string("you didn't keep invalid_tagset_request::"
                                    "cause up-to-date"));
