@@ -4,6 +4,9 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** fixed a bug in id3v1_tag::set_year
+
+Was calling `strlen` on a string that may not be null-terminated.
 *** fixed issue #5: `scribbu popm -C N` fails when there is no PCNT frame
 
 <https://github.com/sp1ff/scribbu/issues/5>
@@ -22,6 +25,8 @@ https://github.com/sp1ff/scribbu/issues/4
 *** handle problems when renaming across filesystems
 
 ** New Features
+
+*** Arch & Debian packages now provided
 
 *** `scribbu genre' now takes a '--get' flag
 

@@ -10,5 +10,6 @@ version="${base:8}"
 tar xf $1
 cp -v $1 scribbu_${version}.orig.tar.gz
 cd $base
-cp -vr /debian .
+cp -vr /scribbu-deb/debian .
 debuild -us -uc -d
+cp -v /scribbu_${version}-1_amd64.deb /scribbu-deb

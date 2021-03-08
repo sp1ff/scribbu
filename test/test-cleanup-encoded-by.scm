@@ -26,7 +26,7 @@
 (use-modules (scribbu))
 (use-modules (oop goops))
 
-(setlocale LC_ALL "")
+(setlocale LC_ALL "en_US.UTF-8")
 
 (define (report-on-encoded-by tags pth v1)
   "Utility routine for evaluating the 'encoded by' attribute of TRACK.

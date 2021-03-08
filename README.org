@@ -1,12 +1,12 @@
 #+TITLE: scribbu
 #+DESCRIPTION: The extensible tool for tagging your music collection
-#+DATE: <2021-01-07 Thu 14:21>
+#+DATE: <2021-03-07 Sun 17:10>
 #+AUTHOR: sp1ff
 #+EMAIL: sp1ff@pobox.com
 #+AUTODATE: t
 #+OPTIONS: toc:nil org-md-headline-style:setext *:t ^:nil
 
-This directory contains the 0.6.14 release of [[https://github.com/sp1ff/scribbu][scribbu]].
+This directory contains the 0.6.15 release of [[https://github.com/sp1ff/scribbu][scribbu]].
 
 See the file [[NEWS]] for the user-visible changes from previous releases.
 
@@ -73,8 +73,8 @@ scribbu can be invoked in a few ways:
 
     #+BEGIN_EXAMPLE
 	    scribbu
-		scribbu 0.6.14
-		Copyright (C) 2017-2020 Michael Herstine <sp1ff@pobox.com>
+		scribbu 0.6.15
+		Copyright (C) 2017-2021 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
 

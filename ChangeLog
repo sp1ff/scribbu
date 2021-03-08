@@ -1,4 +1,14 @@
-2021-01-07  Michael Herstine  <sp1ff@pobox.com>
+2021-03-07  Michael Herstine  <sp1ff@pobox.com>
+
+	Arch package & a bug fix.
+	This commit does a few things:
+
+	    1. adds support for building & packaging on Arch
+	    2. fixes an Arch-specific build problem by adding <deque> to
+	       the includes for src/command-utilities.h
+	    3. fixes a nasty bug I finally tracked down in id3v1_tag::set_genre
+
+2021-01-09  Michael Herstine  <sp1ff@pobox.com>
 
 	Debian packaging commit.
 	This commit adds a few "admin" files for building Debian packages

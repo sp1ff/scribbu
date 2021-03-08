@@ -566,11 +566,10 @@ namespace scribbu {
                      on_no_encoding rsp = DEF_ON_NO_ENCODING) const;
     // year is four ASCII characters; they are supposed to be in the form
     // "YYYY", but beyond length we perform no validation
-    void set_year(const char* text)
+    void set_year(const char text[])
     {
-      size_t i = 0, ntext = strlen(text);
-      ntext = ntext < 4 ? ntext : 4;
-      while (i < ntext) {
+      size_t i = 0;
+      while (i < 4 && text[i]) {
         year_[i] = (char)text[i];
         ++i;
       }

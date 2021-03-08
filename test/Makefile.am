@@ -30,11 +30,11 @@ TESTS = $(check_PROGRAMS) test-split test-rename test-report test-report-tdf \
 	test-cleanup-encoded-by test-cleanup-from-audacity \
 	test-tagsets-from-scheme test-frames-from-scheme test-scripting \
 	test-options test-popm test-xtag test-text test-genre
-unit_SOURCES = unit.cc charsets.cc ostream.cc id3v1.cc framesv2.cc \
+unit_SOURCES = unit.cc unit.hh charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
 	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc tdf-pprinter.cc \
 	scribbu.cc id3v2-edit.cc tagset.cc winamp-genres.cc
-include_HEADERS = unit.hh
+
 AM_CPPFLAGS = -DBOOST_TEST_DYN_LINK -I$(srcdir)/.. $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = -std=c++17
 AM_LDFLAGS  = $(BOOST_LDFLAGS)

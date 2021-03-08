@@ -27,6 +27,7 @@
 #ifndef COMMAND_UTILITIES_HH_INCLUDED
 #define COMMAND_UTILITIES_HH_INCLUDED 1
 
+#include <deque>
 #include <iostream>
 
 #include <boost/filesystem.hpp>

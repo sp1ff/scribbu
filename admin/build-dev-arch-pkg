@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# This script will take a scribbu Autotools tarball together with my current
+# PKGBUILD from scribbu-arch and try to build the tarball as an Arch package in
+# a docker container. It's meant for use during scribbu development, as a check
+# that my latest changes won't break anything downstream when it's time to
+# package the latest scribbu.
+
+# It is presumably run from the root scribbu directory.
+
+# It takes a single argument: the name of the tarball to package.
+
+set -ex
+docker build -t scribbu-arch:latest -f admin/Dockerfile-arch .
+
+here=$(pwd)
+archdir=$(cd ../scribbu-arch && pwd)
+script=${here}/admin/build-dev-arch-pkg-cnt
+tarball="$1"
+if [ ${tarball:0:1} != "/" ]; then tarball=${here}/$1; fi
+docker_args="-it"
+docker_args="$docker_args --mount type=bind,source=${archdir},target=/scribbu"
+docker_args="$docker_args -v ${script}:/build-dev-pkg:ro"
+docker_args="$docker_args -v ${tarball}:/$(basename $1):ro"
+docker_args="$docker_args --privileged"
+docker_args="$docker_args --ulimit core=-1"
+docker_args="$docker_args -u mgh"
+# Un-comment to just drop into the container
+cmd="docker run ${docker_args} scribbu-arch:latest"
+# cmd="docker run ${docker_args} scribbu-arch:latest /build-dev-pkg $1"
+exec $cmd
