@@ -14,9 +14,9 @@ RUN set -ex && \
         # scribbu pre-requisites \
 	flex bison libboost-all-dev libssl-dev zlib1g-dev libunistring-dev libffi-dev guile-2.2-dev texinfo locales \
         # for packaging \
-	debhelper build-essential dh-make devscripts git-buildpackage lintian vim \
+	debhelper build-essential dh-make devscripts git-buildpackage lintian \
         # for my sanity \
-	less procps gdb sudo info && \
+	less procps gdb sudo info vim && \
         # tidy-up \
 	apt-get clean && \
 	rm -rf /tmp/* /var/tmp/* && \
