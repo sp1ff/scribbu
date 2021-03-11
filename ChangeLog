@@ -1,4 +1,13 @@
-2021-03-07  Michael Herstine  <sp1ff@pobox.com>
+2021-03-11  Michael Herstine  <sp1ff@pobox.com>
+
+	Adding a release Github workflow.
+	This commit also adds a few utility scripts under 'admin'.
+
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix the 'ci' workflow.
+
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Arch package & a bug fix.
 	This commit does a few things:
@@ -8,18 +17,14 @@
 	       the includes for src/command-utilities.h
 	    3. fixes a nasty bug I finally tracked down in id3v1_tag::set_genre
 
-2021-01-09  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Debian packaging commit.
 	This commit adds a few "admin" files for building Debian packages
 	for scribbu, as well as continuing to clean-up assorted "TODOs"
 	in the code.
 
-2020-12-15  Michael Herstine  <sp1ff@pobox.com>
-
 	Now building on a bare-bones Debian Docker image. Wrapped up a few "TODO" comments in the source.
-
-2020-12-02  Michael Herstine  <sp1ff@pobox.com>
 
 	This is a hygiene commit. It does a few things:
 	    1. pulled the 'ci' workflow from master to 0.6 & augmented it
@@ -29,12 +34,10 @@
 	    4. stopped bothering to generate LaTeX docs
 	    5. cleaned up a bunch of "TODO" comments in the test suite
 
-2020-11-18  Michael Herstine  <sp1ff@pobox.com>
-
 	Address issue #5.
 	Also, upgrade to Guile 3.0 if it's available.
 
-2020-10-06  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Work in progress.
 	This commit does the following:
@@ -43,14 +46,14 @@
 	       of the return value
 	    2. added a --get option to the 'genre' sub-command
 
-2020-09-23  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Update the 'text' sub-command.
 	This commit re-implements the 'text' sub-command in terms of
 	'tagset_processor'. In so doing, it opens up the options of
 	creating an ID3v2 tag if none exist.
 
-2020-09-21  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Improve 'scribbu dump'
 	This commit makes the following changes to 'scribbu dump'
@@ -63,7 +66,7 @@
 	    - begins stripping track data from test mp3 files
 	    - adds a unit test to 'scribbu xtag'
 
-2020-09-05  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	BUGFIX: owner was not being written out correctly for `popm'.
 	This commit contains a few changes:
@@ -72,15 +75,13 @@
 	    - maintenance: renamed autogen.sh, got rid of libtool.m4
 	    - fixed a compilation bug on MacOS
 
-2020-08-04  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Fixed a SEGV when creating new ID3v2 tags. Repaired the MacOS build.
 
-2020-08-02  Michael Herstine  <sp1ff@pobox.com>
-
 	Bugfix: handle rename errors when renaming across filestystems.
 
-2020-07-10  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Final commit of the `genre' sub-command.
 	This commit completes the implementation of the `genre' sub-
@@ -94,19 +95,23 @@
 	    3. moved the `popm' sub-command over to the tagset_processor
 	       framework
 
-2020-06-27  Michael Herstine  <sp1ff@pobox.com>
+2021-03-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Initial commit for the `genre' sub-command.
 	This commit adds a new sub-command: `git genre' that allows the
 	user to update the "genre" in ID3v1 and/or v2 tags.
-
-2020-05-25  Michael Herstine  <sp1ff@pobox.com>
 
 	Assorted bug fixes:
 	    - https://github.com/sp1ff/scribbu/issues/4: "id3v2_tag text frame
 	      virtuals will SEGV if the relevant frame isn't there"
 
 	Initial commit for the 0.6 release; updating package version along with boilerplate throughout.
+
+2020-11-29  Michael Herstine  <sp1ff@pobox.com>
+
+	ci workflow not caching correctly
+
+	Adding a nightly build GitHub Action. Builds on Ubuntu & MacOS against a few versions of boost.
 
 2019-11-06  Michael Herstine  <sp1ff@pobox.com>
 

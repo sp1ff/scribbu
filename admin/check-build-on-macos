@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# This script will check the build on my hosted MacOS machine.
+
+set -ex
+
+if test -z "$1"; then
+    cat >&2 <<EOF
+Usage: admin/check-build-on-macos SUB-DIRECTORY
+
+Where SUB-DIRECTORY is the sub-directory on my MacOS host.
+EOF
+    exit 2
+fi
+
+vmosx_target="$1"
+
+rsync -avz . vmosx:code/scribbu/$vmosx_target --exclude='*.bz2'  \
+      --exclude='*.gz' --exclude='*.xz' --exclude='*~'           \
+      --exclude='*.x' --exclude='*.o' --exclude='*.lo'           \
+      --exclude='*.Plo' --exclude='.git/*' --exclude='.github/*' \
+      --exclude='autom4te.cache/*' --exclude='sp1ff/*'           \
+      --exclude='.vagrant/*' --exclude='*/.deps/*'               \
+      --exclude='*/.libs/*' --exclude='doc/doxygen-doc/*'        \
+      --exclude='test/*.log' --exclude='test/*.trs'              \
+      --exclude='test/test*tmp/*'
+
+ssh vmosx "cd code/scribbu/$vmosx_target && admin/macos-build"

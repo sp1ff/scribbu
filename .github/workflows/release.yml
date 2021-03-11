@@ -1,0 +1,321 @@
+# Setting up a release workflow for `mpdpopm'. Much thanks to
+# BurntShushi from whom I shamelessly copied a lot of this
+# <https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml>
+name: release
+on:
+  # This permits this workflow to be triggered manually. See the
+  # environment variable RELEASE_VERSION below, however.
+  workflow_dispatch:
+  # Modifying the push event with 'branches' and 'tags' seems to be an
+  # OR operation (i.e. the workflow will run if either on branch
+  # release-infra *or* it has a tag of n.n.n)
+  push:
+    # Un-comment this for testing
+    # branches:
+    #   - 0.6
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  ####################################################################
+  # This job will create the GitHub release entity.
+  ####################################################################
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    # Un-comment this for testing
+    # env:
+    #   RELEASE_VERSION: 0.6.15
+    #   RELEASE_VERSION: 0.0.1
+    steps:
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Get the release version from the tag
+        if: env.RELEASE_VERSION == ''
+        run: |
+          # No idea how this incantation works-- got it from:
+          # https://github.community/t5/GitHub-Actions/How-to-get-just-the-tag-name/m-p/32167/highlight/true#M1027
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "version is: ${{ env.RELEASE_VERSION }}"
+      - name: Create GitHub release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: ${{ env.RELEASE_VERSION }}
+
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
+      - name: Save version number to artifact
+        run: echo "${{ env.RELEASE_VERSION }}" > artifacts/release-version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
+  ####################################################################
+  # This job will actually create the artifacts I want to include with
+  # the release
+  ####################################################################
+  build-release:
+    name: build-release
+    needs: ['create-release']
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux, macos]
+        include:
+        - build: linux
+          os: ubuntu-20.04
+        - build: macos
+          os: macos-10.15
+          boost: latest
+          boost-ver: 1_75_0
+          boost-dl: https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.bz2
+
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
+    - name: Install pre-requisites (MacOS)
+      if: matrix.os == 'macos-10.15'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        brew install autoconf automake libtool openssl guile doxygen flex \
+        bison graphviz texinfo
+
+    - name: Install pre-requisites (Ubuntu)
+      if: matrix.os == 'ubuntu-20.04'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        sudo apt-get update
+        sudo apt-get install -y autoconf automake libtool openssl \
+        guile-3.0-dev doxygen flex bison graphviz libunistring-dev texlive
+
+    - name: Cache boost (MacOS)
+      if: matrix.os == 'macos-10.15'
+      id: cache-boost-macos
+      uses: actions/cache@v2
+      with:
+        path: boost_${{ matrix.boost-ver }}/installdir
+        key: ${{ runner.os }}-${{ matrix.boost-ver }}
+
+    - name: Get boost (MacOS)
+      if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      run: |
+        set -x
+        pwd
+        curl -L -o boost_${{ matrix.boost-ver }}.tar.bz2 ${{ matrix.boost-dl }}
+        md5 boost_${{ matrix.boost-ver }}.tar.bz2
+        cc --version
+        tar xf boost_${{ matrix.boost-ver }}.tar.bz2
+        mkdir boost_${{ matrix.boost-ver }}/installdir
+
+    - name: Patch boost (MacOS)
+      if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
+      run: |
+        set -x
+        pwd
+        cd boost_${{ matrix.boost-ver }}/tools/build/src/engine/modules
+        cp path.c path.c.bak
+        echo "#include \"../filesys.h\"" > path.c.tmp
+        cat path.c >> path.c.tmp
+        mv path.c.tmp path.c
+        cat path.c
+        # https://github.com/arvidn/libtorrent/issues/4662
+        pwd
+        cd ../../tools
+        pwd
+        cp darwin.jam darwin.jam.bak
+        head -n138 darwin.jam > darwin.jam.tmp
+        tail -n +144 darwin.jam >> darwin.jam.tmp
+        mv darwin.jam.tmp darwin.jam
+
+    - name: Build boost (MacOS)
+      if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      run: |
+        cd boost_${{ matrix.boost-ver }}
+        test -f bootstrap.sh && ./bootstrap.sh --prefix=./installdir || cat bootstrap.log
+        ./b2 && ./b2 install
+        cd installdir/lib
+        pwd
+        ls
+        here=$(pwd)
+        set -x
+        install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_log.dylib
+        install_name_tool -change libboost_thread.dylib     ${here}/libboost_thread.dylib     libboost_log.dylib
+        install_name_tool -change libboost_date_time.dylib  ${here}/libboost_date_time.dylib  libboost_log.dylib
+        install_name_tool -change libboost_filesystem.dylib ${here}/libboost_filesystem.dylib libboost_log.dylib
+        install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_log.dylib
+        install_name_tool -change libboost_regex.dylib      ${here}/libboost_regex.dylib      libboost_log.dylib
+        install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_chrono.dylib
+        install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
+
+    - name: Install boost (Ubuntu, latest)
+      if: matrix.os == 'ubuntu-20.04' && matrix.boost == 'latest'
+      run: |
+        set -x
+        pwd
+        sudo apt-get install -y libboost-all-dev
+
+    - name: Get release download URL
+      uses: actions/download-artifact@v1
+      with:
+        name: artifacts
+        path: artifacts
+
+    - name: Set release upload URL and release version
+      shell: bash
+      run: |
+        release_upload_url="$(cat artifacts/release-upload-url)"
+        echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+        echo "release upload url: $RELEASE_UPLOAD_URL"
+        release_version="$(cat artifacts/release-version)"
+        echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+        echo "release version: $RELEASE_VERSION"
+
+    - name: Configure scribbu (MacOS)
+      if: matrix.os == 'macos-10.15'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        ls
+        ./bootstrap
+        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+
+    - name: Configure scribbu (Ubuntu)
+      if: matrix.os == 'ubuntu-20.04'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        ls
+        ./bootstrap
+        ./configure
+
+    - name: Make scribbu (MacOS)
+      if: matrix.os == 'macos-10.15'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make
+    - name: Make scribbu (Ubuntu)
+      if: matrix.os == 'ubuntu-20.04'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        make
+
+    - name: Patch boost dependencies (MacOS)
+      if: matrix.os == 'macos-10.15'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        echo "===================================="
+        otool -L src/.libs/scribbu
+        echo "===================================="
+        otool -l src/.libs/scribbu
+        echo "===================================="
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       src/.libs/scribbu
+        install_name_tool -change libboost_filesystem.dylib          ${there}/libboost_filesystem.dylib      src/.libs/scribbu
+        install_name_tool -change libboost_log.dylib                 ${there}/libboost_log.dylib             src/.libs/scribbu
+        install_name_tool -change libboost_program_options.dylib     ${there}/libboost_program_options.dylib src/.libs/scribbu
+        install_name_tool -change libboost_regex.dylib               ${there}/libboost_regex.dylib           src/.libs/scribbu
+        install_name_tool -change libboost_system.dylib              ${there}/libboost_system.dylib          src/.libs/scribbu
+        echo "===================================="
+        otool -L src/.libs/scribbu
+        echo "===================================="
+        otool -l src/.libs/scribbu
+        echo "===================================="
+        cd test && make unit
+        echo "===================================="
+        otool -L .libs/unit
+        echo "===================================="
+        otool -l .libs/unit
+        install_name_tool -change libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib           .libs/unit
+        install_name_tool -change libboost_filesystem.dylib          ${there}/libboost_filesystem.dylib          .libs/unit
+        install_name_tool -change libboost_log.dylib                 ${there}/libboost_log.dylib                 .libs/unit
+        install_name_tool -change libboost_program_options.dylib     ${there}/libboost_program_options.dylib     .libs/unit
+        install_name_tool -change libboost_regex.dylib               ${there}/libboost_regex.dylib               .libs/unit
+        install_name_tool -change libboost_system.dylib              ${there}/libboost_system.dylib              .libs/unit
+        install_name_tool -change libboost_unit_test_framework.dylib ${there}/libboost_unit_test_framework.dylib .libs/unit
+        echo "===================================="
+        otool -L .libs/unit
+        echo "===================================="
+        otool -l .libs/unit
+
+    - name: Test scribbu
+      shell: bash
+      run: |
+        set -x
+        pwd
+        make check || cat test/test-suite.log
+
+    - name: Test the Autotools distribution (Ubuntu)
+      # I only make the Autotools distro on Ubuntu, so just test there
+      # (besides, I can't get 'distcheck' to work on MacOS anyway)
+      if: matrix.os == 'ubuntu-20.04'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        make distcheck
+
+    # TODO(sp1ff): strip the binaries?
+
+    # TODO(sp1ff): assemble pre-built binaries?
+
+    - name: Upload bzip2 tarball
+      if: matrix.os == 'ubuntu-20.04'
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+        asset_path: ${{ env.DISTRO_BZ2 }}
+        asset_name: ${{ env.DISTRO_BZ2 }}
+        asset_content_type: application/octet-stream
+
+    - name: Upload gzip tarball
+      if: matrix.os == 'ubuntu-20.04'
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+        asset_path: ${{ env.DISTRO_GZ }}
+        asset_name: ${{ env.DISTRO_GZ }}
+        asset_content_type: application/octet-stream
+
+    - name: Upload xzip tarball
+      if: matrix.os == 'ubuntu-20.04'
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+        asset_path: ${{ env.DISTRO_XZ }}
+        asset_name: ${{ env.DISTRO_XZ }}
+        asset_content_type: application/octet-stream
+
+    # NB. The Debian & Arch packages will be created
+    # downstream from this process & uploaded manually.
+
+    

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# This script will check the build on my Arch VM.
+
+set -ex
+
+if test -z "$1"; then
+    cat >&2 <<EOF
+Usage: admin/check-build-on-arch SUB-DIRECTORY
+
+Where SUB-DIRECTORY is the sub-directory on my Arch VM.
+EOF
+    exit 2
+fi
+
+arch_target="$1"
+
+rsync -avz . archpkg:code/scribbu/$arch_target --exclude='*.bz2' \
+      --exclude='*.gz' --exclude='*.xz' --exclude='*~'            \
+      --exclude='*.x' --exclude='*.o' --exclude='*.lo'            \
+      --exclude='*.Plo' --exclude='.git/*' --exclude='.github/*'  \
+      --exclude='autom4te.cache/*' --exclude='sp1ff/*'            \
+      --exclude='.vagrant/*' --exclude='*/.deps/*'                \
+      --exclude='*/.libs/*' --exclude='doc/doxygen-doc/*'         \
+      --exclude='test/*.log' --exclude='test/*.trs'               \
+      --exclude='test/test*tmp/*'
+
+ssh archpkg "cd code/scribbu/$arch_target && admin/arch-build"

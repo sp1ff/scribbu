@@ -11,7 +11,7 @@
              (ice-9 optargs)
              (ice-9 rdelim)
              (ice-9 regex)
-             (ice-9 textual-ports)
+             ;; (ice-9 textual-ports)
              (srfi srfi-19))
 
 
@@ -613,7 +613,7 @@ and updates them with VER, AUTHOR, and the current year."
                       (format #f "~a ~a <~a>" year author email))))
          (re3 (make-regexp (format #f "scribbu ~a" VERSION-REGEXP)))
          (sb3 (list 'pre (format #f "scribbu ~a" version) 'post))
-         (filename (format #f "~a/README.md" root-dir))
+         (filename (format #f "~a/README.org" root-dir))
          (result (process-file-via-regexes
                   filename
                   (list (list re1 sb1) (list re2 sb2) (list re3 sb3))))

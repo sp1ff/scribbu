@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# This script will check the build in a bare-bones Debian Docker container.
+#
+# It is assumed to be run from the top project directory.
+
+set -ex
+admin=$(cd admin && pwd)
+docker build -t scribbu-debian:latest -f admin/Dockerfile-debian .
+docker_args="-it"
+docker_args="$docker_args --mount type=bind,source=$(pwd),target=/scribbu"
+docker_args="$docker_args -v ${admin}/check-build-on-deb-cnt:/check-build"
+docker_args="$docker_args --privileged"
+
+cmd="docker run $docker_args scribbu-debian:latest /check-build"
+exec $cmd
+
