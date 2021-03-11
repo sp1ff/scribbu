@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([scribbu], [0.6.15], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
+AC_INIT([scribbu], [0.6.16], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
 AC_CONFIG_MACRO_DIR([macros])
 AC_CONFIG_SRCDIR([src/scribbu.cc])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -52,6 +52,8 @@ AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h])
+AC_CHECK_HEADERS([libintl.h])
+AC_CHECK_HEADERS([stddef.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -64,6 +66,7 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
+AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset strdup strerror])
 
 GUILE_PKG([3.0 2.2 2.0])

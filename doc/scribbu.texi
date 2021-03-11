@@ -2,10 +2,11 @@
 @c %**start of header
 @setfilename scribbu.info
 @settitle scribbu
+@include version.texi
 @c %**end of header
 @copying
 
-Copyright @copyright{} 2018-2020 Michael Herstine <sp1ff@@pobox.com>
+Copyright @copyright{} 2018-2021 Michael Herstine <sp1ff@@pobox.com>
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -43,7 +44,7 @@ This document was typeset with
 
 The extensible tool for tagging your music collection.
 
-This manual corresponds to scribbu version 0.6.1.
+This manual corresponds to scribbu version @value{VERSION}.
 
 @insertcopying
 

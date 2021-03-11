@@ -627,10 +627,6 @@ This method looks for lines of the form:
 
     Copyright @copyright{} xxx-yyy XXXX
 
-and
-
-    This manual corresponds to scribbu version XXX.
-
 and updates them with VER, AUTHOR, and the current year."
 
     (let* ((year (date-year (current-date)))
@@ -651,8 +647,8 @@ and updates them with VER, AUTHOR, and the current year."
                     (list (list re1 sb1) (list re2 sb2))))
            (num-replacements (list-ref result 0))
            (outlines (list-ref result 1)))
-      (unless (eq? 2 num-replacements)
-        (error (format #f "expected 2 Texinfo replacements, got ~d" num-replacements)))
+      (unless (eq? 1 num-replacements)
+        (error (format #f "expected 1 Texinfo replacements, got ~d" num-replacements)))
       (replace-file-contents filename outlines make-backups dry-run)))
 
 (define (update-source-code version author email root-dir make-backups dry-run debug)

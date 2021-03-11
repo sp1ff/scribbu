@@ -1,7 +1,7 @@
 /**
  * \file unit.cc
  *
- * Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2021 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE( test_file_processing )
   // d41d8cd98f00b204e9800998ecf8427e
   const unsigned char TEST_DIGEST[DIGEST_SIZE] = {
     0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04,
-    0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e, 
+    0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e,
   };
 
   unique_ptr<istream> pis;

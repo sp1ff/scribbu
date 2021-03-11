@@ -1,7 +1,7 @@
 /**
  * \file scheme.cc
  *
- * Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2021 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -48,8 +48,8 @@ using scribbu::scheme_serde_dispatcher;
 //                              utility code                                 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#define AUTHOR            "Michael Herstine"
-#define COPYRIGHT       "2017-2020"
+#define AUTHOR              "Michael Herstine"
+#define COPYRIGHT       "2017-2021"
 #define READ_ID3V1_TAG  "read-id3v1-tag"
 #define READ_TAGSET     "read-tagset"
 #define WITH_TRACK_IN   "with-track-in"

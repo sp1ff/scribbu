@@ -1,7 +1,7 @@
 ;;;;
 ;;;; test.scm
 ;;;;
-;;;; Copyright (C) 2015-2020 Michael Herstine <sp1ff@pobox.com>
+;;;; Copyright (C) 2015-2021 Michael Herstine <sp1ff@pobox.com>
 ;;;;
 ;;;; This file is part of scribbu.
 ;;;;

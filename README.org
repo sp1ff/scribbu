@@ -73,7 +73,7 @@ scribbu can be invoked in a few ways:
 
     #+BEGIN_EXAMPLE
 	    scribbu
-		scribbu 0.6.15
+		scribbu 0.6.16
 		Copyright (C) 2017-2021 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
@@ -263,7 +263,7 @@ You can find the project at https://github.com/sp1ff/scribbu. You can clone it b
 * Installing
 
 scribbu is distributed as an Autotools source distribution, so installation is accomplished via the usual "configure, make, make install" incantations. General instructions may be found in [[INSTALL]]. MacOS support is
-experimental. 
+experimental.
 
 Begining with 0.6, binary packages for Debian & Arch are also available.
 
