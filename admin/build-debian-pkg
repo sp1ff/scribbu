@@ -14,5 +14,7 @@ docker_args="$docker_args --mount type=bind,source=$(pwd),target=/scribbu-deb"
 docker_args="$docker_args -v ${admin}/build-debian-pkg-cnt:/build-pkg-cnt:ro"
 docker_args="$docker_args --privileged"
 
+# Un-comment to just drop into the container
+# cmd="docker run $docker_args scribbu-debian:latest"
 cmd="docker run $docker_args scribbu-debian:latest /build-pkg-cnt"
 exec $cmd

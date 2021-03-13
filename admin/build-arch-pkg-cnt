@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# This script is meant to be run inside a docker container (presumably
+# scribbu-arch:latest). It assumes that it can find the PKGBUILD file in
+# /scribbu-arch.
+set -ex
+cd /scribbu-arch
+makepkg -g >> PKGBUILD
+makepkg
