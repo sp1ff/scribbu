@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_copy )
 
 
   vector<unique_ptr<id3v2_tag>> new_tagset;
-  fs::ifstream ifs(test, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(test.native(), fs::ifstream::binary);
   read_all_id3v2(ifs, back_inserter(new_tagset));
 
   BOOST_REQUIRE( 1 == new_tagset.size() );
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_emplace )
   size_t cb_after = tagset_size(test);
   BOOST_CHECK(cb_after == cb_curr);
 
-  fs::ifstream ifs(test, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(test.native(), ifstream::binary);
   vector<unique_ptr<id3v2_tag>> new_tagset;
   read_all_id3v2(ifs, back_inserter(new_tagset));
 
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE( test_maybe_emplace_tagset )
                          emplace_strategy::reduce_padding_evenly,
                          padding_strategy::adjust_padding_evenly));
 
-  fs::ifstream ifs(test, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(test.native(), ifstream::binary);
   vector<unique_ptr<id3v2_tag>> new_tagset;
   read_all_id3v2(ifs, back_inserter(new_tagset));
 

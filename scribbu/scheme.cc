@@ -274,93 +274,104 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
-    dynwind_context ctx;
+    try {
 
-    char *c_pth = ctx.free_locale_string(scm_pth);
-    fs::ifstream ifs(c_pth, fs::ifstream::binary);
+      dynwind_context ctx;
 
-    auto pv1 = process_id3v1(ifs);
-    if (!pv1) {
-      return SCM_ELISP_NIL;
-    }
+      char *c_pth = ctx.free_locale_string(scm_pth);
+      ifstream ifs = open_ifstream(c_pth, fs::ifstream::binary);
 
-    // If we're here, there was actually an ID3v1 tag at the end of `ifs'. We
-    // now have to build up a GOOPS instance from it.
-    SCM cls = scm_c_public_ref("scribbu", "<id3v1-tag>");
-    SCM args = scm_list_1(cls);
-    SCM x = scm_make(args);
+      auto pv1 = process_id3v1(ifs);
+      if (!pv1) {
+        return SCM_ELISP_NIL;
+      }
 
-    string title = pv1->title<string>(encoding::ISO_8859_1, encoding::UTF_8,
-                                      on_no_encoding::transliterate);
-    SCM scm_title = scm_from_stringn(title.c_str(), title.size(), "UTF-8",
-                                     SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      // If we're here, there was actually an ID3v1 tag at the end of `ifs'. We
+      // now have to build up a GOOPS instance from it.
+      SCM cls = scm_c_public_ref("scribbu", "<id3v1-tag>");
+      SCM args = scm_list_1(cls);
+      SCM x = scm_make(args);
 
-    string artist = pv1->artist<string>(encoding::ISO_8859_1, encoding::UTF_8,
+      string title = pv1->title<string>(encoding::ISO_8859_1, encoding::UTF_8,
                                         on_no_encoding::transliterate);
-    SCM scm_artist = scm_from_stringn(artist.c_str(), artist.size(), "UTF-8",
-                                      SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-
-    string album = pv1->album<string>(encoding::ISO_8859_1, encoding::UTF_8,
-                                      on_no_encoding::transliterate);
-    SCM scm_album = scm_from_stringn(album.c_str(), album.size(), "UTF-8",
-                                     SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-
-    string year = pv1->year<string>();
-    SCM scm_year = scm_from_stringn(year.c_str(), year.size(), "UTF-8",
-                                    SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-
-    string comment = pv1->comment<string>(encoding::ISO_8859_1, encoding::UTF_8,
-                                          on_no_encoding::transliterate);
-    SCM scm_comment = scm_from_stringn(comment.c_str(), comment.size(), "UTF-8",
+      SCM scm_title = scm_from_stringn(title.c_str(), title.size(), "UTF-8",
                                        SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
 
-    unsigned char genre = pv1->genre();
-    SCM scm_genre = scm_from_uchar(genre);
+      string artist = pv1->artist<string>(encoding::ISO_8859_1, encoding::UTF_8,
+                                          on_no_encoding::transliterate);
+      SCM scm_artist = scm_from_stringn(artist.c_str(), artist.size(), "UTF-8",
+                                        SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
 
-    SCM_SET_SLOT(x, 0, scm_title);
-    SCM_SET_SLOT(x, 1, scm_artist);
-    SCM_SET_SLOT(x, 2, scm_album);
-    SCM_SET_SLOT(x, 3, scm_year);
-    SCM_SET_SLOT(x, 4, scm_comment);
-    SCM_SET_SLOT(x, 5, scm_genre);
+      string album = pv1->album<string>(encoding::ISO_8859_1, encoding::UTF_8,
+                                        on_no_encoding::transliterate);
+      SCM scm_album = scm_from_stringn(album.c_str(), album.size(), "UTF-8",
+                                       SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
 
-    bool v11;
-    unsigned char track;
-    tie(v11, track) = pv1->track_number();
-    if (v11) {
-      SCM_SET_SLOT(x, 6, scm_from_uchar(track));
-    }
+      string year = pv1->year<string>();
+      SCM scm_year = scm_from_stringn(year.c_str(), year.size(), "UTF-8",
+                                      SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
 
-    bool ext;
-    unsigned char speed;
-    tie(ext, speed) = pv1->speed();
+      string comment = pv1->comment<string>(encoding::ISO_8859_1, encoding::UTF_8,
+                                            on_no_encoding::transliterate);
+      SCM scm_comment = scm_from_stringn(comment.c_str(), comment.size(), "UTF-8",
+                                         SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
 
-    if (ext) {
+      unsigned char genre = pv1->genre();
+      SCM scm_genre = scm_from_uchar(genre);
 
-      string enh_genre = pv1->enh_genre<string>();
-      SCM scm_enh_genre = scm_from_stringn(enh_genre.c_str(), enh_genre.size(),
-                                           "UTF-8",
-                                           SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-      SCM_SET_SLOT(x, 6, scm_enh_genre);
-      SCM_SET_SLOT(x, 7, scm_from_uchar(speed));
+      SCM_SET_SLOT(x, 0, scm_title);
+      SCM_SET_SLOT(x, 1, scm_artist);
+      SCM_SET_SLOT(x, 2, scm_album);
+      SCM_SET_SLOT(x, 3, scm_year);
+      SCM_SET_SLOT(x, 4, scm_comment);
+      SCM_SET_SLOT(x, 5, scm_genre);
 
-      string start_time = pv1->start_time<string>();
-      SCM scm_start_time = scm_from_stringn(start_time.c_str(),
-                                            start_time.size(),
+      bool v11;
+      unsigned char track;
+      tie(v11, track) = pv1->track_number();
+      if (v11) {
+        SCM_SET_SLOT(x, 6, scm_from_uchar(track));
+      }
+
+      bool ext;
+      unsigned char speed;
+      tie(ext, speed) = pv1->speed();
+
+      if (ext) {
+
+        string enh_genre = pv1->enh_genre<string>();
+        SCM scm_enh_genre = scm_from_stringn(enh_genre.c_str(), enh_genre.size(),
+                                             "UTF-8",
+                                             SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+        SCM_SET_SLOT(x, 6, scm_enh_genre);
+        SCM_SET_SLOT(x, 7, scm_from_uchar(speed));
+
+        string start_time = pv1->start_time<string>();
+        SCM scm_start_time = scm_from_stringn(start_time.c_str(),
+                                              start_time.size(),
+                                              "UTF-8",
+                                              SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+        SCM_SET_SLOT(x, 8, scm_start_time);
+
+        string end_time = pv1->end_time<string>();
+        SCM scm_end_time = scm_from_stringn(end_time.c_str(),
+                                            end_time.size(),
                                             "UTF-8",
                                             SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-      SCM_SET_SLOT(x, 8, scm_start_time);
+        SCM_SET_SLOT(x, 9, scm_end_time);
 
-      string end_time = pv1->end_time<string>();
-      SCM scm_end_time = scm_from_stringn(end_time.c_str(),
-                                          end_time.size(),
-                                          "UTF-8",
-                                          SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-      SCM_SET_SLOT(x, 9, scm_end_time);
+      }
+
+      return x;
+
+    }
+    catch (const exception &ex) {
+
+      scm_error(scm_from_utf8_symbol("scribbu"), READ_ID3V1_TAG, "~A",
+                scm_list_1(scm_from_utf8_string(ex.what())), SCM_ELISP_NIL);
 
     }
 
-    return x;
   }
 
   /**
@@ -382,33 +393,42 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
-    dynwind_context ctx;
-
-    fs::path pth(ctx.free_locale_string(scm_pth));
-    fs::ifstream ifs(pth, fs::ifstream::binary);
-
-    // I'm going to do this in three steps:
-
-    // 1. read each tag into an id3v2_tag
-    vector<unique_ptr<id3v2_tag>> v2;
     try {
-      read_all_id3v2(ifs, back_inserter(v2));
-    } catch (const exception &ex) {
-      scm_error(sym_for_utf8("invalid-tag"), "read-tagset", "found bad tag: ~s",
-                scm_from_utf8_string(ex.what()), SCM_BOOL_F);
+
+      dynwind_context ctx;
+
+      ifstream ifs = open_ifstream(ctx.free_locale_string(scm_pth), ifstream::binary);
+
+      // I'm going to do this in three steps:
+
+      // 1. read each tag into an id3v2_tag
+      vector<unique_ptr<id3v2_tag>> v2;
+      try {
+        read_all_id3v2(ifs, back_inserter(v2));
+      } catch (const exception &ex) {
+        scm_error(sym_for_utf8("invalid-tag"), "read-tagset", "found bad tag: ~s",
+                  scm_from_utf8_string(ex.what()), SCM_BOOL_F);
+      }
+
+      // 2. transform that collection of C++ id3v2_tag instances into a collection
+      // of Scheme <id3v2-tag> instances
+      vector<SCM> tags;
+      transform(v2.begin(), v2.end(), back_inserter(tags),
+                [](const unique_ptr<id3v2_tag>&p) {
+                  return scm_from_id3v2_tag(p.get());
+                });
+
+      // 3. finally, take that collection of SCMs and build them into a Scheme
+      // list
+      return scm_list_for_range(tags.begin(), tags.end());
+
     }
+    catch (const exception &ex) {
 
-    // 2. transform that collection of C++ id3v2_tag instances into a collection
-    // of Scheme <id3v2-tag> instances
-    vector<SCM> tags;
-    transform(v2.begin(), v2.end(), back_inserter(tags),
-              [](const unique_ptr<id3v2_tag>&p) {
-                return scm_from_id3v2_tag(p.get());
-              });
+      scm_error(scm_from_utf8_symbol("scribbu"), READ_TAGSET, "~A",
+                scm_list_1(scm_from_utf8_string(ex.what())), SCM_ELISP_NIL);
 
-    // 3. finally, take that collection of SCMs and build them into a Scheme
-    // list
-    return scm_list_for_range(tags.begin(), tags.end());
+    }
 
   } // End read_tagset.
 
@@ -440,6 +460,7 @@ extern "C" {
     scm_close_port(oport);
 
     return SCM_BOOL_F;
+
   }
 
   /**
@@ -471,29 +492,39 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
-    dynwind_context ctx;
+    try {
 
-    std::size_t len = 0;
-    char * data = scm_to_stringn(dir, &len, "UTF-8",
-                                 SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
-    ctx.free(data);
+      dynwind_context ctx;
 
-    std::string s(data, data + len);
-    for (fs::recursive_directory_iterator p0(s), p1; p0 != p1; ++p0) {
-      if (!fs::is_directory(*p0)) {
+      std::size_t len = 0;
+      char * data = scm_to_stringn(dir, &len, "UTF-8",
+                                   SCM_FAILED_CONVERSION_ESCAPE_SEQUENCE);
+      ctx.free(data);
 
-        SCM scm_pth = scm_from_utf8_string(p0->path().string().c_str());
-        with_track_in_ctx ctx{ fcn, scm_pth, SCM_ELISP_NIL, SCM_ELISP_NIL };
+      std::string s(data, data + len);
+      for (fs::recursive_directory_iterator p0(s), p1; p0 != p1; ++p0) {
+        if (!fs::is_directory(*p0)) {
 
-        scm_c_catch(SCM_BOOL_T, with_track_in_thunk, &ctx,
-                    with_track_in_catch_hand, &ctx, 0, 0);
+          SCM scm_pth = scm_from_utf8_string(p0->path().string().c_str());
+          with_track_in_ctx ctx{ fcn, scm_pth, SCM_ELISP_NIL, SCM_ELISP_NIL };
 
-        scm_call_3(fcn, ctx.tagset_, scm_pth, ctx.v1_);
+          scm_c_catch(SCM_BOOL_T, with_track_in_thunk, &ctx,
+                      with_track_in_catch_hand, &ctx, 0, 0);
 
+          scm_call_3(fcn, ctx.tagset_, scm_pth, ctx.v1_);
+
+        }
       }
+
+      return SCM_EOF_VAL;
+    }
+    catch (const exception &ex) {
+
+      scm_error(scm_from_utf8_symbol("scribbu"), WITH_TRACK_IN, "~A",
+                scm_list_1(scm_from_utf8_string(ex.what())), SCM_ELISP_NIL);
+
     }
 
-    return SCM_EOF_VAL;
   }
 
   /**
@@ -516,115 +547,124 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
-    dynwind_context ctx;
+    try {
+      dynwind_context ctx;
 
-    SCM scm_title = SCM_SLOT(scm_tag, 0);
-    char *c_title = ctx.free_locale_string(scm_title);
+      SCM scm_title = SCM_SLOT(scm_tag, 0);
+      char *c_title = ctx.free_locale_string(scm_title);
 
-    SCM scm_artist = SCM_SLOT(scm_tag, 1);
-    char *c_artist = ctx.free_locale_string(scm_artist);
+      SCM scm_artist = SCM_SLOT(scm_tag, 1);
+      char *c_artist = ctx.free_locale_string(scm_artist);
 
-    SCM scm_album = SCM_SLOT(scm_tag, 2);
-    char *c_album = ctx.free_locale_string(scm_album);
+      SCM scm_album = SCM_SLOT(scm_tag, 2);
+      char *c_album = ctx.free_locale_string(scm_album);
 
-    // This slot can be '() to indicuate "not set"
-    char *c_year = 0;
-    SCM scm_year = SCM_SLOT(scm_tag, 3);
-    if (!scm_null_p(scm_year)) {
-      c_year = ctx.free_locale_string(scm_year);
-    }
-
-    SCM scm_comment = SCM_SLOT(scm_tag, 4);
-    char *c_comment = ctx.free_locale_string(scm_comment);
-
-    SCM scm_genre = SCM_SLOT(scm_tag, 5);
-    unsigned char genre = scm_to_uchar(scm_genre);
-
-    SCM scm_track_no = SCM_SLOT(scm_tag, 6);
-    unsigned char track_no = scm_to_uchar(scm_track_no);
-
-    SCM scm_enh_genre = SCM_SLOT(scm_tag, 7);
-    char *c_enh_genre = ctx.free_locale_string(scm_enh_genre);
-
-    unsigned char speed = 0;
-    SCM scm_speed = SCM_SLOT(scm_tag, 8);
-    if (!scm_null_p(scm_speed)) {
-      speed = scm_to_uchar(scm_speed);
-    }
-
-    SCM scm_start_time = SCM_SLOT(scm_tag, 9);
-    char *c_start_time = ctx.free_locale_string(scm_start_time);
-
-    SCM scm_end_time = SCM_SLOT(scm_tag, 10);
-    char *c_end_time = ctx.free_locale_string(scm_end_time);
-
-    bool v11 = track_no != 0;
-    bool enh = (strlen(c_enh_genre)  != 0) ||
-               (speed != 0)                ||
-               (strlen(c_start_time) != 0) ||
-               (strlen(c_end_time)   != 0);
-
-    id3v1_tag tag(v11, enh);
-
-    if (c_title && 0 != strlen(c_title)) {
-      tag.set_title(c_title, encoding::UTF_8, encoding::UTF_8);
-    }
-    if (c_artist && 0 != strlen(c_artist)) {
-      tag.set_artist(c_artist, encoding::UTF_8, encoding::UTF_8);
-    }
-    if (c_album && 0 != strlen(c_album)) {
-      tag.set_album(c_album, encoding::UTF_8, encoding::UTF_8);
-    }
-
-    if (c_year && 0 != strlen(c_year)) { // treat "" as "not set"
-      if (4 != strlen(c_year)) {
-        // Will *not* return or file dtors!
-        scm_misc_error(WRITE_ID3V1_TAG, "incorrect year ~s", scm_year);
+      // This slot can be '() to indicuate "not set"
+      char *c_year = 0;
+      SCM scm_year = SCM_SLOT(scm_tag, 3);
+      if (!scm_null_p(scm_year)) {
+        c_year = ctx.free_locale_string(scm_year);
       }
-      tag.set_year(c_year);
-    }
 
-    if (c_comment && 0 != strlen(c_comment)) {
-      tag.set_comment(c_comment, encoding::UTF_8, encoding::UTF_8);
-    }
+      SCM scm_comment = SCM_SLOT(scm_tag, 4);
+      char *c_comment = ctx.free_locale_string(scm_comment);
 
-    tag.set_genre(genre);
+      SCM scm_genre = SCM_SLOT(scm_tag, 5);
+      unsigned char genre = scm_to_uchar(scm_genre);
 
-    if (v11) {
-      tag.set_track_number(track_no);
-    }
+      SCM scm_track_no = SCM_SLOT(scm_tag, 6);
+      unsigned char track_no = scm_to_uchar(scm_track_no);
 
-    if (enh) {
-      tag.set_enh_genre(c_enh_genre, encoding::UTF_8, encoding::UTF_8);
-      tag.set_speed(speed);
-      if (c_start_time) {
-        size_t n = strlen(c_start_time);
-        if (n != 0) {
-          if (6 != strlen(c_start_time)) {
-            // Will *not* return or file dtors!
-            scm_misc_error(WRITE_ID3V1_TAG, "incorrect start time len ~s",
-                           scm_start_time);
+      SCM scm_enh_genre = SCM_SLOT(scm_tag, 7);
+      char *c_enh_genre = ctx.free_locale_string(scm_enh_genre);
+
+      unsigned char speed = 0;
+      SCM scm_speed = SCM_SLOT(scm_tag, 8);
+      if (!scm_null_p(scm_speed)) {
+        speed = scm_to_uchar(scm_speed);
+      }
+
+      SCM scm_start_time = SCM_SLOT(scm_tag, 9);
+      char *c_start_time = ctx.free_locale_string(scm_start_time);
+
+      SCM scm_end_time = SCM_SLOT(scm_tag, 10);
+      char *c_end_time = ctx.free_locale_string(scm_end_time);
+
+      bool v11 = track_no != 0;
+      bool enh = (strlen(c_enh_genre)  != 0) ||
+        (speed != 0)                ||
+        (strlen(c_start_time) != 0) ||
+        (strlen(c_end_time)   != 0);
+
+      id3v1_tag tag(v11, enh);
+
+      if (c_title && 0 != strlen(c_title)) {
+        tag.set_title(c_title, encoding::UTF_8, encoding::UTF_8);
+      }
+      if (c_artist && 0 != strlen(c_artist)) {
+        tag.set_artist(c_artist, encoding::UTF_8, encoding::UTF_8);
+      }
+      if (c_album && 0 != strlen(c_album)) {
+        tag.set_album(c_album, encoding::UTF_8, encoding::UTF_8);
+      }
+
+      if (c_year && 0 != strlen(c_year)) { // treat "" as "not set"
+        if (4 != strlen(c_year)) {
+          // Will *not* return or file dtors!
+          scm_misc_error(WRITE_ID3V1_TAG, "incorrect year ~s", scm_year);
+        }
+        tag.set_year(c_year);
+      }
+
+      if (c_comment && 0 != strlen(c_comment)) {
+        tag.set_comment(c_comment, encoding::UTF_8, encoding::UTF_8);
+      }
+
+      tag.set_genre(genre);
+
+      if (v11) {
+        tag.set_track_number(track_no);
+      }
+
+      if (enh) {
+        tag.set_enh_genre(c_enh_genre, encoding::UTF_8, encoding::UTF_8);
+        tag.set_speed(speed);
+        if (c_start_time) {
+          size_t n = strlen(c_start_time);
+          if (n != 0) {
+            if (6 != strlen(c_start_time)) {
+              // Will *not* return or file dtors!
+              scm_misc_error(WRITE_ID3V1_TAG, "incorrect start time len ~s",
+                             scm_start_time);
+            }
+            tag.set_start_time(c_start_time);
           }
-          tag.set_start_time(c_start_time);
+        }
+
+        if (c_end_time) {
+          size_t n = strlen(c_end_time);
+          if (n != 0) {
+            if (6 != strlen(c_end_time)) {
+              // Will *not* return or file dtors!
+              scm_misc_error(WRITE_ID3V1_TAG, "incorrect end time len ~s",
+                             scm_end_time);
+            }
+            tag.set_end_time(c_end_time);
+          }
         }
       }
 
-      if (c_end_time) {
-        size_t n = strlen(c_end_time);
-        if (n != 0) {
-          if (6 != strlen(c_end_time)) {
-            // Will *not* return or file dtors!
-            scm_misc_error(WRITE_ID3V1_TAG, "incorrect end time len ~s",
-                           scm_end_time);
-          }
-          tag.set_end_time(c_end_time);
-        }
-      }
+      replace_id3v1(fs::path(ctx.free_locale_string(scm_pth)), tag);
+
+      return SCM_EOL;
+    }
+    catch (const exception &ex) {
+
+      scm_error(scm_from_utf8_symbol("scribbu"), WRITE_ID3V1_TAG, "~A",
+                scm_list_1(scm_from_utf8_string(ex.what())), SCM_ELISP_NIL);
+
     }
 
-    replace_id3v1(fs::path(ctx.free_locale_string(scm_pth)), tag);
-
-    return SCM_EOL;
   }
 
   /**
@@ -655,48 +695,57 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
-    SCM scm_apply_unsync = SCM_BOOL_F, scm_copy = SCM_BOOL_F;
-    scm_c_bind_keyword_arguments(WRITE_TAGSET, scm_rest,
-                                 (scm_t_keyword_arguments_flags)0,
-                                 kw_apply_unsync, &scm_apply_unsync,
-                                 kw_copy, &scm_copy,
-                                 SCM_UNDEFINED);
+    try {
+      SCM scm_apply_unsync = SCM_BOOL_F, scm_copy = SCM_BOOL_F;
+      scm_c_bind_keyword_arguments(WRITE_TAGSET, scm_rest,
+                                   (scm_t_keyword_arguments_flags)0,
+                                   kw_apply_unsync, &scm_apply_unsync,
+                                   kw_copy, &scm_copy,
+                                   SCM_UNDEFINED);
 
-    apply_unsync au = apply_unsync::never;
-    if (SCM_BOOL_T == scm_apply_unsync) {
-      au = apply_unsync::always;
-    } else if (SCM_BOOL_T == scm_equal_p(sym_as_needed, scm_apply_unsync)) {
-      au = apply_unsync::as_needed;
-    } else if (SCM_BOOL_F != scm_apply_unsync) {
-      scm_error(scm_from_utf8_symbol("unexpected-apply-unsync"),
-                WRITE_TAGSET, "expected #t, #f or 'as-needed, got ~A",
-                scm_apply_unsync, SCM_BOOL_F);
+      apply_unsync au = apply_unsync::never;
+      if (SCM_BOOL_T == scm_apply_unsync) {
+        au = apply_unsync::always;
+      } else if (SCM_BOOL_T == scm_equal_p(sym_as_needed, scm_apply_unsync)) {
+        au = apply_unsync::as_needed;
+      } else if (SCM_BOOL_F != scm_apply_unsync) {
+        scm_error(scm_from_utf8_symbol("unexpected-apply-unsync"),
+                  WRITE_TAGSET, "expected #t, #f or 'as-needed, got ~A",
+                  scm_apply_unsync, SCM_BOOL_F);
+      }
+
+      bool fcopy = SCM_BOOL_T == scm_copy;
+
+      // 1. walk scm_tags, converting each to an id3v2_tag subclass
+      vector<unique_ptr<id3v2_tag>> tags;
+
+      size_t len = scm_to_size_t(scm_length(scm_tags));
+      for (size_t i = 0; i < len; ++i) {
+        SCM scm_tag = scm_list_ref(scm_tags, scm_from_size_t(i));
+        tags.emplace_back(scm_to_id3v2_tag(scm_tag));
+      }
+
+      // 2. write the tagset
+      dynwind_context ctx;
+
+      fs::path pth(ctx.free_locale_string(scm_path));
+      if (fcopy) {
+        replace_tagset_copy(pth, tags.begin(), tags.end(), au);
+      } else {
+        maybe_emplace_tagset(pth, tags.begin(), tags.end(), au,
+                             emplace_strategy::reduce_padding_evenly,
+                             padding_strategy::adjust_padding_evenly);
+      }
+
+      return SCM_EOL;
+    }
+    catch (const exception &ex) {
+
+      scm_error(scm_from_utf8_symbol("scribbu"), WRITE_TAGSET, "~A",
+                scm_list_1(scm_from_utf8_string(ex.what())), SCM_ELISP_NIL);
+
     }
 
-    bool fcopy = SCM_BOOL_T == scm_copy;
-
-    // 1. walk scm_tags, converting each to an id3v2_tag subclass
-    vector<unique_ptr<id3v2_tag>> tags;
-
-    size_t len = scm_to_size_t(scm_length(scm_tags));
-    for (size_t i = 0; i < len; ++i) {
-      SCM scm_tag = scm_list_ref(scm_tags, scm_from_size_t(i));
-      tags.emplace_back(scm_to_id3v2_tag(scm_tag));
-    }
-
-    // 2. write the tagset
-    dynwind_context ctx;
-
-    fs::path pth(ctx.free_locale_string(scm_path));
-    if (fcopy) {
-      replace_tagset_copy(pth, tags.begin(), tags.end(), au);
-    } else {
-      maybe_emplace_tagset(pth, tags.begin(), tags.end(), au,
-                           emplace_strategy::reduce_padding_evenly,
-                           padding_strategy::adjust_padding_evenly);
-    }
-
-    return SCM_EOL;
   }
 
   SCM

@@ -24,7 +24,7 @@ docker_args="$docker_args -v ${script}:/build-dev-pkg:ro"
 docker_args="$docker_args -v ${tarball}:/$(basename $1):ro"
 docker_args="$docker_args --privileged"
 # Un-comment to just drop into the container
-cmd="docker run ${docker_args} scribbu-debian:latest"
-# cmd="docker run ${docker_args} scribbu-debian:latest /build-dev-pkg $1"
+# cmd="docker run ${docker_args} scribbu-debian:latest"
+cmd="docker run ${docker_args} scribbu-debian:latest /build-dev-pkg $1"
 exec $cmd
 

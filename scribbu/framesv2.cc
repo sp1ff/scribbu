@@ -297,6 +297,23 @@ scribbu::operator<<(std::ostream &os, const id3v2_text_frames &x)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+//                          class unknown_text_frame                         //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/ const char *
+scribbu::unknown_text_frame::what() const noexcept(true)
+{
+  // lazily format
+  if ( ! pwhat_ ) {
+    std::stringstream stm;
+    stm << "Unknown ID3v2 text frame `" << frame_ << "': this is likely a bug; "
+      "please report this to sp1ff@pobox.com";
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 //                              class frame_id3                              //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -380,8 +397,7 @@ scribbu::frame_id3::frame_id3(id3v2_text_frames x) :
   case id3v2_text_frames::tyer:
     id_[1] = 'Y'; id_[2] = 'E'; break;
   default:
-    // TODO(sp1ff): throw something more specific
-    throw std::logic_error("");
+    throw unknown_text_frame(x);
   }
 }
 
@@ -552,9 +568,7 @@ scribbu::frame_id4::frame_id4(id3v2_text_frames x):
     id_[1] = 'Y'; id_[2] = 'E'; id_[3] = 'R';
     break;
   default:
-    // TODO(sp1ff): throw something more specific
-    throw std::logic_error("");
-
+    throw unknown_text_frame(x);
   }
 }
 

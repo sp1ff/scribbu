@@ -181,7 +181,7 @@ namespace {
                                        std::ios::failbit |
                                        std::ios::badbit;
 
-    fs::ifstream ifs(pth, ios_base::binary);
+    ifstream ifs = scribbu::open_ifstream(pth.native(), ios_base::binary);
     ifs.exceptions(EXC_MASK);
     scribbu::read_all_id3v2(ifs, pout);
     return scribbu::process_id3v1(ifs);

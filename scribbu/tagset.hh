@@ -110,7 +110,7 @@
  *
  \code
 
-  fs::ifstream ifs(pth, ios_base::binary);
+  std::ifstream ifs = open_ifsteam(pth, ios_base::binary);
   vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
   scribbu::read_all_id3v2(ifs, back_inserter(id3v2));
   scribbu::track_data td((istream&)ifs);
@@ -122,7 +122,7 @@
  *
  \code
 
-  fs::ifstream ifs(in, fs::ifstream::binary);
+  std::ifstream ifs = open_ifstream(in, fs::ifstream::binary);
   ifs.exceptions(EXC_MASK);
 
   scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
@@ -347,12 +347,10 @@ namespace scribbu {
                            forward_input_iterator p0,
                            forward_input_iterator p1,
                            apply_unsync unsync,
-                           // LATER(sp1ff): would like this to be defaulted to false
                            bool keep_backup = true)
   {
     using namespace std;
 
-    // TODO(sp1ff): this is re-used all over the place-- factor out?
     const ios::iostate EXC_MASK = ios::eofbit  |
                                   ios::failbit |
                                   ios::badbit;
@@ -383,7 +381,7 @@ namespace scribbu {
     });
 
     // At this point, the new tagset has been written to the temp file.
-    fs::ifstream ifs(pth, fs::ifstream::binary);
+    ifstream ifs = open_ifstream(pth.native(), fs::ifstream::binary);
     ifs.exceptions(EXC_MASK);
 
     scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
@@ -712,7 +710,6 @@ namespace scribbu {
                             apply_unsync unsync,
                             emplace_strategy estrat,
                             padding_strategy pstrat,
-                            // TODO(sp1ff): would like this to be false
                             bool keep_backup_on_copy = true)
   {
     namespace fs = boost::filesystem;

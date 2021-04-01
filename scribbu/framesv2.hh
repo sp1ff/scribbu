@@ -224,6 +224,20 @@ namespace scribbu {
   std::istream& operator>>(std::istream &is, id3v2_text_frames &x);
   std::ostream& operator<<(std::ostream &is, const id3v2_text_frames &x);
 
+  /// Thrown on failure to interpret an id3v2_text_frame
+  class unknown_text_frame: public error
+  {
+  public:
+    unknown_text_frame(id3v2_text_frames x): frame_(x)
+    { }
+    virtual const char * what() const noexcept(true);
+    id3v2_text_frames frame() const
+    { return frame_; }
+  private:
+    id3v2_text_frames frame_;
+    mutable std::shared_ptr<std::string> pwhat_;
+  };
+
   /// ID3v2.2 identifier-- a simple UDT representing a three-character,
   /// ASCII-encoded frame ID for use in hashed collections
   class frame_id3

@@ -51,7 +51,7 @@ Amazon.com Song ID: 20355825
 unknown genre 255
 )");
 
-  fs::ifstream ifs(TEST_DATA_V1);
+  ifstream ifs = open_ifstream(TEST_DATA_V1.native(), ifstream::binary);
   id3v1_tag tag(ifs);
 
   stringstream stm;

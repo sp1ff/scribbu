@@ -4,6 +4,8 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** improved error messages when failing to open files
+*** no longer terminates on error in functions exported to Guile
 *** fixed a bug in id3v1_tag::set_year
 
 Was calling `strlen` on a string that may not be null-terminated.

@@ -29,6 +29,8 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/log/common.hpp>
 
+#include <sys/stat.h>
+
 #include <openssl/evp.h>
 
 #include <scribbu/id3v1.hh>
@@ -59,8 +61,11 @@ scribbu::static_cleanup()
 //                              class file_info                              //
 ///////////////////////////////////////////////////////////////////////////////
 
-scribbu::file_info::file_info(fs::path pth) {
-
+scribbu::file_info::file_info(fs::path pth):
+    atime_(std::nullopt),
+    mtime_(std::nullopt),
+    ctime_(std::nullopt)
+{
   if (pth.is_relative()) {
     pth = fs::absolute(pth);
   }
@@ -69,16 +74,48 @@ scribbu::file_info::file_info(fs::path pth) {
   filename_ = pth.filename();
   size_     = fs::file_size(pth);
 
+  struct stat st;
+  if (0 == stat(pth.native().c_str(), &st)) {
+    atime_ = st.st_atime;
+    mtime_ = st.st_mtime;
+    ctime_ = st.st_ctime;
+  }
 }
 
-std::pair<std::unique_ptr<std::istream>, scribbu::file_info>
+std::pair<std::ifstream, scribbu::file_info>
 scribbu::open_file(fs::path pth)
 {
-  file_info fi(pth);
-  std::unique_ptr<std::istream> pis(new fs::ifstream(pth, std::ios_base::binary));
-  return std::make_pair(std::move(pis), fi);
+  return std::make_pair(open_ifstream(pth.native()), file_info(pth));
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                                open_ifstream                              //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/
+const char *
+scribbu::file_open_error::what() const noexcept(true)
+{
+  // lazily format
+  if ( ! pwhat_ ) {
+    std::stringstream stm;
+    stm << "Failed to open `" << name_ << "': " << strerror(errno_);
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
+std::ifstream
+scribbu::open_ifstream(const std::string &name,
+                       std::ios_base::openmode mode /*= std::ios_base::in*/)
+{
+  errno = 0;
+  std::ifstream ifs(name, mode | std::ios_base::in);
+  if (!ifs.is_open()) {
+    throw file_open_error(name, errno);
+  }
+  return ifs;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                            class openssl_error                            //

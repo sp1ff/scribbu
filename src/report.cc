@@ -387,9 +387,9 @@ void sequential_strategy::process_file(const fs::path &pth) {
 
   // Open 'pth' & collect externally-observable information about the
   // file while we're at it...
-  std::pair<std::unique_ptr<std::istream>, scribbu::file_info> pr = scribbu::open_file(pth);
-
-  std::istream &is = * pr.first.get();
+  std::ifstream is;
+  scribbu::file_info fi;
+  tie(is, fi) = scribbu::open_file(pth);
 
   // and use the open istream to read the...
   std::unique_ptr<scribbu::id3v2_tag> pid3v2 = scribbu::maybe_read_id3v2(is); // ID3v2 tags...
@@ -397,7 +397,7 @@ void sequential_strategy::process_file(const fs::path &pth) {
   std::unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(is);    // and the ID3v1 tag.
 
   // That's it-- pass whatever data we have to the reporter.
-  _pr->make_entry(pr.second, pid3v2, ti, pid3v1);
+  _pr->make_entry(fi, pid3v2, ti, pid3v1);
 
 }
 

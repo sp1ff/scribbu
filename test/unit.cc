@@ -240,34 +240,34 @@ BOOST_AUTO_TEST_CASE( test_file_processing )
     0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e,
   };
 
-  unique_ptr<istream> pis;
-  file_info            fi;
-  tie(pis, fi) = open_file(TEST_FILE);
-  BOOST_CHECK(pis && *pis);
+  ifstream  is;
+  file_info fi;
+  tie(is, fi) = open_file(TEST_FILE);
+  BOOST_CHECK(is);
   string s = fi.parent().string();
   BOOST_CHECK("/data" == s.substr(s.length() - 5));
   BOOST_CHECK(fs::path("lorca.mp3") == fi.filename());
   BOOST_CHECK(453089UL == fi.size());
 
   vector<unique_ptr<id3v2_tag>> v2tags;
-  read_all_id3v2(*pis, back_inserter(v2tags));
+  read_all_id3v2(is, back_inserter(v2tags));
   BOOST_CHECK(1 == v2tags.size());
 
   unique_ptr<id3v2_tag> &pid3v2 = v2tags.front();
-  BOOST_CHECK(pis && *pis);
-  BOOST_CHECK(452961UL == pis->tellg());
+  BOOST_CHECK(is);
+  BOOST_CHECK(452961UL == is.tellg());
   BOOST_REQUIRE(pid3v2);
   BOOST_CHECK(3 == pid3v2->version());
   BOOST_CHECK(0 == pid3v2->revision());
   BOOST_CHECK(452951 == pid3v2->size());
 
-  track_data tdata(*pis);
-  BOOST_CHECK(*pis);
+  track_data tdata(is);
+  BOOST_CHECK(is);
   unsigned char md5[DIGEST_SIZE];
   tdata.get_md5(md5);
   BOOST_CHECK(equal(md5, md5 + DIGEST_SIZE, TEST_DIGEST));
 
-  unique_ptr<scribbu::id3v1_tag> pid3v1 = process_id3v1(*pis);
+  unique_ptr<scribbu::id3v1_tag> pid3v1 = process_id3v1(is);
   BOOST_CHECK(pid3v1);
 
 }

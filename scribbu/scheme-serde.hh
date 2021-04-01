@@ -76,7 +76,7 @@ namespace scribbu {
    * type-safe manner
    *
    *
-   * In the context of this class, DEserialization meands converting from C++ to
+   * In the context of this class, DEserialization means converting from C++ to
    * Scheme. SERialization means going from Scheme to C++ (i.e. think from the
    * perspective of the Scheme programmer).
    *

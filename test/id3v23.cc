@@ -402,7 +402,8 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
 
   const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
 
-  fs::ifstream ifsv2_3(TEST_DATA_V2_3, fs::ifstream::binary);
+  std::ifstream ifsv2_3 = open_ifstream(TEST_DATA_V2_3.c_str(),
+                                        fs::ifstream::binary);
   id3v2_3_tag tag(ifsv2_3);
 
   BOOST_CHECK(3 == tag.version());
@@ -650,7 +651,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   const fs::path TEST_FILE_02(get_data_directory() / "u2-promenade.mp3");
   const fs::path TEST_FILE_03(get_data_directory() / "forbidden.mp3");
 
-  fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
+  ifstream ifs01 = open_ifstream(TEST_FILE_01.c_str(), ifstream::binary);
   id3v2_3_tag tag01(ifs01);
 
   BOOST_CHECK(!tag01.experimental());
@@ -720,7 +721,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   s = C.text<string>();
   BOOST_CHECK("Ripped by Winamp on Pimpernel" == s);
 
-  fs::ifstream ifs02(TEST_FILE_02, fs::ifstream::binary);
+  ifstream ifs02 = open_ifstream(TEST_FILE_02.c_str(), ifstream::binary);
   id3v2_3_tag tag02(ifs02); // <=========== fails here
 
   BOOST_CHECK("The Unforgettable Fire" == tag02.album());
@@ -740,7 +741,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
   s = p->text<string>();
   BOOST_CHECK("GNXDWEcxAV2SFNbvJmtoMGb6y9FVaeg4e93ptInPDkRMXxW70zFOqxxGmqajiaouQGcteGfJ2g0cvnc9cFxi0Vrhu2KUxVg9X9XssMbw59DiwQdsiFqiEUCTigmjAFKysy7tUMX/FKE=" == s);
 
-  fs::ifstream ifs03(TEST_FILE_03, fs::ifstream::binary);
+  ifstream ifs03 = open_ifstream(TEST_FILE_03.c_str(), ifstream::binary);
   id3v2_3_tag tag03(ifs03);
 
   BOOST_CHECK(!tag03.experimental());
@@ -888,7 +889,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   const fs::path TEST_FILE_01(get_data_directory() / "nin-only-time.mp3");
   const fs::path TEST_FILE_02(get_data_directory() / "waterfall.mp3");
 
-  fs::ifstream ifs01(TEST_FILE_01, fs::ifstream::binary);
+  ifstream ifs01 = open_ifstream(TEST_FILE_01.c_str(), ifstream::binary);
   id3v2_3_tag tag01(ifs01);
 
   BOOST_CHECK(!tag01.experimental());
@@ -961,7 +962,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   C[3].textb(back_inserter(txt));
   BOOST_CHECK(0 == txt.size());
 
-  fs::ifstream ifs02(TEST_FILE_02, fs::ifstream::binary);
+  ifstream ifs02 = open_ifstream(TEST_FILE_02.c_str(), ifstream::binary);
   id3v2_3_tag tag02(ifs02);
 
   BOOST_CHECK(!tag02.experimental());
@@ -1084,11 +1085,14 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
 
 BOOST_AUTO_TEST_CASE( test_rock_the_joint )
 {
+  using namespace std;
+  using namespace scribbu;
+
   using scribbu::id3v2_3_tag;
 
   const fs::path TEST_FILE(get_data_directory() / "rock-the-joint.id3v2.3.tag");
 
-  fs::ifstream ifs(TEST_FILE, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(TEST_FILE.c_str(), ifstream::binary);
   id3v2_3_tag tag(ifs);
 
   BOOST_CHECK("" == tag.artist());
@@ -1107,7 +1111,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_frames )
 
   const fs::path TEST_DATA(get_data_directory() / "cerulean.mp3");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(TEST_DATA.c_str(), ifstream::binary);
   id3v2_3_tag tag(ifs);
 
   vector<POPM> popms;
@@ -1220,7 +1224,7 @@ BOOST_AUTO_TEST_CASE( test_unsync )
   // Lifted from the taglib test suite
   static const fs::path DATA1(get_data_directory() / "unsynch.id3");
 
-  fs::ifstream ifs1(DATA1, fs::ifstream::binary);
+  ifstream ifs1 = open_ifstream(DATA1.c_str(), ifstream::binary);
   id3v2_3_tag tag1(ifs1);
 
   string text = tag1.title();
@@ -1335,7 +1339,7 @@ BOOST_AUTO_TEST_CASE( test_ext_header )
   // Bill LeFaive - Orlando.mp3
   static const fs::path DATA2(get_data_directory() / "orlando.mp3");
 
-  fs::ifstream ifs2(DATA2, fs::ifstream::binary);
+  ifstream ifs2 = open_ifstream(DATA2.c_str(), ifstream::binary);
   id3v2_3_tag tag2(ifs2);
 
   BOOST_CHECK(607 == tag2.size());
@@ -1472,7 +1476,7 @@ BOOST_AUTO_TEST_CASE( test_compressed )
   // Lifted from the taglib test suite
   static const fs::path DATA1(get_data_directory() / "compressed.mp3");
 
-  fs::ifstream ifs1(DATA1, fs::ifstream::binary);
+  ifstream ifs1 = open_ifstream(DATA1.c_str(), ifstream::binary);
   id3v2_3_tag tag1(ifs1);
 
   BOOST_CHECK(3 == tag1.version());
@@ -1557,7 +1561,7 @@ BOOST_AUTO_TEST_CASE( test_compressed_2 )
   // Lifted from the taglib test suite
   static const fs::path DATA(get_data_directory() / "230-compressed.tag");
 
-  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(DATA.c_str(), ifstream::binary);
   id3v2_3_tag tag(ifs);
 
   BOOST_CHECK(3 == tag.version());
@@ -1821,7 +1825,7 @@ BOOST_AUTO_TEST_CASE( test_unsync_2 )
   // Lifted from the taglib test suite
   static const fs::path DATA(get_data_directory() / "230-picture.tag");
 
-  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(DATA.c_str(), ifstream::binary);
   id3v2_3_tag tag(ifs);
 
   BOOST_CHECK(3 == tag.version());
@@ -1852,7 +1856,7 @@ BOOST_AUTO_TEST_CASE( test_ozzy )
   // Lifted from the taglib test suite
   static const fs::path DATA(get_data_directory() / "ozzy.tag");
 
-  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  ifstream ifs = open_ifstream(DATA.c_str(), ifstream::binary);
   id3v2_3_tag tag(ifs);
 
   BOOST_CHECK(3 == tag.version());

@@ -39,9 +39,21 @@ namespace scribbu {
    *
    * 1. application- or library-defined exception classes should subclass
    *    (directly or indirectly) std::exception so that their consumer can catch
-   *    everything with a "catch (const std::exception&)" instead of having to do
-   *    "catch (...)" (see \ref error_refs_1 "[1]" & \ref error_refs_3 "[3]" for
-   *    more discussion)
+   *    everything with a "catch (const std::exception&)" instead of having to
+   *    do "catch (...)" (see \ref error_refs_1 "[1]" & \ref error_refs_3 "[3]"
+   *    for more discussion)
+   *
+   *    \ref error_refs_3 "[3]" argues that you should root your exceptions at
+   *    std::runtime_error, because "It is the standard exception class that
+   *    supports custom messages (the others generally have hardcoded messages
+   *    that one preferably should not change, since they have value in being
+   *    recognizable)." and "because is the standard exception class that
+   *    represents recoverable failures (as opposed to unrecoverable logic
+   *    errors, which can’t be fixed at run time)." I find neither of these
+   *    arguments persuasive; std::logic_error also provides for a custom error
+   *    message, and also represents errors that are recoverable
+   *    (std::length_error, e.g.). Therefore I choose to root mine at
+   *    std::exception.
    *
    * 2. furthermore, they should inherit std::exception virtually to prevent
    *    ambiguity at the catch site in the event that the exception thrown
@@ -59,18 +71,7 @@ namespace scribbu {
    *
    * 5. pursuant to that, format the "what()" message lazily on demand; also,
    *    don't make consumers depend solely on the text: expose the pertinent
-   *    information programattically as well
-   *
-   * \ref error_refs_3 "[3]" argues that you should root your exceptions at
-   * std::runtime_error, because "It is the standard exception class that
-   * supports custom messages (the others generally have hardcoded messages that
-   * one preferably should not change, since they have value in being
-   * recognizable)." and "because is the standard exception class that
-   * represents recoverable failures (as opposed to unrecoverable logic errors,
-   * which can’t be fixed at run time)." I find neither of these arguments
-   * persuasive; std::logic_error also provides for a custom error message, and
-   * also represents errors that are recoverable (std::length_error,
-   * e.g.). Therefore I choose to root mine at std::exception.
+   *    information programatically as well
    *
    * 6. prefer to throw exceptions derived from scribbu::error; they use
    *    the boost::exception context mechanism

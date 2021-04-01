@@ -1,3 +1,19 @@
+2021-03-31  Michael Herstine  <sp1ff@pobox.com>
+
+	Hygiene commit.
+	This commit:
+
+	    1. improves the error messages when opening files
+	    2. updates open_file to reutnr the istream, not a pointer
+	       thereto
+	    3. adds catch handlers to all my functions exported to Scheme
+
+2021-03-12  Michael Herstine  <sp1ff@pobox.com>
+
+	Packaging commits
+
+	release workflow working
+
 2021-03-11  Michael Herstine  <sp1ff@pobox.com>
 
 	Update boilerplate throughout.

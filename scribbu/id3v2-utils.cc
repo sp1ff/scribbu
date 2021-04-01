@@ -124,10 +124,8 @@ std::string scribbu::template_processor::operator()(const boost::filesystem::pat
   using scribbu::tbt_support::process_and_concatenate;
 
   scribbu::file_info info;
-  std::unique_ptr<std::istream> pis;
-  std::tie(pis, info) = scribbu::open_file(pth);
-
-  std::istream &is = *pis.get();
+  std::ifstream is;
+  std::tie(is, info) = scribbu::open_file(pth);
 
   // and use the open istream to read the...
   std::unique_ptr<scribbu::id3v2_tag> pid3v2 = scribbu::maybe_read_id3v2(is); // ID3v2 tags...

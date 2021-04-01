@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 
   for (int i = optind; i < argc; ++i) {
 
-    fs::ifstream ifs(argv[i], ios_base::binary);
+    std::ifstream ifs = scribbu::open_ifstream(argv[i], ios_base::binary);
 
     vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
     scribbu::read_all_id3v2(ifs, back_inserter(id3v2));

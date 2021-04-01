@@ -107,28 +107,6 @@
  * at the pages for \ref scribbu_id3v1 "ID3v1" & \ref scribbu_id3v2 "ID3v2."
  *
  *
- * \section scribbu_discuss Discussion
- *
- * scribbu is currently a hobby project for working with ID3 tags. A few years
- * ago, I excised Windows from my life, and was therefore left without Winamp
- * for managing my mp3 library. There are packages out there,
- * <a href="http://taglib.org/">TagLib</a> e.g., but nothing that did everything
- * I wanted. Necessity being the mother of invention, I started on my own
- * solution.
- *
- * \subsection scribbu_discuss_gs Getting Started
- *
- * This project comes in two parts: a C++ library (\c libscribbu.{a,so},
- * generally installed into ${prefix}/${libdir}, or \c /usr/local/lib by
- * default) and a command built using the library (the \c scribbu executable,
- * generally installed into ${prefix}/${bindir}, or \c /usr/local/bin by
- * default). To get started using the \c scribbu program, start with the
- * Info manual: \c info \c scribbu. To get started coding against the
- * library, or hacking on the library itself, read on.
- *
- * \todo write the "Getting Started" section
- *
- *
  * \section scribbu_references References
  *
  * 1. \anchor ref_01 [1] Alexandrescu, Andrei, Modern C++ Design,
@@ -153,11 +131,13 @@
 
 #include <array>
 #include <iostream>
+#include <optional>
 
 #include <boost/filesystem.hpp>
 #include <boost/exception/exception.hpp>
 
 #include <openssl/err.h>
+#include <scribbu/errors.hh>
 
 /// All exported functions, types &c should be in namespace scribbu
 namespace scribbu {
@@ -179,13 +159,6 @@ namespace scribbu {
    * ctor will gather assorted data about the filesystem entity (as
    * opposed to ID3 tags, or information derived from the track data
    * itself).
-   *
-   * \todo add atime & mtime
-   *
-   * \todo add a checksum on the track data
-   *
-   * \todo add tagset locations (i.e. beginning & end of the ID3v tags in the
-   * file
    *
    *
    */
@@ -212,24 +185,75 @@ namespace scribbu {
     boost::filesystem::path parent_;
     boost::filesystem::path filename_;
     std::uintmax_t size_;
+    std::optional<time_t> atime_;
+    std::optional<time_t> mtime_;
+    std::optional<time_t> ctime_;
 
   };
 
+  /// Open a file & return a stream & a file_info instance describing that file
+  std::pair<std::ifstream, file_info>
+  open_file(boost::filesystem::path pth);
+
+  /// Error thrown on failure to open a file
+  class file_open_error: public error
+  {
+  public:
+    file_open_error(const std::string &name, int err): name_(name), errno_(err)
+    { }
+    virtual const char * what() const noexcept(true);
+    std::string name() const
+    { return name_; }
+    int err() const
+    { return errno_; }
+  private:
+    std::string name_;
+    int errno_;
+    mutable std::shared_ptr<std::string> pwhat_;
+  };
+
   /**
-   * \brief Open a file & return a stream & a file_info instance
-   * describing that file
+   * \brief Instantiate an ifstream & associate it with a file
+   *
+   *
+   * \param name [in] name of the file to open
+   *
+   * \param mode [in] stream open mode; analagous to the basic_ifstream ctor,
+   * defaults to ios_base::in, and will have that value or'd into the provided
+   * mask (if any) when opening the file
+   *
+   * \return a newly instantiated std::ifstream associated with the file \a name
+   *
+   * 
+   * If you call basic_fstream's ctor with a filename, and for any reason it
+   * can't open it, errno will be set, and the constructed basic_fstream
+   * instance will have failbit set in it's error mask. This is unfortunate,
+   * since it will cause subsequent operations to fail if you forget to check
+   * the mask or is_open immediately after. IOW you have a zombie object.
+   *
+   * If you invoke the default ctor, then call open, you have the same
+   * situation-- a basic_ifstream instance whose failbit is set, but no external
+   * indication that the open failed.
+   *
+   * This is a convenienice function to construct an ifstream in a sane way: if
+   * it returns successfully, the returned ifstream is ready for use. If it for
+   * some reason cannot open the given file, it will throw an exception with
+   * salient information. It makes use of the C++ 11 move constructor to simply
+   * move the constructed instance into the return value.
    *
    *
    */
 
-  std::pair<std::unique_ptr<std::istream>, file_info>
-  open_file(boost::filesystem::path pth);
+  std::ifstream
+  open_ifstream(const std::string &name,
+                std::ios_base::openmode mode = std::ios_base::in);
 
-  class openssl_error: public virtual boost::exception,
-                       public virtual std::runtime_error
+  class openssl_error: public scribbu::error
   {
   public:
-    openssl_error(): std::runtime_error(""), err_(ERR_get_error())
+    // openssl_error(): std::runtime_error(""), err_(ERR_get_error())
+    // { }
+    openssl_error(): err_(ERR_get_error())
     { }
     virtual const char * what() const noexcept;
   private:

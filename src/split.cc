@@ -93,7 +93,7 @@ For detailed help, say `scribbu split --help'. To see the manual, say
   {
     const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | std::ios::badbit;
 
-    fs::ifstream ifs(in, fs::ifstream::binary);
+    std::ifstream ifs = scribbu::open_ifstream(in.native(), fs::ifstream::binary);
     ifs.exceptions(EXC_MASK);
 
     scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);

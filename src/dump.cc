@@ -193,7 +193,7 @@ namespace {
 
     try {
 
-      fs::ifstream ifs(pth, ios_base::binary);
+      ifstream ifs = open_ifstream(pth.native(), ios_base::binary);
 
       time_t mtime = fs::last_write_time(pth);
 
