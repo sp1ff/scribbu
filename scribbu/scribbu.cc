@@ -34,6 +34,7 @@
 #include <openssl/evp.h>
 
 #include <scribbu/id3v1.hh>
+#include <scribbu/mp3.hh>
 #include <scribbu/scheme.hh>
 
 namespace fs  = boost::filesystem;
@@ -136,7 +137,7 @@ scribbu::openssl_error::what() const noexcept
 //                             class track_data                              //
 ///////////////////////////////////////////////////////////////////////////////
 
-scribbu::track_data::track_data(std::istream &is) : size_(0)
+scribbu::track_data::track_data(std::istream &is) : size_(0), duration_secs_(0.0)
 {
   const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
     std::ios_base::failbit|std::ios_base::badbit;
@@ -149,66 +150,14 @@ scribbu::track_data::track_data(std::istream &is) : size_(0)
   // and set it to a value convenient for our use.
   is.exceptions(EXC_MASK);
 
+  std::streampos here, tag;
+  std::tie(here, tag) = find_id3v1_tag(is);
+
+  is.exceptions(exc_mask);
+
   const std::size_t BUFSIZE = 4 * 1024 * 1024; // Four megabytes
 
   static unsigned char BUF[BUFSIZE];
-
-  // The ID3v1 tag is 128 bytes long & begins with the sequence "TAG",
-  // and the extended tag is 227 bytes & begins with the sequence
-  // "TAG+". So, if there's an ID3v1 tag present, the sequence "TAG"
-  // will be present at len - 128 or len - 355.
-  char buf[4];
-
-  scribbu::id3_v1_tag_type tag_type = id3_v1_tag_type::none;
-
-  std::streampos here = is.tellg(), tag;
-
-  try {
-    is.seekg(-355, std::ios_base::end);
-    is.read(buf, 4);
-    if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2] && '+' == buf[3]) {
-      // ID3v1 extended tag at `tag'; stream ptr at `tag' + 4.
-      tag = is.tellg() - (std::streampos) 4;
-      tag_type = id3_v1_tag_type::v_1_extended;
-    }
-  }
-  catch (const std::ios_base::failure &ex) {
-    // OK-- something went wrong. Clear the flag, set `tag' to EoS.
-    // stream ptr at the same place.
-    is.exceptions(std::ios_base::goodbit);
-    is.clear();
-    is.seekg(0, std::ios_base::end);
-    tag = is.tellg();
-    is.exceptions(EXC_MASK);
-  }
-
-  if (id3_v1_tag_type::none == tag_type) {
-
-    try {
-      is.seekg(-128, std::ios_base::end);
-      is.read(buf, 3);
-      if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2]) {
-        // ID3v1 tag at `tag'; stream ptr at `tag' + 3
-        tag = is.tellg() - (std::streampos) 3;
-        tag_type = id3_v1_tag_type::v_1;
-      } else {
-        // No ID3v1 tag-- set `tag' to the EoS; stream ptr at same place.
-        is.seekg(0, std::ios_base::end);
-        tag = is.tellg();
-      }
-    }
-    catch (const std::ios_base::failure &ex) {
-      // OK-- something went wrong. Clear the flag, set `tag' to EoS.
-      // stream ptr at the same place.
-      is.exceptions(std::ios_base::goodbit);
-      is.clear();
-      is.seekg(0, std::ios_base::end);
-      tag = is.tellg();
-    }
-
-  }
-
-  is.exceptions(exc_mask);
 
   // Compute an MD5 checksum of the file contents from 'here' to 'tag'
   size_ = tag - here;
@@ -239,13 +188,89 @@ scribbu::track_data::track_data(std::istream &is) : size_(0)
   }
 
   unsigned int  md_len;
-  // unsigned char md_value[EVP_MAX_MD_SIZE];
   EVP_DigestFinal_ex(mdctx, md5_.begin(), &md_len);
 
   EVP_MD_CTX_destroy(mdctx);
 
+  is.seekg(here, std::ios_base::beg);
+  // bad (or non-existent) MP3 data will result in an exception
+  try {
+    duration_secs_ = get_mp3_duration(is);
+  }
+  catch (const mp3_audio_frame::error&) {
+    // pass & recover
+  }
+  is.seekg(tag, std::ios_base::beg);
+  is.clear();
+
 }
 
+/// Locate the ID3v1 tag-- returns [here, there) where here is the current
+/// stream position and there is either the first byte of the ID3v1 tag or the
+/// one-past-the-end position, so that the track data is bracketed in [here,
+/// there)
+std::tuple<std::streampos, std::streampos>
+scribbu::track_data::find_id3v1_tag(std::istream &is)
+{
+  std::ios_base::iostate exc_mask = is.exceptions();
+
+  // The ID3v1 tag is 128 bytes long & begins with the sequence "TAG",
+  // and the extended tag is 227 bytes & begins with the sequence
+  // "TAG+". So, if there's an ID3v1 tag present, the sequence "TAG"
+  // will be present at len - 128 or len - 355.
+  char buf[4];
+
+  scribbu::id3_v1_tag_type tag_type = id3_v1_tag_type::none;
+
+  std::streampos here = is.tellg(), tag;
+
+  try {
+    is.seekg(-355, std::ios_base::end);
+    is.read(buf, 4);
+    if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2] && '+' == buf[3]) {
+      // ID3v1 extended tag at `tag'; stream ptr at `tag' + 4.
+      tag = is.tellg() - (std::streampos) 4;
+      tag_type = id3_v1_tag_type::v_1_extended;
+    }
+  }
+  catch (const std::ios_base::failure &ex) {
+    // OK-- something went wrong. Clear the flag, set `tag' to EoS.
+    // stream ptr at the same place.
+    is.exceptions(std::ios_base::goodbit);
+    is.clear();
+    is.seekg(0, std::ios_base::end);
+    tag = is.tellg();
+    is.exceptions(exc_mask);
+  }
+
+  if (id3_v1_tag_type::none == tag_type) {
+
+    try {
+      is.seekg(-128, std::ios_base::end);
+      is.read(buf, 3);
+      if ('T' == buf[0] && 'A' == buf[1] && 'G' == buf[2]) {
+        // ID3v1 tag at `tag'; stream ptr at `tag' + 3
+        tag = is.tellg() - (std::streampos) 3;
+        tag_type = id3_v1_tag_type::v_1;
+      } else {
+        // No ID3v1 tag-- set `tag' to the EoS; stream ptr at same place.
+        is.seekg(0, std::ios_base::end);
+        tag = is.tellg();
+      }
+    }
+    catch (const std::ios_base::failure &ex) {
+      // OK-- something went wrong. Clear the flag, set `tag' to EoS.
+      // stream ptr at the same place.
+      is.exceptions(std::ios_base::goodbit);
+      is.clear();
+      is.seekg(0, std::ios_base::end);
+      tag = is.tellg();
+    }
+
+  }
+
+  return std::make_tuple(here, tag);
+}
 
 std::string
 scribbu::urlencode(const std::string &text)

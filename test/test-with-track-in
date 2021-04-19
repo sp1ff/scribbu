@@ -13,7 +13,12 @@ cat <<EOF > $SCRIPT_FILE
 (with-track-in
  "${srcdir}/data"
  (lambda (tagset pth v1)
-   (unless (null? v1)
+   (unless (or
+             (null? v1)
+             (member 
+                pth 
+                (list
+                   (format #f "~a/data/Winamp5_normal-128.mp3" (getenv "srcdir")))))
 	   (let ((c (slot-ref v1 'comment))
 			 (r (make-regexp "rip.*winamp" regexp/icase)))
 		 (if (regexp-exec r c)

@@ -256,7 +256,7 @@ namespace scribbu {
     };
 
   public:
-    /// Construct using an input stream known to be currently pointing at an
+     /// Construct using an input stream known to be currently pointing at an
     /// ID3V1 tag; the implementation will determine whether the tag is V1 or
     /// V1.1, and whether the tag is enhanced or not. It will throw if \a is is
     /// not pointing to a valid tag

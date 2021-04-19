@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
-../src/scribbu report -d -o report.csv ${srcdir}/data
+../src/scribbu report -d -o report.csv \
+  ${srcdir}/data/cerulean.mp3                    \
+  ${srcdir}/data/compressed.mp3                  \
+  ${srcdir}/data/duplicate_id3v2.mp3             \
+  ${srcdir}/data/forbidden.mp3                   \
+  ${srcdir}/data/id3v22-tda.mp3                  \
+  ${srcdir}/data/joao.mp3                        \
+  ${srcdir}/data/la-mer.mp3                      \
+  ${srcdir}/data/life.mp3                        \
+  ${srcdir}/data/lorca.mp3                       \
+  ${srcdir}/data/lunch4bfast2.mp3                \
+  ${srcdir}/data/lunch4bfast.mp3                 \
+  ${srcdir}/data/红颜旧.mp3                      \
+  ${srcdir}/data/nan-1.mp3                       \
+  ${srcdir}/data/nin-only-time.mp3               \
+  ${srcdir}/data/on-green-dolphin-street.mp3     \
+  ${srcdir}/data/opium.mp3                       \
+  ${srcdir}/data/orlando.mp3                     \
+  ${srcdir}/data/rare_frames.mp3                 \
+  ${srcdir}/data/sleepwalking.mp3                \
+  ${srcdir}/data/u2-promenade.mp3                \
+  ${srcdir}/data/v1-only.mp3                     \
+  ${srcdir}/data/waterfall.mp3                   \
+  ${srcdir}/data/wy.mp3
 cp -v report.csv report.last.csv
 head -n1 report.csv > report.$$.csv
 tail -n+2 report.csv | sort -d >> report.$$.csv

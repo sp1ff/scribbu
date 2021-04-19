@@ -251,8 +251,6 @@ namespace scribbu {
   class openssl_error: public scribbu::error
   {
   public:
-    // openssl_error(): std::runtime_error(""), err_(ERR_get_error())
-    // { }
     openssl_error(): err_(ERR_get_error())
     { }
     virtual const char * what() const noexcept;
@@ -270,6 +268,14 @@ namespace scribbu {
    * the end if no ID3v1 tag is present). After construction, assorted
    * information about the track may be retrieved.
    *
+   * Note that this implementation is not particularly efficient: the entirety
+   * of track data will be read, so as to compute an MD5 checksum (handy for
+   * verifying that tag-related operations haven't affected the music data).  In
+   * addition, the track length is computed, in the worst case, by decoding each
+   * MPEG audio frame header to determine its duration (if there's a
+   * variable-rate encoding header in the first frame, that is skipped by
+   * default).
+   *
    *
    */
 
@@ -285,6 +291,8 @@ namespace scribbu {
     template <typename forward_input_iterator>
     forward_input_iterator data(forward_input_iterator p0)
     { return std::copy(p0, p0 + DIGEST_SIZE, md5_.begin()); }
+    double duration() const
+    { return duration_secs_; }
     template <typename forward_output_iterator>
     void get_md5(forward_output_iterator p) const
     { std::copy(md5_.begin(), md5_.end(), p); }
@@ -293,8 +301,18 @@ namespace scribbu {
     { return size_; }
 
   private:
+    /// Locate the ID3v1 tag-- returns [here, there) where here is the current
+    /// stream position and there is either the first byte of the ID3v1 tag or
+    /// the one-past-the-end position, so that the track data is bracketed in
+    /// [here, there)
+    static
+    std::tuple<std::streampos, std::streampos>
+    find_id3v1_tag(std::istream &is);
+
+  private:
     std::array<unsigned char, DIGEST_SIZE> md5_;
     std::size_t size_;
+    double duration_secs_;
 
   };
 

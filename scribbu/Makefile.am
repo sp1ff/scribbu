@@ -23,6 +23,7 @@ libscribbu_la_SOURCES = tbt-parser.yy		\
 			id3v24.cc		\
 			id3v2-utils.cc		\
 			tbt-support.cc		\
+			mp3.cc                  \
 			pprinter.cc		\
 			csv-pprinter.cc		\
 			tdf-pprinter.cc		\
@@ -46,6 +47,7 @@ pkginclude_HEADERS = scribbu.hh		\
 		     id3v23.hh		\
 		     id3v24.hh		\
 		     id3v2-utils.hh	\
+		     mp3.hh             \
 		     tbt-support.hh	\
 		     pprinter.hh	\
 		     csv-pprinter.hh	\

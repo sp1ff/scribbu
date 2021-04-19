@@ -26,8 +26,8 @@ jobs:
           boost-dl: https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.bz2
         - os: macos-10.15
           boost: latest
-          boost-ver: 1_75_0
-          boost-dl: https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.bz2
+          boost-ver: 1_76_0
+          boost-dl: https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.bz2
         - os: ubuntu-20.04
           boost: oldest
           boost-ver: 1_58_0
@@ -60,6 +60,7 @@ jobs:
       run: |
         set -x
         pwd
+        brew update
         brew install autoconf automake libtool openssl guile doxygen flex bison graphviz texinfo
         brew install --cask basictex
     - name: Install pre-requisites (Ubuntu)

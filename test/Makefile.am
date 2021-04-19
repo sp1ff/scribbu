@@ -6,7 +6,8 @@ EXTRA_DIST = test-util test-split test-rename test-report test-report-tdf \
 	test-cleanup-from-audacity.scm test-cleanup-from-audacity \
 	test-tagsets-from-scheme.scm test-tagsets-from-scheme \
 	test-frames-from-scheme.scm test-frames-from-scheme \
-	test-scripting test-options test-popm test-xtag test-text test-genre
+	test-scripting test-options test-popm test-xtag test-text test-genre \
+	test-m3u
 CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	report.csv report-last.csv report-tdf.tdf \
 	id3v20A trackB id3v1A trackA \
@@ -24,15 +25,19 @@ CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	test-popm-tmp/test_id3v1_only/v1-only.mp3.1 \
 	test-text-tmp/smoke_tests/id3v2.3.tag \
 	test-popm-tmp/test_issue_5/id3v2.3.tag \
-	test-popm-tmp/test_issue_5/id3v2.3.tag.1
+	test-popm-tmp/test_issue_5/id3v2.3.tag.1 \
+	test-m3u-tmp/smoke_tests/id3v2.3.tag \
+	test-m3u-tmp/smoke_tests/LAME_aots_3951.mp3 \
+	test-m3u-tmp/smoke_tests/sat.mp3 \
+	test-m3u-tmp/smoke_tests/VBRI_16M.mp3
 TESTS = $(check_PROGRAMS) test-split test-rename test-report test-report-tdf \
 	test-dump test-with-track-in test-fs-generator \
 	test-cleanup-encoded-by test-cleanup-from-audacity \
 	test-tagsets-from-scheme test-frames-from-scheme test-scripting \
-	test-options test-popm test-xtag test-text test-genre
+	test-options test-popm test-xtag test-text test-genre test-m3u
 unit_SOURCES = unit.cc unit.hh charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
-	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc tdf-pprinter.cc \
+	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc mp3.cc tdf-pprinter.cc \
 	scribbu.cc id3v2-edit.cc tagset.cc winamp-genres.cc
 
 AM_CPPFLAGS = -DBOOST_TEST_DYN_LINK -I$(srcdir)/.. $(BOOST_CPPFLAGS)

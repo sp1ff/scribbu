@@ -1,4 +1,14 @@
-2021-03-31  Michael Herstine  <sp1ff@pobox.com>
+2021-04-18  Michael Herstine  <sp1ff@pobox.com>
+
+	Adding duration.
+	This is a large commit. It adds the 'mp3_audio_frame' class,
+	builds on it to compute track duration, and adds a sub-command
+	to print M3U entries given files.
+
+	This is the initial commit; I'd like to improve the
+	implementation, add more testing, and write documentation.
+
+2021-04-04  Michael Herstine  <sp1ff@pobox.com>
 
 	Hygiene commit.
 	This commit:

@@ -451,7 +451,8 @@ scribbu::id3v1_tag::init_extended(unsigned char *p)
 
 scribbu::id3v1_info scribbu::ends_in_id3v1(std::istream &is)
 {
-  const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | std::ios::badbit;
+  // const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | std::ios::badbit;
+  const std::ios::iostate EXC_MASK = std::ios::failbit | std::ios::badbit;
 
   // Copy off the stream's exception mask, in case the caller is
   // counting on it...

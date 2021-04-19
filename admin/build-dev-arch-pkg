@@ -18,6 +18,13 @@ archdir=$(cd ../scribbu-arch && pwd)
 script=${here}/admin/build-dev-arch-pkg-cnt
 tarball="$1"
 if [ ${tarball:0:1} != "/" ]; then tarball=${here}/$1; fi
+
+# Since ../scribbu-arch/PKGBUILD will, in general, be setup for the last
+# release, this script will have to do some editing.
+sed -e "s/^pkgver=.*/pkgver=${version}/" ../scribbu-arch/PKGBUILD > /tmp/PKGBUILD.1.$$ && \
+sed -e "s/^source=.*/source=(scribbu-${version}.tar.gz)/" /tmp/PKGBUILD.1.$$ > /tmp/PKGBUILD.2.$$ && \
+cp -v /tmp/PKGBUILD.2.$$ ../scribbu-arch/PKGBUILD-dev
+
 docker_args="-it"
 docker_args="$docker_args --mount type=bind,source=${archdir},target=/scribbu"
 docker_args="$docker_args -v ${script}:/build-dev-pkg:ro"
@@ -26,6 +33,6 @@ docker_args="$docker_args --privileged"
 docker_args="$docker_args --ulimit core=-1"
 docker_args="$docker_args -u mgh"
 # Un-comment to just drop into the container
-cmd="docker run ${docker_args} scribbu-arch:latest"
-# cmd="docker run ${docker_args} scribbu-arch:latest /build-dev-pkg $1"
+# cmd="docker run ${docker_args} scribbu-arch:latest"
+cmd="docker run ${docker_args} scribbu-arch:latest /build-dev-pkg $1"
 exec $cmd

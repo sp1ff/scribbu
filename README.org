@@ -1,6 +1,6 @@
 #+TITLE: scribbu
 #+DESCRIPTION: The extensible tool for tagging your music collection
-#+DATE: <2021-04-04 Sun 17:02>
+#+DATE: <2021-04-18 Sun 20:22>
 #+AUTHOR: sp1ff
 #+EMAIL: sp1ff@pobox.com
 #+AUTODATE: t
@@ -15,18 +15,13 @@ scribbu is a C++ library & associated command-line tool for working with [[http:
 scribbu can be invoked in a few ways:
 
   - with a sub-command & relevant options & arguments; i.e. =scribbu SUB-COMMAND OPTION...=. scribbu implements the following sub-commands:
-
 	+ =scribbu dump= will write the contents of the ID3 tags found in one or more files to stdout
-
     + =scribbu rename= will rename one or more files based on the content of their ID3 tags; e.g. =scribbu rename -t %A-%T.mp3 *.mp3= will rename all the files matching *.mp3 to <artist>-<title>.mp3 where "artist" and "title" are derived from their ID3 tags (if any).
-
     + =scribbu report= will generate a report listing ID3 attributes on one or more files on stdout. CSV & TDF formats are supported currently (on the basis that there are better querying/reporting tools out there already; they can just import the .csv or .tdf & do better than scribbu would)
-
 	+ =scribbu popm= will create or update popularimeter & playcount frames. This can be used to keep up the play count, or set a rating.
-
 	+ =scribbu text= will create, update, or delete various text frames
-
     + =scribbu genre= will update the genre-related fields of ID3v1 and/or -v2 tags
+    + =scribbu m3u= will print M3U entries
 
   - with a Scheme expression (=-e=, =--expression=) or Scheme file (=-f=, =--file=). E.g.
     #+BEGIN_SRC bash
