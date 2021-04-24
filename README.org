@@ -1,6 +1,6 @@
 #+TITLE: scribbu
 #+DESCRIPTION: The extensible tool for tagging your music collection
-#+DATE: <2021-04-18 Sun 20:22>
+#+DATE: <2021-04-23 Fri 20:14>
 #+AUTHOR: sp1ff
 #+EMAIL: sp1ff@pobox.com
 #+AUTODATE: t
@@ -22,6 +22,7 @@ scribbu can be invoked in a few ways:
 	+ =scribbu text= will create, update, or delete various text frames
     + =scribbu genre= will update the genre-related fields of ID3v1 and/or -v2 tags
     + =scribbu m3u= will print M3U entries
+    + =scribbu encodings= will print a list of all the text encodings scribbu supports
 
   - with a Scheme expression (=-e=, =--expression=) or Scheme file (=-f=, =--file=). E.g.
     #+BEGIN_SRC bash

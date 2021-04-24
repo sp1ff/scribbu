@@ -259,6 +259,39 @@ namespace scribbu {
     mutable std::shared_ptr<std::string> pwhat_;
   };
 
+  /// Locate the ID3v1 tag-- returns [here, there) where here is the current
+  /// stream position and there is either the first byte of the ID3v1 tag or
+  /// the one-past-the-end position, so that the track data is bracketed in
+  /// [here, there)
+  std::tuple<std::streampos, std::streampos>
+  find_id3v1_tag(std::istream &is);
+
+  /// 128 bits in bytes
+  const size_t MD5_DIGEST_SIZE = 16;
+
+  /**
+   * \brief Compute the MD5 checksum over track data
+   *
+   *
+   * \param is [in, out] istream whose get pointer is positioned at the
+   * beginning of the audio data
+   *
+   * \param hint [in, opt] offset of either the ID3v1 tag if present, or the 
+   * EOF position, if known
+   *
+   * \return the 128-bit MD5 checksum
+   *
+   *
+   * This function will locate the end of the track via find_id3v1_tag (or use
+   * \a hint). On return, get ptr will be left either at the first byte of the
+   * ID3v1 tag or just past the end of the file if there isn't one (eof bit will
+   * be cleared, however).
+   *
+   */
+
+  std::array<unsigned char, MD5_DIGEST_SIZE>
+  compute_track_md5(std::istream &is, std::streampos hint = EOF);
+  
   /**
    * \brief Container for information about the track data itself
    *
@@ -269,12 +302,12 @@ namespace scribbu {
    * information about the track may be retrieved.
    *
    * Note that this implementation is not particularly efficient: the entirety
-   * of track data will be read, so as to compute an MD5 checksum (handy for
-   * verifying that tag-related operations haven't affected the music data).  In
-   * addition, the track length is computed, in the worst case, by decoding each
-   * MPEG audio frame header to determine its duration (if there's a
-   * variable-rate encoding header in the first frame, that is skipped by
-   * default).
+   * of track data will be read into memory (in chunks), so as to compute an MD5
+   * checksum (handy for verifying that tag-related operations haven't affected
+   * the music data).  In addition, the track length is computed, in the worst
+   * case, by decoding each MPEG audio frame header to determine its duration
+   * (if there's a variable-rate encoding header in the first frame, the second
+   * scan won't be necessary).
    *
    *
    */
@@ -291,28 +324,24 @@ namespace scribbu {
     template <typename forward_input_iterator>
     forward_input_iterator data(forward_input_iterator p0)
     { return std::copy(p0, p0 + DIGEST_SIZE, md5_.begin()); }
-    double duration() const
-    { return duration_secs_; }
     template <typename forward_output_iterator>
     void get_md5(forward_output_iterator p) const
     { std::copy(md5_.begin(), md5_.end(), p); }
+    /// Retrieve the song duration, in seconds
+    std::optional<double> duration() const
+    { return duration_secs_; }
     /// Retrieve the # of bytes in the track data
     std::size_t size() const
-    { return size_; }
-
-  private:
-    /// Locate the ID3v1 tag-- returns [here, there) where here is the current
-    /// stream position and there is either the first byte of the ID3v1 tag or
-    /// the one-past-the-end position, so that the track data is bracketed in
-    /// [here, there)
-    static
-    std::tuple<std::streampos, std::streampos>
-    find_id3v1_tag(std::istream &is);
+    { return size_bytes_; }
 
   private:
     std::array<unsigned char, DIGEST_SIZE> md5_;
-    std::size_t size_;
-    double duration_secs_;
+    std::size_t size_bytes_;
+    /// some tracks are corrupted; in such cases it is impossible to
+    /// strictly compute the duration, so I use an optional to account
+    /// for this; maybe in the future I'll add a 'verify' sub-command
+    /// or something like that
+    std::optional<double> duration_secs_;
 
   };
 

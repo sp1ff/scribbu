@@ -80,10 +80,6 @@ namespace scribbu {
    *     scheme defined.
    *
    *
-   * \todo implement insert overloads for id3v2_2_frame&&,
-   * initializer_list<id3v2_2_frame>, and range (i.e. two iterators)
-   *
-   *
    */
 
   class id3v2_2_tag: public id3v2_tag {
@@ -395,9 +391,6 @@ namespace scribbu {
      * The only solution I can find is to implement forwarding functions on
      * this class for each public member function of class id3v_2_frame. This
      * seems tedious to me, so I'm delaying in the hopes of a better solution.
-     *
-     * \todo Implement functions on id3v2_2_tag::mutable_frame_proxy forwarding
-     * to id3v_2_frame public methods
      *
      *
      */

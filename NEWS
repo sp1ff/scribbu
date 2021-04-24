@@ -28,6 +28,8 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
+
+*** `encodings' sub-command added
 *** `m3u' sub-command added
 
 *** Arch & Debian packages now provided

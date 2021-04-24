@@ -132,87 +132,25 @@ scribbu::openssl_error::what() const noexcept
   return pwhat_->c_str();
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-//                             class track_data                              //
-///////////////////////////////////////////////////////////////////////////////
-
-scribbu::track_data::track_data(std::istream &is) : size_(0), duration_secs_(0.0)
-{
-  const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
-    std::ios_base::failbit|std::ios_base::badbit;
-
-  memset(md5_.data(), 0, DIGEST_SIZE);
-
-  // Copy off the stream's exception mask, in case the caller is
-  // counting on it...
-  std::ios_base::iostate exc_mask = is.exceptions();
-  // and set it to a value convenient for our use.
-  is.exceptions(EXC_MASK);
-
-  std::streampos here, tag;
-  std::tie(here, tag) = find_id3v1_tag(is);
-
-  is.exceptions(exc_mask);
-
-  const std::size_t BUFSIZE = 4 * 1024 * 1024; // Four megabytes
-
-  static unsigned char BUF[BUFSIZE];
-
-  // Compute an MD5 checksum of the file contents from 'here' to 'tag'
-  size_ = tag - here;
-  is.seekg(here, std::ios_base::beg);
-
-  EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
-  if (! mdctx) {
-    throw new openssl_error();
-  }
-
-  if (! EVP_DigestInit_ex(mdctx, EVP_md5(), 0)) {
-    EVP_MD_CTX_destroy(mdctx);
-    throw new openssl_error();
-  }
-
-  for (std::streamsize nleft = tag - here; nleft > 0; ) {
-
-    std::streamsize nbytes = BUFSIZE > nleft ? nleft : BUFSIZE;
-
-    is.read((char*)BUF, nbytes);
-    if (! EVP_DigestUpdate(mdctx, BUF, nbytes)) {
-      EVP_MD_CTX_destroy(mdctx);
-      throw new openssl_error();
-    }
-
-    nleft -= nbytes;
-
-  }
-
-  unsigned int  md_len;
-  EVP_DigestFinal_ex(mdctx, md5_.begin(), &md_len);
-
-  EVP_MD_CTX_destroy(mdctx);
-
-  is.seekg(here, std::ios_base::beg);
-  // bad (or non-existent) MP3 data will result in an exception
-  try {
-    duration_secs_ = get_mp3_duration(is);
-  }
-  catch (const mp3_audio_frame::error&) {
-    // pass & recover
-  }
-  is.seekg(tag, std::ios_base::beg);
-  is.clear();
-
-}
+////////////////////////////////////////////////////////////////////////////////
+//                               free functions                               //
+////////////////////////////////////////////////////////////////////////////////
 
 /// Locate the ID3v1 tag-- returns [here, there) where here is the current
 /// stream position and there is either the first byte of the ID3v1 tag or the
 /// one-past-the-end position, so that the track data is bracketed in [here,
 /// there)
 std::tuple<std::streampos, std::streampos>
-scribbu::track_data::find_id3v1_tag(std::istream &is)
+scribbu::find_id3v1_tag(std::istream &is)
 {
+  const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
+    std::ios_base::failbit|std::ios_base::badbit;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
   std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(EXC_MASK);
 
   // The ID3v1 tag is 128 bytes long & begins with the sequence "TAG",
   // and the extended tag is 227 bytes & begins with the sequence
@@ -269,7 +207,117 @@ scribbu::track_data::find_id3v1_tag(std::istream &is)
 
   }
 
+  is.exceptions(exc_mask);
+
   return std::make_tuple(here, tag);
+}
+
+std::array<unsigned char, scribbu::MD5_DIGEST_SIZE>
+scribbu::compute_track_md5(std::istream &is, std::streampos hint /*= EOF*/)
+{
+  const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
+    std::ios_base::failbit|std::ios_base::badbit;
+
+  std::array<unsigned char, MD5_DIGEST_SIZE> md5;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
+  std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(EXC_MASK);
+
+  std::streampos here, tag;
+  if (hint == EOF) {
+    std::tie(here, tag) = find_id3v1_tag(is);
+  } else {
+    here = is.tellg();
+    tag = hint;
+  }
+
+  const std::size_t BUFSIZE = 4 * 1024 * 1024; // Four megabytes
+
+  static unsigned char BUF[BUFSIZE];
+
+  // Compute an MD5 checksum of the file contents from 'here' to 'tag'
+  EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
+  if (! mdctx) {
+    throw new openssl_error();
+  }
+
+  if (! EVP_DigestInit_ex(mdctx, EVP_md5(), 0)) {
+    EVP_MD_CTX_destroy(mdctx);
+    throw new openssl_error();
+  }
+
+  for (std::streamsize nleft = tag - here; nleft > 0; ) {
+
+    std::streamsize nbytes = BUFSIZE > nleft ? nleft : BUFSIZE;
+
+    is.read((char*)BUF, nbytes);
+    if (! EVP_DigestUpdate(mdctx, BUF, nbytes)) {
+      EVP_MD_CTX_destroy(mdctx);
+      throw new openssl_error();
+    }
+
+    nleft -= nbytes;
+
+  }
+
+  unsigned int  md_len;
+  EVP_DigestFinal_ex(mdctx, md5.begin(), &md_len);
+
+  EVP_MD_CTX_destroy(mdctx);
+
+  is.exceptions(exc_mask);
+
+  return md5;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                             class track_data                              //
+///////////////////////////////////////////////////////////////////////////////
+
+scribbu::track_data::track_data(std::istream &is) :
+  size_bytes_(0),
+  duration_secs_(std::nullopt)
+{
+  const std::ios_base::iostate EXC_MASK = std::ios_base::eofbit|
+    std::ios_base::failbit|std::ios_base::badbit;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
+  std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(EXC_MASK);
+
+  // Find the ID3v1 tag (or the end of the file); if it's there, the ID3v1 tag
+  // will be at one of two fixed offsets, so we can just seek (i.e.  this method
+  // just manipulates the get ptr, it doesn't actually need to read the entire
+  // track).
+  std::streampos here, tag;
+  std::tie(here, tag) = find_id3v1_tag(is);
+  size_bytes_ = tag - here;
+
+  // Now that we've ID'd the track data, reset the get ptr...
+  is.seekg(here);
+  // and compute the MD5 checksum (which *will* entail reading the entirety of
+  // the audio data into memory)
+  md5_ = compute_track_md5(is, tag);
+
+  // Re-set the get ptr one more time...
+  is.seekg(here, std::ios_base::beg);
+  // and compute the duration of the audio data. This may or may not require
+  // re-reading all of it, depending on whether or not VBRI is present.
+  try {
+    duration_secs_ = get_mp3_duration(is);
+  } catch (const std::exception &) {
+    // pass
+  }
+
+  // Finally, patch-up the istream according to this method's contract.
+  is.seekg(tag, std::ios_base::beg);
+  is.clear(); // `eof' may be set
+  is.exceptions(exc_mask);
 }
 
 std::string

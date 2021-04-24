@@ -1,0 +1,148 @@
+.\" Copyright (C) 2021 Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu-m3u 1 2021-04-22 "scribbu 0.6.17" "scribbu Manual"
+.SH NAME
+scribbu m3u \- M3U playlists from one or more files
+.SH SYNOPSIS
+.BR "scribbu m3u " "[-h] [--help] [--info]"
+.RS 8
+.BR
+[-s |--source-encoding=]SRC
+.BR
+[-o |--output=]OUT
+.BR
+[-a|--append]
+.BR
+[-8|--use-utf-8]
+.BR
+[-v|--verbose]
+.BR
+<file-or-directory> <file-or-directory>...
+
+.SH DESCRIPTION
+
+Print extended M3U entries for one or more files. By default, print
+EXTM3U entries to stdout for all the files named on the command
+line. If an argument is a directory, operate recursively on all files
+therein (the order of traversal is unspecified).
+
+Each extended M3U entry takes the form:
+.BR
+.NF
+
+    # EXINF:<duration-in-seconds>,<display title>
+    <path-to-file>
+
+.FI
+The display title will be "Artist - Title" if those two items can be
+derived from ID3 tags; otherwise the file basename will be used. The
+text forming the artist & title tags will be assumed to be in the
+system locale's encoding. To override this, specify the
+.I -s
+flag (for source encoding).
+
+The entry's path will be relative or absolute, according to the
+argument (i.e. specifying an absolute path to a file or directory will
+produce absolute paths, a relative path to a file or directory
+relative paths in the output).
+
+When writing entries to
+.I stdout
+all text will be written in the system locale's text encoding.
+
+If the
+.I -o
+option is given, the output will be written to the file named as the
+option's value. By convention, files ending in .m3u8 are UTF-8 encoded
+and files ending in .m3u are written in an unspecified encoding. Given
+that M3U is a de facto standard, scribbu does not enforce this (or any
+other naming convention).
+
+In this case, a new file will be created with the #EXTM3U header line,
+unless the
+.I -a
+(append) flag is given, in which case the output will be appended to
+the (presumably existing) file.
+
+By default, output will be in the system locale's text encoding. To
+force UTF-8 output, specify the
+.I -8
+option.
+
+So, for instance, if your system locale's encoding is ISO-8859-1, and
+your tags are written in, say, Windows Code Page 1251, but you would
+like an M3U playlist in UTF-8 format, say:
+
+.NF
+
+  scribbu m3u -s CP1251 -o test.m3u8 -8 some-directory/
+
+.FI
+
+.SH OPTIONS
+
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help (and exit with status zero).
+.RE
+.PP
+\-\-info
+.RS 4
+Display this sub-command's node in the user's Info viewer.
+.RE
+.PP
+\-\-verbose
+.RS 4
+Produce more verbose output; this really only makes sense when
+printing entries to file (otherwise the informational messages will be
+intermingled with the entries printed to
+.I stdout
+).
+.RE
+.PP
+\-s,\-\-source-encoding
+.RS 4
+Specify the text encoding in which the textual tags author & title are
+written in the files to be processed; e.g. "ASCII" or "UTF-8". Say `
+.I scribbu encodings
+\' for a list of names for all supported encodings.
+.RE
+.PP
+\-o,\-\-output
+.RS 4
+This option indicates that the EXTM3U entries shall be written to the
+given file rather than
+.I stdout.
+.RE
+.PP
+\-a,\-\-append
+.RS 4
+When writing to file, this option indicates that the named file should
+be appended to rather than overwritten.
+.RE
+.PP
+\-8,\-\-use-utf-8
+.RS 4
+When writing to file, this option indicates that the output shall be
+encoded as UTF-8 (rather than the system locale's text encoding, which
+is the default behavior).
+.RE
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR  scribbu "(1), " scribbu-dump "(1), " scribbu-encodings "(1), " scribbu-popm "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1), " scribbu-text "(1)"

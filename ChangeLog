@@ -1,4 +1,18 @@
-2021-04-18  Michael Herstine  <sp1ff@pobox.com>
+2021-05-01  Michael Herstine  <sp1ff@pobox.com>
+
+	Improved 'm3u' sub-command, added 'encoding' sub-command.
+	This commit cleans-up my duration calculation (I stopped
+	using exceptions for control flow). It also added an
+	'encodings' sub-command for printing out the text encodings
+	scribbu supports.
+
+	It also adds documentation, a new unit test, and cleaned-out
+	a few "TODO"s from my source-code comments.
+
+	Finally, the 'report' sub-command will now print better
+	error messages on errors.
+
+2021-04-20  Michael Herstine  <sp1ff@pobox.com>
 
 	Adding duration.
 	This is a large commit. It adds the 'mp3_audio_frame' class,

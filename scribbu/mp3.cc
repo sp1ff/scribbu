@@ -256,11 +256,36 @@ scribbu::mp3_audio_frame::error::what() const noexcept
   return pwhat_->c_str();
 }
 
+scribbu::mp3_audio_frame::mp3_audio_frame(std::uint8_t hdr[4],
+                                          std::istream &is,
+                                          bool check_vbr /*= false*/):
+  crc_(std::nullopt),
+  vbri_(std::nullopt)
+{
+  parse_header(hdr, is);
+
+  // at this point, `is' now points to the beginning of the MPEG audio samples,
+  // or the VBR header(s).
+  if (check_vbr) {
+    parse_vbr(is);
+  }
+
+  // Either way, `is' now points just past the side information. Advance it
+  // past the audio samples:
+  std::istream::off_type off = size_ - 4 - (crc_.has_value() ? 2 : 0) - side_info_size_;
+  is.seekg(off, std::ios_base::cur);
+}
+
 scribbu::mp3_audio_frame::mp3_audio_frame(std::istream &is, bool check_vbr):
   crc_(std::nullopt),
   vbri_(std::nullopt)
 {
-  parse_header(is);
+  // It is a pre-condition that an MPEG Audio Layer III header be present
+  // in the 32 bits at the beginning of `is'...
+  std::uint8_t hdr[4] = { 0, 0, 0, 0 };
+  is.read((char*)hdr, 4);
+
+  parse_header(hdr, is);
 
   // at this point, `is' now points to the beginning of the MPEG audio samples,
   // or the VBR header(s).
@@ -277,19 +302,13 @@ scribbu::mp3_audio_frame::mp3_audio_frame(std::istream &is, bool check_vbr):
 /// Helper function-- just parse the MPEG Audio Header; should only be
 /// called during construction
 void
-scribbu::mp3_audio_frame::parse_header(std::istream &is)
+scribbu::mp3_audio_frame::parse_header(std::uint8_t hdr[4], std::istream &is)
 {
   std::istream::pos_type here = is.tellg();
 
   try {
-
-    // It is a pre-condition that an MPEG Audio Layer III header be present
-    // in the 32 bits at the beginning of `is'...
-    std::uint8_t hdr[4] = { 0, 0, 0, 0 };
-    is.read((char*)hdr, 4);
-
     // so the first eleven bits had better be 1!
-    if (0xff != hdr[0] || 0xe0 > hdr[1]) {
+    if (!is_sync(hdr)) {
       throw mp3_audio_frame::error(mp3_audio_frame::error::no_sync);
     }
 
@@ -532,47 +551,56 @@ scribbu::mp3_audio_frame::vbri() const
   }
 }
 
-
 double
 scribbu::get_mp3_duration(std::istream &is)
 {
+  const std::ios_base::iostate EXC_MASK = std::ios_base::badbit;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
+  std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(EXC_MASK);
+
   std::istream::pos_type here = is.tellg();
 
-  double dur;
-
-  // If there *is* no audio data, this ctor will throw (no sync will be found)
-  try {
-    std::size_t num, den;
-    mp3_audio_frame f(is, true);
-    std::tie(num, den) = f.duration();
-
-    auto vbri = f.vbri();
-    if (vbri) {
-      std::size_t num_frames, num_bytes;
-      std::tie(num_frames, num_bytes) = *vbri;
-      
-      dur = double(num) * double(num_frames) / double(den);
-      is.seekg(num_bytes - f.size(), std::ios_base::cur);
-    } else {
-      size_t num_frames = 1; // one frame so far
-      bool done = false;
-      while (!done) {
-        try {
-          mp3_audio_frame h(is);
-          ++num_frames;
-        } catch (const std::exception &ex) {
-          done = true;
-          is.clear();
-        }
-      }
-      dur = double(num) * double(num_frames) / double(den);
-    }
-  }
-  catch (const std::exception &ex) {
-    dur = 0.0;
+  std::uint8_t hdr[4];
+  is.read((char*)hdr, 4);
+  if (!is || !is_sync(hdr)) {
     is.clear();
     is.seekg(here, std::ios_base::beg);
+    return 0.0;
+  }
+
+  std::size_t num, den;
+  mp3_audio_frame f(hdr, is, true);
+  std::tie(num, den) = f.duration();
+  
+  double dur;
+
+  auto vbri = f.vbri();
+  if (vbri) {
+    std::size_t num_frames, num_bytes;
+    std::tie(num_frames, num_bytes) = *vbri;
+      
+    dur = double(num) * double(num_frames) / double(den);
+    is.seekg(num_bytes - f.size(), std::ios_base::cur);
+  } else {
+    size_t num_frames = 1; // one frame so far
+
+    for ( ; ; ++num_frames) {
+      is.read((char*)hdr, 4);
+      if (!is || !is_sync(hdr)) {
+        is.clear();
+        break;
+      }
+      // construct a "throwaway" frame just to skip the get ptr past a legit MP3
+      // frame
+      mp3_audio_frame h_(hdr, is);
+    }
+    dur = double(num) * double(num_frames) / double(den);
   }
   
+  is.exceptions(exc_mask);
   return dur;
 }

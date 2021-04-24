@@ -336,27 +336,52 @@ tdf_reporter::make_entry(const scribbu::file_info                  &fi,
 class reporting_strategy: public std::unary_function<void, fs::path> {
 
 public:
-  void operator()(const fs::path &pth);
+  /// return the # of files successfully processed & the # of failures; "failure"
+  /// refers to the failure to process an existing file; if a given path just
+  /// doesn't exist, we throw
+  std::pair<std::size_t, std::size_t> operator()(const fs::path &pth);
   virtual ~reporting_strategy()
   { }
 
 protected:
-  virtual void process_file(const fs::path &pth) = 0;
-  virtual void process_directory(const fs::path &pth) = 0;
+  /// Report on a single file; if done successfully, return true. If there is
+  /// a failure in processing the file (invalid tag, bad MP3 frame, &c) return
+  /// false. Else, throw.
+  virtual bool process_file(const fs::path &pth) = 0;
+  /// Report on a directory tree; return the number of files successfully
+  /// processed & the number of files that could not be processed due to
+  /// invalid data. If \a pth doesn't exist, throw.
+  virtual std::pair<std::size_t, std::size_t>
+  process_directory(const fs::path &pth) = 0;
 
 };
 
-void reporting_strategy::operator()(const fs::path &pth) {
+std::pair<std::size_t, std::size_t>
+reporting_strategy::operator()(const fs::path &pth) {
+
+  using namespace std;
 
   if (! fs::exists(pth)) {
-    throw std::invalid_argument(pth.string() + " does not appear to exist.");
+    throw invalid_argument(pth.string() + " does not appear to exist.");
   }
 
+  size_t num_succeeded = 0, num_failed = 0;
+
   if (fs::is_directory(pth)) {
-    process_directory(pth);
+    size_t s, f;
+    tie(s, f) = process_directory(pth);
+    num_succeeded += s;
+    num_failed += f;
   } else {
-    process_file(pth);
+    if (process_file(pth)) {
+      ++num_succeeded;
+    }
+    else {
+      ++num_failed;
+    }
   }
+
+  return make_pair(num_succeeded, num_failed);
 
 }
 
@@ -372,8 +397,9 @@ public:
   { }
 
 protected:
-  virtual void process_file(const fs::path &pth);
-  virtual void process_directory(const fs::path &pth);
+  virtual bool process_file(const fs::path &pth);
+  virtual std::pair<std::size_t, std::size_t>
+  process_directory(const fs::path &pth);
 
 private:
   static const boost::regex REGEX;
@@ -383,27 +409,39 @@ private:
 
 /*static*/ const boost::regex sequential_strategy::REGEX(".*\\.mp3");
 
-void sequential_strategy::process_file(const fs::path &pth) {
+bool
+sequential_strategy::process_file(const fs::path &pth) {
 
-  // Open 'pth' & collect externally-observable information about the
-  // file while we're at it...
-  std::ifstream is;
-  scribbu::file_info fi;
-  tie(is, fi) = scribbu::open_file(pth);
+  using namespace std;
 
-  // and use the open istream to read the...
-  std::unique_ptr<scribbu::id3v2_tag> pid3v2 = scribbu::maybe_read_id3v2(is); // ID3v2 tags...
-  scribbu::track_data ti(is);                                                 // the track itself...
-  std::unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(is);    // and the ID3v1 tag.
+  try {
+    // Open 'pth' & collect externally-observable information about the
+    // file while we're at it...
+    ifstream is;
+    scribbu::file_info fi;
+    tie(is, fi) = scribbu::open_file(pth);
 
-  // That's it-- pass whatever data we have to the reporter.
-  _pr->make_entry(fi, pid3v2, ti, pid3v1);
+    // and use the open istream to read the...
+    unique_ptr<scribbu::id3v2_tag> pid3v2 = scribbu::maybe_read_id3v2(is); // ID3v2 tags...
+    scribbu::track_data ti(is);                                            // the track itself...
+    unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(is);    // and the ID3v1 tag.
 
+    // That's it-- pass whatever data we have to the reporter.
+    _pr->make_entry(fi, pid3v2, ti, pid3v1);
+  }
+  catch (const exception &ex) {
+    cerr << pth << ": " << ex.what() << endl;
+    return false;
+  }
+
+    return true;
 }
 
 /// Recursively process a directory sequentially
-void sequential_strategy::process_directory(const fs::path &pth) {
+std::pair<std::size_t, std::size_t>
+sequential_strategy::process_directory(const fs::path &pth) {
 
+  std::size_t num_ok = 0, num_err = 0;
   std::for_each(fs::recursive_directory_iterator(pth),
                 fs::recursive_directory_iterator(),
                 [&](const fs::directory_entry &p) {
@@ -411,9 +449,14 @@ void sequential_strategy::process_directory(const fs::path &pth) {
                   fs::path pth = p.path();
                   // Only process files ending in .mp3
                   if (fs::is_regular_file(pth) && boost::regex_match(pth.string(), REGEX)) {
-                    process_file(pth);
+                    if (process_file(pth)) {
+                      num_ok++;
+                    } else {
+                      num_err++;
+                    }
                   }
                 });
+  return std::make_pair(num_ok, num_err);
 
 }
 
@@ -475,8 +518,9 @@ namespace {
        "in ID3v1 tags.")
       ("no-directory,d", po::bool_switch(), "Do not output the directory column")
       ("ascii-delimited,a", po::bool_switch(), "Produce ASCII-delimited text "
-       "instead of tab-delimited text (may be used only with --tdf");
-
+       "instead of tab-delimited text (may be used only with --tsv)")
+      ("no-summary,S", po::bool_switch(), "Do not print a summary of the "
+       "number of files processed on completion.");
 
     po::options_description xopts("hidden options");
     xopts.add_options()
@@ -561,12 +605,13 @@ namespace {
       // - the crawler will handle each file by processing it &
       //   sending the results to the reporter
 
-      size_t ncomm = vm["num-comments"].as<size_t>();
-      fs::path out = vm["output"].as<fs::path>();
-      encoding v1enc = vm["v1-encoding"].as<encoding>();
-      bool no_dir = vm["no-directory"].as<bool>();
-      bool tdf = vm["tsv"].as<bool>();
-      bool ascii = vm["ascii-delimited"].as<bool>();
+      size_t   ncomm   = vm["num-comments"   ].as<size_t  >();
+      fs::path out     = vm["output"         ].as<fs::path>();
+      encoding v1enc   = vm["v1-encoding"    ].as<encoding>();
+      bool     no_dir  = vm["no-directory"   ].as<bool    >();
+      bool     tdf     = vm["tsv"            ].as<bool    >();
+      bool     ascii   = vm["ascii-delimited"].as<bool    >();
+      bool     no_summ = vm["no-summary"     ].as<bool    >();
 
       std::shared_ptr<reporter> pr(
         tdf ?
@@ -575,7 +620,20 @@ namespace {
 
       std::unique_ptr<reporting_strategy> ps(new sequential_strategy(pr));
 
-      std::for_each(arguments.begin(), arguments.end(), std::ref(*ps));
+      size_t num_ok = 0, num_err = 0;
+      for (auto pth: arguments) {
+        size_t o, e;
+        tie(o, e) = (*ps)(pth);
+        num_ok += o;
+        num_err += e;
+      }
+
+      status = (num_err != 0);
+
+      if (!no_summ) {
+        cout << "Processed " << num_ok << " files successfully; " <<
+          num_err << " had errors." << endl;
+      }
 
     } catch (const po::error &ex) {
 

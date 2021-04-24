@@ -105,6 +105,8 @@ namespace scribbu {
     UTF_8, UCS_2, UCS_2BE, UCS_2LE, UCS_4, UCS_4BE, UCS_4LE,
     UTF_16, UTF_16BE, UTF_16LE, UTF_32, UTF_32BE, UTF_32LE,
     UTF_7, C99, JAVA,
+
+    MAX_ENCODING,
   };
 
   std::istream& operator>>(std::istream &is, encoding &x);

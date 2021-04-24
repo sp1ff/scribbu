@@ -124,10 +124,6 @@ namespace scribbu {
    * the extended header & the padding (i.e. just the frames).
    *
    *
-   * \todo Implement insert overloads for id3v2_3_frame&&,
-   * initializer_list<id3v2_3_frame> & ranges (i.e. two iterators).
-   *
-   *
    */
 
   class id3v2_3_tag: public id3v2_tag {
@@ -465,10 +461,6 @@ namespace scribbu {
      *
      * \brief Proxy for an id3v2_3_frame returned when a mutable frame iterator
      * is dereferenced
-     *
-     *
-     * \todo Implement functions on id3v2_3_tag::mutable_frame_proxy forwarding
-     * to id3v_3_frame public methods
      *
      *
      */

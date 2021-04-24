@@ -137,10 +137,6 @@ namespace scribbu {
    * leaving the upper four bits always zeroed.
    *
    *
-   * \todo Implement insert overloads for id3v2_4_frame&&,
-   * initializer_list<id3v2_4_frame> & range (i.e. two iterators)
-   *
-   *
    */
 
   class id3v2_4_tag: public id3v2_tag {
@@ -500,10 +496,6 @@ namespace scribbu {
      *
      * \brief Proxy for an id3v2_3_frame returned when a mutable frame iterator
      * is dereferenced
-     *
-     *
-     * \todo Implement functions on id3v2_3_tag::mutable_frame_proxy forwarding
-     * to id3v_3_frame public methods
      *
      *
      */

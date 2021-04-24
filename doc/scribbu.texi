@@ -334,7 +334,9 @@ Display this manual by saying @code{scribbu --info}.
 @menu
 * Example::
 * Invoking @command{scribbu dump}::
+* Invoking @command{scribbu encodings}::
 * Invoking @command{scribbu genre}::
+* Invoking @command{scribbu m3u}::
 * Invoking @command{scribbu report}::
 * Invoking @command{scribbu rename}::
 * Invoking @command{scribbu popm}::
@@ -672,6 +674,220 @@ complete list of the encodings supported and their identifiers.
 
 @end enumerate
 
+@node Invoking @command{scribbu encodings}
+@section Invoking @command{scribbu encodings}
+@cindex Invoking @command{scribbu encodings}
+
+Several scribbu commands accept character encodings as options. It is
+not always clear what encodings are supported or how to specify them
+textually. This sub-command will print the list of supported character
+encodings along with their names for the user's convenience.
+
+That list is reproduced here:
+
+@enumerate
+
+@item
+ASCII
+@item
+ISO-8859-1
+@item
+ISO-8859-2
+@item
+ISO-8859-3
+@item
+ISO-8859-4
+@item
+ISO-8859-5
+@item
+ISO-8859-7
+@item
+ISO-8859-9
+@item
+ISO-8859-10
+@item
+ISO-8859-13
+@item
+ISO-8859-14
+@item
+ISO-8859-15
+@item
+ISO-8859-16
+@item
+KOI8-R
+@item
+KOI8-U
+@item
+KOI8-RU
+@item
+CP1250
+@item
+CP1251
+@item
+CP1252
+@item
+CP1253
+@item
+CP1254
+@item
+CP1257
+@item
+CP850
+@item
+CP866
+@item
+CP1131
+@item
+MacRoman
+@item
+MacCentralEurope
+@item
+MacIceland
+@item
+MacCroatian
+@item
+MacRomania
+@item
+MacCyrillic
+@item
+MacUkraine
+@item
+MacGreek
+@item
+MacTurkish
+@item
+Macintosh
+@item
+ISO-8859-6
+@item
+ISO-8859-8
+@item
+CP1255
+@item
+CP1256
+@item
+CP862
+@item
+MacHebrew
+@item
+MacArabic
+@item
+EUC-JP
+@item
+SHIFT-JIS
+@item
+CP932
+@item
+ISO-2022-JP
+@item
+ISO-2022-JP-2
+@item
+ISO-2022-JP-1
+@item
+ISO-2022-JP-MS
+@item
+EUC-CN
+@item
+HZ
+@item
+GBK
+@item
+CP936
+@item
+GB18030
+@item
+EUC-TW
+@item
+BIG5
+@item
+CP950
+@item
+BIG5-HKSCS
+@item
+BIG5-HKSCS:2004
+@item
+BIG5-HKSCS:2001
+@item
+BIG5-HKSCS:1999
+@item
+ISO-2022-CN
+@item
+ISO-2022-CN-EXT
+@item
+EUC-KR
+@item
+CP949
+@item
+ISO-2022-KR
+@item
+JOHAB
+@item
+ARMSCII-8
+@item
+Georgian-Academy
+@item
+Georgian-PS
+@item
+KOI8-T
+@item
+PT154
+@item
+RK1048
+@item
+TIS-620
+@item
+CP874
+@item
+MacThai
+@item
+MuleLao-1
+@item
+CP1133
+@item
+VISCII
+@item
+TCVN
+@item
+CP1258
+@item
+HP-ROMAN8
+@item
+NEXTSTEP
+@item
+UTF-8
+@item
+UCS-2
+@item
+UCS-2BE
+@item
+UCS-2LE
+@item
+UCS-4
+@item
+UCS-4BE
+@item
+UCS-4LE
+@item
+UTF-16
+@item
+UTF-16BE
+@item
+UTF-16LE
+@item
+UTF-32
+@item
+UTF-32BE
+@item
+UTF-32LE
+@item
+UTF-7
+@item
+C99
+@item
+JAVA
+
+@end enumerate
+
 @node Invoking @command{scribbu genre}
 @section Invoking @command{scribbu genre}
 @cindex Invoking @command{scribbu genre}
@@ -850,6 +1066,96 @@ found.
 @item
 @option{-w N,--winamp=N} specify the genre numerically in terms of the
 192 Winamp-defined genres.
+
+@end enumerate
+
+@node Invoking @command{scribbu m3u}
+@section Invoking @command{scribbu m3u}
+@cindex Invoking @command{scribbu m3u}
+
+@command{scribbu m3u} will walk each file and/or directory specified
+(recursing directories) and print extended M3U entries for each. By
+default, print EXTM3U entries to stdout for all files named (directly
+or indirectly) on the command line. If an argument is a directory,
+this command will operate recursively on all files therein (the order
+of traversal is unspecified).
+
+Each extended M3U entry takes the form:
+
+@example
+    # EXINF:<duration-in-seconds>,<display title>
+    <path-to-file>
+@end example
+
+The display title will be "Artist - Title" if those two items can be
+derived from ID3 tags; otherwise the file basename will be used. The
+text forming the artist & title tags will be assumed to be in the
+system locale's encoding. To override this, specify the @option{-s}
+flag (for source encoding).
+
+The entry's path will be relative or absolute, according to the
+argument (i.e. specifying an absolute path to a file or directory will
+produce absolute paths, a relative path to a file or directory
+relative paths in the output).
+
+When writing entries to stdout, all text will be written in the system
+locale's text encoding.
+
+If the @option{-o} option is given, the output will be written to the
+file named as the option's value. By convention, files ending in .m3u8
+are UTF-8 encoded and files ending in .m3u are written in an
+unspecified encoding. Given that M3U is a de facto standard, scribbu
+does not enforce this (or any other naming convention).
+
+In this case, a new file will be created with the #EXTM3U header line,
+unless the @option{-a} (append) flag is given, in which case the
+output will be appended to the (presumably existing) file.
+
+By default, output will be in the system locale's text encoding. To
+force UTF-8 output, specify the @option{-8} option.
+
+So, for instance, if your system locale's encoding is ISO-8859-1, and
+your tags are written in, say, Windows Code Page 1251, but you would
+like an M3U playlist in UTF-8 format, say:
+
+@example
+scribbu m3u -s CP1251 -o test.m3u8 -8 some-directory/
+@end example
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* @code{scribbu m3u} Options::
+@end menu
+
+@node @code{scribbu m3u} Options
+@subsection @code{scribbu m3u} Options
+@cindex @code{scribbu m3u} Options
+
+@enumerate
+
+@item
+@option{-v|--verbose} Produce more verbose output; this really only
+makes sense when printing entries to file (otherwise the informational
+messages will be intermingled with the entries printed to stdout.
+
+@item
+@option{-s ARG|--source-encoding=ARG} Specify the text encoding in
+which the textual tags author & title are written in the files to be
+processed; e.g. "ASCII" or "UTF-8". Say @command{scribbu encodings}
+for a list of names for all support ed encodings.
+
+@item
+@option{-o ARG|--output=ARG} This option indicates that the EXTM3U
+entries shall be written to the given file rather than stdout.
+
+@item
+@option{-a|--append} When writing to file, this option indicates that
+the named file should be appended to rather than overwritten.
+
+@item
+@option{-8|use-utf-8} When writing to file, this option indicates that
+the output shall be encoded as UTF-8 (rather than the system locale's
+text encoding, which is the default behavior).
 
 @end enumerate
 

@@ -164,7 +164,9 @@ fi
 
 test_cmd "man scribbu" "NAME scribbu - The extensible tool for tagging your music collection" $cs_batch
 test_cmd "man scribbu-dump" "NAME scribbu-dump - dump ID3 tags from one or more files" $cs_batch
+test_cmd "man scribbu-encodings" "NAME scribbu encodings - List the character encodings supported by scribbu" $cs_batch
 test_cmd "man scribbu-genre" "NAME scribbu genre - Set the genre for one or more files" $cs_batch
+test_cmd "man scribbu-m3u" "NAME scribbu m3u - M3U playlists from one or more files" $cs_batch
 test_cmd "man scribbu-rename" "NAME scribbu rename - Rename files according to the ID3 tag attributes" $cs_batch
 test_cmd "man scribbu-report" 'NAME scribbu-report - generate a report on one or more files.*ID3 tags' $cs_batch
 test_cmd "man scribbu-split" "NAME scribbu-split - split a file into ID3v2, track & ID3v1 pieces" $cs_batch

@@ -86,7 +86,7 @@ So, for instance, if your system locale's encoding is ISO-8859-1, and your
 tags are written in, say, Windows Code Page 1251, but you would like an M3U
 playlist in UTF-8 format, say:
 
-  scribbu m3u -o test.m3u8 -8 some-directory/
+  scribbu m3u -s CP1251 -o test.m3u8 -8 some-directory/
 
 Summary of options:
 
@@ -350,8 +350,8 @@ namespace {
         positional(popts).
         run();
 
-      maybe_handle_help(parsed, docopts, USAGE, "scribbu-genre",
-                        "(scribbu) Invoking scribbu genre");
+      maybe_handle_help(parsed, docopts, USAGE, "scribbu-m3u",
+                        "(scribbu) Invoking scribbu m3u");
 
       po::store(parsed, vm);
 

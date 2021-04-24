@@ -685,6 +685,12 @@ namespace scribbu {
     std::uint32_t size_bytes_;
   };
 
+  inline
+  bool
+  is_sync(std::uint8_t hdr[]) {
+    return (0xff == hdr[0] && 0xe0 <= hdr[1]);
+  }
+
   /**
    * \class mp3_audio_frame
    *
@@ -729,6 +735,11 @@ namespace scribbu {
     };
 
   public:
+    /// Construct having already read the 32-bit frame header; \a hdr shall
+    /// contain that while \a is shall point to the remainder of an MPEG Layer
+    /// III audio frame; this is a convenience for callers that want to check
+    /// for frame sync, or a valid header themselves
+    mp3_audio_frame(std::uint8_t hdr[4], std::istream &is, bool check_vbr = false);
     /// \a is shall point to an MPEG Layer III audio frame
     mp3_audio_frame(std::istream &is, bool check_vbr = false);
 
@@ -751,7 +762,7 @@ namespace scribbu {
   private:
     /// Helper function-- just parse the MPEG Audio Header; should only be
     /// called during construction
-    void parse_header(std::istream &is);
+    void parse_header(std::uint8_t hder[4], std::istream &is);
     /// Helper function for checking for VBR frames & parsing 'em if found;
     /// should only be called during construction
     void parse_vbr(std::istream &is);
