@@ -59,7 +59,7 @@ scribbu can be invoked in a few ways:
 
     #+BEGIN_EXAMPLE
 	    scribbu
-		scribbu 0.6.17
+		scribbu 0.6.18
 		Copyright (C) 2017-2021 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
@@ -110,7 +110,7 @@ scribbu is supported on Linux & MacOS. It depends upon:
 
 scribbu is distributed as an Autotools source distribution, so installation is accomplished via the usual "configure, make, make install" incantations. General instructions may be found in [[INSTALL]].
 
-Begining with scribbu 0.6, binary packages for Debian & Arch are also available.
+Begining with scribbu 0.6.18, binary packages for Debian & Arch are also available.
 
 Patches, suggestions & bug reports are welcome.
 

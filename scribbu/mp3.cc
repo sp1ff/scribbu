@@ -23,7 +23,7 @@
 
 #include <scribbu/mp3.hh>
 
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 
 namespace {
 
@@ -88,7 +88,7 @@ scribbu::vbri_mp3_tag::vbri_mp3_tag(std::istream &is)
 
   is.read((char*)&ns, 2);
   delay_ = ntohs(ns);
-  
+
   is.read((char*)&ns, 2);
   quality_ = ntohs(ns);
 
@@ -418,7 +418,7 @@ scribbu::mp3_audio_frame::parse_header(std::uint8_t hdr[4], std::istream &is)
 
     unsigned int samples_per_frame =
       version_ == mpeg_version::mpeg_audio_version_1 ? 1152 : 576;
-  
+
     size_ = samples_per_frame * bitrate_ / 8 / sample_rate_;
     if (padded_) {
       size_ += 1;
@@ -475,7 +475,7 @@ scribbu::mp3_audio_frame::parse_vbr(std::istream &is)
 
   //   4. failing that, skip forward by enough bytes to bring us to offset 36
   //      within this frame
-  
+
   //   5. check for "VBRI" (i.e. the Fraunhofer tag); if found,
   //      parse the tag
 
@@ -575,14 +575,14 @@ scribbu::get_mp3_duration(std::istream &is)
   std::size_t num, den;
   mp3_audio_frame f(hdr, is, true);
   std::tie(num, den) = f.duration();
-  
+
   double dur;
 
   auto vbri = f.vbri();
   if (vbri) {
     std::size_t num_frames, num_bytes;
     std::tie(num_frames, num_bytes) = *vbri;
-      
+
     dur = double(num) * double(num_frames) / double(den);
     is.seekg(num_bytes - f.size(), std::ios_base::cur);
   } else {
@@ -600,7 +600,7 @@ scribbu::get_mp3_duration(std::istream &is)
     }
     dur = double(num) * double(num_frames) / double(den);
   }
-  
+
   is.exceptions(exc_mask);
   return dur;
 }

@@ -64,7 +64,7 @@ specify the -s flag (for source encoding).
 
 Output to file:
 
-If the -o option is given, the output will be written to the named file. By 
+If the -o option is given, the output will be written to the named file. By
 convention, files ending in .m3u8 are UTF-8 encoded and files ending in .m3u
 are written in an unspecified encoding. Given that M3U is a de facto standard,
 scribbu does not enforce this (or any other naming convention).
@@ -75,9 +75,9 @@ existing file.
 
 By default, paths will be written in the system locale's encoding (the same
 encoding in which they will be read). To force utf-8 output, specify the -8
-flag. 
+flag.
 
-The text forming the artist & title tags will also be assumed to be in 
+The text forming the artist & title tags will also be assumed to be in
 the system locale. To override this, specify the -s flag (for source
 encoding). On output, they will be written in the system locale's encoding,
 again unless the -8 flag is given.
@@ -122,7 +122,7 @@ namespace {
     bool verbose() const
     { return verbose_ ; }
 
-    
+
   protected:
     template <typename forward_input_iterator>
     boost::optional<std::string>
@@ -161,7 +161,7 @@ namespace {
         return a + " - " + t;
       }
     }
-    
+
     if (ptagv1) {
       string a = ptagv1->artist<string>(src_enc_, dst_enc_);
       string t = ptagv1->title<string>(src_enc_, dst_enc_);
@@ -180,7 +180,7 @@ namespace {
   {
     using namespace std;
     using namespace scribbu;
-    
+
     ifstream ifs = open_ifstream(pth.native(), ios_base::binary);
     vector<unique_ptr<id3v2_tag>> id3v2;
     read_all_id3v2(ifs, back_inserter(id3v2));
@@ -198,7 +198,7 @@ namespace {
     os_ << "#EXTINF:" << (int) (secs + 0.5) << "," << display << "\n" <<
       pth.native() << endl;
   }
-    
+
   //////////////////////////////////////////////////////////////////////////////
   //                          class m3u_to_stdout                             //
   //////////////////////////////////////////////////////////////////////////////
@@ -226,7 +226,7 @@ namespace {
     m3u_to_file(boost::optional<scribbu::encoding> src_enc,
                 bool verbose,
                 const fs::path   &out,
-                bool              append,      
+                bool              append,
                 bool              use_utf8);
 
   private:
@@ -237,7 +237,7 @@ namespace {
   m3u_to_file::m3u_to_file(boost::optional<scribbu::encoding> src_enc,
                            bool verbose,
                            const fs::path   &out,
-                           bool              append,      
+                           bool              append,
                            bool              use_utf8):
     m3u(ofs_, src_enc, verbose,
         use_utf8 ? scribbu::encoding::UTF_8 : scribbu::encoding_from_system_locale())

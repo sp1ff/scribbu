@@ -61,8 +61,9 @@ jobs:
         set -x
         pwd
         brew update
-        brew install autoconf automake libtool openssl guile doxygen flex bison graphviz texinfo
+        brew install autoconf automake libtool openssl doxygen flex bison graphviz texinfo
         brew install --cask basictex
+        type -p guile || brew install guile
     - name: Install pre-requisites (Ubuntu)
       if: matrix.os == 'ubuntu-20.04'
       shell: bash

@@ -224,7 +224,7 @@ namespace scribbu {
    *
    * \return a newly instantiated std::ifstream associated with the file \a name
    *
-   * 
+   *
    * If you call basic_fstream's ctor with a filename, and for any reason it
    * can't open it, errno will be set, and the constructed basic_fstream
    * instance will have failbit set in it's error mask. This is unfortunate,
@@ -276,7 +276,7 @@ namespace scribbu {
    * \param is [in, out] istream whose get pointer is positioned at the
    * beginning of the audio data
    *
-   * \param hint [in, opt] offset of either the ID3v1 tag if present, or the 
+   * \param hint [in, opt] offset of either the ID3v1 tag if present, or the
    * EOF position, if known
    *
    * \return the 128-bit MD5 checksum
@@ -291,7 +291,7 @@ namespace scribbu {
 
   std::array<unsigned char, MD5_DIGEST_SIZE>
   compute_track_md5(std::istream &is, std::streampos hint = EOF);
-  
+
   /**
    * \brief Container for information about the track data itself
    *

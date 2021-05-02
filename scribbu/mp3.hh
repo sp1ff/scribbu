@@ -119,7 +119,7 @@
                         for frame sync (see below)
 
  C      2      18-17    layer description
-                        00 - reserved           
+                        00 - reserved
                         01 - Layer III
                         10 - Layer II
                         11 - Layer I
@@ -132,7 +132,7 @@
                         | bits | V1,L1 | V1,L2 | V1,L3 | V2,L1 | V2, L2 & L3 |
                         +------+-------+-------+-------+-------+-------------+
                         | 0000 | free  | free  | free  | free  | free        |
-                        | 0001 | 32    | 32    | 32    | 32    | 8           | 
+                        | 0001 | 32    | 32    | 32    | 32    | 8           |
                         | 0010 | 64    | 48    | 40    | 48    | 16          |
                         | 0011 | 96    | 56    | 48    | 56    | 24          |
                         | 0100 | 128   | 64    | 56    | 64    | 32          |
@@ -142,7 +142,7 @@
                         | 1000 | 256   | 128   | 112   | 128   | 64          |
                         | 1001 | 288   | 160   | 128   | 144   | 80          |
                         | 1010 | 320   | 192   | 160   | 160   | 96          |
-                        | 1011 | 352   | 224   | 192   | 176   | 112         |        
+                        | 1011 | 352   | 224   | 192   | 176   | 112         |
                         | 1100 | 384   | 256   | 224   | 192   | 128         |
                         | 1101 | 416   | 320   | 256   | 224   | 144         |
                         | 1110 | 448   | 384   | 320   | 256   | 160         |
@@ -150,7 +150,7 @@
                         +------+-------+-------+-------+-------+-------------+
 
                         All values are in kbps (kilo, as in x1000, *not* x1024)
-                        V1 - MPEG Version 1     
+                        V1 - MPEG Version 1
                         V2 - MPEG Version 2 and Version 2.5
                         L1 - Layer I
                         L2 - Layer II
@@ -171,7 +171,7 @@
                         +------+-------+-------+---------+
 
   G     1      9        padding bit
-                        0 - frame is not padded 
+                        0 - frame is not padded
                         1 - frame is padded with one extra slot
 
                         Padding is used to fit the bit rates exactly. For an
@@ -183,7 +183,7 @@
 
   I     2      7-6      channel mode
 
-                        00 - Stereo             
+                        00 - Stereo
                         01 - Joint stereo (Stereo)
                         10 - Dual channel (Stereo)
                         11 - Single channel (Mono)
@@ -210,7 +210,7 @@
 
                         +-------+----------------+-------------------------------+
                         | Value | Layers I & II  |        Layer III              |
-                        |       |                | M/S stereo | Intensity stereo | 
+                        |       |                | M/S stereo | Intensity stereo |
                         +-------+----------------+-------------------------------+
                         | 00    | bands 4 to 31  |    off     |     off          |
                         | 01    | bands 8 to 31  |    off     |     on           |
@@ -226,7 +226,7 @@
                         1 - original media
   M     2      1-0      emphasis
 
-                        00 - none               
+                        00 - none
                         01 - 50/15 ms
                         10 - reserved
                         11 - CCIT J.17
@@ -274,7 +274,7 @@
  *
  * The size of Layer III side information varies based on spec version & channel
  * mode:
- * 
+ *
  \code
   |       | MPEG 1 | MPEG 2/2.5 (LSF) |
   +-------+--------+------------------+
@@ -331,7 +331,7 @@
  * header, and if found, instead computes the duration by muliplying
  * the number of frames by the first frame's duration (computed, through
  * libmad, by the sample rate).
- * 
+ *
  * See \ref scribbu_mp3_ref_07 "[7]" for an interesting discussion on sampling
  * rates; changing the sampling rate is apparently never done, but it has to be
  * advertised in each frame to enable decoders to work with streaming data (i.e.
@@ -430,7 +430,7 @@
  *
  * \subsection scribbu_mp3_frame_header_vbri_lame LAME
  *
- * The LAME tag extends the Xing tag to add yet more information. Of particular 
+ * The LAME tag extends the Xing tag to add yet more information. Of particular
  * interest here: if the encoding used ABR, the average bitrate will be listed
  * here.
  *
@@ -442,7 +442,7 @@
                     see [11] for details
                     "LAME" + major + "." + minor + flag until 3.100, then
                     "LAME" + major + minor + flag
-                    flag is one of "a", "b", "r" or " " for alpha, beta, 
+                    flag is one of "a", "b", "r" or " " for alpha, beta,
                     release when the patch is > 0 or all other cases, resp.
 
   9         1       tag version & VBR method
@@ -632,7 +632,7 @@ namespace scribbu {
     std::optional<std::uint32_t> file_size_bytes_;
     std::optional<std::array<std::uint8_t, 100>> toc_;
     std::optional<std::uint32_t> quality_;
-    
+
   };
 
   /**

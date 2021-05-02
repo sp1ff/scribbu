@@ -41,7 +41,7 @@ Summary of options:
   -h              display this usage message
   --help, --man   display this sub-command's man page instead of listing the
                   encodings to stdout
-  --info          display the corresponding Info node instead of listing the 
+  --info          display the corresponding Info node instead of listing the
                   encodings to stdout
 
 For detailed help, say `scribbu encodings --help'. To see the manual, say
