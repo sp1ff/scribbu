@@ -1,3 +1,7 @@
+2021-05-02  Michael Herstine  <sp1ff@pobox.com>
+
+	Preparing to release 0.6.18.
+
 2021-05-01  Michael Herstine  <sp1ff@pobox.com>
 
 	Improved 'm3u' sub-command, added 'encoding' sub-command.

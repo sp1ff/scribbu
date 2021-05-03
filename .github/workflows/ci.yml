@@ -18,20 +18,20 @@ jobs:
         include:
         - os: macos-10.15
           boost: oldest
-          boost-ver: 1_58_0
-          boost-dl: https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2
+          boost-ver: 1_63_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.63.0/source/boost_1_63_0.tar.bz2
         - os: macos-10.15
           boost: pinned
           boost-ver: 1_71_0
-          boost-dl: https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.bz2
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.71.0/source/boost_1_71_0.tar.bz2
         - os: macos-10.15
           boost: latest
           boost-ver: 1_76_0
-          boost-dl: https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.bz2
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2
         - os: ubuntu-20.04
           boost: oldest
-          boost-ver: 1_58_0
-          boost-dl: https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2
+          boost-ver: 1_63_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.63.0/source/boost_1_63_0.tar.bz2
         - os: ubuntu-20.04
           boost: pinned
           boost-ver: 1_71_0
