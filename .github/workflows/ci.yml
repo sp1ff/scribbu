@@ -13,7 +13,6 @@ jobs:
       matrix:
         # TODO(sp1ff): add more OS versions (macos-11.0, ubuntu-18.04, ubuntu-16.04)
         os: [macos-10.15, ubuntu-20.04]
-        # TODO(sp1ff): add latest
         boost: [oldest, pinned, latest]
         include:
         - os: macos-10.15
@@ -103,29 +102,52 @@ jobs:
     - name: Patch boost (MacOS)
       if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
       run: |
-        cd boost_${{ matrix.boost-ver }}/tools/build/src/engine/modules
-        cp path.c path.c.bak
-        echo "#include \"../filesys.h\"" > path.c.tmp
-        cat path.c >> path.c.tmp
-        mv path.c.tmp path.c
-        cat path.c
-        # https://github.com/arvidn/libtorrent/issues/4662
-        pwd
-        cd ../../tools
-        pwd
+        cd boost_${{ matrix.boost-ver }}/tools/build/src/engine
+        cp build.sh build.sh.bak
+        awk '/darwin\)/{print; print "    BOOST_JAM_OPT_JAM=\"$BOOST_JAM_OPT_JAM $CFLAGS $LIBS\""; next }1' build.sh > build.sh.tmp
+        mv build.sh.tmp build.sh
+        chmod a+x build.sh
+        # cat build.sh
+        cp execcmd.c execcmd.c.bak
+        awk '/#include "execcmd.h"/{print; print "#include \"output.h\""; next }1' execcmd.c > execcmd.c.tmp
+        mv execcmd.c.tmp execcmd.c
+        # cat execcmd.c
+        cp make.c make.c.bak
+        awk '/#include "make.h"/{print; print "#include \"output.h\""; next }1' make.c > make.c.tmp
+        mv make.c.tmp make.c
+        # cat make.c
+        cp filesys.c filesys.c.bak
+        awk '/#include "filesys.h"/{print; print "int filelist_empty( FILELIST * list );"; next }1' filesys.c > filesys.c.tmp
+        mv filesys.c.tmp filesys.c
+        # cat filesys.c
+        cp modules/path.c modules/path.c.bak
+        awk '/#include "..\/timestamp.h"/{print; print "#include \"../filesys.h\""; next }1' modules/path.c > modules/path.c.tmp
+        mv modules/path.c.tmp modules/path.c
+        # cat modules/path.c
+        cp fileunix.c fileunix.c.bak
+        awk '/#include "jam.h"/{print; print "int filelist_empty( FILELIST * list );"; next }1' fileunix.c > fileunix.c.tmp
+        awk '/#include "jam.h"/{print; print "#include \"filesys.h\""; next }1' fileunix.c.tmp > fileunix.c.tmp.1
+        awk '/#include "filesys.h"/{print; print "int file_collect_archive_content_( file_archive_info_t * const archive );"; next }1' fileunix.c.tmp.1 > fileunix.c
+        # cat fileunix.c
+        cd ../tools
         cp darwin.jam darwin.jam.bak
         head -n138 darwin.jam > darwin.jam.tmp
-        tail -n +144 darwin.jam >> darwin.jam.tmp
+        tail -n +145 darwin.jam >> darwin.jam.tmp
         mv darwin.jam.tmp darwin.jam
 
     - name: Build boost (MacOS)
       if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      shell: bash
       run: |
         pwd
         set -x
         cd boost_${{ matrix.boost-ver }}
-        test -f bootstrap.sh && ./bootstrap.sh --prefix=./installdir || cat bootstrap.log
-        ./b2 && ./b2 install
+        pwd
+        ls
+        export CFLAGS="-Wno-error=implicit-function-declaration"
+        ./bootstrap.sh --prefix=./installdir || { cat bootstrap.log; exit 1; }
+        ./b2
+        ./b2 install
         cd installdir/lib
         pwd
         ls
@@ -141,6 +163,7 @@ jobs:
 
     - name: Install boost (Ubuntu, pinned)
       if: matrix.os == 'ubuntu-20.04' && matrix.boost == 'pinned'
+      shell: bash
       run: |
         set -x
         pwd
