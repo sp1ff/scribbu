@@ -24,8 +24,8 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     # Un-comment this for testing
-    # env:
-    #   RELEASE_VERSION: 0.6.16
+    env:
+      RELEASE_VERSION: 0.6.18
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -75,8 +75,8 @@ jobs:
         - build: macos
           os: macos-10.15
           boost: latest
-          boost-ver: 1_75_0
-          boost-dl: https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.bz2
+          boost-ver: 1_76_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2
 
     steps:
 
@@ -121,37 +121,23 @@ jobs:
         tar xf boost_${{ matrix.boost-ver }}.tar.bz2
         mkdir boost_${{ matrix.boost-ver }}/installdir
 
-    - name: Patch boost (MacOS)
-      if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
-      run: |
-        set -x
-        pwd
-        cd boost_${{ matrix.boost-ver }}/tools/build/src/engine/modules
-        cp path.c path.c.bak
-        echo "#include \"../filesys.h\"" > path.c.tmp
-        cat path.c >> path.c.tmp
-        mv path.c.tmp path.c
-        cat path.c
-        # https://github.com/arvidn/libtorrent/issues/4662
-        pwd
-        cd ../../tools
-        pwd
-        cp darwin.jam darwin.jam.bak
-        head -n138 darwin.jam > darwin.jam.tmp
-        tail -n +144 darwin.jam >> darwin.jam.tmp
-        mv darwin.jam.tmp darwin.jam
-
     - name: Build boost (MacOS)
       if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      shell: bash
       run: |
+        pwd
+        set -x
         cd boost_${{ matrix.boost-ver }}
-        test -f bootstrap.sh && ./bootstrap.sh --prefix=./installdir || cat bootstrap.log
-        ./b2 && ./b2 install
+        pwd
+        ls
+        export CFLAGS="-Wno-error=implicit-function-declaration"
+        ./bootstrap.sh --prefix=./installdir || { cat bootstrap.log; exit 1; }
+        ./b2
+        ./b2 install
         cd installdir/lib
         pwd
         ls
         here=$(pwd)
-        set -x
         install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_log.dylib
         install_name_tool -change libboost_thread.dylib     ${here}/libboost_thread.dylib     libboost_log.dylib
         install_name_tool -change libboost_date_time.dylib  ${here}/libboost_date_time.dylib  libboost_log.dylib
