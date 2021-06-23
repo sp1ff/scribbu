@@ -58,7 +58,7 @@ pkginclude_HEADERS = scribbu.hh		\
 		     scheme-serde.hh    \
 		     winamp-genres.hh
 
-libscribbu_la_LDFLAGS = -version-info 3:0:0
+libscribbu_la_LDFLAGS = -version-info 4:0:0
 
 # automake will figure out how to make tbt-parser.hh, but we need to tell it how 
 # to make tbt-lexer.h:

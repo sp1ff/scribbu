@@ -254,11 +254,11 @@ namespace scribbu {
 
     /// Return the number of bytes this frame will occupy when serialized to
     /// disk, including the header
-    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t serialized_size(bool unsync, bool last_no_pad = false) const;
     /// Return zero if this tag would not contain false syncs if serialized in
     /// its present state; else return the number of false sync it would
     /// contain
-    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t needs_unsynchronisation(bool last_no_pad = false) const;
     /// Serialize this tag to an output stream, perhaps applying the
     /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
     /// will be updated accordingly)
@@ -284,7 +284,7 @@ namespace scribbu {
 
     /// If the dirty flag is set, re-serialize & re-apply compression,
     /// encryption & unsynchronisation
-    void ensure_cached_data_is_fresh() const;
+    void ensure_cached_data_is_fresh(bool last_no_pad = false) const;
     /// Serialize this frame to \a os, exclusive of the frame header, as well
     /// as any compression, encryption or unsynchronisation; return the number
     /// of bytes written

@@ -421,7 +421,7 @@ namespace {
                    ref(*p));
         }
         else {
-          (*p)(x);
+          (*p)(x, true);
         }
       }
 

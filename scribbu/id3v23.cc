@@ -487,10 +487,6 @@ scribbu::id3v2_3_tag::flags() const
  * - add the padding, if any
  *
  *
- * \todo If \a unsync is requested, and the last byte of the last frame is
- * 0xff, we need to add one.
- *
- *
  */
 
 /*virtual*/
@@ -510,12 +506,23 @@ scribbu::id3v2_3_tag::size(bool unsync) const
     cb += pext_header_->serialized_size(unsync);
   }
 
-  // we of course include all our frames...
-  cb += accumulate(begin(), end(), 0,
-                   [unsync](size_t n, const id3v2_3_frame &f)
-                   { return n + f.serialized_size(unsync); });
+  // we of course include all our frames. We need to treat the last frame
+  // specially (because in ID3v2.3+, a trailing 0xff is treated as a false
+  // sync), but only if there's no padding.
+  size_t cb_pad = padding();
 
-  cb += padding();
+  auto p = begin(), p1 = end();
+  if (p != p1) {
+    p1 -= 1;
+    while (p != p1) {
+      cb += p->serialized_size(unsync);
+      p += 1;
+    }
+    cb += p->serialized_size(unsync, 0 == cb_pad);
+  }
+
+  // as well as any padding.
+  cb += cb_pad;
 
   return cb;
 
@@ -548,16 +555,12 @@ scribbu::id3v2_3_tag::size(bool unsync) const
  *  - padding is synchsafe, so no need to count
  *
  *
- * \todo If the last byte of the last frame is 0xff, that's a false sync
- *
- *
  */
 
 /*virtual*/
 bool
 scribbu::id3v2_3_tag::needs_unsynchronisation() const
 {
-
   using namespace std;
 
   if (pext_header_) {
@@ -569,11 +572,24 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
     }
   }
 
-  // return any_of(begin(), end(), [](const id3v2_3_frame &F) { return F.needs_unsynchronisation(); });
-  return any_of(begin(), end(), [](const id3v2_3_frame &F) {
-                                  bool f = F.needs_unsynchronisation();
-                                  return f;
-                                });
+  size_t cb_pad = padding();
+
+  auto p = begin(), p1 = end();
+  if (p != p1) {
+    p1 -= 1;
+    while (p != p1) {
+      if (p->needs_unsynchronisation()) {
+        return true;
+      }
+      p += 1;
+    }
+    if (p->needs_unsynchronisation(cb_pad == 0)) {
+      return true;
+    }
+  }
+
+  return false;
+  
 }
 
 /**

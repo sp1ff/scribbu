@@ -849,6 +849,8 @@ void scribbu::id3v2_2_tag::parse(std::istream &is, std::size_t size)
   // state.
   std::streampos here = is.tellg();
 
+  padding_ = 0;
+
   try {
 
     // Size, in bytes, of the tag *after* the header, *before*

@@ -119,9 +119,10 @@
  * when reading a tag with the unsynchronisation flag set, we have no way to
  * know whether that was a false sync that was unsynchronised (and so the three
  * bytes should be interpreted as %11111111 111xxxxx) or whether those three
- * bytes had occurred naturally in the tag when it was written. To resolve
- * this, on applying unsynchronisation all two-byte sequences of the form $FF
- * 00 should also be written as $FF 00 00.
+ * bytes had occurred naturally in the tag when it was written. To resolve this,
+ * on applying unsynchronisation all two-byte sequences of the form $FF 00
+ * should also be written as $FF 00 00 (in other words, on deserialization all
+ * two-byte sequences of the form $FF 00 can just be interpreted as $FF).
  *
  * In ID3v2.2, deserialization is straightforward. The ten byte header is
  * "sync-safe" by definition, so it can be read without any additional
@@ -129,8 +130,8 @@
  * sequences of the form $FF 00 should be interpreted as just $FF.
  *
  * ID2v2.3 introduced an extended header, which is *not* sync-safe, and
- * padding, which *is* (padding bytes must always be $00). In section 3.2 \ref
- * scribbu_id3v2_refs_4 "[4]" the specification explicitly notes that the
+ * padding, which *is* (padding bytes must always be $00). In section 3.2 
+ * \ref scribbu_id3v2_refs_4 "[4]" the specification explicitly notes that the
  * extended header \em is subject to unsynchronisation. Therefore, in the end,
  * ID3v2.3 tags are deserialized in the same way as ID3v2.2: once the header is
  * read, all two-byte sequences of the form $FF 00 should again be interpreted
@@ -149,18 +150,18 @@
  * never have its high bit set. An ID3v2 tag may contains false syncs within
  * itself, but may never \em complete a false sync introduced by a preceding
  * component, since the frame header begins with an ASCII character (which
- * may not be zero nor may it have its high bit set).
+ * may not be zero nor have its high bit set).
  *
  * An ID3v2.3 extended header may contain false syncs within itself, but will
  * never complete a false sync (since it follws an ID3v2 header) and may never
  * introduce a false sync, since it must be followed by a frame (compliant tags
- * must contain at least one frmae). ID3v2.2 defines no extended header and
+ * must contain at least one frame). ID3v2.2 defines no extended header and
  * ID3v2.4's header & footer are sync-safe.
  *
- * The one exception to this is when the last frame in a tag has a final byte
- * of 0xff. If there is no padding (or footer, in the case of ID3v2.4) this
- * is a false sync. If there is padding, it will introduce a 0xff 0x00 pattern
- * which must be written as 0xff 0x00 0x00 if unsynchronisation is being
+ * The one exception to this is when the last frame in a tag has a final byte of
+ * 0xff. If there is no padding (or footer, in the case of ID3v2.4) this is a
+ * false sync in ID3v2.3+. If there is padding, it will introduce a 0xff 0x00
+ * pattern which must be written as 0xff 0x00 0x00 if unsynchronisation is being
  * applied.
  *
  * This might suggest handling unsynchronisation at a tag level (e.g. when
@@ -169,12 +170,14 @@
  * one fell swoop), but this is unattractive for two reasons:
  *
  *   - ID3v2.4 applies the usnychronisation scheme on a frame-by-frame basis
- *   - ID3v2.3+ frames can be encrypted and/or compressed, suggesting that they
- *     will be caching representations of themselves in various forms; I don't
- *     want to cache individual frames \em and entire tags
+ *   - ID3v2.3+ frames can be encrypted and/or compressed, and ID3v2.2 supports
+ *     an encrypted frame type-- in all cases this suggests that they will be
+ *     caching representations of themselves in various forms; I don't want to
+ *     cache individual frames \em and entire tags
  *
- * Therefore, scribbu tags write themselves component-by-component, applying
- * unsynchronisation (if requested) as they go.
+ * Perhaps I'll reconsider this in the future, but at this time scribbu tags
+ * write themselves component-by-component, applying unsynchronisation (if
+ * requested) as they go.
  *
  *
  * \section scribbu_impl_notes Implementation Notes
@@ -694,8 +697,8 @@ namespace scribbu {
     /// ID3v2 header (i.e. return the total tag size on disk, in bytes, less
     /// ten)
     virtual std::size_t size(bool unsync = false) const = 0;
-    /// Return true if this the serialization of this tag would contain false
-    /// syncs if serialized in its present state
+    /// Return true if the serialization of this tag would contain false syncs
+    /// if serialized in its present state
     virtual bool needs_unsynchronisation() const = 0;
     /// Serialize this tag to an output stream, perhaps applying the
     /// unsynchronisation scheme if the caller so chooses ("unsynchronised"

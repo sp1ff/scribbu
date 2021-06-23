@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_4 )
   const fs::path TEST_DATA(get_data_directory() / "id3v2.4.tag");
 
   const string GOLDEN(R"(ID3v2.4(.0) Tag:
-1091 bytes, synchronised
+2115 bytes, synchronised
 flags: 0x00
 Joao Gilberto - Acapulco
 Ela E Carioca, <no year>

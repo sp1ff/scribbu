@@ -1,3 +1,26 @@
+2021-07-05  Michael Herstine  <sp1ff@pobox.com>
+
+	Unsynchronisation improvements.
+	This comment addresses a lingering issue with unsynchronisation:
+	when the last frame in an ID3v2.{3,4} tag ends in 0xff, and there
+	is no padding, that should be treated as a false sync.
+
+	The last of the "TODO"-s have been removed from the codebase, as well.
+
+2021-05-21  Michael Herstine  <sp1ff@pobox.com>
+
+	Fixing the Arch package build script.
+
+2021-05-15  Michael Herstine  <sp1ff@pobox.com>
+
+	Fixing release workflow
+
+	Fixing ci workflow
+
+2021-05-03  Michael Herstine  <sp1ff@pobox.com>
+
+	Missed the updated changelog in my last commit. Also, boost has moved the locations of their downloads-- updating ci.yml.
+
 2021-05-02  Michael Herstine  <sp1ff@pobox.com>
 
 	Preparing to release 0.6.18.

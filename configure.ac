@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([scribbu], [0.6.18], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
+AC_INIT([scribbu], [0.6.19], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
 AC_CONFIG_MACRO_DIR([macros])
 AC_CONFIG_SRCDIR([src/scribbu.cc])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -95,4 +95,5 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile scribbu/Makefile src/Makefile scheme/Makefile])
 AC_CONFIG_FILES([test/Makefile test/data/Makefile doc/Makefile doc/Doxyfile])
 AC_CONFIG_FILES([env], [chmod +x env])
+AC_CONFIG_FILES([contrib/rip-tracks], [chmod +x contrib/rip-tracks])
 AC_OUTPUT

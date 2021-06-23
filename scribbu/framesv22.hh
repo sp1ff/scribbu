@@ -150,11 +150,11 @@ namespace scribbu {
 
     /// Return the number of bytes this frame will occupy when serialized to
     /// disk, including the header
-    virtual std::size_t serialized_size(bool unsync) const;
+    virtual std::size_t serialized_size(bool unsync, bool last_no_pad = false) const;
     /// Return zero if this tag would not contain false syncs if serialized in
     /// its present state; else return the number of false sync it would
     /// contain
-    virtual std::size_t needs_unsynchronisation() const;
+    virtual std::size_t needs_unsynchronisation(bool last_no_pad = false) const;
     /// Serialize this tag to an output stream, perhaps applying the
     /// unsynchronisation scheme if the caller so chooses ("unsynchronised"
     /// will be updated accordingly)

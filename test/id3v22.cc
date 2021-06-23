@@ -394,3 +394,35 @@ BOOST_AUTO_TEST_CASE( test_id3v22_text_frames )
   BOOST_CHECK( "2006"          == tag.year()         );
 
 } // End test_text_frames.
+
+BOOST_AUTO_TEST_CASE( test_trailing_ff_2 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Let's concoct an ID3v2.3 tag with a trailing 0xff.
+  const unsigned char TAG[] = {
+    0x49, 0x44, 0x33,       // "ID3"
+    0x02, 0x00,             // version 2
+    0x80,                   // unsync, no compression
+    0x00, 0x00, 0x00, 0x07, // frame size is seven bytes
+    0x43, 0x4e, 0x54,       // "CNT"
+    0x00, 0x00, 0x01,       // frame size is one byte
+    0xff,                   // 255 plays
+  };
+
+  stringstream stm(string((const char*)TAG, sizeof(TAG)));
+  id3v2_2_tag tag(stm);
+
+  // Smoke checks
+  BOOST_CHECK( 1 == tag.num_frames() );
+  BOOST_TEST_MESSAGE( "padding is " << tag.padding() );
+  BOOST_CHECK( 0 == tag.padding() );
+
+  // OK-- the heart of the matter. Despite the trailing 0xff, in ID3v2.2 we
+  // should *not* append a trailing null when writing when applying
+  // unsynchronisation.
+  BOOST_TEST_MESSAGE( "size is " << tag.size(true) );
+  BOOST_CHECK( sizeof(TAG) - 10 == tag.size(true) );
+  BOOST_CHECK( ! tag.needs_unsynchronisation() );
+}

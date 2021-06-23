@@ -4,6 +4,9 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** treat trailing 0xff-s as false syncs
+
+Address a lingering issue with unsynchronisation: when the last frame in an ID3v2.{3,4} tag ends in 0xff, and there is no padding, that should be treated as a false sync.
 *** improved error messages when failing to open files
 *** no longer terminates on error in functions exported to Guile
 *** fixed a bug in id3v1_tag::set_year
@@ -15,7 +18,6 @@ Was calling `strlen` on a string that may not be null-terminated.
 *** fixed a bug in copying ID3v2 tags to ID3v1
 
 *** `scribbu text' will now, optionally, create an ID3v2 tag if there isn't one already
-
 *** `scribbu dump' fails silently on file-not-found
 
 *** owner not being written out by `scribbu popm' in some cases

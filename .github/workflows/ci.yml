@@ -34,7 +34,7 @@ jobs:
         - os: ubuntu-20.04
           boost: pinned
           boost-ver: 1_71_0
-          boost-dl: https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.bz2
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.71.0/source/boost_1_71_0.tar.bz2
         - os: ubuntu-20.04
           boost: latest
           boost-ver: latest

@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
   id3v2_4_tag tag(ifsv2_4);
   BOOST_CHECK(4 == tag.version());
   BOOST_CHECK(0 == tag.revision());
-  BOOST_CHECK(1091 == tag.size());
+  BOOST_CHECK(2115 == tag.size());
   BOOST_CHECK(0 == tag.flags());
   BOOST_CHECK(!tag.has_extended_header());
   BOOST_CHECK(!tag.has_footer());
@@ -375,4 +375,37 @@ BOOST_AUTO_TEST_CASE( test_id3v24_ext_header )
   BOOST_CHECK(H.has_crc());
   BOOST_CHECK(0xa8ef5271 == H.crc());
 
+}
+
+BOOST_AUTO_TEST_CASE( test_trailing_ff_4 )
+{
+  using namespace std;
+  using namespace scribbu;
+
+  // Let's construct a tag by hand that ends in 0xff
+  const unsigned char TAG[] = {
+    0x49, 0x44, 0x33,       // "ID3"
+    0x04, 0x00,             // version 4
+    0x80,                   // unsync, no extended header, not experimental
+    0x00, 0x00, 0x00, 0x0b, // tag is eleven bytes
+    0x50, 0x43, 0x4e, 0x54, // "PCNT"
+    0x00, 0x00, 0x00, 0x01, // frame size (less header)
+    0x00, 0x00,             // no flags set
+    0xff,                   // 255 plays
+  }; // 21 bytes
+
+  stringstream stm(string((const char*)TAG, sizeof(TAG)));
+  id3v2_4_tag tag(stm);
+
+  // Smoke checks
+  BOOST_CHECK( 1 == tag.num_frames() );
+  BOOST_TEST_MESSAGE( "padding is " << tag.padding() );
+  BOOST_CHECK( 0 == tag.padding() );
+
+  // OK-- the heart of the matter. Given the trailing 0xff, in ID3v2.4 we
+  // *should* append a trailing null when writing when applying
+  // unsynchronisation.
+  BOOST_TEST_MESSAGE( "size is " << tag.size(true) );
+  BOOST_CHECK( sizeof(TAG) - 10 + 1 == tag.size(true) );
+  BOOST_CHECK( tag.needs_unsynchronisation() );
 }

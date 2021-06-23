@@ -77,7 +77,8 @@ namespace scribbu {
 /// disk, including the header
 /*virtual*/
 std::size_t
-scribbu::id3v2_2_frame::serialized_size(bool unsync) const
+scribbu::id3v2_2_frame::serialized_size(bool unsync,
+                                        bool /*last_no_pad = false*/) const
 {
   ensure_cached_data_is_fresh();
   return cache_[unsync ? SERIALIZED : SERIALIZED_WITH_UNSYNC].size();
@@ -88,7 +89,7 @@ scribbu::id3v2_2_frame::serialized_size(bool unsync) const
 /// contain
 /*virtual*/
 std::size_t
-scribbu::id3v2_2_frame::needs_unsynchronisation() const
+scribbu::id3v2_2_frame::needs_unsynchronisation(bool /*last_no_pad*/ /*= false*/) const
 {
   ensure_cached_data_is_fresh();
   return num_false_syncs_;

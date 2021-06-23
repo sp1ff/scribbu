@@ -331,7 +331,7 @@ namespace {
       ("album,a", po::value<string>(), "Set the TALB, or Album/Movie/Show Title"
        " frame")
       ("always-create-v2,C", po::bool_switch(), "Always create an ID3v2 tag"
-       "with the given tgext frames for any file that has no ID3v2 tag")
+       "with the given text frames for any file that has no ID3v2 tag")
       ("artist,A", po::value<string>(), "Set the TPE1, or Lead artist(s)/Lead "
        "performer(s)/Soloist(s)/Performing group frame")
       ("create-backups,b", po::bool_switch(), "Create backup copies of all "

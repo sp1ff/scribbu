@@ -588,11 +588,12 @@ scribbu::id3v2_4_tag::flags() const
  *
  * This implementation proceeds as follows:
  *
- * - the ID3v2 header is always ten bytes, regardless of whether unsynch is being applied
+ * - the ID3v2 header is always ten bytes, regardless of whether unsynch is
+ *   being applied
  *
  * - the extended header is synch-safe by design, so its size can be computed
- *   regardless of whether unsynch is being applied (the size will vary based
- *   on which flags are set)
+ *   regardless of whether unsynch is being applied (the size will vary based on
+ *   which flags are set)
  *
  * - ask each frame to compute its size; if \a unsync is true, apply
  *   unsynchronisation unconditionally, otherwise the frame will decide whether
@@ -616,9 +617,26 @@ scribbu::id3v2_4_tag::size(bool unsync) const
   if (pext_header_) {
     cb += pext_header_->size();
   }
-  return accumulate(begin(), end(), cb,
-                   [unsync](size_t n, const id3v2_4_frame &f)
-                   { return n + f.serialized_size(unsync); });
+
+  // we of course include all our frames. We need to treat the last frame
+  // specially (because in ID3v2.3+, a trailing 0xff is treated as a false
+  // sync), but only if there's no padding.
+  size_t cb_pad = padding();
+
+  auto p = begin(), p1 = end();
+  if (p != p1) {
+    p1 -= 1;
+    while (p != p1) {
+      cb += p->serialized_size(unsync);
+      p += 1;
+    }
+    cb += p->serialized_size(unsync, 0 == cb_pad);
+  }
+
+  // as well as any padding.
+  cb += cb_pad;
+
+  return cb;
 }
 
 /**

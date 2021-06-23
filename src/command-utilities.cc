@@ -312,11 +312,11 @@ tagset_processor::process_file(const fs::path &pth)
   if (v2.empty()) {
     // We have no ID3v2 tags in this file; create one?
     //            v2_create_policy
-    //         |     | never | when v1 present   | always           |
-    // ID3v1   |-----+-------+-------------------+------------------|
-    // tag     | yes | no    | yes (with v1 tag) | yes (with v1 tag |
-    // present | no  | no    | no                | yes              |
-    //         |-----+-------+-------------------+------------------|
+    //         |     | never | when v1 present   | always            |
+    // ID3v1   |-----+-------+-------------------+-------------------|
+    // tag     | yes | no    | yes (with v1 tag) | yes (with v1 tag) |
+    // present | no  | no    | no                | yes               |
+    //         |-----+-------+-------------------+-------------------|
     if (pv1 && v2_creation_policy_ != v2_creation_policy::never) {
       pnv2 = create_v2(*pv1);
       dirty = true;

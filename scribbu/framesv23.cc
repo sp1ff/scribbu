@@ -73,16 +73,14 @@ scribbu::id3v2_3_plus_frame::crc(std::uint32_t crc) const
  * including the ehader (i.e. the size of the required buffer)
  *
  *
- * \todo Override separately for ID3v2.4-- should respect the unsync flag.
- *
- *
  */
 
 /*virtual*/
 std::size_t
-scribbu::id3v2_3_plus_frame::serialized_size(bool unsync) const
+scribbu::id3v2_3_plus_frame::serialized_size(bool unsync,
+                                             bool last_no_pad /*= false*/) const
 {
-  ensure_cached_data_is_fresh();
+  ensure_cached_data_is_fresh(last_no_pad);
   return cache_[unsync ? SERIALIZED_WITH_CEU : SERIALIZED_WITH_CE].size();
 }
 
@@ -98,9 +96,9 @@ scribbu::id3v2_3_plus_frame::serialized_size(bool unsync) const
 
 /*virtual*/
 std::size_t
-scribbu::id3v2_3_plus_frame::needs_unsynchronisation() const
+scribbu::id3v2_3_plus_frame::needs_unsynchronisation(bool last_no_pad /*= false*/) const
 {
-  ensure_cached_data_is_fresh();
+  ensure_cached_data_is_fresh(last_no_pad);
   return num_false_syncs_;
 }
 
@@ -116,9 +114,6 @@ scribbu::id3v2_3_plus_frame::needs_unsynchronisation() const
  * unsynchronisation scheme be applied, and false to request that it not.
  *
  * \return The number of bytes written to \a os
- *
- *
- * \todo Override separately for ID3v2.4-- should respect the unsync flag.
  *
  *
  */
@@ -152,7 +147,7 @@ scribbu::id3v2_3_plus_frame::dirty(bool f) const
  */
 
 void
-scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
+scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh(bool last_no_pad) const
 {
   using namespace std;
   using scribbu::detail::count_syncs;
@@ -209,15 +204,15 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
 
     }
 
-    // In the case of ID3v2.4, unsynchorinisation is applied on a frame-by-frame
+    // In the case of ID3v2.4, unsynchronisation is applied on a frame-by-frame
     // basis, so we would need to check the releveant flag, and if it's set,
     // unsynchronise the payload.
 
     // What I'm doing instead is assembling the entire frame payload in
-    // `cache-', & then applying unsynchronisation to that.  In the case of
+    // `cache_', & then applying unsynchronisation to that.  In the case of
     // ID3v2.4, the frame header is sync-safe to begin with, so the data in the
-    // SERIALIZED_WITH_CEU will be exactly what we would have gotten by writing
-    // the header & then unsynchronising the payload.
+    // SERIALIZED_WITH_CEU slot will be exactly what we would have gotten by
+    // writing the header & then unsynchronising the payload.
 
     // Serialize the frame header...
     stringstream hdr;
@@ -234,10 +229,18 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh() const
                                    cache_[SERIALIZED_WITH_CE].end(),
                                    true);
 
+    // Check the very last byte for a trailing 0xff
+    if (last_no_pad &&
+        ! cache_[SERIALIZED_WITH_CE].empty() &&
+        0xff == cache_[SERIALIZED_WITH_CE].back()) {
+      ++num_false_syncs_;
+    }
+
     // and prepare an unsynchronised copy.
     unsynchronise(back_inserter(cache_[SERIALIZED_WITH_CEU]),
                   cache_[SERIALIZED_WITH_CE].begin(),
-                  cache_[SERIALIZED_WITH_CE].end());
+                  cache_[SERIALIZED_WITH_CE].end(),
+                  last_no_pad);
 
     dirty(false);
   }

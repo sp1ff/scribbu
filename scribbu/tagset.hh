@@ -316,9 +316,6 @@ namespace scribbu {
    * integer to the original name
    *
    *
-   * \todo Support applying unsynchronisation on a tag-by-tag basis
-   *
-   *
    * If the new tagset is larger than the extant tagset, and the difference
    * cannot be taken up by padding, or the caller would prefer not to reduce the
    * padding, then we're left with no choice but to write the new tagset to disk
@@ -367,13 +364,12 @@ namespace scribbu {
     // write, close & copy it.
 
     // My (admittedly poor) solution is to live with the race condition &
-    // trucnate on open, hoping to merely stomp on the other process' file in
+    // truncate on open, hoping to merely stomp on the other process' file in
     // the event I hit it (the race condition).
     fs::path tmpnam = fs::temp_directory_path() / fs::unique_path();
     fs::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
     tmpfs.exceptions(EXC_MASK);
 
-    // for_each(p0, p1, [&](unique_ptr<id3v2_tag> &p) {
     typedef typename forward_input_iterator::value_type T;
     for_each(p0, p1, [&](T &p) {
       bool do_unsync = detail::compute_apply_unsync(unsync, *p);

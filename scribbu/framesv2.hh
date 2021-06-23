@@ -141,11 +141,15 @@ namespace scribbu {
     /// requiring unsynchronisation will be counted
     std::size_t count_syncs(std::uint32_t n, bool false_only = true);
 
+    /// Unsynchronise a buffer; callers who wish to comply with the ID3 v2.3 or
+    /// later should set \a last to true to add a final 0x00 when the last byte
+    /// of the last frame is 0xff
     template <typename output_iterator,
               typename input_iterator>
     std::size_t unsynchronise(output_iterator pout,
                               input_iterator  p0,
-                              input_iterator  p1)
+                              input_iterator  p1,
+                              bool            last = false)
     {
       using namespace std;
 
@@ -156,12 +160,14 @@ namespace scribbu {
         cb += q - p;
         if (q != p1) {
           *pout++ = 0xff; ++cb; ++q;
-          if (q != p1 && (0x00 == *q || (*q & 0xe0) == 0xe0)) {
+          if (q == p1 && last) {
+            // trailing 0xff
+            *pout++ = 0x00; ++cb;
+          } else if (q != p1 && (0x00 == *q || (*q & 0xe0) == 0xe0)) {
             *pout++ = 0x00; ++cb;
           }
         }
         p = q;
-
       }
 
       return cb;
@@ -394,10 +400,10 @@ namespace scribbu {
     virtual std::size_t size() const = 0;
     /// Return the number of bytes this frame will occupy when serialized to
     /// disk, including the header
-    virtual std::size_t serialized_size(bool unsync) const = 0;
+    virtual std::size_t serialized_size(bool unsync, bool last_no_pad = false) const = 0;
     /// Return zero if this frame would not contain false syncs if serialized in
     /// its present state; else return the number of false sync it would contain
-    virtual std::size_t needs_unsynchronisation() const = 0;
+    virtual std::size_t needs_unsynchronisation(bool last_no_pad = false) const = 0;
     /// Serialize this frame to an output stream, perhaps applying the
     /// unsynchronisation scheme if the caller so chooses ("unsynchronised" will
     /// be updated accordingly)

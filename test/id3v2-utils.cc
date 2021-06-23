@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
   BOOST_CHECK((bool)ptag);
   BOOST_CHECK(4 == ptag->version());
   BOOST_CHECK(0 == ptag->revision());
-  BOOST_CHECK(1091 == ptag->size());
+  BOOST_CHECK(2115 == ptag->size());
   BOOST_CHECK(0 == ptag->flags());
   unsync = ptag->unsynchronised();
   BOOST_CHECK(unsync && ! *unsync);
@@ -1013,7 +1013,7 @@ frame PRIV (41 bytes)
   BOOST_TEST_MESSAGE(text);
 
   const string GOLDEN1(R"(ID3v2.4(.0) Tag:
-4096 bytes, synchronised
+4553 bytes, synchronised
 flags: 0x00
 Left Wing Fascists - Jo Ones Ugly After 2 AM
 All Fired Up (track 7/11), <no year>

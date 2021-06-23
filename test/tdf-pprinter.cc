@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v24 )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v2.4.tag");
 
-  const string GOLDEN("4\t0\t1091\t0x00\t0\tJoao Gilberto\tAcapulco\tEla E Carioca\t\t\t\t\t0\t\t0\t\t\t\t");
+  const string GOLDEN("4\t0\t2115\t0x00\t0\tJoao Gilberto\tAcapulco\tEla E Carioca\t\t\t\t\t0\t\t0\t\t\t\t");
 
   fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
 

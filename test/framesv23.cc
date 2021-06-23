@@ -155,3 +155,33 @@ BOOST_AUTO_TEST_CASE( test_xtag )
   BOOST_CHECK( "sp1ff@pobox.com" == pF->owner() );
 
 } // End test_xtaxg.
+
+BOOST_AUTO_TEST_CASE( test_frame_unsync )
+{
+  using namespace std;
+  using scribbu::detail::unsynchronise;
+
+  // Smoke test:
+  vector<uint8_t> smoke_in{{ 0x01, 0x02, 0xff, 0xe0, 0x03, 0x04 }};
+  vector<uint8_t> smoke_out;
+  size_t cb = unsynchronise(back_inserter(smoke_out), smoke_in.begin(), smoke_in.end());
+  BOOST_CHECK( 7 == cb );
+
+  vector<uint8_t> smoke_gold{{ 0x01, 0x02, 0xff, 0x00, 0xe0, 0x03, 0x04 }};
+  BOOST_CHECK( smoke_out == smoke_gold );
+
+  // Let's check that this little bit of the spec is respected:
+
+  // "If the last byte in the tag is $FF, and there is a need to eliminate false
+  // synchronisations in the tag, at least one byte of padding should be added."
+
+  vector<uint8_t> test_01_in{{ 0x01, 0x02, 0xff, 0xe0, 0x03, 0x04, 0xff }};
+  vector<uint8_t> test_01_out;
+  cb = unsynchronise(back_inserter(test_01_out), test_01_in.begin(),
+                     test_01_in.end(), true);
+  BOOST_CHECK( 9 == cb );
+
+  vector<uint8_t> test_01_gold{{ 0x01, 0x02, 0xff, 0x00, 0xe0, 0x03, 0x04,
+                                   0xff, 0x00 }};
+  BOOST_CHECK( test_01_out == test_01_gold );
+}

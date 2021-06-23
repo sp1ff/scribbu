@@ -1,0 +1,219 @@
+#!/usr/bin/env bash
+# Rip tracks from CD to .mp3 with tagging. Say `rip-tracks --help' for usage.
+VERSION=@PACKAGE_VERSION@
+
+function log {
+    echo "$1" >&6
+}
+
+function info {
+    echo "$1" >&5
+}
+
+function error {
+    echo "$1" >&2
+    exit 1
+}
+
+###########################################################################
+# parse arguments
+###########################################################################
+
+album=
+artist=
+genre=
+help=
+prev_option=
+silent=
+template=
+tracks=
+verbose=
+version=
+year=
+for option
+do
+    # If the previous option required an argument, assign it now.
+    if test -n "$prev_option"; then
+        eval $prev_option="\$option"
+        prev_option=
+        continue
+    fi
+
+    # Parse out the argument option in $option, if present.
+    case $option in
+        *=?*) optarg=$(expr "X$option" : '[^=]*=(.*)') ;;
+        *=)   optarg= ;;
+        *)    optarg=yes ;;
+    esac
+
+    # Options are handled here:
+    case $option in
+        -A | --art | --arti | --artis | --artist)
+            prev_option=artist;;
+        -A=* | --art=* | --arti=* | --artis=* | --artist=*)
+            artist="$optarg";;
+        -a | --al | --alb | --albu | --album)
+            prev_option=album;;
+        -a=* | --al=* | --alb=* | --albu=* | --album=*)
+            album="$optarg";;
+        -g | --ge | --gen | --genr | --genre)
+            prev_option=genre;;
+        -g=* | --ge=* | --gen=* | --genr=* | --genre=*)
+            genre="$optarg";;
+        -h | --he | --hel | --help)
+            help=yes;;
+        -s | --silent)
+            silent=yes;;
+        -t | --temp | --templ | --templa | --templat | --template)
+            prev_option=template;;
+        -t=* | --temp==* | --templ=* | --templa=* | --templat=* | --template=*)
+            template="$optarg";;
+        -V | --vers | --versi | --versio | --version)
+            version=yes;;
+        -v | --verb | --verbo | --verbos | --verbose)
+            verbose=yes;;
+        -y | --ye | --yea | --year)
+            prev_option=year;;
+        -y=* | --ye=* | --yea=* | --year=*)
+            year=$optarg;;
+        -*)
+            cat >&2 <<EOF
+Unrecognized option \`$option'.
+Try \`$0 --help' for more information.
+EOF
+            exit 2;;
+        *) # presumably the input file
+            tracks="$option"
+            break
+    esac
+
+done
+
+if test -n "$help"; then
+    cat <<EOF
+\`$0' -- encode .wav-s to .mp3-s, tag & copy into place.
+
+This is $0 version $VERSION.
+
+Usage:
+
+    $0 [OPTION...] TRACKS-FILE
+
+Options:
+
+    -a ALBUM, --album=ALBUM  tag all tracks with album ALBUM
+    -g GENRE, --genre=GENRE  tag all tracks with genre GENRE
+    -h, --help               print this message & exit with status zero
+    -s, --silent             produce no output while ripping
+    -V, --version            print this script's version & exit with
+                             status zero
+    -v, --verbose            produce more verbose output while ripping
+    -y YEAR, --year=YEAR     tag all tracks with year YEAR
+
+Argument TRACKS-FILE is a plain/text file containing a mapping from 
+.wav filename to title (on which more below).
+
+This script will:
+
+    1. use the LAME encoder to encode each .wav file in TRACKS-FILE
+       to an .mp3 file
+    2. tag that .mp3 file with the following information:
+       a. artist
+       b. title
+       c. track #
+       d. album
+       e. year
+       f. genre
+    3. name the resulting .mp3-s according to the \`scribbu rename'
+       template provided
+
+TRACKS-FILE describes the .wav files to be encoded. Lines beginning
+with a \`#' character are interpreted as comments & ignored. All 
+other lines shall be of the form: 
+
+    <.WAV FILE>T<TITLE>T<TRACK #>T<ARTIST>N
+
+where \`T' denotes the tab character & \`N' a Unix newline. The
+ARTIST field is optional (if not given, the value of the --artist
+argument will be used).
+EOF
+    exit 0
+fi
+
+if test -n "$version"; then
+    cat <<EOF
+\`$0' $VERSION
+EOF
+    exit 0
+fi
+
+# Alright, if we're here, we're expected to do something. Sort
+# out verbosity.
+if test -n "$verbose" && test -n "$silent"; then
+    cat >&2 <<EOF
+Only one of --verbose & --silent may be given.
+EOF
+    exit 2
+fi
+
+exec 5>&1
+test -n "$silent" && exec 5>/dev/null
+
+exec 6>&1
+test -n "$silent" && exec 6>/dev/null
+test -n "$verbose" && set -x
+
+if test -z "$template"; then
+    error "No template"
+fi
+
+# Read the "tracks file"
+program="open(H,\"<$tracks\");while(<H>){print if \$_ !~ /^\\s*\$/ && \$_ !~ /^\\s*#.*\$/;};close(H);"
+perl -e "$program" > /tmp/rip-tracks.$$
+exec 3<> /tmp/rip-tracks.$$
+OLDIFS="$IFS"
+IFS="	"
+while read -u 3 wav title track track_artist; do
+
+    log "Processing $wav..."
+    true_artist="$track_artist"
+    if test -z "$true_artist"; then
+        true_artist=$artist
+    fi
+    if test -z "$true_artist"; then
+        error "No artist for track $wav"
+    fi
+    if test -z "$title"; then
+        error "No title for track $wav"
+    fi
+    if test -z "$track"; then
+        error "No track number for track $wav"
+    fi
+    
+    set -e
+    lame --vbr-new -V 3 "$wav" "wav.$$.mp3"
+    scribbu text -C --artist="$true_artist" "wav.$$.mp3"
+    scribbu text --title="$title" "wav.$$.mp3"
+    scribbu text --track="$track" "wav.$$.mp3"
+    scribbu text --encoded-by="LAME 64bits version 3.100 (http://lame.sf.net)" "wav.$$.mp3"
+
+    if test -n "$album"; then
+        scribbu text --album="$album" "wav.$$.mp3"
+    fi
+    if test -n "$year"; then
+        scribbu text --year="$year" "wav.$$.mp3"
+    fi
+    if test -n "$genre"; then
+        scribbu text --genre="$genre" "wav.$$.mp3"
+    fi
+
+    scribbu rename -r -t "$template" "wav.$$.mp3"
+
+    set +e
+    
+    log "Processing $wav...done."
+
+done
+exec 3>&-
+IFS="$OLDIFS"
+
