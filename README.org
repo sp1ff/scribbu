@@ -1,6 +1,6 @@
 #+TITLE: scribbu
 #+DESCRIPTION: The extensible tool for tagging your music collection
-#+DATE: <2021-07-05 Mon 06:53>
+#+DATE: <2021-07-08 Thu 16:51>
 #+AUTHOR: sp1ff
 #+EMAIL: sp1ff@pobox.com
 #+AUTODATE: t
@@ -59,7 +59,7 @@ scribbu can be invoked in a few ways:
 
     #+BEGIN_EXAMPLE
 	    scribbu
-		scribbu 0.6.19
+		scribbu 0.6.20
 		Copyright (C) 2017-2021 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.
@@ -110,7 +110,7 @@ scribbu is supported on Linux & MacOS. It depends upon:
 
 scribbu is distributed as an Autotools source distribution, so installation is accomplished via the usual "configure, make, make install" incantations. General instructions may be found in [[INSTALL]].
 
-Begining with scribbu 0.6.19, binary packages for Debian & Arch are also available.
+Begining with scribbu 0.6.20, binary packages for Debian & Arch are also available.
 
 Patches, suggestions & bug reports are welcome.
 

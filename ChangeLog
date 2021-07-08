@@ -1,3 +1,29 @@
+2021-07-18  Michael Herstine  <sp1ff@pobox.com>
+
+	This commit normalizes assorted creation flags (for both frames and tags) among the sub-commands `xtag`, `genre`, `popm` and `text`.
+	It also extends the last to operate on ID3v1 tags, if they're
+	present and the frames being updated map naturally to an ID3v1
+	field.
+
+	It fixes a bug in my implementation of Damerau-Levenshtein
+	distance; which see
+	<https://github.com/sp1ff/damerau-levenshtein/issues/2>.
+
+	Finally, there were a number of places in which the address
+	of a vector's elements was passed as `&(vec[0])` without
+	checking that `vec` was non-empty. In every case, that address
+	was passed along with the size (e.g. `foo(&(vec[0]), vec.size())`)
+	and so taking the address of the "first" element of an empty
+	vector was generally harmless. That said, "Accessing a nonexistent
+	element through [operator[]] is undefined behavior." per
+	<https://en.cppreference.com/w/cpp/container/vector/operator_at>.
+
+	The most recent implementation of the Standard C++ Library on my
+	Arch image, however, includes an assertion that the passed index
+	is legit in `operator[]`, which broke quite a few unit tests. To
+	repair them, I wrapped all such invocations with a check that the
+	vector is non-empty.
+
 2021-07-05  Michael Herstine  <sp1ff@pobox.com>
 
 	Unsynchronisation improvements.

@@ -43,12 +43,12 @@ namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu text -- manage text frames
 
-scrubbu text [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
+Usage: scrubbu text [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
-Create, update or delete one or more text frames in ID3v2 tags. By
-default, update the specified frames in all tags in all files named
-on the command line. If an argument is a directory, operate on all
-tags in all files in the directory tree rooted at that argument.
+Create, update or delete one or more text frames in ID3v2 tags (and ID3v1 tags,
+if present). By default, update the specified frames in all tags in all files
+named on the command line. If an argument is a directory, operate on all tags in
+all files in the directory tree rooted at that argument.
 
 Examples:
 
@@ -67,13 +67,12 @@ artist in a group of files, but only in the first tag:
 
 The --tag option can be given more than once to specify multiple indicies.
 
-By default, only existing ID3v2 tags will be processed. When setting
-a frame or frames, specify the -c flag to create a new ID3v2 tag to house
-them, but only if there's already an ID3v1 tag present (any information
-therein will be copied to the new ID3v2 tag). The -C flag will
-unconditioanlly create a new ID3v2 tag. This should be used with care
-when operating on directories, or you may find assorted, non-music
-files have had ID3v2 tags prepended to them.
+By default, only existing tags will be processed. When setting a frame or
+frames, specify the -c flag to create a new ID3v2 tag to house them, but only if
+there's already an ID3v1 tag present (any information therein will be copied to
+the new ID3v2 tag). The -C flag will unconditionally create a new ID3v2
+tag. This should be used with care when operating on directories, or you may
+find assorted, non-music files have had ID3v2 tags prepended to them.
 
 For detailed help, say `scribbu text --help'. To see the manual, say
 `info "scribbu (text) "'.
@@ -110,7 +109,8 @@ public:
   template <typename FIIS, // forward input iterator * => pair<id3v2_text_frames, string>
             typename FIID> // forward input iterator * => id3v2_text_frames
   set_text(FIIS ps0, FIIS ps1, FIID pd0, FIID pd1, scribbu::encoding srcenc,
-           v2_creation_policy v2cp, bool verbose, bool adj_unsync, bool create_backups):
+           v2_creation_policy v2cp, bool verbose, bool adj_unsync,
+           bool create_backups):
     tagset_processor(v2_simple_tag_scope_policy::all,
                      v1_tag_scope_policy::no,
                      v2cp,
@@ -135,7 +135,7 @@ public:
              scribbu::encoding srcenc, v2_creation_policy v2cp,
              bool verbose, bool adj_unsync, bool create_backups):
       tagset_processor(pt0, pt1,
-                       v1_tag_scope_policy::no,
+                       v1_tag_scope_policy::yes,
                        v2cp,
                        v1_creation_policy::never,
                        false,
@@ -229,7 +229,45 @@ set_text::create_v2()
 /*virtual*/ bool
 set_text::process_v1(scribbu::id3v1_tag &v1)
 {
-  throw bad_operation(unknown_op::process_v1);
+  using namespace std;
+  using namespace scribbu;
+
+  size_t num_deltas = 0;
+  for_each(dels_.begin(), dels_.end(), [&](scribbu::id3v2_text_frames id) {
+    switch (id) {
+    case id3v2_text_frames::tit2:
+      v1.set_title(string());
+      break;
+    case id3v2_text_frames::tpe1:
+      v1.set_artist(string());
+      break;
+    case id3v2_text_frames::talb:
+      v1.set_album(string());
+      break;
+    default:
+      // do nothing
+      break;
+    }
+  });
+
+  for_each(adds_.begin(), adds_.end(), [&](const strings_type::value_type &x) {
+    switch (x.first) {
+    case id3v2_text_frames::tit2:
+      v1.set_title(x.second, enc_);
+      break;
+    case id3v2_text_frames::tpe1:
+      v1.set_artist(x.second, enc_);
+      break;
+    case id3v2_text_frames::talb:
+      v1.set_album(x.second, enc_);
+      break;
+    default:
+      // do nothing
+      break;
+    }
+  });
+
+  return num_deltas != 0;    
 }
 
 /// Process an ID3v2.2 tag

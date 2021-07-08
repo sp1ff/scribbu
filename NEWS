@@ -4,6 +4,17 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** fix bug in computation of Demerau-Levenshtein distance
+
+See <https://github.com/sp1ff/damerau-levenshtein/issues/2>.
+*** check that vectors are not empty before taking address of first element
+
+There were a number of places in which the address of a vector's elements was passed as `&(vec[0])` without checking that `vec` was non-empty. In every case, that address was passed along with the size (e.g. `foo(&(vec[0]), vec.size())`) and so taking the address of the "first" element of an empty vector was generally harmless. That said, "Accessing a nonexistent element through [operator[]] is undefined behavior." per <https://en.cppreference.com/w/cpp/container/vector/operator_at>.
+
+The most recent implementation of the Standard C++ Library on my Arch image, however, includes an assertion that the passed index is legit in `operator[]`, which broke quite a few unit tests. To repair them, I wrapped all such invocations with a check that the vector is non-empty.
+*** added docs for missing flags
+
+.. in the `genre`, `popm` and `text` sub-commands.
 *** treat trailing 0xff-s as false syncs
 
 Address a lingering issue with unsynchronisation: when the last frame in an ID3v2.{3,4} tag ends in 0xff, and there is no padding, that should be treated as a false sync.
@@ -31,6 +42,9 @@ https://github.com/sp1ff/scribbu/issues/4
 ** New Features
 
 
+
+*** `scribbu text` now operates on existing ID3v1 tags, when possible
+*** the `create-frame` short flag for `popm` changed from -A to -f.
 *** `encodings' sub-command added
 *** `m3u' sub-command added
 

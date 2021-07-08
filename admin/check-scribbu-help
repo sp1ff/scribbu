@@ -197,9 +197,9 @@ test_cmd "scribbu split --help" "NAME scribbu-split - split a file into ID3v2, t
 # TODO(sp1ff): write me!
 # `scribbu split' has no Info manual node
 # XFAIL: test_cmd "scribbu split --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu split." $cs_batch
-test_cmd "scribbu popm -h" "scribbu popm -- manage playcount and/or popularimeter frames scribbu popm" $cs_batch
+test_cmd "scribbu popm -h" "scribbu popm -- manage playcount and/or popularimeter frames Usage: scribbu popm" $cs_batch
 test_cmd "scribbu popm --help" "NAME scribbu popm - Manage the play count and/or popularimeter ID3v2 tags" $cs_batch
 test_cmd "scribbu popm --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu popm." $cs_batch
-test_cmd "scribbu text -h" "scribbu text -- manage text frames scrubbu text" $cs_batch
+test_cmd "scribbu text -h" "scribbu text -- manage text frames Usage: scrubbu text" $cs_batch
 test_cmd "scribbu text --help" "NAME scribbu-text - Manage ID3v2 text frames" $cs_batch
 test_cmd "scribbu text --info" "Up: The scribbu Program [0-9.]+ Invoking .scribbu text." $cs_batch

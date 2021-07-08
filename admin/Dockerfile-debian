@@ -34,5 +34,10 @@ RUN set -ex && \
 	echo "path-include /usr/share/man/man1/scribbu*" >> /etc/dpkg/dpkg.cfg.d/docker && \
 	echo "path-include /usr/share/info/scribbu.info" >> /etc/dpkg/dpkg.cfg.d/docker
 
+# RUN useradd -ms /bin/bash -G users,wheel mgh && \
+RUN useradd -ms /bin/bash -G users mgh && \
+	echo 'mgh:mgh' | chpasswd # && \
+	# echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
 # The test suite won't work if this isn't set:
 ENV LANG="en_US.UTF-8"

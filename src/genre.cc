@@ -38,7 +38,7 @@ namespace po = boost::program_options;
 
 const std::string USAGE(R"usage(scribbu genre -- set the genre for one or more files
 
-scribbu genre [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
+Usage: scribbu genre [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
 By default, set the genre for all tags in all files named on the command
 line. If an argument is a file, operate on the tags in that file. If the
@@ -51,13 +51,17 @@ The genre can be specified in a few ways:
 
 will interpret N as one of the genres defined by Winamp, specified as an integer
 between 0 & 191 (inclusive). Run `scribbu genre -W' to print a list of the
-Winamp genres.
+Winamp genres to stdout (this will be piped through your pager by default;
+give the -P or --no-pager option to avoid that).
 
     scribbu genre -g GENRE
 
 will attempt to map to map the string GENRE to one of the Winamp genres using
-Damerau-Levenshtein distance, but disregarding case.  For instance `scribbu
-genre -g rok' will be interpreted as Winamp genre 17: "Rock".
+Damerau-Levenshtein distance, but disregarding case.  For instance 
+
+    scribbu genre -g rok
+
+will be interpreted as Winamp genre number seventeen "Rock".
 
     scribbu genre -G GENRE
 
@@ -71,13 +75,15 @@ The operation can also be scoped by tag:
 
         -1, --v1-only  operate on ID3v1 tags only
         -2, --v2-only  operate on ID3v2 tags only
-  -t N, --tag-index=N  operate on ID3v2 tag N only (zero-based, may be given
-                       more than once)
+  -t N, --tag-index=N  operate on ID3v2 tag N only (the index N is zero-based &
+                       may be given more than once)
 
 This brings up the question of what to do if there is no ID3v1 and/or no ID3v2
 tag. By default, in the absence of a tag, nothing will be done (so if invoked,
 for instance, on a file with neither an ID3v1 nor an ID3v2 tag, this sub-command
-would do nothing). This behavior can be customized by the following flags:
+would do nothing; this is not necessarily a degenerate case-- imagine this 
+sub-command being invoked on a directory containing non-music files). This 
+behavior can be customized by the following flags:
 
          -c,--create-v2  create an ID3v2.3 tag & add a TCON frame to it for any
                          file that has an ID3v1 tag, but no ID3v2 tag
@@ -93,7 +99,7 @@ would do nothing). This behavior can be customized by the following flags:
   -A,--always-create-v1  create an ID3v1 tag & set its genre field
                          appropriately for any file that does not have an ID3v1
                          tag, regardless of the presence or absence of an ID3v2
-                         tag; use this with caution when operating on
+                         tag; use this with caution when operating on 
                          directories, or you may find assorted, non-musical files
                          have had ID3v1 tags appended to them
 
@@ -106,7 +112,9 @@ options:
                         (the default is to just never use it)
    -b,--create-backups  create a backup copy of each file before writing new or
                         updated tags (this is good for experimenting or gaining
-                        confidence with the tool)
+                        confidence with the tool, but using it consistently will
+                        leave your music directories littered with copies named
+                        foo.mp3.1, foo.mp3.2 and so on)
 
 For detailed help, say `scribbu genre --help'. To see the manual, say
 `info "scribbu (genre)"'.
@@ -834,7 +842,8 @@ namespace {
        "with --Genre")
       ("v2-only,2", po::bool_switch(), "Operate on ID3v2 tags only; incompatible "
        "with --v1")
-      ("verbose,v", po::bool_switch(), "Produce more verbose output during operation")
+      ("verbose,v", po::bool_switch(), "Produce more verbose output during "
+       "operation")
       ("winamp,w", po::value<unsigned int>(), "Winamp genre, 0-191 (inclusive)");
 
     po::options_description xopts("hidden options");

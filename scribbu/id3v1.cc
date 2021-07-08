@@ -223,10 +223,11 @@ namespace scribbu {
     if (!scribbu::char_traits<char>::is_code_unit(dst)) {
       throw bad_code_unit(dst, sizeof(char));
     }
-    return convert_encoding<string>(&(ext_genre_[0]), ext_genre_.size(),
-                                    src ? src.get() :
-                                    encoding_from_system_locale(),
-                                    dst, rsp);
+    return ext_genre_.empty() ? string() :
+      convert_encoding<string>(&(ext_genre_[0]), ext_genre_.size(),
+                               src ? src.get() :
+                               encoding_from_system_locale(),
+                               dst, rsp);
   }
 
   template<>

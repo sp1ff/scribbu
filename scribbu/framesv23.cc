@@ -188,6 +188,8 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh(bool last_no_pad) const
       // compress `buf' into `payload'...
       unsigned long destLen = compressBound(cb_no_ceu);
       payload.resize(destLen);
+      // NB. `cb_no_ceu' must be greater than zero, so the indexes into
+      // `payload' & `buf' are safe.
       int status =  compress(&payload[0], &destLen,
                              (unsigned char*)&buf[0], cb_no_ceu);
       if (Z_OK != status) {
@@ -386,7 +388,9 @@ scribbu::unknown_id3v2_3_frame::size() const
 std::size_t
 scribbu::unknown_id3v2_3_frame::serialize(std::ostream &os) const
 {
-  os.write((char*)&(data_[0]), data_.size());
+  if (!data_.empty()) {
+    os.write((char*)&(data_[0]), data_.size());
+  }
   return data_.size();
 }
 
@@ -481,7 +485,9 @@ std::size_t
 scribbu::id3v2_3_text_frame::serialize(std::ostream &os) const
 {
   os.write((char*)&unicode_, 1);
-  os.write((char*)&(text_[0]), text_.size());
+  if (!text_.empty()) {
+    os.write((char*)&(text_[0]), text_.size());
+  }
   return 1 + text_.size();
 }
 

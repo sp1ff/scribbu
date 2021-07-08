@@ -7,8 +7,8 @@ set -ex
 base="$(basename $1 .tar.gz)"
 version="${base:8}"
 cp -v "$1" /tmp
-cp -v /scribbu/PKGBUILD-dev /tmp/PKGBUILD
+cp -v /scribbu-arch/PKGBUILD-dev /tmp/PKGBUILD
 cd tmp
 makepkg -g >> PKGBUILD
 makepkg
-cp -v scribbu-${version}-1-x86_64.pkg.tar.zst /scribbu
+cp -v scribbu-${version}-1-x86_64.pkg.tar.zst /scribbu-arch

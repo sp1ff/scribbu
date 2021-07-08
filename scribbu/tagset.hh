@@ -396,9 +396,11 @@ namespace scribbu {
     ifs.seekg(here, fs::ifstream::beg);
 
     size_t cb = there - here;
-    vector<char> buf(cb);
-    ifs.read(&(buf[0]), cb);
-    tmpfs.write(&(buf[0]), cb);
+    if (cb > 0) {
+      vector<char> buf(cb);
+      ifs.read(&(buf[0]), cb);
+      tmpfs.write(&(buf[0]), cb);
+    }
 
     // Write complete-- close all file handles & shuffle the files.
     tmpfs.close();

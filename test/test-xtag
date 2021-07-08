@@ -69,7 +69,7 @@ function smoke_tests()
     [ -n "$err" ] || fail "smoke_tests: nil stderr for no tags"
     [ -z "$out" ] || fail "smoke_tests: non-nil stdout for no tags"
 
-    run_xtag out err stat '--tags=foo&bar=splat&grog=a,b,c' id3v2.3.tag
+    run_xtag out err stat '--xtags=foo&bar=splat&grog=a,b,c' id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: incorrect status for tags"
 
     ${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG
@@ -77,12 +77,12 @@ function smoke_tests()
     # Shouldn't be there, since there's no XTAG
     [ $stat -ne 0 ] || fail "smoke_tests: XTAG"
 
-    run_xtag out err stat -a -o sp1ff@pobox.com '--tags=foo&bar=splat&grog=a,b,c' id3v2.3.tag
+    run_xtag out err stat -f -o sp1ff@pobox.com '--xtags=foo&bar=splat&grog=a,b,c' id3v2.3.tag
     [ $stat -eq 0 ] || fail "smoke_tests: incorrect status for tags (2)"
     xtag=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG|awk '{print $2}')
     [ "$xtag" = "sp1ff@pobox.com" ] || fail "smoke_tests: failed to create"
 
-    run_xtag out err stat -m -o sp1ff@pobox.com '--tags=foo&bar=splat2&grog=d' id3v2.3.tag
+    run_xtag out err stat -m -o sp1ff@pobox.com '--xtags=foo&bar=splat2&grog=d' id3v2.3.tag
     bar=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F bar|awk '{print $2, $3}')
     [ "$bar" = "splat, splat2" ] || fail "smoke_tests: bad bar"
 
@@ -108,7 +108,7 @@ function test_owner_bug()
     here=`pwd`
     set_testdir ${srcdir} $xtag_testdir xtag_owner_bug id3v2.3.tag
 
-    run_xtag out err stat -A -a -T 'decade=90s&subgenres=Rock&move-to-cali' -o sp1ff@pobox.com id3v2.3.tag
+    run_xtag out err stat -A -f -T 'decade=90s&subgenres=Rock&move-to-cali' -o sp1ff@pobox.com id3v2.3.tag
     test $stat -eq 0 || fail "smoke_owner_bug: incorrect status"
     xtag=$(${xtag_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F XTAG|awk '{print $2}')
     test "$xtag" = "sp1ff@pobox.com" || fail "smoke_test_owner_bug: failed to write owner!"
@@ -126,7 +126,7 @@ function test_set_xtag_0()
     here=`pwd`
     set_testdir ${srcdir} $xtag_testdir set_xtag_0 wy.mp3
 
-    run_xtag out err stat -A -a -o 'sp1ff@pobox.com' -T 'decade=aughts&C' wy.mp3
+    run_xtag out err stat -A -f -o 'sp1ff@pobox.com' -T 'decade=aughts&C' wy.mp3
     test $stat -eq 0 || fail "test_set_xtag_0: incorrect status"
     xtag=$(${xtag_scribbu_dir}/scribbu dump wy.mp3|grep -F XTAG|awk '{print $2}')
     test "$xtag" = "sp1ff@pobox.com" || fail "test_set_xtag_0: failed to write owner!"

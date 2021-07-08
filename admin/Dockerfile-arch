@@ -1,8 +1,10 @@
 # Docker image for building, debugging & packaging    -*- mode: dockerfile; -*-
 FROM archlinux:latest AS base
 
+ARG user_id=1000
+
 # Bootstrap
-RUN pacman --noconfirm -Syu && \
+RUN pacman --noconfirm -Syu sudo && \
 	cp -v /etc/pacman.conf /etc/pacman.conf.orig && \
 	sed -e 's/^NoExtract/# NoExtract/' /etc/pacman.conf > /tmp/pacman.conf.tmp && \
 	cp -v /tmp/pacman.conf.tmp /etc/pacman.conf
@@ -14,18 +16,17 @@ RUN patched_glibc=glibc-linux4-2.33-4-x86_64.pkg.tar.zst && \
     curl -LO "https://repo.archlinuxcn.org/x86_64/$patched_glibc" && \
     bsdtar -C / -xvf "$patched_glibc"
 
-RUN pacman --noconfirm -S man-db man-pages vim base-devel gdb && \
- 	ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
-	useradd -ms /bin/bash -G users,wheel mgh && \
+RUN ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
+	useradd -ms /bin/bash -G users,wheel -u $user_id mgh && \
 	echo 'mgh:mgh' | chpasswd && \
 	echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
 	mkdir /cores && chmod 777 /cores && \
 	echo "kernel.core_pattern=/cores/core.%e.%p" >> /etc/sysctl.d/50-coredump.conf
 
-# TODO(sp1ff): needed?
-# sysctl -p /etc/sysctl.d/50-coredump.conf
+## TODO(sp1ff): needed?
+## sysctl -p /etc/sysctl.d/50-coredump.conf
 
 # scribbu pre-requisites
-RUN pacman --noconfirm -S boost boost-libs
+RUN pacman --noconfirm -S man-db man-pages vim base-devel gdb boost boost-libs
 
 

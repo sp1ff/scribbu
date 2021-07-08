@@ -485,7 +485,8 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       unique_file_id::ownerb(back_inserter(buf));
-      return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
+      return buf.empty() ? string_type() :
+        convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
   protected:
@@ -540,7 +541,8 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       encryption_method::emailb(back_inserter(buf));
-      return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
+      return buf.empty() ? string_type() :
+        convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
   protected:
@@ -735,8 +737,9 @@ namespace scribbu {
            on_no_encoding rsp = on_no_encoding::fail,
            const boost::optional<encoding> &src = boost::none) const
     {
-      return id3v2_3_frame::as_str<string_type>(&(text_[0]), text_.size(),
-                                                unicode(), dst, rsp, src);
+      return text_.empty() ? string_type():
+        id3v2_3_frame::as_str<string_type>(&(text_[0]), text_.size(),
+                                           unicode(), dst, rsp, src);
     }
 
     unsigned char unicode() const
@@ -851,8 +854,9 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       user_defined_text::descriptionb(back_inserter(buf));
-      return id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
-                                                unicode(), dst, rsp, src);
+      return buf.empty() ? string_type() :
+        id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
+                                           unicode(), dst, rsp, src);
     }
 
     template <typename string_type>
@@ -864,8 +868,9 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       user_defined_text::textb(back_inserter(buf));
-      return id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
-                                                unicode(), dst, rsp, src);
+      return buf.empty() ? string_type() :
+        id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
+                                           unicode(), dst, rsp, src);
     }
 
   protected:
@@ -931,8 +936,9 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       comments::descriptionb(back_inserter(buf));
-      return id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
-                                                unicode(), dst, rsp, src);
+      return buf.empty() ? string_type() :
+        id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
+                                           unicode(), dst, rsp, src);
     }
 
     template <typename string_type>
@@ -944,8 +950,9 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       comments::textb(back_inserter(buf));
-      return id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
-                                                unicode(), dst, rsp, src);
+      return buf.empty() ? string_type() :
+        id3v2_3_frame::as_str<string_type>(&(buf[0]), buf.size(),
+                                           unicode(), dst, rsp, src);
     }
 
     /// Return the size, in bytes, of the frame, prior to desynchronisation,
@@ -1075,7 +1082,8 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       popularimeter::emailb(back_inserter(buf));
-      return convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
+      return buf.empty() ? string_type() :
+        convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
     }
 
   protected:

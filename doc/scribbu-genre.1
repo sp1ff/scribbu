@@ -38,7 +38,7 @@ scribbu genre \- Set the genre for one or more files
 
 Set the genre for one or more files. By default, set the genre for all
 tags in all files named on the command line. If an argument is a file,
-operate on the tages in that file. If the argument is a directory,
+operate on the tags in that file. If the argument is a directory,
 operate recursively on all files containing ID3 tags therein.
 
 The genre can be specified in a few ways:
@@ -66,7 +66,7 @@ will attempt to map to map the string
 to one of the Winamp genres using Damerau-Levenshtein distance,
 but disregarding case.  For instance
 .I scribbu genre -g rok
-will be interpreted as Winamp genre 17: "Rock".
+will be interpreted as Winamp genre number seventeen "Rock".
 .br
 .nf
 
@@ -90,20 +90,23 @@ The operation can also be scoped by tag; cf. options
 This brings up the question of what to do if there is no ID3v1 and/or
 no ID3v2 tag. By default, in the absence of a tag, nothing will be
 done (so if invoked, for instance, on a file with neither an ID3v1 nor
-an ID3v2 tag, this sub-command would do nothing). This behavior can be
+an ID3v2 tag, this sub-command would do nothing; this is not
+necessarily a degenerate case-- imagine this sub-command being invoked
+on a directory containing non-music files). This behavior can be
 customized by the following flags:
 
 .PP
 \-c, \-\-create\-v2
 .RS 4
-create an ID3v2.3 tag & add a TCON frame to it for any file that has an ID3v1 tag, but no ID3v2 tag
+create an ID3v2.3 tag & add a TCON frame to it for any file that has
+an ID3v1 tag, but no ID3v2 tag
 .RE
 
 .PP
 \-C,\-\-create\-v1
 .RS 4
-create an ID3v1 tag and set its genre field appropriately for any file that has an ID3v2 tag, but
-no ID3v1 tag
+create an ID3v1 tag and set its genre field appropriately for any file
+that has an ID3v2 tag, but no ID3v1 tag
 .RE
 
 .PP
@@ -126,8 +129,8 @@ or you may find assorted, non-musical files have had ID3v1 tags
 appended to them
 .RE
 
-Finally, serialization of new or updated tags can be modified with the following
-options:
+Finally, serialization of new or updated tags can be modified with the
+following options:
 
 .PP
 \-n,\-\-dry\-run
@@ -260,6 +263,7 @@ will be accepted). See also
 Do not use any pager when printing the Winamp genre list; just
 print to
 .I stdout.
+.RE
 .PP
 \-t,\-\-tag=INDEX
 .RS 4

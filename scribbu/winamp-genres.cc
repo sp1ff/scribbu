@@ -267,7 +267,8 @@ namespace {
     if (ta > t) t = ta;
     if (tb > t) t = tb;
     if (t2 > t) t = t2;
-    while (t < (ptrdiff_t)std::min(m, n - k) && A[t] == B[t+k]) ++t;
+    ptrdiff_t L = (ptrdiff_t)std::min(m, n - k);
+    while (t >= 0 && t >= -k && t < L && A[t] == B[t+k]) ++t;
     if (k + zero_k >= 0 && p > -2) {
       fkp[(k + zero_k)*max_p+p+1] = t;
     }
@@ -286,7 +287,7 @@ namespace {
     using namespace std;
 
     size_t m = A.length();
-    // The minmal p will be at the end of diagonal k
+    // The minimal p will be at the end of diagonal k
     ptrdiff_t k = n - m;
     ptrdiff_t p = k;
 

@@ -632,9 +632,13 @@ scribbu::unique_file_id::write(std::ostream &os) const
 {
   const char zed = 0;
 
-  os.write((const char*)&(owner_[0]), owner_.size());
+  if (!owner_.empty()) {
+    os.write((const char*)&(owner_[0]), owner_.size());
+  }
   os.write(&zed, 1);
-  os.write((const char*)&(id_[0]), id_.size());
+  if (!id_.empty()) {
+    os.write((const char*)&(id_[0]), id_.size());
+  }
   return owner_.size() + 1 + id_.size();
 }
 
@@ -684,9 +688,13 @@ scribbu::encryption_method::write(std::ostream &os) const
 {
   const char zed = 0;
 
-  os.write((const char*)&(email_[0]), email_.size());
+  if (!email_.empty()) {
+    os.write((const char*)&(email_[0]), email_.size());
+  }
   os.write((const char*)&method_symbol_, 1);
-  os.write((const char*)&(data_[0]), data_.size());
+  if (!data_.empty()) {
+    os.write((const char*)&(data_[0]), data_.size());
+  }
   return email_.size() + 1 + data_.size();
 
 }
@@ -818,7 +826,9 @@ scribbu::user_defined_text::write(std::ostream &os) const
   std::size_t cb = 0;
   os.write((const char*)&unicode_, 1);
   cb += 1;
-  os.write((const char*)&(description_[0]), description_.size());
+  if (!description_.empty()) {
+    os.write((const char*)&(description_[0]), description_.size());
+  }
   cb += description_.size();
   if (2 == cbnil_) {
     os.write(uzed, 2);
@@ -828,7 +838,9 @@ scribbu::user_defined_text::write(std::ostream &os) const
     os.write(&zed, 1);
     cb += 1;
   }
-  os.write((const char*)&(text_[0]), text_.size());
+  if (!text_.empty()) {
+    os.write((const char*)&(text_[0]), text_.size());
+  }
   cb += text_.size();
 
   return cb;
@@ -961,11 +973,15 @@ scribbu::comments::write(std::ostream &os) const
   cb += 1;
   os.write((const char*)lang_, 3);
   cb += 3;
-  os.write((const char*)&(description_[0]), description_.size());
+  if (!description_.empty()) {
+    os.write((const char*)&(description_[0]), description_.size());
+  }
   cb += description_.size();
   os.write(zed, cbnil_);
   cb += cbnil_;
-  os.write((const char*)&(text_[0]), text_.size());
+  if (!text_.empty()) {
+    os.write((const char*)&(text_[0]), text_.size());
+  }
   cb += text_.size();
 
   return cb;
@@ -1065,7 +1081,9 @@ scribbu::play_count::needs_unsynchronisation() const
 std::size_t
 scribbu::play_count::write(std::ostream &os) const
 {
-  os.write((const char*)&(counter_[0]), counter_.size());
+  if (!counter_.empty()) {
+    os.write((const char*)&(counter_[0]), counter_.size());
+  }
   return counter_.size();
 }
 
@@ -1152,10 +1170,14 @@ scribbu::popularimeter::write(std::ostream &os) const
 {
   static const char zed = 0;
 
-  os.write((const char*)&(email_[0]), email_.size());
+  if (!email_.empty()) {
+    os.write((const char*)&(email_[0]), email_.size());
+  }
   os.write(&zed, 1);
   os.write((const char*)&rating_, 1);
-  os.write((const char*)&(counter_[0]), counter_.size());
+  if (!counter_.empty()) {
+    os.write((const char*)&(counter_[0]), counter_.size());
+  }
   return email_.size() + 2 + counter_.size();
 }
 

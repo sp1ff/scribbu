@@ -91,7 +91,7 @@ function smoke_tests()
     pcnt=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|awk '{print $2}')
     [ $pcnt = "2" ] || fail "smoke_tests: PCNT is $pcnt; should be 2"
 
-    run_popm out err stat --popularimeter-only -A -o "sp1ff@pobox.com" -r 192 id3v2.3.tag
+    run_popm out err stat --popularimeter-only -f -o "sp1ff@pobox.com" -r 192 id3v2.3.tag
     popm=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F POPM|awk '{print $2}')
     [ "$popm" = "sp1ff@pobox.com" ] || fail "smoke_tests: no POPM"
     rating=$(${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F rating|awk '{print $2}')
@@ -230,7 +230,7 @@ function test_id3v1_only
     here=`pwd`
     set_testdir ${srcdir} $popm_testdir test_id3v1_only v1-only.mp3
 
-    run_popm out err stat -a -A -b -o sp1ff@pobox.com -r 196 v1-only.mp3
+    run_popm out err stat -a -f -b -o sp1ff@pobox.com -r 196 v1-only.mp3
     test $stat -eq 0 || fail "test_id3v1_only: failed to set rating"
 
     rating=$(${popm_scribbu_dir}/scribbu dump v1-only.mp3|grep -F rating|awk '{print $2}')
@@ -259,13 +259,13 @@ function test_rate_then_count
     here=`pwd`
     set_testdir ${srcdir} $popm_testdir test_rate_then_count life.mp3
 
-    run_popm out err stat -a -A -b -o sp1ff@pobox.com -r 196 life.mp3
+    run_popm out err stat -a -f -b -o sp1ff@pobox.com -r 196 life.mp3
     test $stat -eq 0 || fail "test_rate_then_count: failed to set rating"
     rating=$(${popm_scribbu_dir}/scribbu dump life.mp3|grep -F rating|awk '{print $2}')
     [ "$rating" = "196" ] || fail "test_rate_then_count: rating is $rating; should be 196"
 
     # Now set the playcount to 1
-    run_popm out err stat -a -A -b -o sp1ff@pobox.com -C 1 life.mp3
+    run_popm out err stat -a -f -b -o sp1ff@pobox.com -C 1 life.mp3
     rating=$(${popm_scribbu_dir}/scribbu dump life.mp3|grep -F rating|awk '{print $2}')
     [ "$rating" = "196" ] || fail "test_rate_then_count: rating is $rating; should be 196 (2)"
 
@@ -293,7 +293,7 @@ function test_issue_5
     set_testdir ${srcdir} $popm_testdir test_issue_5 id3v2.3.tag
 
     # id3v2.3.tag has no PCNT frame-- try to add one with a non-zero value
-    run_popm out err stat -a -A -b -o sp1ff@pobox.com -C 11 id3v2.3.tag
+    run_popm out err stat -a -f -b -o sp1ff@pobox.com -C 11 id3v2.3.tag
     test $stat -eq 0 || fail "test_issue_5: non-zero exit status on create"
 
     pcnt=`${popm_scribbu_dir}/scribbu dump id3v2.3.tag|grep -F PCNT|sed ${sed_regex} 's/PCNT: ([0-9]+)/\1/'`

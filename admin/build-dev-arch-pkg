@@ -11,7 +11,7 @@
 # It takes a single argument: the name of the tarball to package.
 
 set -ex
-docker build -t scribbu-arch:latest -f admin/Dockerfile-arch .
+docker build -t scribbu-arch:latest --build-arg user_id=$(id -u) -f admin/Dockerfile-arch .
 
 here=$(pwd)
 archdir=$(cd ../scribbu-arch && pwd)
@@ -26,7 +26,7 @@ sed -e "s/^source=.*/source=(scribbu-${version}.tar.gz)/" /tmp/PKGBUILD.1.$$ > /
 cp -v /tmp/PKGBUILD.2.$$ ../scribbu-arch/PKGBUILD-dev
 
 docker_args="-it"
-docker_args="$docker_args --mount type=bind,source=${archdir},target=/scribbu"
+docker_args="$docker_args --mount type=bind,source=${archdir},target=/scribbu-arch"
 docker_args="$docker_args -v ${script}:/build-dev-pkg:ro"
 docker_args="$docker_args -v ${tarball}:/$(basename $1):ro"
 docker_args="$docker_args --privileged"

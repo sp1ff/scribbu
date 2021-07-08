@@ -9,9 +9,10 @@ scribbu-text \- Manage ID3v2 text frames
 .RS 8
 .br
 [-u|--adjust-unsync] [-a|--album=] <album> [-A|--artist=] <artist>
+[-c|--create-v2] [-C|--always-create-v2]
 [-b|--create-backups] [-d|--delete=] <frames> [-E|--encoding] encoding
 [-e|--encoded-by] encoder [-g|--genre] genre [-t|--tag] index
-[-T|--title] title [-k|--track] track [-y|--year] year
+[-T|--title] title [-t|--track] track [-y|--year] year
 <file-or-directory> <file-or-directory>...
 
 .SH DESCRIPTION
@@ -62,6 +63,19 @@ Display more detailed help.
 \-\-info
 .RS 4
 Display this sub-command's node in the user's Info viewer.
+.RE
+.PP
+\-A,\-\-always\-create\-v1
+.RS 4
+Always create an ID3v1 tag with the genre field set appropriately for
+any file that does not possess one.
+.RE
+.PP
+\-c,\-\-create\-v2
+.RS 4
+Create an ID3v2 tag with a TCON frame for any file that has an ID3v1
+tag but does not have an ID3v2 tag (fields from the ID3v1 tag will
+be copied over).
 .RE
 .PP
 \-a,\-\-album=ALBUM Set the TALB, or Album/Movie/Show Title frame

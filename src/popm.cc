@@ -45,7 +45,7 @@ namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu popm -- manage playcount and/or popularimeter frames
 
-scribbu popm [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
+Usage: scribbu popm [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
 By default, increment the play count in all PCNT & POPM frames in all tags
 in the files named on the command line. If an argument is a directory, increment
@@ -73,12 +73,12 @@ will only modify POPM frames with an owner field of "sp1ff@pobox.com".
 While the default effect on the play count(s) is to increment by one, this can
 also be modified in a few ways:
 
-      --count=C,-c C: explicitly set the play count to C
+      --count=C,-C C: explicitly set the play count to C
   --increment=I,-i I: increment the play count by I (instead of 1)
 
 This command can also be used to set the rating. The ID3v2 POPM frame expresses
-the rating as an unsigned int from 0 to 255 inclusive. The user may specify that
-rating in one of two ways:
+the rating as an unsigned integer between 0 to 255, inclusive. The user may
+specify that rating in one of two ways:
 
     1. by simply providing such a number: e.g. --rating=128
 
@@ -104,8 +104,10 @@ The question arises: what if a given frame (PCNT, say) doesn't exist in a tag
 selected for procesing? By default, nothing. That can be changed with the
 --create-frame flag, which will create the missing frame if possible.
 
-If no ID3v2 tag exists whatsoever, by default no action will be taken. This
-behavior can be changed with the following two flags:
+If no ID3v2 tag exists whatsoever, by default no action will be taken. This may
+be desirable: imagine invoking this sub-command on a directory containing both
+music & non-musc files. This behavior can be changed with the following two
+flags:
 
          -c,--create-v2  create an ID3v2.3 tag & add the relevant frame(s) to
                          it for any file that has an ID3v1 tag, but no ID3v2 tag
@@ -746,7 +748,7 @@ namespace {
       ("count,C", po::value<size_t>(), "Set the play count to this value")
       ("create-v2,c", po::bool_switch(), "Create an ID3v2.3 tag containing "
        "the relevant frames for any file that has an ID3v1 tag, but no v2")
-      ("create-frame,A", po::bool_switch(), "Create a new frame when directed "
+      ("create-frame,f", po::bool_switch(), "Create a new frame when directed "
        "to process frames of a given sort and none are present in the tag")
       ("create-backups,b", po::bool_switch(), "Create backup copies of all "
        "files before modifying them.")

@@ -272,7 +272,9 @@ scribbu::unknown_id3v2_2_frame::size() const
 std::size_t
 scribbu::unknown_id3v2_2_frame::serialize(std::ostream &os) const
 {
-  os.write((char*)&(data_[0]), data_.size());
+  if (!data_.empty()) {
+    os.write((char*)&(data_[0]), data_.size());
+  }
   return data_.size();
 }
 
@@ -363,7 +365,9 @@ std::size_t
 scribbu::id3v2_2_text_frame::serialize(std::ostream &os) const
 {
   os.write((char*)&unicode_, 1);
-  os.write((char*)&(text_[0]), text_.size());
+  if  (!text_.empty()) {
+    os.write((char*)&(text_[0]), text_.size());
+  }
   return 1 + text_.size();
 }
 

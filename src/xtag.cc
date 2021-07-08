@@ -42,7 +42,7 @@ namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu xtag -- manage the tag cloud frame
 
-scribbu xtag [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
+Usage: scribbu xtag [OPTION...] FILE-OR-DIRECTORY [FILE-OR-DIRECTORY...]
 
 By default, create or update the "tag cloud" frame in all tags in the files
 named on the command line. If an argument is a directory, create or update the
@@ -54,18 +54,18 @@ introduced by `scribbu'. It is meant to represent a collection of arbitrary tags
 attached to the track, with or without values. On the command-line, this
 sub-command expresses it as urlencoded query parameters, e.g.:
 
-    scribbu xtag --tags=sub-genres=foo,bar&90s...
+    scribbu xtag --tags="sub-genres=foo,bar&90s..."
 
 will update the tag cloud for any XTAG frames found.
 
 This operation can be scoped in a few ways:
 
-    scribbu xtag -t=1 --tags=sub-genres=foo,bar&90s...
+    scribbu xtag -t=1 --tags="sub-genres=foo,bar&90s..."
 
 will only operate on the XTAG frame in the second tag in each file (the
 option can be given more than once to specify multiple indicies).
 
-    scribbu xtag -c --tags=sub-genres=foo,bar&90s...
+    scribbu xtag -c --tags="sub-genres=foo,bar&90s..."
 
 will create an ID3v2.3 tag and add an XTAG frame if no ID3v2 tag exists, but
 only if the file already has an ID3v1 tag (any information therein will be
@@ -74,7 +74,7 @@ whether there's an ID3v1 tag present or not. This should be used with care when
 operating on directories, or you may find assorted, non-music files have had
 ID3v2 tags prepended to them.
 
-    scribbu xtag --tags=sub-genres=foo,bar&90s --merge
+    scribbu xtag --tags="sub-genres=foo,bar&90s" --merge
 
 will "merge" the tags instead of overwriting.
 
@@ -493,7 +493,8 @@ namespace {
        "flag as needed on write (default is to never use it).")
       ("always-create-v2,A", po::bool_switch(), "Always create an ID3v2 tag"
        "with an XTAG frame for any file that has no ID3v2 tag")
-      ("create,a", po::bool_switch(), "Create a new XTAG frame if not present")
+      ("create-frame,f", po::bool_switch(), "Create a new XTAG frame if not "
+       "present")
       ("create-v2,c", po::bool_switch(), "Create an ID3v2.3 tag containing "
        "an XTAG frame for any file that an ID3v1 tag, but no ID3v2 tag")
       ("create-backups,b", po::bool_switch(), "Create backup copies of all "
@@ -505,10 +506,10 @@ namespace {
       ("merge,m", po::bool_switch(), "Merge the given tags, don't overwrite")
       ("owner,o", po::value<string>(), "Operate only on XTAG frames with "
        "this owner, or specify the owner in case an XTAG frame is being created")
-      ("index,t", po::value<vector<size_t>>(), "Zero-based index of the tag "
+      ("tag,t", po::value<vector<size_t>>(), "Zero-based index of the tag "
        "on which to operate; may be given more than once to select "
        "multiple tags")
-      ("tags,T", po::value<string>(), "Tags to be set or merged "
+      ("xtags,T", po::value<string>(), "Tags to be set or merged "
        "expressed in HTTP query params style using URL-encoding, e.g. "
        "foo&bar=has%20%2c&splat=a,b,c");
 
@@ -574,7 +575,7 @@ namespace {
 
       bool adj_unsync       = vm["adjust-unsync"   ].as<bool>();
       bool always_create_v2 = vm["always-create-v2"].as<bool>();
-      bool create           = vm["create"          ].as<bool>();
+      bool create           = vm["create-frame"    ].as<bool>();
       bool create_backups   = vm["create-backups"  ].as<bool>();
       bool create_v2        = vm["create-v2"       ].as<bool>();
       bool dry_run          = vm["dry-run"         ].as<bool>();
@@ -609,10 +610,10 @@ namespace {
         if (get) {
           pF.reset(new xtag_processor(owner));
         } else {
-          if (!vm.count("tags")) {
-            throw po::required_option("--tags");
+          if (!vm.count("xtags")) {
+            throw po::required_option("--xtags");
           }
-          string tag_cloud = vm["tags"].as<string>();
+          string tag_cloud = vm["xtags"].as<string>();
           pF.reset(new xtag_processor(tag_cloud, owner, create, merge, v2cp,
                                       create_backups, dry_run, adj_unsync));
         }
@@ -620,10 +621,10 @@ namespace {
         if (get) {
           pF.reset(new xtag_processor(tags.begin(), tags.end(), owner));
         } else {
-          if (!vm.count("tags")) {
-            throw po::required_option("--tags");
+          if (!vm.count("xtags")) {
+            throw po::required_option("--xtags");
           }
-          string tag_cloud = vm["tags"].as<string>();
+          string tag_cloud = vm["xtags"].as<string>();
           pF.reset(new xtag_processor(tags.begin(), tags.end(), tag_cloud,
                                       owner, create, merge, v2cp, create_backups,
                                       dry_run, adj_unsync));

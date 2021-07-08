@@ -916,7 +916,7 @@ scribbu genre -g GENRE
 will attempt to map to map the string @code{GENRE} to one of the
 Winamp genres using Damerau-Levenshtein distance, but disregarding
 case.  For instance @code{scribbu genre -g rok} will be interpreted as
-Winamp genre 17: "Rock".
+Winamp genre number seventeen "Rock".
 
 @example
 scribbu genre -G GENRE
@@ -951,7 +951,7 @@ will always be created if it doesn't exist.
 @cindex @code{scribbu genre} Behavior on Write
 
 If the command didn't change the tagset for a given file, that file
-will not be modified. More generally, the tagset will have been
+will not be modified. Typically however, the tagset will have been
 changed, and we need to write out the new tagset. Since ID3v1 tags are
 fixed-size blocks appended to the file, writing them out is trivial.
 
@@ -1008,13 +1008,13 @@ cause a backup file to be made before changing the original
 file that has an ID3v1 tag but does not have an ID3v2 tag (fields from
 the ID3v1 tag will be copied over); may be combined with
 @option{--always-create-v1} or @option{--create-v1}, but not with
-@option{--always-crate-v2}
+@option{--always-create-v2}
 
 @item
-@option{-C|--craete-v1} create an ID3v1 tag with the genre field set
+@option{-C|--create-v1} create an ID3v1 tag with the genre field set
 appropriately for any file that has an ID3v2 tag, but no ID3v1 tag;
 may be combined with @option{--always-create-v2} or
-@option{--create-v2}, but not with @option{--always-crate-v1}
+@option{--create-v2}, but not with @option{--always-create-v1}
 
 @item
 @option{-g GENRE|--genre=GENRE} specify @code{GENRE} as the textual
@@ -1408,15 +1408,14 @@ Both of these take the following options:
 
 @end enumerate
 
-
 @node Invoking @command{scribbu popm}
 @section Invoking @command{scribbu popm}
 @cindex Invoking @command{scribbu popm}
 
 @command{scribbu popm} creates or updates play count and/or
 popularimeter frames. With no options, it increments the counter fields in
-every and/or play count popularimeter frame in every tag by one. With the
-@option{--create} flag, create the relevant frames in each tag.
+every play count and/or popularimeter frame in every tag by one. With the
+@option{--create-frame} flag, create the relevant frames in each tag.
 Popularimeter frames will not be created in the absence of the
 @option{--owner} option.  Play count & popularimeter frame creation
 can be inhibited via the @option{--popularimeter-only} and
@@ -1448,11 +1447,22 @@ will accept almost any character, repeated one-to-five times.
 print what @emph{would} have been done
 
 @item
-@option{-a,--create} create playcount and/or popularimeter in any tags
-that are missing. This can be modified by the
+@option{-f,--create-frame} create playcount and/or popularimeter in
+any tags that are missing. This can be modified by the
 @option{--popularimeter-only} and @option{--playcount-only} flags,
 respectively. Popularimeter frames will only be created if the
 @option{--owner} flag is given, as well.
+
+@item
+@option{-c|--create-v2} create an ID3v2 tag with a POPM and/or PCNT
+frames for any file that has an ID3v1 tag but does not have an ID3v2
+tag; may not be combined with @option{--always-create-v2}
+
+@item
+@option{-a|--always-create-v2} always create an ID3v2 tag with a POPM
+and/or PCNT frame for any file that does not possess one (whether or
+not there's an ID3v1 tag present); may not be combined with
+@option{--create-v2}.
 
 @item
 @option{-b,--create-backups} by default, the new tagset will be written
@@ -1460,7 +1470,7 @@ in-place (emplacing, if possible); this option will cause a backup file
 to be made first.
 
 @item
-@option{-c COUNT,--count=COUNT} set all counter fields to @verb{.COUNT.}
+@option{-C COUNT,--count=COUNT} set all counter fields to @verb{.COUNT.}
 instead of incrementing
 
 @item
@@ -1500,13 +1510,12 @@ unysnchronisation scheme on write (by default, it's never used)
 
 @end enumerate
 
-
 @node Invoking @command{scribbu text}
 @section Invoking @command{scribbu text}
 @cindex Invoking @command{scribbu text}
 
 @code{scribbu text} will create, udpate & delete various ID3v2 text
-frames.
+frames & ID3v1 tag fields.
 
 @c Generate the nodes for this menu with `C-c C-u C-m'.
 @menu
@@ -1518,6 +1527,17 @@ frames.
 @cindex @code{scribbu text} Options
 
 @enumerate
+
+@item
+@option{-c|--create-v2} create an ID3v2 tag with a POPM and/or PCNT
+frames for any file that has an ID3v1 tag but does not have an ID3v2
+tag; may not be combined with @option{--always-create-v2}
+
+@item
+@option{-a|--always-create-v2} always create an ID3v2 tag with a POPM
+and/or PCNT frame for any file that does not possess one (whether or
+not there's an ID3v1 tag present); may not be combined with
+@option{--create-v2}.
 
 @item
 @option{-a ALBUM,--album=ALBUM} set the TALB, or Album/Movie/Show
