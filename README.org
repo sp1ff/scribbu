@@ -1,6 +1,6 @@
 #+TITLE: scribbu
 #+DESCRIPTION: The extensible tool for tagging your music collection
-#+DATE: <2021-07-08 Thu 16:51>
+#+DATE: <2021-12-18 Sat 09:10>
 #+AUTHOR: sp1ff
 #+EMAIL: sp1ff@pobox.com
 #+AUTODATE: t
@@ -59,7 +59,7 @@ scribbu can be invoked in a few ways:
 
     #+BEGIN_EXAMPLE
 	    scribbu
-		scribbu 0.6.20
+		scribbu 0.6.21
 		Copyright (C) 2017-2021 Michael Herstine <sp1ff@pobox.com>
 
 		You are in the Guile REPL; in your shell, type `info scribbu' for documentation.

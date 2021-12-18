@@ -4,6 +4,12 @@
 @settitle scribbu
 @include version.texi
 @c %**end of header
+
+@dircategory Music
+@direntry
+* scribbu: (scribbu). The extensible tool for tagging your music collection.
+@end direntry
+
 @copying
 
 Copyright @copyright{} 2018-2021 Michael Herstine <sp1ff@@pobox.com>

@@ -29,7 +29,7 @@ RUN set -ex && \
 	locale-gen en_US.UTF-8 && \
 	update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
 	# re-include the doc directories \
-	mkdir /usr/share/man/man1 && \
+	test -d /usr/share/man/man1 || mkdir /usr/share/man/man1 && \
 	echo "path-include /usr/share/doc/scribbu" >> /etc/dpkg/dpkg.cfg.d/docker && \
 	echo "path-include /usr/share/man/man1/scribbu*" >> /etc/dpkg/dpkg.cfg.d/docker && \
 	echo "path-include /usr/share/info/scribbu.info" >> /etc/dpkg/dpkg.cfg.d/docker

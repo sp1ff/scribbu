@@ -1,4 +1,12 @@
-2021-07-18  Michael Herstine  <sp1ff@pobox.com>
+2021-12-18  Michael Herstine  <sp1ff@pobox.com>
+
+	Hygiene commit.
+	    - moved to boost 1.63 as the minimum version
+	    - added a .zstd distribution
+	    - added a category to the Texinfo `dir` entry
+	    - updated the guile macro to work with version-suffixed installs
+
+2021-07-19  Michael Herstine  <sp1ff@pobox.com>
 
 	This commit normalizes assorted creation flags (for both frames and tags) among the sub-commands `xtag`, `genre`, `popm` and `text`.
 	It also extends the last to operate on ID3v1 tags, if they're
