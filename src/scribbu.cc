@@ -305,10 +305,9 @@ main(int argc, char * argv[])
 
   // Setup an alternate stack, so our signal handler will still work in the
   // case of stack overflow (which will cause a SIGSEGV)
-  static char stack[SIGSTKSZ];
   stack_t ss = { 0 };
   ss.ss_size = SIGSTKSZ;
-  ss.ss_sp = stack;
+  ss.ss_sp = malloc(SIGSTKSZ);
   sigaltstack(&ss, 0);
 
 # ifdef SCRIBBU_ALWAYS_DUMP_CORE
