@@ -41,7 +41,7 @@
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/tagset.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 ////////////////////////////////////////////////////////////////////////////////

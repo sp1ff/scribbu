@@ -31,9 +31,9 @@
 
 #include <numeric>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ scribbu::read_id3v2(std::istream &ifs, std::size_t idx)
     if (!I.present_) {
       throw std::invalid_argument("bad index");
     }
-    ifs.seekg(I.size_ + scribbu::ID3V2_HEADER_SIZE, fs::ifstream::cur);
+    ifs.seekg(I.size_ + scribbu::ID3V2_HEADER_SIZE, std::ifstream::cur);
   }
 
   id3v2_info I = looking_at_id3v2(ifs, true);
@@ -119,7 +119,7 @@ scribbu::template_processor::template_processor(const std::string &templat)
 }
 
 /// Given the path of the file, process our template
-std::string scribbu::template_processor::operator()(const boost::filesystem::path &pth) const
+std::string scribbu::template_processor::operator()(const std::filesystem::path &pth) const
 {
   using scribbu::tbt_support::process_and_concatenate;
 

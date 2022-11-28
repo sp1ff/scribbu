@@ -33,12 +33,12 @@
 
 #include <iostream>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 

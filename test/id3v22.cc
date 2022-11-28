@@ -25,12 +25,12 @@
 
 #include "unit.hh"
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 /**
  * \brief id3v2_2_ tag unit tests
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 
   const fs::path TEST_DATA_V2_2(get_data_directory() / "id3v2.2.tag");
 
-  fs::ifstream ifsv2_2(TEST_DATA_V2_2, fs::ifstream::binary);
+  std::ifstream ifsv2_2(TEST_DATA_V2_2, std::ifstream::binary);
 
   id3v2_2_tag tag(ifsv2_2);
 
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag_2 )
 
   const fs::path TEST_DATA_V2_2(get_data_directory() / "id3v22-tda.mp3");
 
-  fs::ifstream ifsv2_2(TEST_DATA_V2_2, fs::ifstream::binary);
+  std::ifstream ifsv2_2(TEST_DATA_V2_2, std::ifstream::binary);
 
   id3v2_2_tag tag(ifsv2_2);
 
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag_as_container )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v2.2.tag");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v2_2_tag tag(ifs);
 
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE( test_id3v22_text_frames )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v2.2.tag");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v2_2_tag tag(ifs);
 

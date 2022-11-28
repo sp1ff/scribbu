@@ -27,7 +27,7 @@
 
 #include <sstream>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/ostream.hh>
@@ -36,7 +36,7 @@
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/csv-pprinter.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_track_data )
 {
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE( test_track_data )
   using namespace std;
   using namespace scribbu;
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
   unique_ptr<scribbu::id3v2_tag> pid3v2 = maybe_read_id3v2(ifs); // ID3v2 tags...
   track_data td(ifs);                                            // the track itself...
   unique_ptr<id3v1_tag> pid3v1 = process_id3v1(ifs);             // & the ID3v1 tag.
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( test_track_data2 )
   using namespace std;
   using namespace scribbu;
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
   ios_base::iostate state = ifs.rdstate();
   unique_ptr<scribbu::id3v2_tag> pid3v2 = maybe_read_id3v2(ifs); // ID3v2 tags...
   state = ifs.rdstate();

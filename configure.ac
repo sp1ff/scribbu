@@ -31,7 +31,6 @@ AC_PROG_LEX
 # Checks for libraries.
 AX_BOOST_BASE([1.63], [], [AC_MSG_ERROR([Scribbu requires boost_base 1.63 or later.])])
 AX_BOOST_IOSTREAMS
-AX_BOOST_FILESYSTEM
 AX_BOOST_LOG
 AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_REGEX

@@ -25,14 +25,15 @@
 
 #include <scribbu/framesv23.hh>
 
-#include <boost/filesystem/fstream.hpp>
+#include <cstdio>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/id3v23.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_ufid )
 {
@@ -111,7 +112,7 @@ BOOST_AUTO_TEST_CASE( test_xtag )
   //////////////////////////////////////////////////////////////////////////
 
   // Read a tagset in...
-  fs::ifstream ifs(CERULEAN, ios_base::binary);
+  std::ifstream ifs(CERULEAN, ios_base::binary);
   vector<unique_ptr<id3v2_tag>> tags;
   read_all_id3v2(ifs, back_inserter(tags));
 
@@ -124,13 +125,14 @@ BOOST_AUTO_TEST_CASE( test_xtag )
   tag.push_back(xtag);
 
   // write the thing back out...
-  fs::path tmp = fs::temp_directory_path() / fs::unique_path();
-  fs::ofstream ofs(tmp, ios_base::binary);
+  char buf[L_tmpnam];
+  fs::path tmp = fs::temp_directory_path() / std::tmpnam(buf);
+  std::ofstream ofs(tmp, ios_base::binary);
   tag.write(ofs);
   ofs.close();
 
   // re-read it in...
-  fs::ifstream tmpifs(tmp, ios_base::binary);
+  std::ifstream tmpifs(tmp, ios_base::binary);
   vector<unique_ptr<id3v2_tag>> new_tags;
   read_all_id3v2(tmpifs, back_inserter(new_tags));
 

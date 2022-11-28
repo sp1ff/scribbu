@@ -380,7 +380,7 @@ namespace scribbu
       }
 
     protected:
-      std::string transform(const boost::filesystem::path &text) const;
+      std::string transform(const std::filesystem::path &text) const;
 
 
     private:

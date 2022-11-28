@@ -33,7 +33,7 @@
 #include <scribbu/mp3.hh>
 #include <scribbu/scribbu.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 const std::string USAGE(R"usage(scribbu m3u -- M3U playlists from one or more files
@@ -230,7 +230,7 @@ namespace {
                 bool              use_utf8);
 
   private:
-    fs::ofstream ofs_;
+    std::ofstream ofs_;
 
   };
 

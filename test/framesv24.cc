@@ -23,7 +23,7 @@
 
 #include <scribbu/framesv24.hh>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>

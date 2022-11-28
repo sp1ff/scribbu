@@ -27,7 +27,7 @@
 
 #include <sstream>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/id3v1.hh>
@@ -36,7 +36,7 @@
 #include <scribbu/id3v23.hh>
 #include <scribbu/id3v24.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v1 )
 {
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v1 )
 
   const string GOLDEN("1\t0\tThe Pogues\tLorca's Novena\tHell's Ditch [Expanded] (US Ve\t1990\tAmazon.com Song ID: 20355825\t255");
 
-  fs::ifstream ifs(TEST_DATA_V1);
+  std::ifstream ifs(TEST_DATA_V1);
   id3v1_tag tag(ifs);
 
   stringstream stm;
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v22 )
   const fs::path TEST_DATA(get_data_directory() / "id3v2.2.tag");
 
   const string GOLDEN("2\t0\t2192\t0x00\t0\tMurley Braid Quartet\tSheep Walking\tMnemosyne's March (Demo)\t(8)\tiTunes v6.0.4\t\t\t0\t\t2\t 000006E1 000000D3 00004F8D 00001990 00006729 00001E1A 000064D1 00007E10 00005582 0000DF78\t 00000000 00000210 000007A2 00000000004A6C4E 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000\t\t");
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
   id3v2_2_tag tag(ifs);
 
   stringstream stm;
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v23 )
   const string GOLDEN_2("3\t0\t1397\t0x00\t0\tFrank Sinatra\tThat's Life\tThe Very Go"
                         "od Years\tVocal\t\t\t\t2\t*\t5\t\tPretty slow\tEvening\t1966\t\t");
 
-  fs::ifstream ifs_1(TEST_FILE_1, fs::ifstream::binary);
+  std::ifstream ifs_1(TEST_FILE_1, std::ifstream::binary);
   id3v2_3_tag tag_1(ifs_1);
 
   stringstream stm1;
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v23 )
   BOOST_TEST_MESSAGE(text);
   BOOST_CHECK(GOLDEN_1 == text);
 
-  fs::ifstream ifs_2(TEST_FILE_2, fs::ifstream::binary);
+  std::ifstream ifs_2(TEST_FILE_2, std::ifstream::binary);
   id3v2_3_tag tag_2(ifs_2);
 
   stringstream stm3;
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( test_tdf_pprinting_id3v24 )
 
   const string GOLDEN("4\t0\t2115\t0x00\t0\tJoao Gilberto\tAcapulco\tEla E Carioca\t\t\t\t\t0\t\t0\t\t\t\t");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v2_4_tag tag(ifs);
   stringstream stm;

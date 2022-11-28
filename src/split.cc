@@ -27,10 +27,10 @@
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2.hh>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 
@@ -56,7 +56,7 @@ For detailed help, say `scribbu split --help'. To see the manual, say
     const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit |
       std::ios::badbit;
 
-    fs::ofstream ofs(pth, std::istream::binary);
+    std::ofstream ofs(pth, std::istream::binary);
     ofs.exceptions(EXC_MASK);
 
     std::unique_ptr<char[]> p(new char[cb]);
@@ -93,7 +93,7 @@ For detailed help, say `scribbu split --help'. To see the manual, say
   {
     const std::ios::iostate EXC_MASK = std::ios::eofbit | std::ios::failbit | std::ios::badbit;
 
-    std::ifstream ifs = scribbu::open_ifstream(in.native(), fs::ifstream::binary);
+    std::ifstream ifs = scribbu::open_ifstream(in.native(), std::ifstream::binary);
     ifs.exceptions(EXC_MASK);
 
     scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);

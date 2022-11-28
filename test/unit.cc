@@ -29,15 +29,16 @@
 #include <scribbu/id3v2.hh>
 #include <scribbu/id3v2-utils.hh>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #define BOOST_TEST_MODULE scribbu unit tests
 #include <boost/test/unit_test.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 
 #include <openssl/evp.h>
 
-namespace fs   = boost::filesystem;
+#include <filesystem>
+
+namespace fs   = std::filesystem;
 namespace po   = boost::program_options;
 namespace test = boost::unit_test;
 
@@ -144,7 +145,7 @@ InitUnitTestSuite::InitUnitTestSuite()
 BOOST_GLOBAL_FIXTURE(InitUnitTestSuite);
 
 void
-compute_md5(const boost::filesystem::path &pth, unsigned char md5[])
+compute_md5(const fs::path &pth, unsigned char md5[])
 {
   using scribbu::openssl_error;
 
@@ -162,7 +163,7 @@ compute_md5(const boost::filesystem::path &pth, unsigned char md5[])
     throw new openssl_error();
   }
 
-  fs::ifstream ifs(pth, fs::ifstream::binary);
+  std::ifstream ifs(pth, std::ifstream::binary);
 
   for (std::streamsize nleft = fs::file_size(pth); nleft > 0; ) {
 

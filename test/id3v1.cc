@@ -25,17 +25,18 @@
 
 #include "unit.hh"
 
+#include <cstdio>
 #include <iostream>
 #include <memory>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/framesv2.hh>
 #include <scribbu/winamp-genres.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 namespace {
 
@@ -50,8 +51,8 @@ namespace {
       return false;
     }
 
-    fs::ifstream ifsa(a, fs::ifstream::binary);
-    fs::ifstream ifsb(b, fs::ifstream::binary);
+    std::ifstream ifsa(a, std::ifstream::binary);
+    std::ifstream ifsb(b, std::ifstream::binary);
 
     std::unique_ptr<char[]> pa(new char[sza]);
     std::unique_ptr<char[]> pb(new char[szb]);
@@ -78,7 +79,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_a )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v1.2.3.tag");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v1_tag tag(ifs);
 
@@ -160,8 +161,9 @@ BOOST_AUTO_TEST_CASE( test_id3v1_a )
   BOOST_CHECK(s == string{"1990"});
 
   // Test serialization
-  fs::path tmp = fs::unique_path();
-  fs::ofstream ofs(tmp, fs::ofstream::binary);
+  char buf[L_tmpnam];
+  fs::path tmp = std::tmpnam(buf);
+  std::ofstream ofs(tmp, std::ofstream::binary);
   tag.write(ofs);
   ofs.close();
 
@@ -183,7 +185,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_b )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v1.2.4.tag");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v1_tag tag1(ifs);
 
@@ -245,8 +247,9 @@ BOOST_AUTO_TEST_CASE( test_id3v1_b )
               0 == year[2] && 0 == year[3]);
 
   // Test serialization
-  fs::path tmp = fs::unique_path();
-  fs::ofstream ofs(tmp, fs::ofstream::binary);
+  char buf[L_tmpnam];
+  fs::path tmp = std::tmpnam(buf);
+  std::ofstream ofs(tmp, std::ofstream::binary);
   tag1.write(ofs);
   ofs.close();
 
@@ -263,7 +266,7 @@ BOOST_AUTO_TEST_CASE( test_id3v1_c )
 
   const fs::path TEST_DATA(get_data_directory() / "id3v1-ext.tag");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v1_tag tag1(ifs);
 
@@ -355,8 +358,9 @@ BOOST_AUTO_TEST_CASE( test_id3v1_c )
               '6' == year[2] && '0' == year[3]);
 
   // Test serialization
-  fs::path tmp = fs::unique_path();
-  fs::ofstream ofs(tmp, fs::ofstream::binary);
+  char buf[L_tmpnam];
+  fs::path tmp = std::tmpnam(buf);
+  std::ofstream ofs(tmp, std::ofstream::binary);
   tag1.write(ofs);
   ofs.close();
 
@@ -371,7 +375,7 @@ BOOST_AUTO_TEST_CASE( test_jing_jing_1 )
 
   const fs::path TEST_DATA(get_data_directory() / "红颜旧.mp3");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v1_info I1 = ends_in_id3v1(ifs);
   BOOST_CHECK(scribbu::id3_v1_tag_type::none == I1.type_);
@@ -406,7 +410,7 @@ BOOST_AUTO_TEST_CASE( test_elliot_goldenthal )
 
   const fs::path TEST_DATA(get_data_directory() / "elliot-goldenthal.id3v1.tag");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
   id3v1_info info = ends_in_id3v1(ifs);
   BOOST_CHECK( id3_v1_tag_type::v_1 == info.type_ );
 
@@ -464,7 +468,7 @@ BOOST_AUTO_TEST_CASE( test_nan_tom_teaimin )
 
   const fs::path DATA(get_data_directory() / "nan-1.mp3");
 
-  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  std::ifstream ifs(DATA, std::ifstream::binary);
   id3v1_info info = ends_in_id3v1(ifs);
   BOOST_CHECK( id3_v1_tag_type::v_1 == info.type_ );
 
@@ -493,14 +497,15 @@ BOOST_AUTO_TEST_CASE( test_maybe_remove_id3v1 )
 
   static const fs::path LORCA("lorca.mp3");
 
-  fs::path tmp = fs::unique_path();
+  char buf[L_tmpnam];
+  fs::path tmp = std::tmpnam(buf);
   fs::path src = get_data_directory() / LORCA;
 
-  boost::system::error_code ec;
+  std::error_code ec;
   fs::copy_file(src, tmp, ec);
 
   // Ensure our tmp file is writable
-  fs::permissions(tmp, fs::perms::add_perms|fs::perms::owner_write);
+  fs::permissions(tmp, fs::status(tmp).permissions()|fs::perms::owner_write);
 
   maybe_remove_id3v1(tmp);
 
@@ -522,12 +527,13 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
 
   static const fs::path LORCA("lorca.mp3");
 
-  fs::path tmp = fs::unique_path();
+  char buf[L_tmpnam];
+  fs::path tmp = std::tmpnam(buf);
   fs::path lrc = get_data_directory() / LORCA;
-  boost::system::error_code ec;
+  std::error_code ec;
   fs::copy(lrc, tmp, ec);
 
-  fs::ifstream ifs(lrc, fs::ifstream::binary);
+  std::ifstream ifs(lrc, std::ifstream::binary);
 
   unique_ptr<id3v1_tag> ptag = process_id3v1(ifs);
   BOOST_CHECK( ptag );
@@ -536,11 +542,11 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
   ptag->set_genre(88);
 
   // Ensure our tmp file is writable
-  fs::permissions(tmp, fs::perms::add_perms|fs::perms::owner_write);
+  fs::permissions(tmp, fs::status(tmp).permissions()|fs::perms::owner_write);
 
   replace_id3v1(tmp, *ptag);
 
-  fs::ifstream ifs2(tmp, fs::ifstream::binary);
+  std::ifstream ifs2(tmp, std::ifstream::binary);
   unique_ptr<id3v1_tag> ptag2 = process_id3v1(ifs2);
   BOOST_CHECK( ptag2 );
   BOOST_CHECK( 88 == ptag2->genre() );
@@ -550,7 +556,7 @@ BOOST_AUTO_TEST_CASE( test_replace_id3v1 )
   replace_id3v1(tmp2, *ptag);
   BOOST_CHECK( fs::exists(tmp2) );
 
-  fs::ifstream ifs3(tmp2, fs::ifstream::binary);
+  std::ifstream ifs3(tmp2, std::ifstream::binary);
   unique_ptr<id3v1_tag> ptag3 = process_id3v1(ifs3);
   BOOST_CHECK( ptag3 );
   BOOST_CHECK( 88 == ptag3->genre() );
@@ -566,7 +572,7 @@ BOOST_AUTO_TEST_CASE( test_funny_id3v1 )
 
   const fs::path TEST_DATA(get_data_directory() / "v1-only.mp3");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v1_tag tag(ifs);
   BOOST_CHECK(!tag.enhanced());

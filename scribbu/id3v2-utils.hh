@@ -212,7 +212,7 @@ namespace scribbu {
     /// Construct with the template in textual form
     template_processor(const std::string &templat);
     /// Given the path of the file, process our template
-    std::string operator()(const boost::filesystem::path &pth) const;
+    std::string operator()(const std::filesystem::path &pth) const;
 
   private:
     std::vector<std::shared_ptr<scribbu::tbt_support::term>> terms_;

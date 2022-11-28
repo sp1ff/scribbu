@@ -122,7 +122,7 @@
  *
  \code
 
-  std::ifstream ifs = open_ifstream(in, fs::ifstream::binary);
+  std::ifstream ifs = open_ifstream(in, std::ifstream::binary);
   ifs.exceptions(EXC_MASK);
 
   scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
@@ -148,11 +148,12 @@
  *
  */
 
+#include <cerrno>
+#include <cstdio>
 #include <sstream>
 
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
+#include <fstream>
+#include <filesystem>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
@@ -211,11 +212,11 @@ namespace scribbu {
      */
 
     inline
-    boost::filesystem::path
-    get_backup_name(const boost::filesystem::path &pth)
+    std::filesystem::path
+    get_backup_name(const std::filesystem::path &pth)
     {
       using namespace std;
-      using namespace boost::filesystem;
+      using namespace std::filesystem;
 
       auto here = absolute(pth).parent_path();
       auto prefix = pth.string();
@@ -340,7 +341,7 @@ namespace scribbu {
    */
 
   template <typename forward_input_iterator>
-  void replace_tagset_copy(const boost::filesystem::path &pth,
+  void replace_tagset_copy(const std::filesystem::path &pth,
                            forward_input_iterator p0,
                            forward_input_iterator p1,
                            apply_unsync unsync,
@@ -352,8 +353,7 @@ namespace scribbu {
                                   ios::failbit |
                                   ios::badbit;
 
-    namespace fs = boost::filesystem;
-    namespace sys = boost::system;
+    namespace fs = std::filesystem;
 
     // Ideally, I'd using std::tmpfile or mkstmp; functions that determine the
     // temporary name & open it atomically, to avoid the race condition (and
@@ -366,8 +366,9 @@ namespace scribbu {
     // My (admittedly poor) solution is to live with the race condition &
     // truncate on open, hoping to merely stomp on the other process' file in
     // the event I hit it (the race condition).
-    fs::path tmpnam = fs::temp_directory_path() / fs::unique_path();
-    fs::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
+    char buf[L_tmpnam];
+    fs::path tmpnam = fs::temp_directory_path() / std::tmpnam(buf);
+    std::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
     tmpfs.exceptions(EXC_MASK);
 
     typedef typename forward_input_iterator::value_type T;
@@ -377,12 +378,12 @@ namespace scribbu {
     });
 
     // At this point, the new tagset has been written to the temp file.
-    ifstream ifs = open_ifstream(pth.native(), fs::ifstream::binary);
+    ifstream ifs = open_ifstream(pth.native(), std::ifstream::binary);
     ifs.exceptions(EXC_MASK);
 
     scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs);
     while (id3v2.present_) {
-      ifs.seekg(10 + id3v2.size_, fs::ifstream::cur);
+      ifs.seekg(10 + id3v2.size_, std::ifstream::cur);
       id3v2 = scribbu::looking_at_id3v2(ifs);
     }
 
@@ -391,9 +392,9 @@ namespace scribbu {
     // Surely not the most efficient implementation, but until I have some data
     // I'm going to defer to the std implementation...
     streampos here = ifs.tellg();
-    ifs.seekg(0, fs::ifstream::end);
+    ifs.seekg(0, std::ifstream::end);
     streampos there = ifs.tellg();
-    ifs.seekg(here, fs::ifstream::beg);
+    ifs.seekg(here, std::ifstream::beg);
 
     size_t cb = there - here;
     if (cb > 0) {
@@ -421,21 +422,21 @@ namespace scribbu {
       // WORKAROUND(boost): I should be able to call `fs::copy(pth, cp)' and
       // have it throw on failure. For reasons I have not yet figured out, doing
       // this on MacOS/clang causes a SEGV somewhere in
-      // `boost::filesystem::detail::copy'.  If I do this instead, the unit
+      // `std::filesystem::detail::copy'.  If I do this instead, the unit
       // tests pass(!?). I'm hoping that when I upgrade to a more recent version
       // of boost, this problem will just go away.
-      sys::error_code ec;
+      std::error_code ec;
       fs::copy(pth, cp, ec);
       if (ec) {
-        throw sys::system_error(ec);
+        throw std::system_error(ec);
       }
     }
 
     // Attempt a rename
-    sys::error_code ec;
+    std::error_code ec;
     fs::rename(tmpnam, pth, ec);
     if (ec) {
-      if (sys::errc::cross_device_link == ec.value()) {
+      if (EXDEV == ec.value()) {
         // `rename()' doesn't work across filesystems-- fallback to copy + rm.
 
         // Thing is, `copy' fails when the destination exists (sigh). So, copy
@@ -462,7 +463,7 @@ namespace scribbu {
           throw;
         }
       } else {
-        throw sys::system_error(ec);
+        throw std::system_error(ec);
       }
     }
   }
@@ -517,28 +518,28 @@ namespace scribbu {
 
   inline
   std::size_t
-  tagset_size(const boost::filesystem::path &pth)
+  tagset_size(const std::filesystem::path &pth)
   {
-    namespace fs = boost::filesystem;
+    namespace fs = std::filesystem;
 
     const std::ios::iostate EXC_MASK = std::ios::eofbit  |
                                        std::ios::failbit |
                                        std::ios::badbit;
 
     size_t cb = 0;
-    fs::ifstream ifs;
+    std::ifstream ifs;
 
     try {
-      ifs.open(pth, fs::ifstream::binary);
+      ifs.open(pth, std::ifstream::binary);
       ifs.exceptions(EXC_MASK);
-    } catch (const fs::ifstream::failure &) {
+    } catch (const std::ifstream::failure &) {
       return cb;
     }
 
     scribbu::id3v2_info id3v2 = scribbu::looking_at_id3v2(ifs, false);
     while (id3v2.present_) {
       cb += 10 + id3v2.size_;
-      ifs.seekg(id3v2.size_, fs::ifstream::cur);
+      ifs.seekg(id3v2.size_, std::ifstream::cur);
       id3v2 = scribbu::looking_at_id3v2(ifs, false);
     }
 
@@ -572,7 +573,7 @@ namespace scribbu {
    */
 
   template <typename forward_input_iterator>
-  void replace_tagset_emplace(const boost::filesystem::path &pth,
+  void replace_tagset_emplace(const std::filesystem::path &pth,
                               forward_input_iterator p0,
                               forward_input_iterator p1,
                               apply_unsync unsync)
@@ -702,7 +703,7 @@ namespace scribbu {
    */
 
   template <typename forward_input_iterator>
-  void maybe_emplace_tagset(const boost::filesystem::path &pth,
+  void maybe_emplace_tagset(const std::filesystem::path &pth,
                             forward_input_iterator p0,
                             forward_input_iterator p1,
                             apply_unsync unsync,
@@ -710,7 +711,7 @@ namespace scribbu {
                             padding_strategy pstrat,
                             bool keep_backup_on_copy = true)
   {
-    namespace fs = boost::filesystem;
+    namespace fs = std::filesystem;
 
     size_t curr_sz = tagset_size(pth);
 
@@ -732,7 +733,7 @@ namespace scribbu {
     }
     else if (!fs::exists(pth)) {
       // Special case-- output file does not exist
-      fs::ofstream ofs(pth, fs::ofstream::binary);
+      std::ofstream ofs(pth, std::ofstream::binary);
       for ( ; p0 != p1; ++p0) {
         (*p0)->write(ofs, detail::compute_apply_unsync(unsync, **p0));
       }

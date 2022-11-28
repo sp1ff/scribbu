@@ -1,3 +1,30 @@
+2022-12-03  Michael Herstine  <sp1ff@pobox.com>
+
+	Remove boost::filesystem in favor of std::filesystem.
+	It turns-out that boost 1.74 introduced a bug in the
+	`filesystem` library method `copy_file()`
+	<https://github.com/boostorg/filesystem/issues/254>
+	that threw an `EXDEV` when *copying* across filesystems.
+	This was fixed in 1.77
+	<https://www.boost.org/users/history/version_1_77_0.html>,
+	but the Debian repos are back at 1.74
+	<https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1017558>
+
+	This is really disappointing; renaming will generally fail across
+	filesystems, to which the standard response is to copy & then remove
+	the original. This would have broken a lot of code.
+
+	Experimenting showed that `std::filesystem` did *not* suffer from this
+	bug, so I replaced the boost implementation with the std version
+	throughout.
+
+2022-11-25  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix SIGSTKSZ.
+	Beginning with glibc 2.4, the constant SIGSTKSZ is no longer a
+	constant. Update `main()` to malloc the signal handler stack rather
+	than allocating it on the stack.
+
 2021-12-18  Michael Herstine  <sp1ff@pobox.com>
 
 	Hygiene commit.

@@ -25,10 +25,10 @@
 
 #include "unit.hh"
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_mp3_smoke )
 {
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE( test_mp3_smoke )
 
   const fs::path TEST_DATA(get_data_directory() / "sat.mp3");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   mp3_audio_frame f(ifs, true);
   BOOST_CHECK( mp3_audio_frame::mpeg_version::mpeg_audio_version_1 == f.version() );
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE( test_vbri_smoke )
   // - frame per entry: 0x0001
   // - TOC: [62,124)
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   mp3_audio_frame f(ifs, true);
   BOOST_CHECK( mp3_audio_frame::mpeg_version::mpeg_audio_version_2 == f.version() );
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE( test_lame_smoke )
 
   // 0xd2 = 210 = frames
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   mp3_audio_frame f(ifs, true);
   BOOST_CHECK( mp3_audio_frame::mpeg_version::mpeg_audio_version_1 == f.version() );
@@ -255,7 +255,7 @@ BOOST_AUTO_TEST_CASE( test_3931 )
 
   // CBR encoding so duration = 0.024 * 210 = 5.04
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   mp3_audio_frame f(ifs, true);
   BOOST_CHECK( mp3_audio_frame::mpeg_version::mpeg_audio_version_1 == f.version() );

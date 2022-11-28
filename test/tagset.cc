@@ -29,7 +29,9 @@
 
 #include <boost/test/unit_test.hpp>
 
-namespace fs = boost::filesystem;
+#include <cstdio>
+
+namespace fs = std::filesystem;
 
 namespace {
 
@@ -38,15 +40,15 @@ namespace {
     size_t num_files = 0;
     for (fs::directory_iterator p0(pth), p1; p0 != p1; ++p0) {
       switch (p0->status().type()) {
-      case fs::regular_file:
-      case fs::symlink_file:
-      case fs::block_file:
-      case fs::character_file:
-      case fs::fifo_file:
-      case fs::socket_file:
+      case fs::file_type::regular:
+      case fs::file_type::symlink:
+      case fs::file_type::block:
+      case fs::file_type::character:
+      case fs::file_type::fifo:
+      case fs::file_type::socket:
         ++num_files;
         break;
-      default: // Get teh compiler to shut-up
+      default: // Get the compiler to shut-up
         break;
       }
     }
@@ -59,7 +61,8 @@ BOOST_AUTO_TEST_CASE( test_get_backup_name )
 {
   using scribbu::detail::get_backup_name;
 
-  fs::path tmp = fs::temp_directory_path() / fs::unique_path();
+  char buf[L_tmpnam];
+  fs::path tmp = fs::temp_directory_path() / std::tmpnam(buf);
   fs::create_directories(tmp);
 
   fs::path a = tmp / "a.mp3";
@@ -68,7 +71,7 @@ BOOST_AUTO_TEST_CASE( test_get_backup_name )
 
   BOOST_CHECK( bu0.filename().string() == "a.mp3.1" );
 
-  fs::ofstream ofs(a);
+  std::ofstream ofs(a);
   ofs << "a";
   ofs.close();
 
@@ -76,7 +79,7 @@ BOOST_AUTO_TEST_CASE( test_get_backup_name )
 
   BOOST_CHECK( bu1.filename().string() == "a.mp3.1" );
 
-  boost::system::error_code ec;
+  std::error_code ec;
   fs::copy_file(a, bu1, ec);
 
   fs::path bu2 = get_backup_name(a);
@@ -109,8 +112,9 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_copy )
   const fs::path CERULEAN("cerulean.mp3");
 
   // Cop cerulean.mp3 to a test directory...
-  fs::path tmp = fs::temp_directory_path() / fs::unique_path();
-  boost::system::error_code ec;
+  char buf[L_tmpnam];
+  fs::path tmp = fs::temp_directory_path() / std::tmpnam(buf);
+  std::error_code ec;
   fs::create_directories(tmp, ec);
 
   fs::path src = get_data_directory() / CERULEAN, test = tmp / CERULEAN;
@@ -118,7 +122,7 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_copy )
   fs::copy_file(src, test, ec);
 
   // Ensure our tmp file is writable
-  fs::permissions(test, fs::perms::add_perms|fs::perms::owner_write);
+  fs::permissions(test, fs::status(test).permissions()|fs::perms::owner_write);
 
   unsigned char test_md5[16];
   compute_md5(test, test_md5);
@@ -150,7 +154,7 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_copy )
 
 
   vector<unique_ptr<id3v2_tag>> new_tagset;
-  ifstream ifs = open_ifstream(test.native(), fs::ifstream::binary);
+  ifstream ifs = open_ifstream(test.native(), std::ifstream::binary);
   read_all_id3v2(ifs, back_inserter(new_tagset));
 
   BOOST_REQUIRE( 1 == new_tagset.size() );
@@ -184,15 +188,16 @@ BOOST_AUTO_TEST_CASE( test_replace_tagset_emplace )
   const fs::path CERULEAN("cerulean.mp3");
 
   // Cop cerulean.mp3 to a test directory...
-  fs::path tmp = fs::temp_directory_path() / fs::unique_path();
+  char buf[L_tmpnam];
+  fs::path tmp = fs::temp_directory_path() / std::tmpnam(buf);
   fs::create_directories(tmp);
 
   fs::path src = get_data_directory() / CERULEAN, test = tmp / CERULEAN;
 
-  boost::system::error_code ec;
+  std::error_code ec;
   fs::copy_file(src, test, ec);
   // Ensure our tmp file is writable
-  fs::permissions(test, fs::perms::add_perms|fs::perms::owner_write);
+  fs::permissions(test, fs::status(test).permissions()|fs::perms::owner_write);
 
   size_t cb_curr = tagset_size(test);
 
@@ -283,15 +288,16 @@ BOOST_AUTO_TEST_CASE( test_maybe_emplace_tagset )
   const fs::path CERULEAN("cerulean.mp3");
 
   // Cop cerulean.mp3 to a test directory...
-  fs::path tmp = fs::temp_directory_path() / fs::unique_path();
+  char buf[L_tmpnam];
+  fs::path tmp = fs::temp_directory_path() / std::tmpnam(buf);
   fs::create_directories(tmp);
 
   fs::path src = get_data_directory() / CERULEAN, test = tmp / CERULEAN;
 
-  boost::system::error_code ec;
+  std::error_code ec;
   fs::copy_file(src, test, ec);
   // Ensure our tmp file is writable
-  fs::permissions(test, fs::perms::add_perms|fs::perms::owner_write);
+  fs::permissions(test, fs::status(test).permissions()|fs::perms::owner_write);
 
 
   // Let's create a very simple tagset (something that can easily be emplaced)

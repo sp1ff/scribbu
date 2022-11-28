@@ -32,12 +32,12 @@
 
 #include <iomanip>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/regex.hpp>
 
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 
@@ -97,7 +97,7 @@ public:
 
 private:
   static const std::string COMMA;
-  fs::ofstream      ofs_;
+  std::ofstream      ofs_;
   std::size_t       ncomm_;
   scribbu::encoding v1enc_;
   bool              no_dir_;
@@ -222,7 +222,7 @@ public:
                           const std::unique_ptr<scribbu::id3v1_tag> &pid3v1);
 
 private:
-  fs::ofstream      ofs_;
+  std::ofstream      ofs_;
   std::size_t       ncomm_;
   scribbu::encoding v1enc_;
   bool              no_dir_;

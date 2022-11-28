@@ -23,9 +23,10 @@
 
 #include <scribbu/id3v1.hh>
 
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -537,11 +538,11 @@ scribbu::maybe_remove_id3v1(const fs::path &pth)
                                      std::ios::failbit |
                                      std::ios::badbit;
 
-  fs::ifstream ifs;
+  std::ifstream ifs;
   ifs.exceptions(EXC_MASK);
 
   try {
-    ifs.open(pth, fs::ifstream::binary);
+    ifs.open(pth, std::ifstream::binary);
   } catch (const std::ios_base::failure&) {
     return;
   }
@@ -565,7 +566,7 @@ scribbu::replace_id3v1(const fs::path &pth, const id3v1_tag &tag)
                                      std::ios::badbit;
 
   maybe_remove_id3v1(pth);
-  fs::ofstream ofs(pth, fs::ofstream::binary|fs::ofstream::app);
+  std::ofstream ofs(pth, std::ofstream::binary|std::ofstream::app);
   ofs.exceptions(EXC_MASK);
   tag.write(ofs);
 }

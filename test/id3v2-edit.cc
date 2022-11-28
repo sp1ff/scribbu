@@ -25,7 +25,7 @@
 
 #include "unit.hh"
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/framesv22.hh>
@@ -36,7 +36,7 @@
 
 #include <scribbu/pprinter.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_add_frame )
 {
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
                          id3v2_4_text_frame::frame_encoding::UTF_8,
                          false);
 
-  fs::ifstream ifs(get_data_directory() / "id3v2.2.tag", fs::ifstream::binary);
+  std::ifstream ifs(get_data_directory() / "id3v2.2.tag", std::ifstream::binary);
   BOOST_REQUIRE(ifs.is_open());
 
   id3v2_2_tag tag22(ifs);
@@ -146,11 +146,11 @@ BOOST_AUTO_TEST_CASE( test_add_frame )
 
   fs::path pth(fs::current_path() / "tag22.dat");
   {
-    fs::ofstream ofs(pth, fs::ofstream::binary);
+    std::ofstream ofs(pth, std::ofstream::binary);
     tag22.write(ofs, false);
   }
 
-  fs::ifstream ifs2(pth);
+  std::ifstream ifs2(pth);
   id3v2_2_tag check(ifs2);
   BOOST_TEST_MESSAGE("After read:\n" << check);
 
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE( test_set_frame )
   fs::path datadir = get_data_directory();
   BOOST_TEST_MESSAGE("datadir is " << datadir.c_str());
 
-  fs::ifstream ifs(get_data_directory() / "id3v2.2.tag", fs::ifstream::binary);
+  std::ifstream ifs(get_data_directory() / "id3v2.2.tag", std::ifstream::binary);
   BOOST_REQUIRE(ifs.is_open());
 
   id3v2_2_tag tag22(ifs);
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE( test_write_frame )
   unsigned char md5in[16];
   compute_md5(in, md5in);
 
-  fs::ifstream ifs(in, fs::ifstream::binary);
+  std::ifstream ifs(in, std::ifstream::binary);
   BOOST_REQUIRE(ifs.is_open());
 
   id3v2_2_tag tag22(ifs);
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE( test_write_frame )
   fs::path out(fs::current_path() / "test.write.2.2.dat");
 
   {
-    fs::ofstream ofs(out, fs::ofstream::binary);
+    std::ofstream ofs(out, std::ofstream::binary);
     BOOST_REQUIRE(!tag22.needs_unsynchronisation());
     tag22.write(ofs, false);
   }

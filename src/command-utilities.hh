@@ -30,7 +30,7 @@
 #include <deque>
 #include <iostream>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/optional/optional.hpp>
 #include <boost/program_options.hpp>
 
@@ -52,11 +52,11 @@ const int EXIT_INCORRECT_USAGE = 2;
 
 class file_not_found: public scribbu::error {
 public:
-  file_not_found(const boost::filesystem::path &pth): pth_(pth)
+  file_not_found(const std::filesystem::path &pth): pth_(pth)
   { }
   virtual const char * what() const noexcept(true);
 private:
-  boost::filesystem::path pth_;
+  std::filesystem::path pth_;
   mutable std::shared_ptr<std::string> pwhat_;
 };
 
@@ -322,7 +322,7 @@ public:
   /// Process the tagset contained in \a pth; in an implementation-specific
   /// manner
   void
-  process_file(const boost::filesystem::path &pth);
+  process_file(const std::filesystem::path &pth);
 
 private:
   /**
@@ -361,7 +361,7 @@ private:
   void
   write_tagset(bool dirty, FII p0, FII p1,
                const std::unique_ptr<scribbu::id3v1_tag> &pv1,
-               const boost::filesystem::path &pth) const
+               const std::filesystem::path &pth) const
   {
     using namespace std;
     using scribbu::apply_unsync;
@@ -547,11 +547,11 @@ process_dirent_args(FII p0, FII p1, Functor &F)
 {
   using namespace std;
 
-  using boost::filesystem::directory_iterator;
-  using boost::filesystem::is_directory;
-  using boost::filesystem::path;
+  using std::filesystem::directory_iterator;
+  using std::filesystem::is_directory;
+  using std::filesystem::path;
 
-  for_each(p0, p1, [&F](const boost::filesystem::path &pth) {
+  for_each(p0, p1, [&F](const std::filesystem::path &pth) {
     if (is_directory(pth)) {
       process_dirent_args(directory_iterator(pth), directory_iterator(), F);
     } else if (is_regular_file(pth)) {

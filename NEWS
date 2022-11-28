@@ -4,6 +4,9 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** SIGSTKSZ is no longer constant
+
+Address the fact that with glibc 2.34 SIGSTKSZ is no longer a constant; in the process, remove boost::filesystem.
 *** fix bug in computation of Demerau-Levenshtein distance
 
 See <https://github.com/sp1ff/damerau-levenshtein/issues/2>.

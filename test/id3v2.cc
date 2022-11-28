@@ -25,13 +25,13 @@
 
 #include "unit.hh"
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v2.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_from_sync_safe)
 {
@@ -76,11 +76,11 @@ BOOST_AUTO_TEST_CASE( test_looking_at )
   const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
   const fs::path TEST_DATA_V2_4(get_data_directory() / "id3v2.4.tag");
 
-  fs::ifstream ifsv1(TEST_DATA_V1, fs::ifstream::binary);
+  std::ifstream ifsv1(TEST_DATA_V1, std::ifstream::binary);
   id3v2_info I = looking_at_id3v2(ifsv1);
   BOOST_CHECK( ! I.present_ );
 
-  fs::ifstream ifsv2_2(TEST_DATA_V2_2, fs::ifstream::binary);
+  std::ifstream ifsv2_2(TEST_DATA_V2_2, std::ifstream::binary);
   I = looking_at_id3v2(ifsv2_2);
   BOOST_CHECK( I.present_ );
   BOOST_CHECK(2 == I.version_);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( test_looking_at )
   BOOST_CHECK(2192 == I.size_);
   BOOST_CHECK(0 == ifsv2_2.tellg());
 
-  fs::ifstream ifsv2_3(TEST_DATA_V2_3, fs::ifstream::binary);
+  std::ifstream ifsv2_3(TEST_DATA_V2_3, std::ifstream::binary);
   I = looking_at_id3v2(ifsv2_3);
   BOOST_CHECK( I.present_ );
   BOOST_CHECK(3 == I.version_);
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( test_looking_at )
   BOOST_CHECK(452951 == I.size_);
   BOOST_CHECK(0 == ifsv2_3.tellg());
 
-  fs::ifstream ifsv2_4(TEST_DATA_V2_4, fs::ifstream::binary);
+  std::ifstream ifsv2_4(TEST_DATA_V2_4, std::ifstream::binary);
   I = looking_at_id3v2(ifsv2_4, false);
   BOOST_CHECK( I.present_ );
   BOOST_CHECK(4 == I.version_);
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE( test_jing_jing_2 )
 
   const fs::path TEST_DATA(get_data_directory() / "红颜旧.mp3");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
   id3v2_info I2 = looking_at_id3v2(ifs);
   BOOST_CHECK(I2.present_);
 
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE( test_jing_jing_2 )
 
   ifs.close();
 
-  ifs.open(TEST_DATA, fs::ifstream::binary);
+  ifs.open(TEST_DATA, std::ifstream::binary);
   std::vector<std::unique_ptr<id3v2_tag>> V;
   read_all_id3v2(ifs, std::back_inserter(V));
   ifs.close();

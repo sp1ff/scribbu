@@ -28,12 +28,12 @@
 #include <scribbu/id3v2.hh>
 #include <scribbu/scribbu.hh>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 

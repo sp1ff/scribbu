@@ -5,8 +5,8 @@
 
 #include <iostream>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/id3v1.hh>
@@ -17,7 +17,7 @@
 #include <scribbu/id3v24.hh>
 #include <scribbu/tagset.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 template <class tag_type>
 struct tag_traits

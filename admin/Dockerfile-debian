@@ -9,7 +9,7 @@ ENV DEBFULLNAME="Michael Herstine"
 ENV DEBEMAIL="sp1ff@pobox.com"
 
 RUN set -ex && \
-	apt-get update && \
+    	apt-get clean && apt-get update && \
 	apt-get install -y --no-install-recommends \
         # scribbu pre-requisites \
 	flex bison libboost-all-dev libssl-dev zlib1g-dev libunistring-dev libffi-dev guile-2.2-dev texinfo locales \
@@ -34,10 +34,7 @@ RUN set -ex && \
 	echo "path-include /usr/share/man/man1/scribbu*" >> /etc/dpkg/dpkg.cfg.d/docker && \
 	echo "path-include /usr/share/info/scribbu.info" >> /etc/dpkg/dpkg.cfg.d/docker
 
-# RUN useradd -ms /bin/bash -G users,wheel mgh && \
-RUN useradd -ms /bin/bash -G users mgh && \
-	echo 'mgh:mgh' | chpasswd # && \
-	# echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN useradd -ms /bin/bash -G users mgh && echo 'mgh:mgh' | chpasswd
 
 # The test suite won't work if this isn't set:
 ENV LANG="en_US.UTF-8"

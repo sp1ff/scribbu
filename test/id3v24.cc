@@ -25,11 +25,11 @@
 
 #include "unit.hh"
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 #include <scribbu/scribbu.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 /**
  * \brief Test against one of the few ID3v2.4 frames I have
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_4_tag )
 
   const fs::path DATA1(get_data_directory() / "id3v2.4.tag");
 
-  fs::ifstream ifsv2_4(DATA1, fs::ifstream::binary);
+  std::ifstream ifsv2_4(DATA1, std::ifstream::binary);
 
   id3v2_4_tag tag(ifsv2_4);
   BOOST_CHECK(4 == tag.version());
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE( test_rare_frames )
 
   const fs::path DATA(get_data_directory() / "rare_frames.mp3");
 
-  fs::ifstream ifsv2_4(DATA, fs::ifstream::binary);
+  std::ifstream ifsv2_4(DATA, std::ifstream::binary);
 
   id3v2_4_tag tag(ifsv2_4);
   BOOST_CHECK(4 == tag.version());
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE( test_id3v24_ext_header )
 
   const fs::path DATA(get_data_directory() / "id3v2.4.ext.tag");
 
-  fs::ifstream ifs(DATA, fs::ifstream::binary);
+  std::ifstream ifs(DATA, std::ifstream::binary);
   id3v2_4_tag tag(ifs);
 
   BOOST_CHECK(4 == tag.version());

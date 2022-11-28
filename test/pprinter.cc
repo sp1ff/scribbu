@@ -27,7 +27,7 @@
 
 #include <sstream>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/id3v1.hh>
@@ -36,7 +36,7 @@
 #include <scribbu/id3v23.hh>
 #include <scribbu/id3v24.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_pprinting_id3v1 )
 {
@@ -92,7 +92,7 @@ COM (iTunSMPB):
 1802 bytes of padding
 )");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
   id3v2_2_tag tag(ifs);
 
   stringstream stm;
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_3 )
                       "335921 bytes of padding\n"
                       "");
 
-  fs::ifstream ifs_3(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs_3(TEST_DATA, std::ifstream::binary);
   id3v2_3_tag tag(ifs_3);
 
   stringstream stm;
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_3 )
 
   const fs::path TEST_DATA2(get_data_directory() / "cerulean.mp3");
 
-  fs::ifstream ifs2(TEST_DATA2, fs::fstream::binary);
+  std::ifstream ifs2(TEST_DATA2, std::ifstream::binary);
   id3v2_3_tag tag2(ifs2);
 
   stringstream stm2;
@@ -176,7 +176,7 @@ TALB: Ela E Carioca
 1024 bytes of padding
 )");
 
-  fs::ifstream ifs(TEST_DATA, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA, std::ifstream::binary);
 
   id3v2_4_tag tag(ifs);
   stringstream stm;

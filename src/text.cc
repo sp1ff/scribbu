@@ -34,11 +34,11 @@
 #include <deque>
 #include <exception>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu text -- manage text frames

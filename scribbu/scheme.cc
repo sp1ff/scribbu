@@ -35,11 +35,11 @@
 
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/functional/hash.hpp>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 using scribbu::dynwind_context;
 using scribbu::scheme_serde_dispatcher;
@@ -279,7 +279,7 @@ extern "C" {
       dynwind_context ctx;
 
       char *c_pth = ctx.free_locale_string(scm_pth);
-      ifstream ifs = open_ifstream(c_pth, fs::ifstream::binary);
+      ifstream ifs = open_ifstream(c_pth, std::ifstream::binary);
 
       auto pv1 = process_id3v1(ifs);
       if (!pv1) {

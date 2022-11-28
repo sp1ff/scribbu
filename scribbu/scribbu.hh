@@ -133,7 +133,7 @@
 #include <iostream>
 #include <optional>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/exception/exception.hpp>
 
 #include <openssl/err.h>
@@ -168,22 +168,22 @@ namespace scribbu {
   public:
     file_info()
     { }
-    file_info(boost::filesystem::path pth);
+    file_info(std::filesystem::path pth);
 
   public:
     /// Absolute path of the directory containing this file
-    boost::filesystem::path parent() const
+    std::filesystem::path parent() const
     { return parent_; }
     /// Unqualified filename for this track
-    boost::filesystem::path filename() const
+    std::filesystem::path filename() const
     { return filename_; }
     /// The size, in bytes, of this file
     std::uintmax_t size() const
     { return size_; }
 
   private:
-    boost::filesystem::path parent_;
-    boost::filesystem::path filename_;
+    std::filesystem::path parent_;
+    std::filesystem::path filename_;
     std::uintmax_t size_;
     std::optional<time_t> atime_;
     std::optional<time_t> mtime_;
@@ -193,7 +193,7 @@ namespace scribbu {
 
   /// Open a file & return a stream & a file_info instance describing that file
   std::pair<std::ifstream, file_info>
-  open_file(boost::filesystem::path pth);
+  open_file(std::filesystem::path pth);
 
   /// Error thrown on failure to open a file
   class file_open_error: public error

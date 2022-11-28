@@ -25,6 +25,7 @@
 
 #include "command-utilities.hh"
 
+#include <cstdio>
 #include <memory>
 
 #include <boost/algorithm/string/split.hpp>
@@ -33,7 +34,7 @@
 #include <scribbu/errors.hh>
 #include <scribbu/winamp-genres.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 const std::string USAGE(R"usage(scribbu genre -- set the genre for one or more files
@@ -474,8 +475,9 @@ namespace {
     // My (admittedly poor) solution is to live with the race condition &
     // trucnate on open, hoping to merely stomp on the other process' file in
     // the event I hit it (the race condition).
-    fs::path tmpnam = fs::temp_directory_path() / fs::unique_path();
-    fs::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
+    char buf[L_tmpnam];
+    fs::path tmpnam = fs::temp_directory_path() / std::tmpnam(buf);
+    std::ofstream tmpfs(tmpnam, ios_base::out |  ios_base::binary | ios_base::trunc);
     tmpfs.exceptions(EXC_MASK);
     print_winamp_genres(tmpfs);
     tmpfs.close();
@@ -694,7 +696,7 @@ namespace {
              bool verbose,
              bool adjust_unsync,
              bool create_backups,
-             const std::vector<boost::filesystem::path>& args)
+             const std::vector<std::filesystem::path>& args)
   {
     using namespace std;
 

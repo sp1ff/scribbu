@@ -26,7 +26,7 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/log/common.hpp>
 
 #include <sys/stat.h>
@@ -37,7 +37,7 @@
 #include <scribbu/mp3.hh>
 #include <scribbu/scheme.hh>
 
-namespace fs  = boost::filesystem;
+namespace fs  = std::filesystem;
 namespace src = boost::log::sources;
 
 

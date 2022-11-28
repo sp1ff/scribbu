@@ -25,13 +25,13 @@
 
 #include <scribbu/id3v2-utils.hh>
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>
 #include <scribbu/pprinter.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
 {
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE( test_maybe_read_id3 )
   const fs::path TEST_FILE_V2_3(get_data_directory() / "lorca.mp3");
   const fs::path TEST_FILE_V2_4(get_data_directory() / "id3v2.4.tag");
 
-  fs::ifstream ifs(TEST_FILE_V2_2);
+  std::ifstream ifs(TEST_FILE_V2_2);
   std::unique_ptr<id3v2_tag> ptag = scribbu::maybe_read_id3v2(ifs);
 
   BOOST_CHECK((bool)ptag);
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE( test_read_all_id3v2 )
 
   const fs::path DATA1(get_data_directory() / "searchresults.dat");
 
-  fs::ifstream ifs1(DATA1, fs::ifstream::binary);
+  std::ifstream ifs1(DATA1, std::ifstream::binary);
 
   vector<unique_ptr<id3v2_tag>> tags;
   read_all_id3v2(ifs1, back_inserter(tags));
@@ -960,25 +960,25 @@ BOOST_AUTO_TEST_CASE( test_multi_id3v2 )
   const fs::path DATA3(get_data_directory() / "rock-the-joint.id3v2.3.tag");
   const fs::path DATA4(get_data_directory() / "duplicate_id3v2.mp3");
 
-  fs::ifstream ifs1(DATA1, fs::ifstream::binary);
+  std::ifstream ifs1(DATA1, std::ifstream::binary);
 
   vector<unique_ptr<id3v2_tag>> tags;
   BOOST_CHECK_THROW( read_all_id3v2(ifs1, back_inserter(tags)), scribbu::error );
   BOOST_CHECK(1 == tags.size());
 
-  fs::ifstream ifs2(DATA2, fs::ifstream::binary);
+  std::ifstream ifs2(DATA2, std::ifstream::binary);
 
   tags.erase(tags.begin(), tags.end());
   read_all_id3v2(ifs2, back_inserter(tags));
   BOOST_CHECK(2 == tags.size());
 
-  fs::ifstream ifs3(DATA3, fs::ifstream::binary);
+  std::ifstream ifs3(DATA3, std::ifstream::binary);
 
   tags.erase(tags.begin(), tags.end());
   read_all_id3v2(ifs3, back_inserter(tags));
   BOOST_CHECK(1 == tags.size());
 
-  fs::ifstream ifs4(DATA4, fs::ifstream::binary);
+  std::ifstream ifs4(DATA4, std::ifstream::binary);
 
   tags.erase(tags.begin(), tags.end());
   read_all_id3v2(ifs4, back_inserter(tags));
@@ -1076,7 +1076,7 @@ BOOST_AUTO_TEST_CASE( test_total_size )
 
   const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
 
-  fs::ifstream ifs(TEST_DATA_V2_3, fs::ifstream::binary);
+  std::ifstream ifs(TEST_DATA_V2_3, std::ifstream::binary);
 
   vector<unique_ptr<id3v2_tag>> tags;
   read_all_id3v2(ifs, back_inserter(tags));

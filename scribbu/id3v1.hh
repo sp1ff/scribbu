@@ -694,7 +694,7 @@ namespace scribbu {
    *
    */
 
-  void maybe_remove_id3v1(const boost::filesystem::path &pth);
+  void maybe_remove_id3v1(const std::filesystem::path &pth);
 
   /**
    * \brief Replace any ID3v1 tag that may be present
@@ -711,7 +711,7 @@ namespace scribbu {
    *
    */
 
-  void replace_id3v1(const boost::filesystem::path &pth, const id3v1_tag &tag);
+  void replace_id3v1(const std::filesystem::path &pth, const id3v1_tag &tag);
 
 } // End namespace scribbu.
 

@@ -32,12 +32,12 @@
 
 #include <exception>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/regex.hpp>
 
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 
@@ -58,6 +58,15 @@ For detailed help, say `scribbu dump --help'. To see the manual, say
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
+
+  // <https://stackoverflow.com/questions/61030383/how-to-convert-stdfilesystemfile-time-type-to-time-t>
+  template <typename TP>
+  std::time_t to_time_t(TP tp) {
+    using namespace std::chrono;
+    auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now()
+                                                        + system_clock::now());
+    return system_clock::to_time_t(sctp);
+  }
 
   /// Dump ID3v2 tags, track data, and/or the ID3v1 tag to stdout
   class dumper: public std::unary_function<void, fs::path>
@@ -195,7 +204,7 @@ namespace {
 
       ifstream ifs = open_ifstream(pth.native(), ios_base::binary);
 
-      time_t mtime = fs::last_write_time(pth);
+      time_t mtime = to_time_t(fs::last_write_time(pth));
 
       vector<unique_ptr<scribbu::id3v2_tag>> id3v2;
       scribbu::read_all_id3v2(ifs, back_inserter(id3v2));

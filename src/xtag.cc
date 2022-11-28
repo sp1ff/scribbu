@@ -27,8 +27,8 @@
 #include <queue>
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/optional.hpp>
 
 #include <scribbu/id3v2-utils.hh>
@@ -37,7 +37,7 @@
 #include <scribbu/id3v24.hh>
 #include <scribbu/tagset.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu xtag -- manage the tag cloud frame

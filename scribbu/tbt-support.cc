@@ -613,7 +613,7 @@ scribbu::tbt_support::year::evaluate(const file_info  & /*fi    */,
 ///////////////////////////////////////////////////////////////////////////////
 
 std::string
-scribbu::tbt_support::file_term::transform(const boost::filesystem::path &pth) const
+scribbu::tbt_support::file_term::transform(const std::filesystem::path &pth) const
 {
   std::string out = do_the_xform(pth.string(), the_);
   out = do_cap_xform(out, cap_);

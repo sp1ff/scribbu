@@ -25,12 +25,12 @@
 
 #include "unit.hh"
 
-#include <boost/filesystem/fstream.hpp>
+#include <fstream>
 #include <boost/test/unit_test.hpp>
 
 #include <scribbu/scribbu.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 /**
  * \brief Test id3v2.3.tag (Lorca's Novena)
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_tag )
   const fs::path TEST_DATA_V2_3(get_data_directory() / "id3v2.3.tag");
 
   std::ifstream ifsv2_3 = open_ifstream(TEST_DATA_V2_3.c_str(),
-                                        fs::ifstream::binary);
+                                        std::ifstream::binary);
   id3v2_3_tag tag(ifsv2_3);
 
   BOOST_CHECK(3 == tag.version());

@@ -28,8 +28,8 @@
 #include <queue>
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
@@ -40,7 +40,7 @@
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/tagset.hh>
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 const std::string USAGE(R"(scribbu popm -- manage playcount and/or popularimeter frames
