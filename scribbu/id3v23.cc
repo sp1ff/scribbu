@@ -1,7 +1,7 @@
 /**
  * \file id3v23.cc
  *
- * Copyright (C) 2015-2021 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2022 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -589,7 +589,7 @@ scribbu::id3v2_3_tag::needs_unsynchronisation() const
   }
 
   return false;
-  
+
 }
 
 /**

@@ -1,7 +1,7 @@
 /**
  * \file text.cc
  *
- * Copyright (C) 2019-2021 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2019-2022 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -267,7 +267,7 @@ set_text::process_v1(scribbu::id3v1_tag &v1)
     }
   });
 
-  return num_deltas != 0;    
+  return num_deltas != 0;
 }
 
 /// Process an ID3v2.2 tag

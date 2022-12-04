@@ -1,7 +1,7 @@
 /**
  * \file framesv24.hh
  *
- * Copyright (C) 2015-2021 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2022 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -768,7 +768,7 @@ namespace scribbu {
       using namespace std;
       vector<unsigned char> buf;
       comments::textb(back_inserter(buf));
-      return buf.empty() ? string_type() : 
+      return buf.empty() ? string_type() :
         id3v2_4_frame::as_str<string_type>(&(buf[0]), buf.size(),
                                            unicode(), dst, rsp, src);
     }

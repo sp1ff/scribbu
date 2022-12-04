@@ -12,7 +12,7 @@
 
 @copying
 
-Copyright @copyright{} 2018-2021 Michael Herstine <sp1ff@@pobox.com>
+Copyright @copyright{} 2018-2022 Michael Herstine <sp1ff@@pobox.com>
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document

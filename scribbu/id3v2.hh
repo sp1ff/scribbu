@@ -1,7 +1,7 @@
 /**
  * \file id3v2.hh
  *
- * Copyright (C) 2015-2021 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2022 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -130,7 +130,7 @@
  * sequences of the form $FF 00 should be interpreted as just $FF.
  *
  * ID2v2.3 introduced an extended header, which is *not* sync-safe, and
- * padding, which *is* (padding bytes must always be $00). In section 3.2 
+ * padding, which *is* (padding bytes must always be $00). In section 3.2
  * \ref scribbu_id3v2_refs_4 "[4]" the specification explicitly notes that the
  * extended header \em is subject to unsynchronisation. Therefore, in the end,
  * ID3v2.3 tags are deserialized in the same way as ID3v2.2: once the header is

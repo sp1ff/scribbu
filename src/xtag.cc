@@ -1,7 +1,7 @@
 /**
  * \file xtag.cc
  *
- * Copyright (C) 2019-2021 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2019-2022 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *

@@ -1,4 +1,9 @@
-2022-12-03  Michael Herstine  <sp1ff@pobox.com>
+2022-12-04  Michael Herstine  <sp1ff@pobox.com>
+
+	scribbu release 0.6.22.
+	Updating boilerplate prior to releasing 0.6.22.
+
+2022-12-04  Michael Herstine  <sp1ff@pobox.com>
 
 	Remove boost::filesystem in favor of std::filesystem.
 	It turns-out that boost 1.74 introduced a bug in the
@@ -17,6 +22,8 @@
 	Experimenting showed that `std::filesystem` did *not* suffer from this
 	bug, so I replaced the boost implementation with the std version
 	throughout.
+
+	Also updated `ci.yml`.
 
 2022-11-25  Michael Herstine  <sp1ff@pobox.com>
 

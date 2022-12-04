@@ -53,6 +53,7 @@ AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
 AC_CHECK_HEADERS([arpa/inet.h])
 AC_CHECK_HEADERS([libintl.h])
 AC_CHECK_HEADERS([stddef.h])
+AC_CHECK_HEADERS([stdint.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL

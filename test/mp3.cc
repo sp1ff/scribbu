@@ -1,7 +1,7 @@
 /**
  * \file mp3.cc
  *
- * Copyright (C) 2021 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2021-2022 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
