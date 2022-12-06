@@ -93,7 +93,7 @@ jobs:
         bison graphviz texinfo
 
     - name: Install pre-requisites (Ubuntu)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       shell: bash
       run: |
         set -x
@@ -148,7 +148,7 @@ jobs:
         install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
 
     - name: Install boost (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       run: |
         set -x
         pwd
@@ -181,7 +181,7 @@ jobs:
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
 
     - name: Configure scribbu (Ubuntu)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       shell: bash
       run: |
         set -x
@@ -202,7 +202,7 @@ jobs:
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make
 
     - name: Make scribbu (Ubuntu)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       shell: bash
       run: |
         set -x
@@ -260,7 +260,7 @@ jobs:
     - name: Test the Autotools distribution (Ubuntu)
       # I only make the Autotools distro on Ubuntu, so just test there
       # (besides, I can't get 'distcheck' to work on MacOS anyway)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       shell: bash
       run: |
         set -x
@@ -272,7 +272,7 @@ jobs:
     # TODO(sp1ff): assemble pre-built binaries?
 
     - name: Upload bzip2 tarball
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -283,7 +283,7 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: Upload gzip tarball
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -294,7 +294,7 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: Upload xzip tarball
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-22.04'
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
