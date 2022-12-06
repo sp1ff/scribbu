@@ -71,7 +71,7 @@ jobs:
         build: [linux, macos]
         include:
         - build: linux
-          os: ubuntu-20.04
+          os: ubuntu-22.04
         - build: macos
           os: macos-10.15
           boost: latest
