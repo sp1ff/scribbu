@@ -11,6 +11,7 @@ docker_args="-it"
 docker_args="$docker_args --mount type=bind,source=$(pwd),target=/scribbu"
 docker_args="$docker_args -v ${admin}/check-build-on-deb-cnt:/check-build"
 docker_args="$docker_args --privileged"
+docker_args="$docker_args --user=mgh:users"
 
 cmd="docker run $docker_args scribbu-debian:latest /check-build"
 exec $cmd

@@ -7,7 +7,7 @@
 set -ex
 scribbu_dev=$(cd ../scribbu && pwd)
 admin=${scribbu_dev}/admin
-docker build -t scribbu-arch:latest -f ${admin}/Dockerfile-arch .
+docker build -t scribbu-arch:latest --build-arg user_id=$(id -u) -f ${admin}/Dockerfile-arch .
 
 docker_args="-it"
 docker_args="$docker_args --mount type=bind,source=$(pwd),target=/scribbu-arch"

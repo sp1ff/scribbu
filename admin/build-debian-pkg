@@ -10,7 +10,8 @@ admin=${scribbu_dev}/admin
 docker build -t scribbu-debian:latest -f ${admin}/Dockerfile-debian .
 
 docker_args="-it"
-docker_args="$docker_args --mount type=bind,source=$(pwd),target=/scribbu-deb"
+docker_args="$docker_args --mount type=bind,source=$(pwd),target=/tmp/scribbu-deb"
+docker_args="$docker_args --mount type=bind,source=${scribbu_dev},target=/tmp/scribbu"
 docker_args="$docker_args -v ${admin}/build-debian-pkg-cnt:/build-pkg-cnt:ro"
 docker_args="$docker_args --privileged"
 docker_args="$docker_args -u mgh"

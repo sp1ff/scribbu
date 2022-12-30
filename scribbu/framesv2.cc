@@ -29,6 +29,7 @@
 #include <boost/static_assert.hpp>
 
 #include <arpa/inet.h>
+#include <cmath> // for `log2()`
 #include <iconv.h>
 
 
@@ -1204,23 +1205,15 @@ scribbu::popularimeter::count_syncs(bool false_only) const
 void
 scribbu::popularimeter::reset_counter(std::size_t n)
 {
-  static const std::size_t FF = std::size_t( 0xff );
+  // compute the number of bytes needed to represent `n`...
+  size_t cb = size_t(floor(log2(n)/8.)) + 1;
+  // and size `counter_` accordingly.
+  counter_.resize(cb);
 
-  counter_.erase(counter_.begin(), counter_.end());
-
-  // Walk `n' from the MSB, looking for the first non-zero byte.
-  std::size_t msb;
-  for (msb = sizeof(size_t) - 1; msb > 0; --msb) {
-    if ( (n & ( FF << (msb*8))) != 0 ) {
-      break;
-    }
+  for (size_t i = 0; i < cb; ++i) {
+    counter_[cb - i - 1] = 0xff & n;
+    n >>= 8;
   }
-
-  while (msb > 0) {
-    counter_.push_back( (0xff << msb) & n );
-  }
-
-  counter_.push_back( 0xff & n );
 }
 
 ////////////////////////////////////////////////////////////////////////////

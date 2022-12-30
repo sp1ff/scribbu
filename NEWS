@@ -4,6 +4,8 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+
+*** fixed issue #7: scribbu popm hangs and eventually OOMs when given a playcount > 255
 *** SIGSTKSZ is no longer constant
 
 Address the fact that with glibc 2.34 SIGSTKSZ is no longer a constant; in the process, remove boost::filesystem.
@@ -44,21 +46,14 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
-
-
 *** `scribbu text` now operates on existing ID3v1 tags, when possible
 *** the `create-frame` short flag for `popm` changed from -A to -f.
 *** `encodings' sub-command added
 *** `m3u' sub-command added
-
 *** Arch & Debian packages now provided
-
 *** `scribbu genre' now takes a '--get' flag
-
 *** `scribbu dump' will now list mtime
-
 *** builds on MacOS
-
 *** new sub-command `genre'
 
 `scribbu genre' lets you set the "genre" for your file by updating the relevant fields in the file's ID3v1 and/or -2 tags.

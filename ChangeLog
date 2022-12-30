@@ -1,4 +1,24 @@
+2022-12-30  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix a bug in `popularimeter::reset_counter()` where any argument greater than 255 would result in an infinite loops that would eventually exhaust memory.
+	Also commiting some changes to the packaging scripts that were
+	made while releasing 0.6.22.
+
+	Also committing some updates to the Github Workflows attempting
+	to set the locale (to enable running the unit tests as part
+	of CI).
+
+	Closes #7.
+
+2022-12-05  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix release workflow
+
+	Fix release workflow
+
 2022-12-04  Michael Herstine  <sp1ff@pobox.com>
+
+	Fixing the release workflow... sigh.
 
 	scribbu release 0.6.22.
 	Updating boilerplate prior to releasing 0.6.22.

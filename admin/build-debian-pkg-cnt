@@ -1,10 +1,12 @@
 #!/bin/bash
 set -ex
+cd /tmp
 mkdir build-area
 cd scribbu-deb
-gbp buildpackage --git-export-dir=../build-area/
-cd ../build-area
-cp -v * ../scribbu-deb
+gbp import-orig -u ${version} ../scribbu/scribbu-${version}.tar.gz
+gbp buildpackage --git-export-dir=/tmp/build-area/ --git-ignore-new
+cd /tmp/build-area
+cp -v * /tmp/scribbu-deb
 
 # TODO(sp1ff): PACKAGING
 # cp -v scribbu_0.6.13-1_amd64.deb /tmp && cd /tmp

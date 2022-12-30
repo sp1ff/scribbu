@@ -755,6 +755,27 @@ BOOST_AUTO_TEST_CASE( test_popularimeter )
   BOOST_CHECK( p01.count() == 11 );
   BOOST_CHECK( p01.rating() == 255 );
 
+  //////////////////////////////////////////////////////////////////////////////
+  // test issue #7
+  // <https://github.com/sp1ff/scribbu/issues/7>
+  //////////////////////////////////////////////////////////////////////////////
+
+  p01.count(256);
+  BOOST_CHECK( p01.count() == 256 );
+  BOOST_CHECK( p01.rating() == 255 );
+
+  p01.count(319);
+  BOOST_CHECK( p01.count() == 319 );
+  BOOST_CHECK( p01.rating() == 255 );
+
+  p01.count(65535);
+  BOOST_CHECK( p01.count() == 65535 );
+  BOOST_CHECK( p01.rating() == 255 );
+
+  p01.count(65536);
+  BOOST_CHECK( p01.count() == 65536 );
+  BOOST_CHECK( p01.rating() == 255 );
+
 } // End test_popularimeter.
 
 BOOST_AUTO_TEST_CASE( test_tag_cloud )

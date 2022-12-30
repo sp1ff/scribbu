@@ -6,6 +6,9 @@ on:
   push:
   # TODO(sp1ff): add pull requests, cron job
 
+env:
+  LANG: "en_US.UTF-8"
+
 jobs:
   build:
     name: build
@@ -25,8 +28,8 @@ jobs:
           boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.bz2
         - os: macos-10.15
           boost: latest
-          boost-ver: 1_80_0
-          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2
+          boost-ver: 1_81_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.bz2
         - os: ubuntu-22.04
           boost: oldest
           boost-ver: 1_63_0
@@ -287,27 +290,22 @@ jobs:
     # TODO(sp1ff): desperately trying to get *something* to work, here
     # https://github.com/actions/runner-images/issues/762
     # No matter *what* I do, I cannot get the new locale to "take"-- punting for now
-    # - name: Test scribbu
-    #   if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
-    #   shell: bash
-    #   run: |
-    #     set -x
-    #     sudo locale-gen en_US.UTF-8
-    #     sudo localectl set-locale LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8"
-    #     sudo update-locale LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8"
-    #     export LANG="en_US.UTF-8"
-    #     export LANGUAGE="en_US.UTF-8"
-    #     locale -a
-    #     locale
-    #     localectl status
-    #     echo "LANG is $LANG"
-    #     echo "LANGUAGE is $LANGUAGE"
-    #     echo "LC_ALL is $LC_ALL" 
-    #     pwd
-    #     if ! make check; then
-    #         cat test/test-suite.log
-    #         # exit 1
-    #     fi
+    - name: Test scribbu
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+      shell: bash
+      run: |
+        set -x
+        sudo locale-gen en_US.UTF-8
+        sudo update-locale LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
+        locale
+        echo "LANG is $LANG"
+        echo "LANGUAGE is $LANGUAGE"
+        echo "LC_ALL is $LC_ALL" 
+        pwd
+        if ! make check; then
+            cat test/test-suite.log
+            # exit 1
+        fi
 
     # - name: Test the Autotools distribution (Ubuntu, non-oldest)
     #   # I only make the Autotools distro on Ubuntu, so just test there
