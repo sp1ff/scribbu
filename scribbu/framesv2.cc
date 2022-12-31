@@ -1097,23 +1097,21 @@ scribbu::play_count::count_syncs(bool false_only) const
 void
 scribbu::play_count::reset_counter(std::size_t n)
 {
-  static const std::size_t FF = std::size_t( 0xff );
-
-  counter_.erase(counter_.begin(), counter_.end());
-
-  // Walk `n' from the MSB, looking for the first non-zero byte.
-  std::size_t msb;
-  for (msb = sizeof(size_t) - 1; msb > 0; --msb) {
-    if ( (n & ( FF << (msb*8))) != 0 ) {
-      break;
-    }
+  // Special case:
+  if (0 == n) {
+    counter_.resize(1);
+    counter_[0] = 0;
+    return;
   }
+  // compute the number of bytes needed to represent `n`...
+  size_t cb = size_t(floor(log2(n)/8.)) + 1;
+  // and size `counter_` accordingly.
+  counter_.resize(cb);
 
-  while (msb > 0) {
-    counter_.push_back( (0xff << msb) & n );
+  for (size_t i = 0; i < cb; ++i) {
+    counter_[cb - i - 1] = 0xff & n;
+    n >>= 8;
   }
-
-  counter_.push_back( 0xff & n );
 }
 
 
@@ -1205,6 +1203,12 @@ scribbu::popularimeter::count_syncs(bool false_only) const
 void
 scribbu::popularimeter::reset_counter(std::size_t n)
 {
+  // Special case:
+  if (0 == n) {
+    counter_.resize(1);
+    counter_[0] = 0;
+    return;
+  }
   // compute the number of bytes needed to represent `n`...
   size_t cb = size_t(floor(log2(n)/8.)) + 1;
   // and size `counter_` accordingly.

@@ -1,5 +1,12 @@
 2022-12-30  Michael Herstine  <sp1ff@pobox.com>
 
+	Fixed the same bug in `play_count::reset_counter()`.
+	Removed test workflow since I got it working on ci.yml
+
+	This time, really closes #7.
+
+2022-12-30  Michael Herstine  <sp1ff@pobox.com>
+
 	Fix a bug in `popularimeter::reset_counter()` where any argument greater than 255 would result in an infinite loops that would eventually exhaust memory.
 	Also commiting some changes to the packaging scripts that were
 	made while releasing 0.6.22.

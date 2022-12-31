@@ -739,6 +739,20 @@ BOOST_AUTO_TEST_CASE( test_play_count )
   BOOST_CHECK( 0 == p03.count() );
   BOOST_CHECK( 1 == p03.size() );
 
+  //////////////////////////////////////////////////////////////////////////////
+  // test issue #7
+  // <https://github.com/sp1ff/scribbu/issues/7>
+  //////////////////////////////////////////////////////////////////////////////
+
+  p03.count(256);
+  BOOST_CHECK( 256 == p03.count() );
+  p03.count(320);
+  BOOST_CHECK( 320 == p03.count() );
+  p03.count(65535);
+  BOOST_CHECK( 65535 == p03.count() );
+  p03.count(65536);
+  BOOST_CHECK( 65536 == p03.count() );
+
 } // End test_play_count.
 
 BOOST_AUTO_TEST_CASE( test_popularimeter )
@@ -759,6 +773,10 @@ BOOST_AUTO_TEST_CASE( test_popularimeter )
   // test issue #7
   // <https://github.com/sp1ff/scribbu/issues/7>
   //////////////////////////////////////////////////////////////////////////////
+
+  p01.count(0);
+  BOOST_CHECK( p01.count() == 0 );
+  BOOST_CHECK( p01.rating() == 255 );
 
   p01.count(256);
   BOOST_CHECK( p01.count() == 256 );

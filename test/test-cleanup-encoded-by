@@ -2,12 +2,15 @@
 export GUILE_AUTO_COMPILE=0
 # Cf. https://stackoverflow.com/questions/11027679/store-capture-stdout-and-stderr-in-different-variables-bash
 cols=$(tput cols)
+echo "CP0"
 eval "$(../src/scribbu -L ${srcdir}/../scheme -s ${srcdir}/test-cleanup-encoded-by.scm ${srcdir} \
         2> >(t_err=$(cat); typeset -p t_err) \
          > >(t_std=$(cat); typeset -p t_std) )"
 t_stat=$?
+echo "CP1"
 echo "$t_std"
 t_err=$(echo "$t_err" | grep -vE ';;; note: source file .*test-cleanup-encoded-by.scm' | grep -v 'newer than compiled'|grep -v ';;; WARNING: failed to parse.*lunch4bfast.mp3')
+echo "CP2"
 if [ ! -z "$t_err" ]; then
     printf '=%.0s' $(seq 1 $cols)
 	echo "$t_err"
@@ -15,10 +18,12 @@ if [ ! -z "$t_err" ]; then
 	exit 1
 fi
 
+echo "CP3"
+
 ../src/scribbu dump elliot-goldenthal.id3v1.tag.out > test-cleanup-encoded-by.$$.out || exit 1
 # Get rid of the "Last Modified" line
 sed -e '/^Last Modified/d' test-cleanup-encoded-by.$$.out > test-cleanup-encoded-by.out
 rm test-cleanup-encoded-by.$$.out
-diff test-cleanup-encoded-by.out ${srcdir}/data/golden-test-cleanup-encoded-by.out || exit 1
+diff test-cleanup-encoded-by.out ${srcdir}/data/golden-test-cleanup-encoded-by.out || exit 2
 
 exit $t_stat
