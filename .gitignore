@@ -25,3 +25,6 @@ GSYMS
 GTAGS
 .vagrant
 *.log
+compile_commands.json
+*.zst
+.cache

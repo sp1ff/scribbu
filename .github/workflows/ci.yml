@@ -1,36 +1,39 @@
-# Nightly build for `scribbu'.
-name: ci
+# This is the continuous integration job for `scribbu`. It will run on
+# both MacOS & Ubuntu, using various versions of `boost`. I'd also
+# like to try installing & building against multple `gcc` versions.
+
+# The intent here is get as many lints & checks as possible out of my
+# personal checklist & into automation, being run every night.
+name: Continuous Integration
 on:
-  # I want to be able to trigger this workflow manually at any time
   workflow_dispatch:
   push:
-  # TODO(sp1ff): add pull requests, cron job
-
-# IN-PROGRESS: not sure if this is screwing-up `test-split`, `test-report` & `test-report-tdf`
-# env:
-#   LANG: "en_US.UTF-8"
+  pull_request:
+    types: [opened, edited, reopened] # don't say `synchronize`-- that is taken care of by `push`
+  schedule:
+    - cron: '01 02 * * *'
 
 jobs:
+
   build:
     name: build
     strategy:
       matrix:
-        # TODO(sp1ff): add more OS versions (macos-11.0, ubuntu-18.04, ubuntu-16.04)
-        os: [macos-12.6.2, ubuntu-22.04]
+        os: [macos-12, ubuntu-22.04]
         boost: [oldest, pinned, latest]
         include:
-        - os: macos-12.6.2
+        - os: macos-12
           boost: oldest
           boost-ver: 1_63_0
           boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.63.0/source/boost_1_63_0.tar.bz2
-        - os: macos-12.6.2
+        - os: macos-12
           boost: pinned
           boost-ver: 1_74_0
           boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.bz2
-        - os: macos-12.6.2
+        - os: macos-12
           boost: latest
-          boost-ver: 1_81_0
-          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.bz2
+          boost-ver: 1_82_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.bz2
         - os: ubuntu-22.04
           boost: oldest
           boost-ver: 1_63_0
@@ -43,10 +46,20 @@ jobs:
           boost: latest
           boost-ver: latest
     runs-on: ${{ matrix.os }}
+
     steps:
 
     - name: Checkout repo
       uses: actions/checkout@v2
+
+    - name: Check for TODO-s left in code
+      shell: bash
+      run: |
+        set -x
+        if find . -not -path '*/.git/*' -not -name 'tbt-lexer.cc' -not -name 'tbt-lexer.hh' '(' -iname '*.hh' -or -iname '*cc' ')' -print0 | xargs -0 -e grep -nE 'TODO|TOOD|\\todo|\\tood'; then
+          echo "You have TODO-s"
+          exit 1
+        fi
 
     - name: Get build number
       shell: bash
@@ -57,16 +70,6 @@ jobs:
         echo "Building scribbu version $version."
         echo "SCRIBBU_BUILD_NUMBER=${version}" >> $GITHUB_ENV
 
-    - name: Install pre-requisites (MacOS)
-      if: matrix.os == 'macos-12.6.2'
-      shell: bash
-      run: |
-        set -x
-        pwd
-        brew update
-        brew install autoconf automake libtool openssl doxygen flex bison graphviz texinfo
-        brew install --cask basictex
-        type -p guile || brew install guile
     - name: Install pre-requisites (Ubuntu)
       if: matrix.os == 'ubuntu-22.04'
       shell: bash
@@ -76,15 +79,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y autoconf automake libtool openssl guile-3.0-dev doxygen flex bison graphviz libunistring-dev texlive tzdata locales
 
-    - name: Cache boost (MacOS)
-      if: matrix.os == 'macos-12.6.2'
-      id: cache-boost-macos
-      uses: actions/cache@v2
-      with:
-        path: boost_${{ matrix.boost-ver }}/installdir
-        key: ${{ runner.os }}-${{ matrix.boost-ver }}
+    - name: Install pre-requisites (MacOS)
+      if: matrix.os == 'macos-12'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        brew update
+        brew install autoconf automake libtool openssl doxygen flex bison graphviz texinfo
+        brew install --cask basictex
+        type -p guile || brew install guile
 
     - name: Cache boost (Ubuntu)
+      # On Ubuntu, we install "pinned" & "latest" directly from the packages.
       if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
       id: cache-boost-ubuntu
       uses: actions/cache@v2
@@ -92,8 +99,45 @@ jobs:
         path: boost_${{ matrix.boost-ver }}/installdir
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
 
+    - name: Cache boost (MacOS)
+      if: matrix.os == 'macos-12'
+      id: cache-boost-macos
+      uses: actions/cache@v2
+      with:
+        path: boost_${{ matrix.boost-ver }}/installdir
+        key: ${{ runner.os }}-${{ matrix.boost-ver }}
+
+    - name: Install boost (Ubuntu, latest)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+      run: |
+        set -x
+        pwd
+        sudo apt-get install -y libboost-all-dev
+
+    - name: Install boost (Ubuntu, pinned)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'pinned'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        sudo apt-get install -y libboost1.74-all-dev
+
+    - name: Get boost (Ubuntu, oldest)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest' && steps.cache-boost-ubuntu.outputs.cache-hit != 'true'
+      run: |
+        set -x
+        pwd
+        curl -L -o boost_${{ matrix.boost-ver }}.tar.bz2 ${{ matrix.boost-dl }}
+        md5sum boost_${{ matrix.boost-ver }}.tar.bz2
+        tar xf boost_${{ matrix.boost-ver }}.tar.bz2
+        cd boost_${{ matrix.boost-ver }}
+        mkdir installdir
+        # libboost_python fails for boost 1.58.0-- I don't need it, so didn't bother debugging it
+        ./bootstrap.sh --prefix=./installdir --without-libraries=python || cat bootstrap.log
+        ./b2 && ./b2 install
+
     - name: Get boost (MacOS)
-      if: matrix.os == 'macos-12.6.2' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true'
       run: |
         set -x
         pwd
@@ -104,8 +148,8 @@ jobs:
         tar xf boost_${{ matrix.boost-ver }}.tar.bz2
         mkdir boost_${{ matrix.boost-ver }}/installdir
 
-    - name: Patch boost (MacOS)
-      if: matrix.os == 'macos-12.6.2' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
+    - name: Patch boost source (MacOS)
+      if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
       run: |
         cd boost_${{ matrix.boost-ver }}/tools/build/src/engine
         cp build.sh build.sh.bak
@@ -141,7 +185,7 @@ jobs:
         mv darwin.jam.tmp darwin.jam
 
     - name: Build boost (MacOS)
-      if: matrix.os == 'macos-12.6.2' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true'
       shell: bash
       run: |
         pwd
@@ -153,72 +197,66 @@ jobs:
         ./bootstrap.sh --prefix=./installdir || { cat bootstrap.log; exit 1; }
         ./b2
         ./b2 install
-        cd installdir/lib
+
+    - name: Patch boost library dependencies (MacOS, non-oldest)
+      if: matrix.os == 'macos-12' && matrix.boost != 'oldest' # && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      run: |
+        cd boost_${{ matrix.boost-ver }}/installdir/lib
         pwd
         ls
+        echo ================================================
+        otool -L libboost_log.dylib
+        otool -L libboost_chrono.dylib
+        otool -L libboost_thread.dylib
+        echo ================================================
         here=$(pwd)
+        install_name_tool -change @rpath/libboost_atomic.dylib     ${here}/libboost_atomic.dylib     libboost_log.dylib
+        install_name_tool -change @rpath/libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_log.dylib
+        install_name_tool -change @rpath/libboost_filesystem.dylib ${here}/libboost_filesystem.dylib libboost_log.dylib
+        install_name_tool -change @rpath/libboost_thread.dylib     ${here}/libboost_thread.dylib     libboost_log.dylib
+        install_name_tool -change @rpath/libboost_date_time.dylib  ${here}/libboost_date_time.dylib  libboost_log.dylib
+        install_name_tool -change @rpath/libboost_system.dylib     ${here}/libboost_system.dylib     libboost_log.dylib
+        install_name_tool -change @rpath/libboost_regex.dylib      ${here}/libboost_regex.dylib      libboost_log.dylib
+        install_name_tool -change @rpath/libboost_system.dylib     ${here}/libboost_system.dylib     libboost_chrono.dylib
+        install_name_tool -change @rpath/libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
+        echo ================================================
+        otool -L libboost_log.dylib
+        otool -L libboost_chrono.dylib
+        otool -L libboost_thread.dylib
+        echo ================================================
+
+    - name: Patch boost library dependencies (MacOS, oldest)
+      if: matrix.os == 'macos-12' && matrix.boost == 'oldest' # && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      run: |
+        cd boost_${{ matrix.boost-ver }}/installdir/lib
+        pwd
+        ls
+        echo ================================================
+        otool -L libboost_log.dylib
+        otool -L libboost_chrono.dylib
+        otool -L libboost_thread.dylib
+        otool -L libboost_unit_test_framework.dylib
+        otool -L libboost_timer.dylib
+        echo ================================================
+        here=$(pwd)
+        install_name_tool -change libboost_atomic.dylib     ${here}/libboost_atomic.dylib     libboost_log.dylib
         install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_log.dylib
+        install_name_tool -change libboost_filesystem.dylib ${here}/libboost_filesystem.dylib libboost_log.dylib
         install_name_tool -change libboost_thread.dylib     ${here}/libboost_thread.dylib     libboost_log.dylib
         install_name_tool -change libboost_date_time.dylib  ${here}/libboost_date_time.dylib  libboost_log.dylib
         install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_log.dylib
         install_name_tool -change libboost_regex.dylib      ${here}/libboost_regex.dylib      libboost_log.dylib
         install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_chrono.dylib
         install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
-
-    - name: Install boost (Ubuntu, pinned)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'pinned'
-      shell: bash
-      run: |
-        set -x
-        pwd
-        sudo apt-get install -y libboost1.74-all-dev
-
-    - name: Install boost (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
-      run: |
-        set -x
-        pwd
-        sudo apt-get install -y libboost-all-dev
-
-    - name: Get boost (Ubuntu)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest' && steps.cache-boost-ubuntu.outputs.cache-hit != 'true'
-      run: |
-        set -x
-        pwd
-        curl -L -o boost_${{ matrix.boost-ver }}.tar.bz2 ${{ matrix.boost-dl }}
-        md5sum boost_${{ matrix.boost-ver }}.tar.bz2
-        tar xf boost_${{ matrix.boost-ver }}.tar.bz2
-        cd boost_${{ matrix.boost-ver }}
-        mkdir installdir
-        # libboost_python fails for boost 1.58.0-- I don't need it, so didn't bother debugging it
-        ./bootstrap.sh --prefix=./installdir --without-libraries=python || cat bootstrap.log
-        ./b2 && ./b2 install
-
-    - name: Configure scribbu (MacOS)
-      if: matrix.os == 'macos-12.6.2'
-      shell: bash
-      run: |
-        autoconf --version
-        automake --version
-        # libtool --version
-        set -x
-        pwd
-        ls
-        ./bootstrap
-        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
-
-    - name: Configure scribbu (Ubuntu, non-oldest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'oldest'
-      shell: bash
-      run: |
-        autoconf --version
-        automake --version
-        # libtool --version
-        set -x
-        pwd
-        ls
-        ./bootstrap
-        ./configure
+        install_name_tool -change libboost_timer.dylib      ${here}/libboost_timer.dylib      libboost_unit_test_framework.dylib
+        install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_timer.dylib
+        echo ================================================
+        otool -L libboost_log.dylib
+        otool -L libboost_chrono.dylib
+        otool -L libboost_thread.dylib
+        otool -L libboost_unit_test_framework.dylib
+        otool -L libboost_timer.dylib
+        echo ================================================
 
     - name: Configure scribbu (Ubuntu, oldest)
       if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
@@ -226,20 +264,36 @@ jobs:
       run: |
         autoconf --version
         automake --version
-        # libtool --version
         set -x
         pwd
         ls
         ./bootstrap
         ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)
 
-    - name: Make scribbu (MacOS)
-      if: matrix.os == 'macos-12.6.2'
+    - name: Configure scribbu (Ubuntu, non-oldest)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'oldest'
       shell: bash
       run: |
+        autoconf --version
+        automake --version
         set -x
         pwd
-        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make
+        ls
+        ./bootstrap
+        ./configure
+
+    - name: Configure scribbu (MacOS)
+      if: matrix.os == 'macos-12'
+      shell: bash
+      run: |
+        autoconf --version
+        automake --version
+        set -x
+        pwd
+        ls
+        ./bootstrap
+        eval "$(/usr/libexec/path_helper)"
+        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
 
     - name: Make scribbu (Ubuntu)
       if: matrix.os == 'ubuntu-22.04'
@@ -247,10 +301,19 @@ jobs:
       run: |
         set -x
         pwd
-        make
+        make -j 4
 
-    - name: Patch boost dependencies (MacOS)
-      if: matrix.os == 'macos-12.6.2'
+    - name: Make scribbu (MacOS)
+      if: matrix.os == 'macos-12'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        eval "$(/usr/libexec/path_helper)"
+        PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make -j 4
+
+    - name: Patch boost binary dependencies (MacOS, oldest)
+      if: matrix.os == 'macos-12' && matrix.boost == 'oldest'
       shell: bash
       run: |
         set -x
@@ -258,78 +321,145 @@ jobs:
         echo "===================================="
         otool -L src/.libs/scribbu
         echo "===================================="
-        otool -l src/.libs/scribbu
-        echo "===================================="
-        there=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
         echo "Changing the load location for boost libs to ${there}."
         install_name_tool -change libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       src/.libs/scribbu
         install_name_tool -change libboost_log.dylib                 ${there}/libboost_log.dylib             src/.libs/scribbu
         install_name_tool -change libboost_program_options.dylib     ${there}/libboost_program_options.dylib src/.libs/scribbu
         install_name_tool -change libboost_regex.dylib               ${there}/libboost_regex.dylib           src/.libs/scribbu
         install_name_tool -change libboost_system.dylib              ${there}/libboost_system.dylib          src/.libs/scribbu
+        there=$(cd scribbu/.libs; pwd)
+        echo "Changing the load location for scribbu lib to be ${there}."
+        install_name_tool -change /usr/local/lib/libscribbu.4.dylib ${there}/libscribbu.4.dylib src/.libs/scribbu
         echo "===================================="
         otool -L src/.libs/scribbu
-        echo "===================================="
-        otool -l src/.libs/scribbu
+        src/.libs/scribbu --version
         echo "===================================="
         cd test && make unit
         echo "===================================="
         otool -L .libs/unit
         echo "===================================="
-        otool -l .libs/unit
+        there=$(cd ../boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
         install_name_tool -change libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib           .libs/unit
         install_name_tool -change libboost_log.dylib                 ${there}/libboost_log.dylib                 .libs/unit
         install_name_tool -change libboost_program_options.dylib     ${there}/libboost_program_options.dylib     .libs/unit
         install_name_tool -change libboost_regex.dylib               ${there}/libboost_regex.dylib               .libs/unit
         install_name_tool -change libboost_system.dylib              ${there}/libboost_system.dylib              .libs/unit
         install_name_tool -change libboost_unit_test_framework.dylib ${there}/libboost_unit_test_framework.dylib .libs/unit
+        there=$(cd ../scribbu/.libs; pwd)
+        echo "Changing the load location for unit lib to be ${there}."
+        install_name_tool -change /usr/local/lib/libscribbu.4.dylib ${there}/libscribbu.4.dylib .libs/unit
         echo "===================================="
         otool -L .libs/unit
-        echo "===================================="
-        otool -l .libs/unit
+        .libs/unit --help
 
-    # cf. <https://github.com/actions/runner-images/issues/762>
-    - name: Test scribbu
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+    - name: Patch boost binary dependencies (MacOS, non-oldest)
+      if: matrix.os == 'macos-12' && matrix.boost != 'oldest'
       shell: bash
       run: |
         set -x
-        sudo locale-gen en_US.UTF-8
-        # IN-PROGRESS: not sure if this is screwing-up `test-split`, `test-report` & `test-report-tdf`
-        # sudo update-locale LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
-        locale
-        echo "LANG is $LANG"
-        echo "LANGUAGE is $LANGUAGE"
-        echo "LC_ALL is $LC_ALL" 
+        pwd
+        echo "===================================="
+        otool -L src/.libs/scribbu
+        echo "===================================="
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change @rpath/libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       src/.libs/scribbu
+        install_name_tool -change @rpath/libboost_log.dylib                 ${there}/libboost_log.dylib             src/.libs/scribbu
+        install_name_tool -change @rpath/libboost_program_options.dylib     ${there}/libboost_program_options.dylib src/.libs/scribbu
+        install_name_tool -change @rpath/libboost_regex.dylib               ${there}/libboost_regex.dylib           src/.libs/scribbu
+        install_name_tool -change @rpath/libboost_system.dylib              ${there}/libboost_system.dylib          src/.libs/scribbu
+        there=$(cd scribbu/.libs; pwd)
+        echo "Changing the load location for scribbu lib to be ${there}."
+        install_name_tool -change /usr/local/lib/libscribbu.4.dylib ${there}/libscribbu.4.dylib src/.libs/scribbu
+        echo "===================================="
+        otool -L src/.libs/scribbu
+        src/.libs/scribbu --version
+        echo "===================================="
+        cd test && make unit
+        echo "===================================="
+        otool -L .libs/unit
+        echo "===================================="
+        there=$(cd ../boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change @rpath/libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib           .libs/unit
+        install_name_tool -change @rpath/libboost_log.dylib                 ${there}/libboost_log.dylib                 .libs/unit
+        install_name_tool -change @rpath/libboost_program_options.dylib     ${there}/libboost_program_options.dylib     .libs/unit
+        install_name_tool -change @rpath/libboost_regex.dylib               ${there}/libboost_regex.dylib               .libs/unit
+        install_name_tool -change @rpath/libboost_system.dylib              ${there}/libboost_system.dylib              .libs/unit
+        install_name_tool -change @rpath/libboost_unit_test_framework.dylib ${there}/libboost_unit_test_framework.dylib .libs/unit
+        there=$(cd ../scribbu/.libs; pwd)
+        echo "Changing the load location for unit lib to be ${there}."
+        install_name_tool -change /usr/local/lib/libscribbu.4.dylib ${there}/libscribbu.4.dylib .libs/unit
+        echo "===================================="
+        otool -L .libs/unit
+        .libs/unit --help
+
+    - name: Test scribbu (Ubuntu, oldest)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        here=$(pwd)
+        find ${here}/boost_${{ matrix.boost-ver }}/installdir -iname '*.so'
+        export LD_LIBRARY_PATH="${here}/boost_${{ matrix.boost-ver }}/installdir/lib:$LD_LIBRARY_PATH"
         pwd
         if ! make check; then
             cat test/test-suite.log
-            # exit 1
+            exit 1
         fi
 
-    # - name: Test the Autotools distribution (Ubuntu, non-oldest)
-    #   # I only make the Autotools distro on Ubuntu, so just test there
-    #   if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'oldest'
-    #   shell: bash
-    #   run: |
-    #     pwd
-    #     make distcheck
+    - name: Test scribbu (Ubuntu, non-oldest)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'oldest'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        if ! make check; then
+            cat test/test-suite.log
+            exit 1
+        fi
 
-    # TODO(sp1ff): for reasons unknown, this one fails-- in the process
-    # of building it out, but want to get a successful run, first
-    # - name: Test the Autotools distribution (Ubuntu, oldest)
-    #   # I only make the Autotools distro on Ubuntu, so just test there
-    #   if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
-    #   shell: bash
-    #   run: |
-    #     set -x
-    #     pwd
-    #     ls
-    #     version=${{ env.SCRIBBU_BUILD_NUMBER }}
-    #     export DISTCHECK_CONFIGURE_FLAGS="--with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)"
-    #     if ! make distcheck; then
-    #         cat test/test-suite.log
-    #         test -f scribbu-${version}/_build/sub/test/test-suite.log && \
-    #         cat scribbu-${version}/_build/sub/test/test-suite.log
-    #         exit 1
-    #     fi
+    - name: Test scribbu (MacOS)
+      if: matrix.os == 'macos-12'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        if ! make check; then
+            cat test/test-suite.log
+            exit 1
+        fi
+
+    - name: Test the Autotools distribution (Ubuntu, oldest)
+      # I only make the Autotools distro on Ubuntu, so just test there
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
+      shell: bash
+      run: |
+        set -x
+        pwd
+        ls
+        here=$(pwd)
+        version=${{ env.SCRIBBU_BUILD_NUMBER }}
+        export DISTCHECK_CONFIGURE_FLAGS="--with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)"
+        export LD_LIBRARY_PATH="${here}/boost_${{ matrix.boost-ver }}/installdir/lib:$LD_LIBRARY_PATH"
+        if ! make -j 4 distcheck; then
+            cat test/test-suite.log
+            test -f scribbu-${version}/_build/sub/test/test-suite.log && \
+            cat scribbu-${version}/_build/sub/test/test-suite.log
+            exit 1
+        fi
+
+    - name: Test the Autotools distribution (Ubuntu, non-oldest)
+      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'oldest'
+      shell: bash
+      run: |
+        pwd
+        make -j 4 distcheck
+
+    # Given that I had to move heaven & earth to get `make check` to
+    # work on MacOS, I'm going to hold-off on `make distcheck` until I
+    # want to really support MacOS, or someone asks for it... or
+    # something.

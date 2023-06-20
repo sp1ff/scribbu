@@ -543,8 +543,12 @@
  *
  */
 
+// Nb. No idea why, but if I don't include <array> here, this build fails in GHA
+// on MacOS(?!)
+#include <array>
 #include <scribbu/errors.hh>
 
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <variant>

@@ -557,8 +557,7 @@ namespace {
 
       po::store(parsed, vm);
 
-      parsed = po::parse_environment(nocli, "SCRIBBU");
-      po::store(parsed, vm);
+      // Nb. no options read from the environment.
 
       // That's it-- the list of files and/or directories to be processed
       // should be waiting for us in 'arguments'...

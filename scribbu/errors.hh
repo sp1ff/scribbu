@@ -24,8 +24,8 @@
 #ifndef ERRORS_H_INCLUDED
 #define ERRORS_H_INCLUDED 1
 
-#include <exception>
 #include <boost/exception/all.hpp>
+#include <exception>
 
 namespace scribbu {
 

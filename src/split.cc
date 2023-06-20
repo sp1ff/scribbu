@@ -207,8 +207,7 @@ namespace {
 
       po::store(parsed, vm);
 
-      parsed = po::parse_environment(nocli, "SCRIBBU");
-      po::store(parsed, vm);
+      // Nb. no options read from the environment.
 
       po::notify(vm);
       split_file(fs::path(vm["argument"].as<std::string>()),
