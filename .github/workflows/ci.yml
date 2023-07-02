@@ -84,11 +84,20 @@ jobs:
       shell: bash
       run: |
         set -x
+        # This seems wrong on multiple levels, but see here:
+        # <https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6339258>
+        set +e
         pwd
+        brew cleanup
+        # Will exit with non-zero status if it finds problems, but can be handy
+        # for trouble-shooting:
+        brew doctor
         brew update
+        brew upgrade
         brew install autoconf automake libtool openssl doxygen flex bison graphviz texinfo
         brew install --cask basictex
         type -p guile || brew install guile
+        set -e
 
     - name: Cache boost (Ubuntu)
       # On Ubuntu, we install "pinned" & "latest" directly from the packages.

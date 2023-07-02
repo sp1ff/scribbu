@@ -4,6 +4,15 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** fixed several bugs in `write_id3v1_tag`
+
+  - Added a GOOPS type check ensuring the argument is truly an
+    `<id3v1-tag>` instance.
+  - Stopped calling `scm_null_p()` in favor of `scm_is_null()` which
+    returns an int.
+  - Changed `emplace_strategy::reduce_padding_evently` to
+    `only_with_full_padding`. While not strictly a bug, this results
+    in more intuitive behavior for Scheme callers.
 *** the `split` and `rename` sub-commands no longer look for "SCRIBBU"-prefixed env vars indiscriminately
 
 `scribbu` can parse options from the environment. The environment variables examined all have a prefix of "SCRIBBU_". If there is such a variable in the environment with such a prefix, that does not correspond to a known command-line argument, `split` & `rename` would error-out. This build fixes that.

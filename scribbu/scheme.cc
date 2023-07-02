@@ -547,6 +547,12 @@ extern "C" {
     using namespace std;
     using namespace scribbu;
 
+    if (!SCM_IS_A_P(scm_tag, scm_c_public_ref("scribbu", "<id3v1-tag>"))) {
+      scm_error(sym_for_utf8("unexpected-type"), WRITE_ID3V1_TAG,
+                             "expected <id3v1-tag>, got ~A", scm_tag,
+                             SCM_BOOL_F);
+    }
+
     try {
       dynwind_context ctx;
 
@@ -562,7 +568,7 @@ extern "C" {
       // This slot can be '() to indicuate "not set"
       char *c_year = 0;
       SCM scm_year = SCM_SLOT(scm_tag, 3);
-      if (!scm_null_p(scm_year)) {
+      if (!scm_is_null(scm_year)) {
         c_year = ctx.free_locale_string(scm_year);
       }
 
@@ -572,15 +578,19 @@ extern "C" {
       SCM scm_genre = SCM_SLOT(scm_tag, 5);
       unsigned char genre = scm_to_uchar(scm_genre);
 
+      // This slot can be '() to indicate "not set"
+      unsigned char track_no = 0;
       SCM scm_track_no = SCM_SLOT(scm_tag, 6);
-      unsigned char track_no = scm_to_uchar(scm_track_no);
+      if (!scm_is_null(scm_track_no)) {
+        track_no = scm_to_uchar(scm_track_no);
+      }
 
       SCM scm_enh_genre = SCM_SLOT(scm_tag, 7);
       char *c_enh_genre = ctx.free_locale_string(scm_enh_genre);
 
       unsigned char speed = 0;
       SCM scm_speed = SCM_SLOT(scm_tag, 8);
-      if (!scm_null_p(scm_speed)) {
+      if (!scm_is_null(scm_speed)) {
         speed = scm_to_uchar(scm_speed);
       }
 
@@ -733,7 +743,7 @@ extern "C" {
         replace_tagset_copy(pth, tags.begin(), tags.end(), au);
       } else {
         maybe_emplace_tagset(pth, tags.begin(), tags.end(), au,
-                             emplace_strategy::reduce_padding_evenly,
+                             emplace_strategy::only_with_full_padding,
                              padding_strategy::adjust_padding_evenly);
       }
 
