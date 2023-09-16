@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+tmpfile=/tmp/test-scripting.scm
+scribbu_dir=`cd ../src; pwd`
+lib_dir=`cd ../scribbu; pwd`
+case `uname` in
+    Linux)
+        echo "#!${scribbu_dir}/scribbu \\" > $tmpfile;;
+    Darwin)
+        # Workaround for MacOS-- should be; for some reason I don't
+        # understand (and don't care to debug), the `src/scribbu'
+        # libtool script doesn't work well with the extended #! line
+        # I use below. So, I call the MacOS binary directly, being careful
+        # to set DYLD_LIBRARY_PATH (like the libtool script would)
+        # so that we load the .so under test and not any previously installed
+        # version.
+        echo "#!${scribbu_dir}/.libs/scribbu \\" >  $tmpfile;
+        export DYLD_LIBRARY_PATH=$lib_dir/.libs:$DYLD_LIBRARY_PATH;;
+    *)
+        echo "Unknown system" 2>&1;
+        exit 1;;
+esac
+
+cat >> $tmpfile<<EOF
+-e main -s
+!#
+;; Should fail
+(set! x (read-id3v1-tag "data/id3v1.2.3.tag"))
+EOF
+
+chmod a+x $tmpfile
+export GUILE_AUTO_COMPILE=0
+cols=$(tput cols)
+export GUILE_LOAD_PATH=${srcdir}/../scheme
+
+eval "$($tmpfile \
+        2> >(t_err=$(cat); typeset -p t_err) \
+         > >(t_std=$(cat); typeset -p t_std) )"
+t_stat=$?
+t_err=$(echo "$t_err" | grep -vE ';;; note: source file /tmp/test-scripting.scm' | grep -v 'newer than compiled')
+if [ $t_stat -ne 0 ]; then
+    >&2 echo "Non-zero exit code ($t_stat)."
+    echo "stdout:"
+    echo "$t_std"
+    echo "stderr:"
+    echo "$t_err"
+    exit 1
+fi
+
+if [ "${t_err}" !~ "Unbound variable: read-id3v1-tag" ]; then
+    >&2 echo "Unexpected stderr"
+    echo "stdout:"
+    echo "$t_std"
+    echo "stderr:"
+    echo "$t_err"
+    exit 1
+fi
