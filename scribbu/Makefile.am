@@ -4,6 +4,7 @@ BUILT_SOURCES = tbt-parser.hh tbt-lexer.hh scheme.x
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(GUILE_CFLAGS)
 AM_CXXFLAGS = -std=c++17 -Wno-register $(GUILE_CFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 lib_LTLIBRARIES = libscribbu.la
 
