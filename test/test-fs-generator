@@ -2,4 +2,4 @@
 testdir=/tmp/scribbu-test/scheme
 mkdir -p $testdir/a/b
 touch $testdir/foo $testdir/a/bar $testdir/a/b/splat
-LD_LIBRARY_PATH=${abs_top_builddir}/scribbu/.libs guile -L ${srcdir}/../scheme -s ${srcdir}/test-fs-generator.scm
+LD_LIBRARY_PATH=${abs_top_builddir}/scribbu/.libs:$LD_LIBRARY_PATH guile -L ${srcdir}/../scheme -s ${srcdir}/test-fs-generator.scm
