@@ -405,9 +405,9 @@ jobs:
         otool -L .libs/unit
         .libs/unit --help
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    #   if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
 
     - name: Test scribbu (Ubuntu, oldest)
       if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'

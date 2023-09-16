@@ -4,9 +4,18 @@ BUILT_SOURCES = tbt-parser.hh tbt-lexer.hh scheme.x
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(GUILE_CFLAGS)
 AM_CXXFLAGS = -std=c++17 -Wno-register $(GUILE_CFLAGS)
-AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBUNISTRING)
 
 lib_LTLIBRARIES = libscribbu.la
+libscribbu_la_LIBADD = $(GUILE_LIBS)	 \
+	$(OPENSSL_LIBS)                  \
+	$(BOOST_IOSTREAMS_LIB)           \
+	$(BOOST_FILESYSTEM_LIB)          \
+	$(BOOST_LOG_LIB)                 \
+	$(BOOST_PROGRAM_OPTIONS_LIB)     \
+	$(BOOST_REGEX_LIB)               \
+	$(BOOST_SYSTEM_LIB)
+
 
 libscribbu_la_SOURCES = tbt-parser.yy		\
 			tbt-lexer.ll		\
