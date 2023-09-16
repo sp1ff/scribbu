@@ -4,6 +4,12 @@
 
 # The intent here is get as many lints & checks as possible out of my
 # personal checklist & into automation, being run every night.
+
+# Reference:
+#
+# - pwd
+#   - MacOS: /Users/runner/work/scribbu/scribbu
+#   - Ubuntu: /home/runner/work/scribbu/scribbu
 name: Continuous Integration
 on:
   workflow_dispatch:
@@ -32,8 +38,8 @@ jobs:
           boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.bz2
         - os: macos-12
           boost: latest
-          boost-ver: 1_82_0
-          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.bz2
+          boost-ver: 1_83_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.bz2
         - os: ubuntu-22.04
           boost: oldest
           boost-ver: 1_63_0
@@ -65,7 +71,6 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
         version=`awk '/^AC_INIT/ {print substr($2, 2, length($2)-3)}' configure.ac`
         echo "Building scribbu version $version."
         echo "SCRIBBU_BUILD_NUMBER=${version}" >> $GITHUB_ENV
@@ -75,7 +80,6 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
         sudo apt-get update
         sudo apt-get install -y autoconf automake libtool openssl guile-3.0-dev doxygen flex bison graphviz libunistring-dev texlive tzdata locales
 
@@ -87,7 +91,6 @@ jobs:
         # This seems wrong on multiple levels, but see here:
         # <https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6339258>
         set +e
-        pwd
         brew cleanup
         # Will exit with non-zero status if it finds problems, but can be handy
         # for trouble-shooting:
@@ -326,7 +329,19 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_log.dylib                 ${there}/libboost_log.dylib             scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_program_options.dylib     ${there}/libboost_program_options.dylib scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_regex.dylib               ${there}/libboost_regex.dylib           scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_system.dylib              ${there}/libboost_system.dylib          scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
         echo "===================================="
         otool -L src/.libs/scribbu
         echo "===================================="
@@ -368,7 +383,19 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change @rpath/libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_log.dylib                 ${there}/libboost_log.dylib             scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_program_options.dylib     ${there}/libboost_program_options.dylib scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_regex.dylib               ${there}/libboost_regex.dylib           scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_system.dylib              ${there}/libboost_system.dylib          scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
         echo "===================================="
         otool -L src/.libs/scribbu
         echo "===================================="
@@ -412,6 +439,7 @@ jobs:
         set -x
         pwd
         here=$(pwd)
+        ldd scribbu/.libs/libscribbu.so
         find ${here}/boost_${{ matrix.boost-ver }}/installdir -iname '*.so'
         export LD_LIBRARY_PATH="${here}/boost_${{ matrix.boost-ver }}/installdir/lib:$LD_LIBRARY_PATH"
         pwd
@@ -426,6 +454,7 @@ jobs:
       run: |
         set -x
         pwd
+        ldd scribbu/.libs/libscribbu.so
         if ! make check; then
             cat test/test-suite.log
             exit 1

@@ -4,6 +4,7 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** Scheme function & types defined in C are now in module (scribbu)
 *** fixed several bugs in `write_id3v1_tag`
 
   - Added a GOOPS type check ensuring the argument is truly an

@@ -758,6 +758,30 @@ extern "C" {
 
   }
 
+  /// Define our types & functions at the top level of the current module
+  void
+  init_scribbu() 
+  {
+
+    scribbu::init_symbols();
+
+#   ifndef SCM_MAGIC_SNARFER
+#   include "scheme.x"
+#   endif
+
+    scm_c_export(READ_ID3V1_TAG, READ_TAGSET, WITH_TRACK_IN, WRITE_ID3V1_TAG,
+                 WRITE_TAGSET, nullptr);
+
+  }
+
+  /// Define our types & functions in the current module-- this function is
+  /// just a shim to allow us to initialize this from either the Guile REPL or
+  /// when loading the extension from Scheme.
+  void
+  init_scribbu_shim(void*) {
+    init_scribbu();
+  }
+
   SCM
   get_version_variable(void*)
   {
@@ -854,16 +878,11 @@ extern "C" {
   {
     const init_guile *pig = reinterpret_cast<const init_guile*>(praw);
 
-    scribbu::init_symbols();
-
-#   ifndef SCM_MAGIC_SNARFER
-#   include "scheme.x"
-#   endif
-
+    // scm_c_define_module("scribbu-int", init_scribbu_shim, nullptr);
     customize_welcome();
     customize_load_path(pig->datadir_);
 
-    return 0;
+    return nullptr;
   }
 
 } // End extern "C".

@@ -20,7 +20,6 @@
 ;;;;
 ;;;;
 
-
 (use-modules (scribbu))
 (define test-dir "/tmp/scribbu-test/scheme")
 (define G (fs-tree-generator test-dir))

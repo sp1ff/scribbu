@@ -21,6 +21,7 @@
  *
  */
 
+#include <boost/test/unit_test_suite.hpp>
 #include <scribbu/id3v2-utils.hh>
 
 #include "unit.hh"

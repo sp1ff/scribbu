@@ -1,12 +1,6 @@
 # Tell automake that these two must be built first; we say how below
 BUILT_SOURCES = tbt-parser.hh tbt-lexer.hh scheme.x
-
-AM_YFLAGS = -d
-AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(GUILE_CFLAGS)
-AM_CXXFLAGS = -std=c++17 -Wno-register $(GUILE_CFLAGS)
-
 lib_LTLIBRARIES = libscribbu.la
-
 libscribbu_la_SOURCES = tbt-parser.yy		\
 			tbt-lexer.ll		\
 			scribbu.cc		\
@@ -58,7 +52,20 @@ pkginclude_HEADERS = scribbu.hh		\
 		     scheme-serde.hh    \
 		     winamp-genres.hh
 
-libscribbu_la_LDFLAGS = -version-info 4:1:0
+AM_YFLAGS = -d
+AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(GUILE_CFLAGS)
+AM_CXXFLAGS = -std=c++17 -Wno-register $(GUILE_CFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBUNISTRING)
+
+libscribbu_la_LIBADD = $(GUILE_LIBS)	 \
+	$(OPENSSL_LIBS)                  \
+	$(BOOST_IOSTREAMS_LIB)           \
+	$(BOOST_FILESYSTEM_LIB)          \
+	$(BOOST_LOG_LIB)                 \
+	$(BOOST_REGEX_LIB)               \
+	$(BOOST_SYSTEM_LIB)
+
+libscribbu_la_LDFLAGS = -version-info 4:1:0 $(BOOST_LDFLAGS) $(LIBUNISTRING)
 
 # automake will figure out how to make tbt-parser.hh, but we need to tell it how 
 # to make tbt-lexer.h:

@@ -34,6 +34,10 @@
             unknown-frame album-frame artist-frame
             has-frame? get-frames))
 
+;; Load the Scheme extension in `libscribbu.so` & invoke `init_scribbu()` therein to define types &
+;; functions. Nb. These definitions will be in module `(scribbu)`.
+(load-extension "libscribbu" "init_scribbu")
+
 (use-modules (ice-9 ftw))
 (use-modules (ice-9 match))
 (use-modules (rnrs bytevectors))

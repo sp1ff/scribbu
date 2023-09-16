@@ -1,3 +1,5 @@
+AM_TESTS_ENVIRONMENT = \
+	abs_top_builddir=$(abs_top_builddir)
 check_PROGRAMS = unit
 SUBDIRS = data
 EXTRA_DIST = test-util test-split test-rename test-report test-report-tdf \
@@ -7,7 +9,7 @@ EXTRA_DIST = test-util test-split test-rename test-report test-report-tdf \
 	test-tagsets-from-scheme.scm test-tagsets-from-scheme \
 	test-frames-from-scheme.scm test-frames-from-scheme \
 	test-scripting test-options test-popm test-xtag test-text test-genre \
-	test-m3u
+	test-m3u test-snarfed-in-scribbu
 CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	report.csv report-last.csv report-tdf.tdf \
 	id3v20A trackB id3v1A trackA \
@@ -34,7 +36,8 @@ TESTS = $(check_PROGRAMS) test-split test-rename test-report test-report-tdf \
 	test-dump test-with-track-in test-fs-generator \
 	test-cleanup-encoded-by test-cleanup-from-audacity \
 	test-tagsets-from-scheme test-frames-from-scheme test-scripting \
-	test-options test-popm test-xtag test-text test-genre test-m3u
+	test-options test-popm test-xtag test-text test-genre test-m3u \
+	test-snarfed-in-scribbu
 unit_SOURCES = unit.cc unit.hh charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	framesv22.cc framesv23.cc framesv24.cc id3v2.cc id3v22.cc id3v23.cc \
 	id3v24.cc id3v2-utils.cc pprinter.cc csv-pprinter.cc mp3.cc tdf-pprinter.cc \
