@@ -412,6 +412,7 @@ jobs:
         set -x
         pwd
         here=$(pwd)
+        ldd scribbu/.libs/libscribbu.so
         find ${here}/boost_${{ matrix.boost-ver }}/installdir -iname '*.so'
         export LD_LIBRARY_PATH="${here}/boost_${{ matrix.boost-ver }}/installdir/lib:$LD_LIBRARY_PATH"
         pwd
@@ -426,6 +427,7 @@ jobs:
       run: |
         set -x
         pwd
+        ldd scribbu/.libs/libscribbu.so
         if ! make check; then
             cat test/test-suite.log
             exit 1
