@@ -304,6 +304,7 @@ jobs:
         eval "$(/usr/libexec/path_helper)"
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
 
+    # TODO(sp1ff): DEBUG
     # - name: Setup tmate session
     #   uses: mxschmitt/action-tmate@v3
     #   if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
