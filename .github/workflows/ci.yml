@@ -38,8 +38,8 @@ jobs:
           boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.bz2
         - os: macos-12
           boost: latest
-          boost-ver: 1_82_0
-          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.bz2
+          boost-ver: 1_83_0
+          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.bz2
         - os: ubuntu-22.04
           boost: oldest
           boost-ver: 1_63_0
