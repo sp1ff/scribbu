@@ -4,6 +4,12 @@
 
 # The intent here is get as many lints & checks as possible out of my
 # personal checklist & into automation, being run every night.
+
+# Reference:
+#
+# - pwd
+#   - MacOS: /Users/runner/work/scribbu/scribbu
+#   - Ubuntu: /home/runner/work/scribbu/scribbu
 name: Continuous Integration
 on:
   workflow_dispatch:
@@ -65,7 +71,6 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
         version=`awk '/^AC_INIT/ {print substr($2, 2, length($2)-3)}' configure.ac`
         echo "Building scribbu version $version."
         echo "SCRIBBU_BUILD_NUMBER=${version}" >> $GITHUB_ENV
@@ -75,7 +80,6 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
         sudo apt-get update
         sudo apt-get install -y autoconf automake libtool openssl guile-3.0-dev doxygen flex bison graphviz libunistring-dev texlive tzdata locales
 
@@ -87,7 +91,6 @@ jobs:
         # This seems wrong on multiple levels, but see here:
         # <https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6339258>
         set +e
-        pwd
         brew cleanup
         # Will exit with non-zero status if it finds problems, but can be handy
         # for trouble-shooting:
@@ -304,11 +307,6 @@ jobs:
         eval "$(/usr/libexec/path_helper)"
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
 
-    # TODO(sp1ff): DEBUG
-    # - name: Setup tmate session
-    #   uses: mxschmitt/action-tmate@v3
-    #   if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest'
-
     - name: Make scribbu (Ubuntu)
       if: matrix.os == 'ubuntu-22.04'
       shell: bash
@@ -331,7 +329,19 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_log.dylib                 ${there}/libboost_log.dylib             scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_program_options.dylib     ${there}/libboost_program_options.dylib scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_regex.dylib               ${there}/libboost_regex.dylib           scribbu/.libs/libscribbu.dylib
+        install_name_tool -change libboost_system.dylib              ${there}/libboost_system.dylib          scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
         echo "===================================="
         otool -L src/.libs/scribbu
         echo "===================================="
@@ -373,7 +383,19 @@ jobs:
       shell: bash
       run: |
         set -x
-        pwd
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        there=$(cd boost_${{ matrix.boost-ver }}/installdir/lib; pwd)
+        echo "Changing the load location for boost libs to ${there}."
+        install_name_tool -change @rpath/libboost_iostreams.dylib           ${there}/libboost_iostreams.dylib       scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_log.dylib                 ${there}/libboost_log.dylib             scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_program_options.dylib     ${there}/libboost_program_options.dylib scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_regex.dylib               ${there}/libboost_regex.dylib           scribbu/.libs/libscribbu.dylib
+        install_name_tool -change @rpath/libboost_system.dylib              ${there}/libboost_system.dylib          scribbu/.libs/libscribbu.dylib
+        echo "===================================="
+        otool -L scribbu/.libs/libscribbu.dylib
+        echo "===================================="
         echo "===================================="
         otool -L src/.libs/scribbu
         echo "===================================="
