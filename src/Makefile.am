@@ -12,4 +12,5 @@ scribbu_LDADD = ../scribbu/libscribbu.la \
 	$(GUILE_LIBS)                    \
 	$(BOOST_IOSTREAMS_LIB)           \
 	$(BOOST_PROGRAM_OPTIONS_LIB)     \
-	$(BOOST_REGEX_LIB)
+	$(BOOST_REGEX_LIB)		 \
+	$(BOOST_SYSTEM_LIB)
