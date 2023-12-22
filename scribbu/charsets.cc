@@ -344,6 +344,36 @@ namespace scribbu {
 
     return os << TBL.at(x);
   }
+
+  std::istream &operator>>(std::istream &is, on_no_encoding &x)
+  {
+    using namespace std;
+    static const unordered_map<string, on_no_encoding, hash<string>> TBL{
+      { "fail",          on_no_encoding::fail   },
+      { "ignore",        on_no_encoding::ignore },
+      { "transliterate", on_no_encoding::transliterate },
+    };
+
+    string text;
+    is >> text;
+
+    x = TBL.at(text);
+
+    return is;
+  }
+
+  std::ostream &operator<<(std::ostream &os, const on_no_encoding &x)
+  {
+    using namespace std;
+    static const unordered_map<on_no_encoding, string, hash<on_no_encoding>> TBL{
+      { on_no_encoding::fail,          "fail"          },
+      { on_no_encoding::ignore,        "ignore"        },
+      { on_no_encoding::transliterate, "transliterate" },
+    };
+
+    return os << TBL.at(x);
+  }
+
 }
 
 namespace scribbu {

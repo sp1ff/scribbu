@@ -90,13 +90,17 @@ playlist in UTF-8 format, say:
 
 Summary of options:
 
-  -s SRC, --source-encoding=SRC Specify the text encoding in which textual
-                                ID3 tags like artist & title are written
-  -o OUT, --output=OUT          Specify that output be written to file OUT
-  -a, --append                  Append, don't overwrite OUT
+  -v, --verbose                 Produce more verbose output
   -8, --use-utf-8               Write the output in utf-8, not the system
                                 locale's encoding
-  -v, --verbose                 Produce more verbose output
+  -a, --append                  Append, don't overwrite OUT
+  -e RSP, --on-encoding-failure=RSP
+                                Specify how to handle encoding errors; may
+                                be one of 'fail', 'transliterate', or 'ignore'
+                                (defaults to 'fail')
+  -o OUT, --output=OUT          Specify that output be written to file OUT
+  -s SRC, --source-encoding=SRC Specify the text encoding in which textual
+                                ID3 tags like artist & title are written
 
 For detailed help, say `scribbu m3u --help'. To see the manual, say
 `info "scribbu (m3u)"'.
@@ -113,8 +117,9 @@ namespace {
   {
   public:
     m3u(std::ostream& os, boost::optional<scribbu::encoding> src_enc, bool verbose,
-        scribbu::encoding dst_enc):
-      os_(os), src_enc_(src_enc), dst_enc_(dst_enc), verbose_(verbose)
+        scribbu::encoding dst_enc, scribbu::on_no_encoding on_enc_fail):
+      os_(os), src_enc_(src_enc), dst_enc_(dst_enc), verbose_(verbose),
+      on_enc_fail_(on_enc_fail)
     { }
 
   public:
@@ -135,8 +140,11 @@ namespace {
     boost::optional<scribbu::encoding> src_enc_;
     scribbu::encoding dst_enc_;
     bool verbose_;
+    scribbu::on_no_encoding on_enc_fail_;
   };
 
+  /// Guess a display title for a tagset. Return boost::none if unable to do so
+  /// (e.g. no ID3 tags, or unable to convert the character encodings therein),
   template <typename forward_input_iterator>
   boost::optional<std::string>
   m3u::guess_display_title(forward_input_iterator    ptagv2_0,
@@ -146,33 +154,38 @@ namespace {
     using namespace std;
     using namespace scribbu;
 
-    forward_input_iterator p =
-      find_if(ptagv2_0, ptagv2_1,
-              [](const unique_ptr<id3v2_tag>& ptag) {
-                return ptag->has_artist() && ptag->has_title();
-              });
+    try {
+      forward_input_iterator p =
+        find_if(ptagv2_0, ptagv2_1,
+                [](const unique_ptr<id3v2_tag>& ptag) {
+                  return ptag->has_artist() && ptag->has_title();
+                });
 
-    if (p != ptagv2_1) {
+      if (p != ptagv2_1) {
 
-      string a = (*p)->artist(dst_enc_, on_no_encoding::fail, src_enc_);;
-      string t = (*p)->title(dst_enc_, on_no_encoding::fail, src_enc_);
-
-      if (!a.empty() && !t.empty()) {
-        return a + " - " + t;
-      }
-    }
-
-    if (ptagv1) {
-      string a = ptagv1->artist<string>(src_enc_, dst_enc_);
-      string t = ptagv1->title<string>(src_enc_, dst_enc_);
+        string a = (*p)->artist(dst_enc_, on_enc_fail_, src_enc_);;
+        string t = (*p)->title(dst_enc_, on_enc_fail_, src_enc_);
 
         if (!a.empty() && !t.empty()) {
           return a + " - " + t;
         }
+      }
+
+      if (ptagv1) {
+        string a = ptagv1->artist<string>(src_enc_, dst_enc_, on_enc_fail_);
+        string t = ptagv1->title<string>(src_enc_, dst_enc_, on_enc_fail_);
+
+        if (!a.empty() && !t.empty()) {
+          return a + " - " + t;
+        }
+      }
+    } catch (const iconv_error &ex) {
+      if (verbose()) {
+        cerr << "Character encoding error: " << ex.what() << endl;
+      }
     }
 
     return boost::none;
-
   }
 
   void
@@ -189,7 +202,7 @@ namespace {
 
     string display;
     boost::optional<string> gdt;
-    if (gdt = guess_display_title(id3v2.begin(), id3v2.end(), pid3v1.get())) {
+    if ((gdt = guess_display_title(id3v2.begin(), id3v2.end(), pid3v1.get()))) {
       display = *gdt;
     } else {
       display = pth.stem().native();
@@ -207,12 +220,16 @@ namespace {
   class m3u_to_stdout: public m3u
   {
   public:
-    m3u_to_stdout(boost::optional<scribbu::encoding> src_enc, bool verbose);
+    m3u_to_stdout(boost::optional<scribbu::encoding> src_enc, bool verbose,
+                  scribbu::on_no_encoding on_enc_fail);
 
   };
 
-  m3u_to_stdout::m3u_to_stdout(boost::optional<scribbu::encoding> src_enc, bool verbose):
-    m3u(std::cout, src_enc, verbose, scribbu::encoding_from_system_locale())
+  m3u_to_stdout::m3u_to_stdout(boost::optional<scribbu::encoding> src_enc,
+                               bool verbose,
+                               scribbu::on_no_encoding on_enc_fail)
+      : m3u(std::cout, src_enc, verbose, scribbu::encoding_from_system_locale(),
+            on_enc_fail)
   { }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -225,9 +242,10 @@ namespace {
   public:
     m3u_to_file(boost::optional<scribbu::encoding> src_enc,
                 bool verbose,
-                const fs::path   &out,
-                bool              append,
-                bool              use_utf8);
+                const fs::path &out,
+                bool append,
+                bool use_utf8,
+                scribbu::on_no_encoding on_enc_fail);
 
   private:
     std::ofstream ofs_;
@@ -235,12 +253,12 @@ namespace {
   };
 
   m3u_to_file::m3u_to_file(boost::optional<scribbu::encoding> src_enc,
-                           bool verbose,
-                           const fs::path   &out,
-                           bool              append,
-                           bool              use_utf8):
-    m3u(ofs_, src_enc, verbose,
-        use_utf8 ? scribbu::encoding::UTF_8 : scribbu::encoding_from_system_locale())
+                           bool verbose, const fs::path &out, bool append,
+                           bool use_utf8, scribbu::on_no_encoding on_enc_fail)
+      : m3u(ofs_, src_enc, verbose,
+            use_utf8 ? scribbu::encoding::UTF_8
+                     : scribbu::encoding_from_system_locale(),
+            on_enc_fail)
   {
     using namespace std;
 
@@ -312,13 +330,17 @@ namespace {
 
     po::options_description opts("general options");
     opts.add_options()
+      ("append,a", po::bool_switch(), "append to instead of overwriting the "
+       "output file (only applies if -o is given)")
+      ("on-encoding-failure,e", po::value<on_no_encoding>()->default_value(
+        on_no_encoding::fail),
+       "specify how to handle encoding errors; may be one of 'fail', "
+       "'transliterate', or 'ignore' (defaults to 'fail')")
+      ("output,o", po::value<fs::path>(), "specify that output be written to "
+       "file instead of stdout")
       ("source-encoding,s", po::value<encoding>()->default_value(encoding::CP1252),
        "specify the text encoding in which textual ID3 tags like artist & title "
        "are written")
-      ("output,o", po::value<fs::path>(), "specify that output be written to "
-       "file instead of stdout")
-      ("append,a", po::bool_switch(), "append to instead of overwriting the "
-       "output file (only applies if -o is given)")
       ("use-utf8,8", po::bool_switch(), "write the output in utf-8, not the "
        "system locale's encoding (only applies if -o is given)")
       ("verbose,v", po::bool_switch(), "produce more verbose output");
@@ -378,6 +400,7 @@ namespace {
       if (use_utf8 && out.empty()) {
         throw po::error("--use-utf8 is only relevant when --output is given");
       }
+      on_no_encoding on_enc_fail = vm["on-encoding-failure"].as<on_no_encoding>();
 
       // Workaround to https://svn.boost.org/trac/boost/ticket/8535
       std::vector<fs::path> args;
@@ -386,10 +409,10 @@ namespace {
       }
 
       if (out.empty()) {
-        m3u_to_stdout F(src_enc, verbose);
+        m3u_to_stdout F(src_enc, verbose, on_enc_fail);
         process_dirent_args(args.begin(), args.end(), F);
       } else {
-        m3u_to_file F(src_enc, verbose, out, append, use_utf8);
+        m3u_to_file F(src_enc, verbose, out, append, use_utf8, on_enc_fail);
         process_dirent_args(args.begin(), args.end(), F);
       }
 

@@ -136,6 +136,9 @@ namespace scribbu {
     fail, transliterate, ignore
   };
 
+  std::istream& operator>>(std::istream &is, on_no_encoding &x);
+  std::ostream& operator<<(std::ostream &os, const on_no_encoding &x);
+
   namespace detail {
 
     ///////////////////////////////////////////////////////////////////////////

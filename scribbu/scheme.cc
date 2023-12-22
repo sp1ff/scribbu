@@ -184,6 +184,13 @@ namespace {
                              SCM_BOOL_F);
     }
 
+    if (!scm_is_exact_integer(scm_ver)) {
+      scm_error(sym_for_utf8("unexpected-type"), "scm_to_id3v2_tag",
+                "expected exact integer for ID3v2 version, got ~A", scm,
+                SCM_BOOL_F);
+      
+    }
+
     int version = scm_to_int(scm_ver);
 
     bool fexp = false;

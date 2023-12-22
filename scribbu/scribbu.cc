@@ -419,5 +419,3 @@ scribbu::urldecode(const std::string &text)
 
   return out;
 }
-
-
