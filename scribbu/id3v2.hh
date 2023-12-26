@@ -138,7 +138,7 @@
  * as just $FF.
  *
  * ID3v2.4 introduced a different extended header and a footer, both of which
- * *are* sync-safe, and frames can be unsynhronised individually. The
+ * *are* sync-safe, and frames can be unsynchronised individually. The
  * unsynchronisation flag in the header being set indicates that all frames are
  * unsynchronised; unset in the header means that at least one frame is *not*
  * unsynchronised.

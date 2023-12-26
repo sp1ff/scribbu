@@ -552,3 +552,42 @@ scribbu::XTAG_2_4::serialize(std::ostream &os) const
 {
   return tag_cloud::write(os);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//                              class PRIV_2_4                               //
+///////////////////////////////////////////////////////////////////////////////
+
+/*static*/ std::unique_ptr<scribbu::id3v2_4_frame>
+scribbu::PRIV_2_4::create(const frame_id4 &id,
+                          const unsigned char *p,
+                          std::size_t cb,
+                          tag_alter_preservation tap,
+                          file_alter_preservation fap,
+                          read_only read_only,
+                          const boost::optional<unsigned char> &enc,
+                          const boost::optional<unsigned char> &gid,
+                          bool compressed,
+                          bool unsynchronised,
+                          const boost::optional<std::size_t> &dli)
+{
+  return std::unique_ptr<id3v2_4_frame>(new PRIV_2_4(p, p + cb, tap, fap,
+                                                     read_only, enc,
+                                                     gid, compressed,
+                                                     unsynchronised, dli));
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::PRIV_2_4::size() const
+{
+  return private_frame::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::PRIV_2_4::serialize(std::ostream &os) const
+{
+  return private_frame::write(os);
+}

@@ -994,13 +994,20 @@ AlbumXXXX, <no year>
 TALB: AlbumXXXX
 TPE1: ArtistXXXX
 TIT2: TitleXXXX
-frame PRIV (39 bytes)
-frame PRIV (138 bytes)
-frame PRIV (20 bytes)
-frame PRIV (39 bytes)
-frame PRIV (34 bytes)
-frame PRIV (31 bytes)
-frame PRIV (41 bytes)
+PRIV (WM/WMCollectionGroupID): 16 bytes beginning with:
+6d 6b dd f3 57 a0 eb 40 ac 64 17 26 16 e6 60 a1  >mk..W..@.d.&..`.<
+PRIV (WM/UniqueFileIdentifier): 114 bytes beginning with:
+41 00 4d 00 47 00 61 00 5f 00 69 00 64 00 3d 00  >A.M.G.a._.i.d.=.<
+PRIV (WM/Provider): 8 bytes beginning with:
+41 00 4d 00 47 00 00 00  >A.M.G...<
+PRIV (WM/MediaClassPrimaryID): 16 bytes beginning with:
+bc 7d 60 d1 23 e3 e2 4b 86 a1 48 a4 2a 28 44 1e  >.}`.#..K..H.*(D.<
+PRIV (WM/WMCollectionID): 16 bytes beginning with:
+6d 6b dd f3 57 a0 eb 40 ac 64 17 26 16 e6 60 a1  >mk..W..@.d.&..`.<
+PRIV (WM/WMContentID): 16 bytes beginning with:
+9f 36 29 24 05 6d 79 49 a2 e1 ec e4 9e f6 fc dd  >.6)$.myI........<
+PRIV (WM/MediaClassSecondaryID): 16 bytes beginning with:
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
 3426 bytes of padding
 )");
 

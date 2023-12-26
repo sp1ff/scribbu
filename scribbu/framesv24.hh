@@ -1008,6 +1008,85 @@ namespace scribbu {
 
   }; // End class XTAG_2_4.
 
+  // Private frame
+  class PRIV_2_4: public id3v2_4_frame, public private_frame {
+  public:
+    template <typename forward_input_iterator>
+    PRIV_2_4(forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("PRIV", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      private_frame(p0, p1)
+    { }
+
+    template <typename forward_input_iterator>
+    PRIV_2_4(const std::string                    &email,
+             forward_input_iterator                p0,
+             forward_input_iterator                p1,
+             tag_alter_preservation                tap,
+             file_alter_preservation               fap,
+             read_only                             ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool                                  cmprsd,
+             bool                                  unsynch,
+             const boost::optional<std::size_t>   &dli):
+      id3v2_4_frame("PRIV", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      private_frame(email, p0, p1)
+    { }
+
+    virtual id3v2_4_frame* clone() const
+    { return new PRIV_2_4(*this); }
+
+    static std::unique_ptr<id3v2_4_frame>
+    create(const frame_id4                      &id,
+           const unsigned char                  *p,
+           std::size_t                           cb,
+           tag_alter_preservation                tap,
+           file_alter_preservation               fap,
+           read_only                             ro,
+           const boost::optional<unsigned char> &enc,
+           const boost::optional<unsigned char> &gid,
+           bool                                  cmprsd,
+           bool                                  unsynch,
+           const boost::optional<std::size_t>   &dli);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+    template <typename string_type>
+    string_type
+    email(encoding dst = encoding::UTF_8,
+          on_no_encoding rsp = on_no_encoding::fail,
+          const encoding &src = encoding::ASCII) const
+    {
+      using namespace std;
+      vector<unsigned char> buf;
+      private_frame::emailb(back_inserter(buf));
+      return buf.empty() ? string_type() :
+        convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
+    }
+
+  protected:
+
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class POPM_2_4.
+
 } // End namespace scribbu.
 
 #endif // not FRAMESV24_HH_INCLUDED

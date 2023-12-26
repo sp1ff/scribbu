@@ -41,6 +41,40 @@ using scribbu::pprinter;
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//                             utility functions                             //
+///////////////////////////////////////////////////////////////////////////////
+
+char
+asciify(unsigned char x)
+{
+  if (x > 31 && x < 127) {
+    return (char) x;
+  } else {
+    return '.';
+  }
+}
+
+template <typename forward_input_iterator>
+void
+pprint_binary(const std::string &indent,
+              forward_input_iterator p0,
+              forward_input_iterator p1,
+              std::ostream &os)
+{
+  using namespace std;
+  string ascii_rep;
+  os << indent << hex << setw(2) << (unsigned)*p0;
+  ascii_rep += asciify(*p0);
+  for (++p0 ; p0 != p1; ++p0) {
+    os << ' ' << setw(2) << (unsigned)*p0;
+    ascii_rep += asciify(*p0);
+  }
+
+  os << "  >" << ascii_rep << "<";
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 //                              dual dispatcher                              //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -213,6 +247,7 @@ pprint_dispatcher::pprint_dispatcher()
   reg_v23_frame<PCNT, &pprinter::pprint_PCNT>();
   reg_v23_frame<POPM, &pprinter::pprint_POPM>();
   reg_v23_frame<XTAG, &pprinter::pprint_XTAG>();
+  reg_v23_frame<PRIV, &pprinter::pprint_PRIV>();
   reg_v24_frame<unknown_id3v2_4_frame, &pprinter::pprint_unk_id3v2_4_frame>();
   reg_v24_frame<id3v2_4_text_frame, &pprinter::pprint_id3v2_4_text_frame>();
   reg_v24_frame<UFID_2_4, &pprinter::pprint_UFID_2_4>();
@@ -222,6 +257,7 @@ pprint_dispatcher::pprint_dispatcher()
   reg_v24_frame<PCNT_2_4, &pprinter::pprint_PCNT_2_4>();
   reg_v24_frame<POPM_2_4, &pprinter::pprint_POPM_2_4>();
   reg_v23_frame<XTAG_2_4, &pprinter::pprint_XTAG_2_4>();
+  reg_v23_frame<PRIV_2_4, &pprinter::pprint_PRIV_2_4>();
 
 }
 
@@ -758,6 +794,27 @@ scribbu::standard_pprinter::pprint_XTAG(const XTAG &frame, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
+scribbu::standard_pprinter::pprint_PRIV(const PRIV &frame, std::ostream &os)
+{
+  using namespace std;
+
+  string owner = frame.email<string>();
+
+  os << sin_ << frame.id() << " (" << owner << "): " << dec <<
+    frame.contents_size() << " bytes beginning with:\n";
+
+  size_t cb = min((size_t)16, frame.contents_size());
+
+  std::vector<unsigned char> buf(cb);
+  frame.contentsb(buf.begin(), boost::optional<size_t>(cb));
+  pprint_binary(sin_, buf.cbegin(), buf.cend(), os);
+
+  os << "\n";
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
 scribbu::standard_pprinter::pprint_unk_id3v2_4_frame(
   const unknown_id3v2_4_frame &frame, std::ostream &os)
 {
@@ -900,6 +957,27 @@ scribbu::standard_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &frame,
     }
     os << "\n";
   }
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
+scribbu::standard_pprinter::pprint_PRIV_2_4(const PRIV_2_4 &frame, std::ostream &os)
+{
+  using namespace std;
+
+  string owner = frame.email<string>();
+
+  os << sin_ << frame.id() << " (" << owner << "): " << dec <<
+    frame.contents_size() << " bytes beginning with:\n";
+
+  size_t cb = min((size_t)16, frame.contents_size());
+
+  std::vector<unsigned char> buf(cb);
+  frame.contentsb(buf.begin(), boost::optional<size_t>(cb));
+  pprint_binary(sin_, buf.cbegin(), buf.cend(), os);
+
+  os << "\n";
 
   return os;
 }

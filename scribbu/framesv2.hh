@@ -108,7 +108,7 @@ namespace scribbu {
     /// Return true iff [x, y] contain an MP3 sync word (i.e. the bit
     /// pattern %11111111 111xxxxx)
     bool is_false_sync(unsigned char x, unsigned char y);
-    /// Return truee ifff [x, y] contain a bit pattern that would need
+    /// Return true iff [x, y] contain a bit pattern that would need
     /// "unsynchronisation" if the ID3v2 unsynchronisation scheme is being
     /// applied; this is subtly different than [x, y] being a false sync (\ref
     /// is_false_sync)-- this method will return true if [x, y] is a false sync

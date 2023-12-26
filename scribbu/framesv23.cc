@@ -249,6 +249,55 @@ scribbu::id3v2_3_plus_frame::ensure_cached_data_is_fresh(bool last_no_pad) const
 
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                            class private_frame                            //
+///////////////////////////////////////////////////////////////////////////////
+
+std::size_t
+scribbu::private_frame::size() const {
+  return email_.size() + 1 + contents_.size(); // Need to add the trailing null
+}
+
+std::size_t
+scribbu::private_frame::serialized_size(bool unsync) const {
+  std::size_t cb = size();
+  if (unsync) {
+    cb += count_syncs(false);
+  }
+  return cb;
+}
+
+std::size_t
+scribbu::private_frame::needs_unsynchronisation() const
+{
+  return count_syncs(true);
+}
+
+std::size_t
+scribbu::private_frame::write(std::ostream &os) const
+{
+  static const char zed = 0;
+
+  if (!email_.empty()) {
+    os.write((const char*)&(email_[0]), email_.size());
+  }
+  os.write(&zed, 1);
+  if (!contents_.empty()) {
+    os.write((const char*)&(contents_[0]), contents_.size());
+  }
+  return email_.size() + 1 + contents_.size();
+}
+
+std::size_t
+scribbu::private_frame::count_syncs(bool false_only) const
+{
+  std::size_t cb = 0;
+
+  cb += detail::count_syncs(email_.begin(), email_.end(), false_only);
+  cb += detail::count_syncs(contents_.begin(), contents_.end(), false_only);
+
+  return cb;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //                            class id3v2_3_frame                            //
@@ -720,4 +769,40 @@ std::size_t
 scribbu::XTAG::serialize(std::ostream &os) const
 {
   return tag_cloud::write(os);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                                class PRIV                                 //
+///////////////////////////////////////////////////////////////////////////////
+
+/*static*/ std::unique_ptr<scribbu::id3v2_3_frame>
+scribbu::PRIV::create(const frame_id4 &id,
+                      const unsigned char *p,
+                      std::size_t cb,
+                      tag_alter_preservation tap,
+                      file_alter_preservation fap,
+                      read_only read_only,
+                      const boost::optional<unsigned char> &enc,
+                      const boost::optional<unsigned char> &gid,
+                      const boost::optional<std::size_t> &dsz)
+{
+  return std::unique_ptr<id3v2_3_frame>(new PRIV(p, p + cb, tap,
+                                                 fap, read_only,
+                                                 enc, gid, dsz));
+}
+
+/// Return the size, in bytes, of the frame, prior to desynchronisation,
+/// compression, and/or encryption exclusive of the header
+/*virtual*/
+std::size_t
+scribbu::PRIV::size() const
+{
+  return private_frame::size();
+}
+
+/*virtual*/
+std::size_t
+scribbu::PRIV::serialize(std::ostream &os) const
+{
+  return private_frame::write(os);
 }

@@ -314,6 +314,84 @@ namespace scribbu {
 
   }; // End class id3v2_3_plus_frame.
 
+  /**
+   * \brief Private frame
+   *
+   * While the frame id and frame header format changes across versions of the
+   * spec, the structure of the private frame does not. This class models that
+   * structure, and is meant to be combined into version-specific
+   * id3v2_3_plus_frame sub-classes through multiple inheritence.
+   *
+   *
+   */
+
+  class private_frame {
+  public:
+    /// Construct from a raw buffer; forward_input_iterator shall dereference to
+    /// an unsigned char
+    template <typename forward_input_iterator>
+    private_frame(forward_input_iterator p0, forward_input_iterator p1) {
+      forward_input_iterator p = std::find(p0, p1, 0);
+      std::copy(p0, p, std::back_inserter(email_));
+      ++p;
+      std::copy(p, p1, std::back_inserter(contents_));
+    }
+    /// Construct "from scratch"
+    template <typename forward_input_iterator>
+    private_frame(const std::string &owner,
+                  forward_input_iterator p0,
+                  forward_input_iterator p1) {
+      std::copy(owner.begin(), owner.end(), std::back_inserter(email_));
+      std::copy(p0, p1, std::back_inserter(contents_));
+    }
+
+  public:
+
+    template <typename forward_output_iterator>
+    forward_output_iterator emailb(forward_output_iterator pout) const
+    { return std::copy(email_.begin(), email_.end(), pout); }
+
+    template <typename forward_output_iterator>
+    forward_output_iterator contentsb(
+      forward_output_iterator pout,
+      boost::optional<size_t> count = boost::none) const
+    {
+      if (count) {
+        return std::copy_n(contents_.begin(), *count, pout);
+      } else {
+        return std::copy(contents_.begin(), contents_.end(), pout);
+      }
+    }
+
+    /// Return the size, in bytes, of the frame contents (i.e. the remaining
+    /// bytes after the email/contact info ahs been stripped off)
+    std::size_t contents_size() const {
+      return contents_.size();
+    }
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    std::size_t size() const;
+    /// Return the number of bytes this frame will occupy when serialized to
+    /// disk, including the header
+    std::size_t serialized_size(bool unsync) const;
+    /// Return zero if this frame would not contain false syncs if serialized in
+    /// its present state; else return the number of false sync it would contain
+    std::size_t needs_unsynchronisation() const;
+    /// Serialize this frame to an output stream, perhaps applying the
+    /// unsynchronisation scheme if the caller so chooses ("unsynchronised" will
+    /// be updated accordingly)
+    std::size_t write(std::ostream &os) const;
+
+  private:
+    std::size_t count_syncs(bool false_only) const;
+
+  private:
+    std::vector<unsigned char> email_;
+    std::vector<unsigned char> contents_;
+
+  }; // End class private_frame.
+
   /// Interface shared by all ID3v2.3 frames
   class id3v2_3_frame: public id3v2_3_plus_frame {
 
@@ -1180,7 +1258,80 @@ namespace scribbu {
     /// or unsynchronisation; return the number of bytes written
     virtual std::size_t serialize(std::ostream &os) const;
 
-  }; // End class POPM.
+  }; // End class XTAG.
+
+  /// Private frame; cf. sec. 4.28
+  class PRIV : public id3v2_3_frame, public private_frame {
+
+  public:
+
+    template <typename forward_input_iterator>
+    PRIV(forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("PRIV", tap, fap, ro, encmth, gid, decsz),
+      private_frame(p0, p1)
+    { }
+
+    template <typename forward_input_iterator>
+    PRIV(const std::string      &email,
+         forward_input_iterator  p0,
+         forward_input_iterator  p1,
+         tag_alter_preservation  tap,
+         file_alter_preservation fap,
+         read_only               ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+      id3v2_3_frame("PRIV", tap, fap, ro, encmth, gid, decsz),
+      private_frame(email, p0, p1)
+    { }
+
+    virtual id3v2_3_frame* clone() const
+    { return new PRIV(*this); }
+
+    static
+    std::unique_ptr<id3v2_3_frame>
+    create(const frame_id4         &id,
+           const unsigned char     *p,
+           std::size_t             cb,
+           tag_alter_preservation  tap,
+           file_alter_preservation fap,
+           read_only               ro,
+           const id_type           &encmth,
+           const id_type           &gid,
+           const opt_sz_type       &decsz);
+
+  public:
+
+    /// Return the size, in bytes, of the frame, prior to desynchronisation,
+    /// compression, and/or encryption exclusive of the header
+    virtual std::size_t size() const;
+
+    template <typename string_type>
+    string_type email(encoding dst = encoding::UTF_8,
+                      on_no_encoding rsp = on_no_encoding::fail,
+                      const encoding &src = encoding::ASCII) const
+    {
+      using namespace std;
+      vector<unsigned char> buf;
+      private_frame::emailb(back_inserter(buf));
+      return buf.empty() ? string_type() :
+        convert_encoding<string>(&(buf[0]), buf.size(), src, dst, rsp);
+    }
+
+  protected:
+    /// Serialize this frame to \a os, exclusive of any compression, encryption
+    /// or unsynchronisation; return the number of bytes written
+    virtual std::size_t serialize(std::ostream &os) const;
+
+  }; // End class PRIV.
+
 
 } // End namespace scribbu.
 

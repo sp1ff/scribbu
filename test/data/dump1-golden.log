@@ -19,7 +19,8 @@ Amazon.com Song ID: 203558254
 TCOP: 2004 Warner Music UK Ltd.
 TPOS: 1
 frame APIC (115554 bytes)
-frame PRIV (1122 bytes)
+PRIV (www.amazon.com): 1107 bytes beginning with:
+3c 3f 78 6d 6c 20 76 65 72 73 69 6f 6e 3d 22 31  ><?xml version="1<
 335921 bytes of padding
 0 bytes of track data:
 MD5: d41d8cd98f00b204e9800998ecf8427e

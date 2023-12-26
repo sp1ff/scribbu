@@ -1530,7 +1530,8 @@ scribbu::id3v2_4_tag::parse_frame(
 {
   using namespace std;
 
-  static const frame_id4 COMMID("COMM"), PCNTID("PCNT"), POPMID("POPM");
+  static const frame_id4 COMMID("COMM"), PCNTID("PCNT"), POPMID("POPM"),
+    PRIVID("PRIV");
 
   // COMM is handled specially-- the frame parser for "COMM" may not
   // be replaced
@@ -1554,6 +1555,12 @@ scribbu::id3v2_4_tag::parse_frame(
                                   dli);
     popms_.push_back(make_pair(popm, frames_.size()));
     frames_.push_back(unique_ptr<id3v2_4_frame>(popm));
+  }
+  else if (PRIVID == id) {
+    PRIV_2_4 *priv = new PRIV_2_4(p0, p1, tap, fap, read_only, encmth,
+                                  group_id, compressed, unsynchronisation,
+                                  dli);
+    frames_.push_back(unique_ptr<id3v2_4_frame>(priv));
   }
   else {
     // check to see if we have a text frame parser registered for `id'...

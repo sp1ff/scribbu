@@ -243,6 +243,7 @@ namespace scribbu {
   class PCNT;
   class POPM;
   class XTAG;
+  class PRIV;
   class id3v2_4_frame;
   class unknown_id3v2_4_frame;
   class id3v2_4_text_frame;
@@ -253,6 +254,7 @@ namespace scribbu {
   class PCNT_2_4;
   class POPM_2_4;
   class XTAG_2_4;
+  class PRIV_2_4;
 
   /// The interface to which pretty-printers shall conform
   struct pprinter
@@ -302,6 +304,8 @@ namespace scribbu {
     virtual std::ostream&
     pprint_XTAG(const XTAG&, std::ostream&) = 0;
     virtual std::ostream&
+    pprint_PRIV(const PRIV&, std::ostream&) = 0;
+    virtual std::ostream&
     pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame&, std::ostream&) = 0;
     virtual std::ostream&
     pprint_id3v2_4_text_frame(const id3v2_4_text_frame&, std::ostream&) = 0;
@@ -319,6 +323,8 @@ namespace scribbu {
     pprint_POPM_2_4(const POPM_2_4&, std::ostream&) = 0;
     virtual std::ostream&
     pprint_XTAG_2_4(const XTAG_2_4&, std::ostream&) = 0;
+    virtual std::ostream&
+    pprint_PRIV_2_4(const PRIV_2_4&, std::ostream&) = 0;
 
     virtual ~pprinter()
     { }
@@ -538,6 +544,8 @@ namespace scribbu {
     virtual std::ostream&
     pprint_XTAG(const XTAG&, std::ostream&);
     virtual std::ostream&
+    pprint_PRIV(const PRIV&, std::ostream&);
+    virtual std::ostream&
     pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame&, std::ostream&);
     virtual std::ostream&
     pprint_id3v2_4_text_frame(const id3v2_4_text_frame&, std::ostream&);
@@ -555,6 +563,8 @@ namespace scribbu {
     pprint_POPM_2_4(const POPM_2_4&, std::ostream&);
     virtual std::ostream&
     pprint_XTAG_2_4(const XTAG_2_4&, std::ostream&);
+    virtual std::ostream&
+    pprint_PRIV_2_4(const PRIV_2_4&, std::ostream&);
 
     virtual pprinter* clone() {
       return new standard_pprinter(*this);

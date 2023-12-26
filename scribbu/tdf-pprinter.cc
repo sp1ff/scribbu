@@ -514,6 +514,20 @@ scribbu::tdf_pprinter::pprint_XTAG(const XTAG &f, std::ostream &os)
 }
 
 /*virtual*/ std::ostream&
+scribbu::tdf_pprinter::pprint_PRIV(const PRIV &f, std::ostream &os)
+{
+  using namespace std;
+
+  // encoding dst;
+  // on_no_encoding rsp;
+  // std::tie(dst, rsp) = encoding_from_stream(os);
+
+  os << f.email<string>();
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
 scribbu::tdf_pprinter::pprint_unk_id3v2_4_frame(const unknown_id3v2_4_frame &f,
                                                 std::ostream &os)
 {
@@ -661,6 +675,20 @@ scribbu::tdf_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &f, std::ostream &os)
                                  dst, rsp) << sep_ <<
     convert_encoding<string>(tags.c_str(), tags.length(), encoding::UTF_8,
                              dst, rsp);
+
+  return os;
+}
+
+/*virtual*/ std::ostream&
+scribbu::tdf_pprinter::pprint_PRIV_2_4(const PRIV_2_4 &f, std::ostream &os)
+{
+  using namespace std;
+
+  // encoding dst;
+  // on_no_encoding rsp;
+  // std::tie(dst, rsp) = encoding_from_stream(os);
+
+  os << f.email<string>();
 
   return os;
 }

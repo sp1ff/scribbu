@@ -58,6 +58,8 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
+
+*** `scribbu dump` now prints PRIV frames
 *** `scribbu text` now operates on existing ID3v1 tags, when possible
 *** the `create-frame` short flag for `popm` changed from -A to -f.
 *** `encodings' sub-command added

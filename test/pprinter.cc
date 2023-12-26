@@ -131,7 +131,8 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_3 )
                       "TCOP: 2004 Warner Music UK Ltd.\n"
                       "TPOS: 1\n"
                       "frame APIC (115554 bytes)\n"
-                      "frame PRIV (1122 bytes)\n"
+                      "PRIV (www.amazon.com): 1107 bytes beginning with:\n"
+                      "3c 3f 78 6d 6c 20 76 65 72 73 69 6f 6e 3d 22 31  ><?xml version=\"1<\n"
                       "335921 bytes of padding\n"
                       "");
 
