@@ -188,7 +188,7 @@ namespace {
       scm_error(sym_for_utf8("unexpected-type"), "scm_to_id3v2_tag",
                 "expected exact integer for ID3v2 version, got ~A", scm,
                 SCM_BOOL_F);
-      
+
     }
 
     int version = scm_to_int(scm_ver);
@@ -542,7 +542,7 @@ extern "C" {
    * \param scm_tag [in] the ID3v1 tag to be written
    *
    * \param scm_pth [in] the text (as a Scheme string) giving a path (relative
-   * or absolute) to the file of interest)
+   * or absolute) to the file of interest
    *
    *
    */
@@ -767,7 +767,7 @@ extern "C" {
 
   /// Define our types & functions at the top level of the current module
   void
-  init_scribbu() 
+  init_scribbu()
   {
 
     scribbu::init_symbols();
@@ -893,4 +893,3 @@ extern "C" {
   }
 
 } // End extern "C".
-

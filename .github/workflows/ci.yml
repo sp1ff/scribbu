@@ -137,7 +137,7 @@ jobs:
     - name: Get boost (Ubuntu, oldest)
       if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'oldest' && steps.cache-boost-ubuntu.outputs.cache-hit != 'true'
       run: |
-        set -x
+        set -ex
         pwd
         curl -L -o boost_${{ matrix.boost-ver }}.tar.bz2 ${{ matrix.boost-dl }}
         md5sum boost_${{ matrix.boost-ver }}.tar.bz2
@@ -151,11 +151,12 @@ jobs:
     - name: Get boost (MacOS)
       if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true'
       run: |
-        set -x
+        set -ex
         pwd
         curl -L -o boost_${{ matrix.boost-ver }}.tar.bz2 ${{ matrix.boost-dl }}
         ls -l boost_${{ matrix.boost-ver }}.tar.bz2
         md5 boost_${{ matrix.boost-ver }}.tar.bz2
+        # Apple clang version 14.0.0 (clang-1400.0.29.202)
         cc --version
         tar xf boost_${{ matrix.boost-ver }}.tar.bz2
         mkdir boost_${{ matrix.boost-ver }}/installdir
@@ -206,7 +207,8 @@ jobs:
         pwd
         ls
         export CFLAGS="-Wno-error=implicit-function-declaration"
-        ./bootstrap.sh --prefix=./installdir || { cat bootstrap.log; exit 1; }
+        # python failed for boost 1.63; I don't use it, so didn't bother debugging
+        ./bootstrap.sh --prefix=./installdir --without-libraries=python || { cat bootstrap.log; exit 1; }
         ./b2
         ./b2 install
 
