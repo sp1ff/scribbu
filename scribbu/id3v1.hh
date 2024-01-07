@@ -467,11 +467,11 @@ namespace scribbu {
     void set_start_time(const char *text)
     {
       size_t i = 0, ntext = strlen(text);
-      while (i < ntext && i < 7) {
+      while (i < ntext && i < 6) {
         start_time_[i] = (char)text[i];
         ++i;
       }
-      while (i < 7) {
+      while (i < 6) {
         start_time_[i++] = 0;
       }
       extended_ = true;
@@ -497,11 +497,11 @@ namespace scribbu {
     void set_end_time(const char *text)
     {
       size_t i = 0, ntext = strlen(text);
-      while (i < ntext && i < 7) {
+      while (i < ntext && i < 6) {
         end_time_[i] = (char)text[i];
         ++i;
       }
-      while (i < 7) {
+      while (i < 6) {
         end_time_[i++] = 0;
       }
       extended_ = true;

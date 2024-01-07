@@ -153,8 +153,7 @@ namespace scribbu
       { }
     };
 
-    class process_and_concatenate:
-      public std::binary_function<std::string, std::shared_ptr<scribbu::tbt_support::term>, std::string>
+    class process_and_concatenate
     {
     public:
       process_and_concatenate(const scribbu::file_info  &fi,

@@ -69,7 +69,7 @@ namespace {
   }
 
   /// Dump ID3v2 tags, track data, and/or the ID3v1 tag to stdout
-  class dumper: public std::unary_function<void, fs::path>
+  class dumper
   {
   public:
     /// The format in which we shall dump information to stdout

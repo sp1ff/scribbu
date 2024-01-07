@@ -333,7 +333,7 @@ tdf_reporter::make_entry(const scribbu::file_info                  &fi,
 
 /// A thing that knows how to report on a directory tree full of
 /// ID3v2-tagged files
-class reporting_strategy: public std::unary_function<void, fs::path> {
+class reporting_strategy {
 
 public:
   /// return the # of files successfully processed & the # of failures; "failure"
