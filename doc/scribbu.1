@@ -10,7 +10,7 @@ scribbu \- The extensible tool for tagging your music collection
 [-h|--help] [-v|--version] [--info]
 .RS 8
 .br
-([(-e|--expression) expr] |
+([-c expr] |
 .br
 [(-f|--file) file] |
 .br
@@ -32,7 +32,7 @@ can be invoked in a few ways:
 
 .IP "  1."
 with a Scheme expression
-.RI ( -e ", " --expression )
+.RI -c
 or Scheme file
 .RI ( -f ", " --file "). "
 In this case,
@@ -169,7 +169,7 @@ library, which is exactly what Guile provides.
 .B scribbu
 embeds a Scheme interpreter, which users can invoke with
 the
-.IR -e " or " -f
+.IR -c " or " -f
 flags, passing a Scheme expression or a Scheme file,
 respectively. Simply typing
 .B scribbu

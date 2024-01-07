@@ -885,7 +885,6 @@ extern "C" {
   {
     const init_guile *pig = reinterpret_cast<const init_guile*>(praw);
 
-    // scm_c_define_module("scribbu-int", init_scribbu_shim, nullptr);
     customize_welcome();
     customize_load_path(pig->datadir_);
 
