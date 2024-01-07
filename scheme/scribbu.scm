@@ -139,6 +139,12 @@ at `root'"
   (start-time #:init-value ""  #:accessor start-time #:init-keyword #:start-time)
   (end-time   #:init-value ""  #:accessor end-time   #:init-keyword #:end-time))
 
+(define-method (display (x <id3v1-tag>) out)
+  "Pretty-print <id3v1-tag> instances"
+  (display "<id3v1-tag " out)
+  (display (format #f "~a - ~a" (slot-ref x 'artist) (slot-ref x 'title)) out)
+  (display ">" out))
+
 (make-symbol "unknown-frame")
 
 (make-symbol "album-frame")                 ;; TAL/TALB
@@ -226,6 +232,18 @@ at `root'"
   (frames       #:init-value '() #:accessor frames  #:init-keyword #:frames)
   (padding      #:init-value   0 #:accessor padding #:init-keyword #:padding))
 
+(define-method (display (x <id3v2-tag>) out)
+  "Pretty-print <id3v2-tag> instances"
+  (let* ((artists (get-frames x 'artist-frame))
+         (artist
+          (if (= 0 (length artists)) "" (slot-ref (car  artists) 'text)))
+         (titles (get-frames x 'title-frame))
+         (title (if (= 0 (length titles)) "" (slot-ref (car titles) 'text))))
+    (display "<id3v2-tag " out)
+    (display (format #f "~a - ~a" artist title) out)
+    (display (format #f " (~d bytes padding)" (slot-ref x 'padding)) out)
+    (display ">" out)))
+
 (define (has-frame-internal frms f)
   (cond ((null? frms) #f)
         ((let ((x (car frms))) (eq? f (slot-ref x 'id))) #t)
@@ -244,5 +262,4 @@ at `root'"
                (set! ret (append ret (list (car frms)))))
            (set! frms (cdr frms)))
     ret))
-
 

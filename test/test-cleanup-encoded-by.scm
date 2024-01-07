@@ -35,8 +35,8 @@ This function is for testing & debugging purposes. It will simply print the trac
 path, the ID3v1 comment (if any) and the ID3v2 TENC frame (if any)."
   (format #t "~s: " pth)
   (if (null? v1)
-	    (display "<no ID3v1 match>")
-	    (format #t "ID3v1 comment: ~s" (slot-ref v1 'comment)))
+	    (display "<no ID3v1 match> ")
+	    (format #t "ID3v1 comment: ~s " (slot-ref v1 'comment)))
   (while (not (null? tags))
          (let ((tag (caar tags)))
            (format #t "tag ~a" tag)
