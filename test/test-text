@@ -108,6 +108,27 @@ function test_create
     clean_testdir $here $text_testdir test_create
 }
 
+# Test that a frame is deleted when the `-d` argument is supplied
+function test_delete
+{
+    local out
+    local err
+    local stat
+
+    here=`pwd`
+    set_testdir ${srcdir} ${text_testdir} test_delete cerulean.mp3
+
+    run_text out err stat -d TPE3 cerulean.mp3
+    [ $stat -eq 0 ] || fail "test_delete: non-zero status on set artist"
+    [ -z "$err" ] || fail "test_delete: non-nil stderr on set artist ($err)"
+    
+    conductor=$(${text_scribbu_dir}/scribbu dump cerulean.mp3|grep -F TPE3)
+    stat=$?
+    [ $stat -ne 0 ] || fail "test_delete: TPE3 appears to still be present"
+
+    clean_testdir $here $text_testdir test_delete
+}
+
 ###########################################################################
 # main
 ###########################################################################
@@ -185,3 +206,5 @@ text_scribbu_dir=`cd "$text_scribbu_dir"; pwd`
 text_testdir=`cd "$text_testdir"; pwd`
 smoke_tests
 test_create
+test_delete
+

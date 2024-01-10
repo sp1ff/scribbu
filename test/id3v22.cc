@@ -377,11 +377,15 @@ BOOST_AUTO_TEST_CASE( test_id3v22_text_frames )
 
   id3v2_2_tag tag(ifs);
 
+  ostringstream stm;
+  BOOST_TEST_MESSAGE("Test ID3v2.2 tag has " << tag.num_frames() << " frames");
+
   BOOST_CHECK("Murley Braid Quartet" == tag.text(id3v2_text_frames::tpe1));
   tag.text(id3v2_text_frames::tpe1, "foo");
   BOOST_CHECK("foo" == tag.text(id3v2_text_frames::tpe1));
-  tag.delete_frame(id3v2_text_frames::tpe1);
   BOOST_CHECK( 9 == tag.num_frames() );
+  tag.delete_frame(id3v2_text_frames::tpe1);
+  BOOST_CHECK( 8 == tag.num_frames() );
 
   BOOST_CHECK( !tag.has_artist() );
 

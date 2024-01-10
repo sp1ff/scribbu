@@ -380,6 +380,7 @@ scribbu::id3v2_2_tag::delete_frame(id3v2_text_frames id)
   if (p != frame_map_.end()) {
     std::ptrdiff_t idx = p->second;
     remove_frame_from_lookups(id3, idx);
+    frames_.erase(frames_.begin() + idx);
   }
 }
 

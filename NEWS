@@ -4,6 +4,8 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+
+*** `scribbu text -d` doesn't actually delete the given frames
 *** Scheme function & types defined in C are now in module (scribbu)
 *** fixed several bugs in `write_id3v1_tag`
 
