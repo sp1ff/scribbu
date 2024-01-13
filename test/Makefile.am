@@ -44,7 +44,7 @@ unit_SOURCES = unit.cc unit.hh charsets.cc ostream.cc id3v1.cc framesv2.cc \
 	scribbu.cc id3v2-edit.cc tagset.cc winamp-genres.cc
 
 AM_CPPFLAGS = -DBOOST_TEST_DYN_LINK -I$(srcdir)/.. $(BOOST_CPPFLAGS)
-AM_CXXFLAGS = -std=c++17
+AM_CXXFLAGS = -std=c++20
 AM_LDFLAGS  = $(BOOST_LDFLAGS)
 unit_LDADD = ../scribbu/libscribbu.la    \
 	$(GUILE_LIBS)                    \

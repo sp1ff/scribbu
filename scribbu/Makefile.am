@@ -54,7 +54,7 @@ pkginclude_HEADERS = scribbu.hh		\
 
 AM_YFLAGS = -d
 AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(GUILE_CFLAGS)
-AM_CXXFLAGS = -std=c++17 -Wno-register $(GUILE_CFLAGS)
+AM_CXXFLAGS = -std=c++20 -Wno-register $(GUILE_CFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBUNISTRING)
 
 libscribbu_la_LIBADD = $(GUILE_LIBS)	 \
