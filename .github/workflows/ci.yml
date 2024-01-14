@@ -209,7 +209,7 @@ jobs:
         ./b2 install
 
     - name: Patch boost library dependencies (MacOS, non-oldest)
-      if: matrix.os == 'macos-12' && matrix.boost != 'oldest' # && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      if: matrix.os == 'macos-12' # && matrix.boost != 'oldest' # && steps.cache-boost-macos.outputs.cache-hit != 'true'
       run: |
         cd boost_${{ matrix.boost-ver }}/installdir/lib
         pwd
@@ -235,38 +235,38 @@ jobs:
         otool -L libboost_thread.dylib
         echo ================================================
 
-    - name: Patch boost library dependencies (MacOS, oldest)
-      if: matrix.os == 'macos-12' && matrix.boost == 'oldest' # && steps.cache-boost-macos.outputs.cache-hit != 'true'
-      run: |
-        cd boost_${{ matrix.boost-ver }}/installdir/lib
-        pwd
-        ls
-        echo ================================================
-        otool -L libboost_log.dylib
-        otool -L libboost_chrono.dylib
-        otool -L libboost_thread.dylib
-        otool -L libboost_unit_test_framework.dylib
-        otool -L libboost_timer.dylib
-        echo ================================================
-        here=$(pwd)
-        install_name_tool -change libboost_atomic.dylib     ${here}/libboost_atomic.dylib     libboost_log.dylib
-        install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_log.dylib
-        install_name_tool -change libboost_filesystem.dylib ${here}/libboost_filesystem.dylib libboost_log.dylib
-        install_name_tool -change libboost_thread.dylib     ${here}/libboost_thread.dylib     libboost_log.dylib
-        install_name_tool -change libboost_date_time.dylib  ${here}/libboost_date_time.dylib  libboost_log.dylib
-        install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_log.dylib
-        install_name_tool -change libboost_regex.dylib      ${here}/libboost_regex.dylib      libboost_log.dylib
-        install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_chrono.dylib
-        install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
-        install_name_tool -change libboost_timer.dylib      ${here}/libboost_timer.dylib      libboost_unit_test_framework.dylib
-        install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_timer.dylib
-        echo ================================================
-        otool -L libboost_log.dylib
-        otool -L libboost_chrono.dylib
-        otool -L libboost_thread.dylib
-        otool -L libboost_unit_test_framework.dylib
-        otool -L libboost_timer.dylib
-        echo ================================================
+    # - name: Patch boost library dependencies (MacOS, oldest)
+    #   if: matrix.os == 'macos-12' && matrix.boost == 'oldest' # && steps.cache-boost-macos.outputs.cache-hit != 'true'
+    #   run: |
+    #     cd boost_${{ matrix.boost-ver }}/installdir/lib
+    #     pwd
+    #     ls
+    #     echo ================================================
+    #     otool -L libboost_log.dylib
+    #     otool -L libboost_chrono.dylib
+    #     otool -L libboost_thread.dylib
+    #     otool -L libboost_unit_test_framework.dylib
+    #     otool -L libboost_timer.dylib
+    #     echo ================================================
+    #     here=$(pwd)
+    #     install_name_tool -change libboost_atomic.dylib     ${here}/libboost_atomic.dylib     libboost_log.dylib
+    #     install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_log.dylib
+    #     install_name_tool -change libboost_filesystem.dylib ${here}/libboost_filesystem.dylib libboost_log.dylib
+    #     install_name_tool -change libboost_thread.dylib     ${here}/libboost_thread.dylib     libboost_log.dylib
+    #     install_name_tool -change libboost_date_time.dylib  ${here}/libboost_date_time.dylib  libboost_log.dylib
+    #     install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_log.dylib
+    #     install_name_tool -change libboost_regex.dylib      ${here}/libboost_regex.dylib      libboost_log.dylib
+    #     install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_chrono.dylib
+    #     install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
+    #     install_name_tool -change libboost_timer.dylib      ${here}/libboost_timer.dylib      libboost_unit_test_framework.dylib
+    #     install_name_tool -change libboost_chrono.dylib     ${here}/libboost_chrono.dylib     libboost_timer.dylib
+    #     echo ================================================
+    #     otool -L libboost_log.dylib
+    #     otool -L libboost_chrono.dylib
+    #     otool -L libboost_thread.dylib
+    #     otool -L libboost_unit_test_framework.dylib
+    #     otool -L libboost_timer.dylib
+    #     echo ================================================
 
     - name: Configure scribbu (Ubuntu, non-latest)
       if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest'
