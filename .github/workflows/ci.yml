@@ -157,41 +157,41 @@ jobs:
         tar xf boost_${{ matrix.boost-ver }}.tar.bz2
         mkdir boost_${{ matrix.boost-ver }}/installdir
 
-    - name: Patch boost source (MacOS)
-      if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
-      run: |
-        cd boost_${{ matrix.boost-ver }}/tools/build/src/engine
-        cp build.sh build.sh.bak
-        awk '/darwin\)/{print; print "    BOOST_JAM_OPT_JAM=\"$BOOST_JAM_OPT_JAM $CFLAGS $LIBS\""; next }1' build.sh > build.sh.tmp
-        mv build.sh.tmp build.sh
-        chmod a+x build.sh
-        # cat build.sh
-        # cp execcmd.c execcmd.c.bak
-        # awk '/#include "execcmd.h"/{print; print "#include \"output.h\""; next }1' execcmd.c > execcmd.c.tmp
-        # mv execcmd.c.tmp execcmd.c
-        # cat execcmd.c
-        cp make.c make.c.bak
-        awk '/#include "make.h"/{print; print "#include \"output.h\""; next }1' make.c > make.c.tmp
-        mv make.c.tmp make.c
-        # cat make.c
-        cp filesys.c filesys.c.bak
-        awk '/#include "filesys.h"/{print; print "int filelist_empty( FILELIST * list );"; next }1' filesys.c > filesys.c.tmp
-        mv filesys.c.tmp filesys.c
-        # cat filesys.c
-        cp modules/path.c modules/path.c.bak
-        awk '/#include "..\/timestamp.h"/{print; print "#include \"../filesys.h\""; next }1' modules/path.c > modules/path.c.tmp
-        mv modules/path.c.tmp modules/path.c
-        # cat modules/path.c
-        cp fileunix.c fileunix.c.bak
-        awk '/#include "jam.h"/{print; print "int filelist_empty( FILELIST * list );"; next }1' fileunix.c > fileunix.c.tmp
-        awk '/#include "jam.h"/{print; print "#include \"filesys.h\""; next }1' fileunix.c.tmp > fileunix.c.tmp.1
-        awk '/#include "filesys.h"/{print; print "int file_collect_archive_content_( file_archive_info_t * const archive );"; next }1' fileunix.c.tmp.1 > fileunix.c
-        # cat fileunix.c
-        cd ../tools
-        cp darwin.jam darwin.jam.bak
-        head -n138 darwin.jam > darwin.jam.tmp
-        tail -n +145 darwin.jam >> darwin.jam.tmp
-        mv darwin.jam.tmp darwin.jam
+    # - name: Patch boost source (MacOS)
+    #   if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true' && matrix.boost == 'oldest'
+    #   run: |
+    #     cd boost_${{ matrix.boost-ver }}/tools/build/src/engine
+    #     cp build.sh build.sh.bak
+    #     awk '/darwin\)/{print; print "    BOOST_JAM_OPT_JAM=\"$BOOST_JAM_OPT_JAM $CFLAGS $LIBS\""; next }1' build.sh > build.sh.tmp
+    #     mv build.sh.tmp build.sh
+    #     chmod a+x build.sh
+    #     # cat build.sh
+    #     # cp execcmd.c execcmd.c.bak
+    #     # awk '/#include "execcmd.h"/{print; print "#include \"output.h\""; next }1' execcmd.c > execcmd.c.tmp
+    #     # mv execcmd.c.tmp execcmd.c
+    #     # cat execcmd.c
+    #     cp make.c make.c.bak
+    #     awk '/#include "make.h"/{print; print "#include \"output.h\""; next }1' make.c > make.c.tmp
+    #     mv make.c.tmp make.c
+    #     # cat make.c
+    #     cp filesys.c filesys.c.bak
+    #     awk '/#include "filesys.h"/{print; print "int filelist_empty( FILELIST * list );"; next }1' filesys.c > filesys.c.tmp
+    #     mv filesys.c.tmp filesys.c
+    #     # cat filesys.c
+    #     cp modules/path.c modules/path.c.bak
+    #     awk '/#include "..\/timestamp.h"/{print; print "#include \"../filesys.h\""; next }1' modules/path.c > modules/path.c.tmp
+    #     mv modules/path.c.tmp modules/path.c
+    #     # cat modules/path.c
+    #     cp fileunix.c fileunix.c.bak
+    #     awk '/#include "jam.h"/{print; print "int filelist_empty( FILELIST * list );"; next }1' fileunix.c > fileunix.c.tmp
+    #     awk '/#include "jam.h"/{print; print "#include \"filesys.h\""; next }1' fileunix.c.tmp > fileunix.c.tmp.1
+    #     awk '/#include "filesys.h"/{print; print "int file_collect_archive_content_( file_archive_info_t * const archive );"; next }1' fileunix.c.tmp.1 > fileunix.c
+    #     # cat fileunix.c
+    #     cd ../tools
+    #     cp darwin.jam darwin.jam.bak
+    #     head -n138 darwin.jam > darwin.jam.tmp
+    #     tail -n +145 darwin.jam >> darwin.jam.tmp
+    #     mv darwin.jam.tmp darwin.jam
 
     - name: Build boost (MacOS)
       if: matrix.os == 'macos-12' && steps.cache-boost-macos.outputs.cache-hit != 'true'
