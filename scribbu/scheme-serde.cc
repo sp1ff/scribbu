@@ -156,7 +156,7 @@ SCM sym_year_frame;                 // 'year-frame, TYE/TYER
 SCM sym_comment_frame;              // 'comment-frame, COM/COMM
 SCM sym_udt_frame;                  // 'udt-frame, TXX/TXXX
 SCM sym_play_count_frame;           // 'play-count-frame, CNT/PCNT
-SCM sym_pop_frame;                  // 'pop-frame, POP/POPM
+SCM sym_popm_frame;                 // 'popm-frame, POP/POPM
 SCM sym_tag_cloud_frame;            // 'tag-cloud-frame, XTG/XTAG
 
 SCM scribbu::sym_as_needed;
@@ -227,7 +227,7 @@ void scribbu::init_symbols() {
   DEFSYMX(comment_frame,               comment-frame,               IDCOM, IDCOMM);
   DEFSYMX(udt_frame,                   udt-frame,                   IDTXX, IDTXXX);
   DEFSYMX(play_count_frame,            play-count-frame,            IDCNT, IDPCNT);
-  DEFSYMX(pop_frame,                   pop-frame,                   IDPOP, IDPOPM);
+  DEFSYMX(popm_frame,                  popm-frame,                  IDPOP, IDPOPM);
   DEFSYMX(tag_cloud_frame,             tag-cloud-frame,             IDXTG, IDXTAG);
 
 # undef DEFSYM4
@@ -587,7 +587,7 @@ namespace {
   {
     using namespace std;
 
-    SCM x = init_frame("<pop-frame>", sym_pop_frame);
+    SCM x = init_frame("<popm-frame>", sym_popm_frame);
 
     string own = f.email<string>();
     SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
@@ -606,7 +606,7 @@ namespace {
   {
     using namespace std;
 
-    SCM x = init_frame("<pop-frame>", sym_pop_frame,
+    SCM x = init_frame("<popm-frame>", sym_popm_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly());
 
@@ -627,7 +627,7 @@ namespace {
   {
     using namespace std;
 
-    SCM x = init_frame("<pop-frame>", sym_pop_frame,
+    SCM x = init_frame("<popm-frame>", sym_popm_frame,
                        f.tag_alter_preserve(), f.file_alter_preserve(),
                        f.readonly(), f.unsynchronised());
 
@@ -1107,7 +1107,7 @@ namespace {
     using namespace scribbu;
 
     dynwind_context ctx;
-    ser_frame_2_2("<pop-frame>", scm, ctx);
+    ser_frame_2_2("<popm-frame>", scm, ctx);
 
     string email = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     unsigned char rating = scm_to_uchar(SCM_SLOT(scm, 6));
@@ -1135,7 +1135,7 @@ namespace {
     file_alter_preservation fap;
     read_only ro;
 
-    tie(id_txt, tap, fap, ro) = ser_frame_2_3("<pop-frame>", scm, ctx);
+    tie(id_txt, tap, fap, ro) = ser_frame_2_3("<popm-frame>", scm, ctx);
 
     string email = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     unsigned char rating = scm_to_uchar(SCM_SLOT(scm, 6));
@@ -1166,7 +1166,7 @@ namespace {
     read_only ro;
     bool unsync;
 
-    tie(id_txt, tap, fap, ro, unsync) = ser_frame_2_4("<pop-frame>", scm, ctx);
+    tie(id_txt, tap, fap, ro, unsync) = ser_frame_2_4("<popm-frame>", scm, ctx);
 
     string email = ctx.free_utf8_string(SCM_SLOT(scm, 5));
     unsigned char rating = scm_to_uchar(SCM_SLOT(scm, 6));
@@ -1519,7 +1519,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_2, ser_comment_2_2,    comment-frame               );
   REG_SER(2_2, ser_udt_2_2,        udt-frame                   );
   REG_SER(2_2, ser_cnt_2_2,        play-count-frame            );
-  REG_SER(2_2, ser_pop_2_2,        pop-frame                   );
+  REG_SER(2_2, ser_pop_2_2,        popm-frame                  );
   REG_SER(2_2, ser_xtag_2_2,       tag-cloud-frame             );
 
   REG_SER(2_3, ser_text_frame_2_3, album-frame                 );
@@ -1563,7 +1563,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_3, ser_comment_2_3,    comment-frame               );
   REG_SER(2_3, ser_udt_2_3,        udt-frame                   );
   REG_SER(2_3, ser_cnt_2_3,        play-count-frame            );
-  REG_SER(2_3, ser_pop_2_3,        pop-frame                   );
+  REG_SER(2_3, ser_pop_2_3,        popm-frame                  );
   REG_SER(2_3, ser_xtag_2_3,       tag-cloud-frame             );
 
   REG_SER(2_4, ser_text_frame_2_4, album-frame                 );
@@ -1607,7 +1607,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_4, ser_comment_2_4,    comment-frame               );
   REG_SER(2_4, ser_udt_2_4,        udt-frame                   );
   REG_SER(2_4, ser_cnt_2_4,        play-count-frame            );
-  REG_SER(2_4, ser_pop_2_4,        pop-frame                   );
+  REG_SER(2_4, ser_pop_2_4,        popm-frame                  );
   REG_SER(2_4, ser_xtag_2_4,       tag-cloud-frame             );
 
 # undef REG_SER

@@ -23,6 +23,8 @@
 
 #include "scribbu/pprinter.hh"
 
+#include <optional>
+#include <string>
 #include <typeindex>
 #include <unordered_map>
 
@@ -71,6 +73,37 @@ pprint_binary(const std::string &indent,
   }
 
   os << "  >" << ascii_rep << "<";
+}
+
+std::string comment_lang(const scribbu::comments &frame) {
+
+  using namespace std;
+
+  char blang[4]{ 0, 0, 0, 0 };
+  frame.lang(blang);
+
+  stringstream stm(blang);
+  optional<scribbu::language> strict_lang;
+  try {
+    scribbu::language lang;
+    stm >> lang;
+    strict_lang = lang;
+  } catch (...) {
+    strict_lang = std::nullopt;
+  }
+
+  stringstream stm2;
+  if (strict_lang) {
+    stm2 << *strict_lang;
+  } else {
+    stm2 << hex << setfill('0') <<
+      "0x" << setw(2) << (unsigned)blang[0] << "," <<
+      "0x" << setw(2) << (unsigned)blang[1] << "," <<
+      "0x" << setw(2) << (unsigned)blang[2];
+  }
+
+  return stm2.str();
+
 }
 
 
@@ -579,6 +612,7 @@ scribbu::standard_pprinter::pprint_COM(const COM &frame, std::ostream &os)
   encoding dst = stream_enc.get_encoding();
   on_no_encoding rsp = stream_enc.get_on_no_encoding();
 
+  string lang = comment_lang(frame);
   string dsc = frame.description<string>(dst, rsp, v2enc_);
   string text = frame.text<string>(dst, rsp, v2enc_);
 
@@ -590,7 +624,7 @@ scribbu::standard_pprinter::pprint_COM(const COM &frame, std::ostream &os)
     text = "<no text>";
   }
 
-  return os << frame.id() << " (" << dsc << "):\n" << text << "\n";
+  return os << frame.id() << " (" << lang << ", " << dsc << "):\n" << text << "\n";
 }
 
 /*virtual*/ std::ostream&
@@ -726,18 +760,19 @@ scribbu::standard_pprinter::pprint_COMM(const COMM &frame, std::ostream &os)
   encoding dst = stream_enc.get_encoding();
   on_no_encoding rsp = stream_enc.get_on_no_encoding();
 
-  string dsc = frame.description<string>(dst, rsp, v2enc_);
-  string text = frame.text<string>(dst, rsp, v2enc_);
+  string lang = comment_lang(frame);
 
+  string dsc = frame.description<string>(dst, rsp, v2enc_);
   if (dsc.empty()) {
     dsc = "<no description>";
   }
 
+  string text = frame.text<string>(dst, rsp, v2enc_);
   if (text.empty()) {
     text = "<no text>";
   }
 
-  return os << frame.id() << " (" << dsc << "):\n" << text << "\n";
+  return os << frame.id() << " (" << lang << ", " << dsc << "):\n" << text << "\n";
 }
 
 /*virtual*/ std::ostream&
@@ -893,6 +928,7 @@ scribbu::standard_pprinter::pprint_COMM_2_4(const COMM_2_4 &frame, std::ostream 
   encoding dst = stream_enc.get_encoding();
   on_no_encoding rsp = stream_enc.get_on_no_encoding();
 
+  string lang = comment_lang(frame);
   string dsc = frame.description<string>(dst, rsp, v2enc_);
   string text = frame.text<string>(dst, rsp, v2enc_);
 
@@ -904,7 +940,7 @@ scribbu::standard_pprinter::pprint_COMM_2_4(const COMM_2_4 &frame, std::ostream 
     text = "<no text>";
   }
 
-  return os << frame.id() << " (" << dsc << "):\n" << text << "\n";
+  return os << frame.id() << " (" << lang << ", " << dsc << "):\n" << text << "\n";
 }
 
 /*virtual*/ std::ostream&

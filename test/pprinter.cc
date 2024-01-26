@@ -85,9 +85,9 @@ TAL: Mnemosyne's March (Demo)
 TYE: 2006
 TCO: (8)
 TEN: iTunes v6.0.4
-COM (iTunNORM):
+COM (eng, iTunNORM):
  000006E1 000000D3 00004F8D 00001990 00006729 00001E1A 000064D1 00007E10 00005582 0000DF78
-COM (iTunSMPB):
+COM (eng, iTunSMPB):
  00000000 00000210 000007A2 00000000004A6C4E 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
 1802 bytes of padding
 )");
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( test_pprinting_id3v2_3 )
                       "TRCK: 5\n"
                       "TYER: 1990\n"
                       "TPE2: The Pogues\n"
-                      "COMM (<no description>):\n"
+                      "COMM (eng, <no description>):\n"
                       "Amazon.com Song ID: 203558254\n"
                       "TCOP: 2004 Warner Music UK Ltd.\n"
                       "TPOS: 1\n"

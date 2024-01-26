@@ -30,7 +30,7 @@
   #:export (flat-file-system-tree fs-tree-generator
             <id3v1-tag> <id3v2-frame> <unk-frame> <text-frame>
             <comment-frame> <user-defined-text-frame> <play-count-frame>
-            <pop-frame> <tag-cloud-frame> <id3v2-tag>
+            <popm-frame> <tag-cloud-frame> <id3v2-tag>
             unknown-frame album-frame artist-frame
             has-frame? get-frames))
 
@@ -176,7 +176,7 @@ at `root'"
 (make-symbol "part-of-a-set-frame")         ;; TPA/TPOS
 (make-symbol "play-count-frame")            ;; CNT/PCNT
 (make-symbol "playlist-delay-frame")        ;; TDY/TDLY
-(make-symbol "pop-frame")                   ;; POP/POPM
+(make-symbol "popm-frame")                  ;; POP/POPM
 (make-symbol "publisher-frame")             ;; TPB/TPUB
 (make-symbol "recording-dates-frame")       ;; TRD/TRDA
 (make-symbol "settings-frame")              ;; TSS/TSSE
@@ -217,7 +217,7 @@ at `root'"
 (define-class <play-count-frame> (<id3v2-frame>)
   (count #:init-value 0 #:accessor count #:init-keyword #:count))
 
-(define-class <pop-frame> (<id3v2-frame>)
+(define-class <popm-frame> (<id3v2-frame>)
   (e-mail #:init-value "" #:accessor e-mail #:init-keyword #:e-mail)
   (rating #:init-value 0  #:accessor rating #:init-keyword #:rating)
   (count  #:init-value 0  #:accessor count  #:init-keyword #:count))

@@ -240,7 +240,7 @@
       (let* ((new-frames
               (append
                (list
-                (make <pop-frame> #:id 'pop-frame #:e-mail "sp1ff@pobox.com" #:rating 211 #:count 11))
+                (make <popm-frame> #:id 'popm-frame #:e-mail "sp1ff@pobox.com" #:rating 211 #:count 11))
                (list-head (slot-ref tag 'frames) 2)))
              (new-tag (make <id3v2-tag> #:frames new-frames))
              (tmpfp (mkstemp! (string-copy "/tmp/test-popm-XXXXXX")))
@@ -267,7 +267,7 @@
             (let ((frames (slot-ref tag 'frames)))
               (let* ((F (car frames))
                      (frames (cdr frames)))
-                (unless (and (eq? 'pop-frame (slot-ref F 'id))
+                (unless (and (eq? 'popm-frame (slot-ref F 'id))
                              (eq? 11 (slot-ref F 'count))
                              (equal? "sp1ff@pobox.com" (slot-ref F 'e-mail))
                              (eq? 211 (slot-ref F 'rating)))

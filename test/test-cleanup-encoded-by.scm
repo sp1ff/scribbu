@@ -109,7 +109,7 @@ frames in the extant ID3v2 frames."
   (let ((data (string-join (list dir "data") "/" 'infix)))
     (display "Report:\n=======\n")
 	  (with-track-in data report-on-encoded-by)
-    (display "\n.Report done.\n")
+    (display "\nReport done.\n")
     (display "Cleanup:\n========\n")
 	  (with-track-in data cleanup-encoded-by)))
 

@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( test_track_data )
 "TRCK: 6/12\n"
 "TYER: 2005\n"
 "TPE2: The Ocean Blue\n"
-"COMM (<no description>):\n"
+"COMM (eng, <no description>):\n"
 "tags=90s,sub-genres=shoegazer\n"
 "TCOP: 2005 Warner Bros. Records Inc. Manufactured & Marketed by Warner Strategic Marketing.\n"
 "TPOS: 1/1\n"

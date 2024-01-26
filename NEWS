@@ -4,7 +4,7 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
-
+*** renamed pop-frame to popm-frame in scribbu.scm
 *** `scribbu text -d` doesn't actually delete the given frames
 *** Scheme function & types defined in C are now in module (scribbu)
 *** fixed several bugs in `write_id3v1_tag`
@@ -60,7 +60,10 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
+*** updated the default pretty-printer to list the language field
+*** updated the manual
 
+Especially the section on scripting.
 *** `scribbu dump` now prints PRIV frames
 *** `scribbu text` now operates on existing ID3v1 tags, when possible
 *** the `create-frame` short flag for `popm` changed from -A to -f.

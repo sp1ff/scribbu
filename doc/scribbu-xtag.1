@@ -1,0 +1,140 @@
+.\" Copyright (C) 2024 Michael Herstine <sp1ff@pobox.com>
+.\" You may distribute this file under the terms of the GNU Free
+.\" Documentation License.
+.TH scribbu-xtag 1 2024-01-16 "scribbu 0.6.23" "scribbu Manual"
+.SH NAME
+scribbu-xtag \- Manage an ID3v2 tag cloud frame
+.SH SYNOPSIS
+.BR "scribbu xtag " "[-h] [--help] [--info]"
+.RS 8
+.br
+[-u|--adjust-unsync]
+[-b|--create-backups]
+[-c|--create-v2] [-C|--always-create-v2]
+[-f|--create-frame]
+[-m|--merge]
+[-n|--dry-run] [-g|--get]
+[-o|--owner] owner
+[-t|--tag] index
+[-T|--xtags] tag-cloud
+<file-or-directory> <file-or-directory>...
+
+.SH DESCRIPTION
+
+Manage tag cloud frames.
+.br
+.nf
+
+scribbu xtag --owner=foo@bar.com --xtags="decade=90s&mood=uptempo" some.mp3
+
+.fi
+will set foo@bar.com's tag cloud frame (
+.B XTAG
+) to be "decade=90s" and "mood=uptemo"  in all tags in
+.B some.mp3.
+.nf
+
+scribbu xtag --tag=0 --owner=foo@bar.com --merge --xtags='sub-genre=jazz' *.mp3
+
+.fi
+will
+.B add
+the tag "sub-genre=jazz" to foo@bar.com's tag cloud in the first ID3v2 tag only in all
+.B .mp3
+files in the current directory.
+.nf
+
+.SH OPTIONS
+
+.PP
+\-h
+.RS 4
+Print a brief usage message on
+.I stdout
+& exit with status zero.
+.RE
+.PP
+\-\-help
+.RS 4
+Display more detailed help.
+.RE
+.PP
+\-\-info
+.RS 4
+Display this sub-command's node in the user's Info viewer.
+.RE
+.PP
+\-u,\-\-adjust-unsync
+.RS 4
+Update the unsynchronisation flag as needed on
+write (default is to never use it).
+.RE
+.PP
+\-b,\-\-create-backups
+.RS 4
+Create backup copies of all files before modifying them.
+.RE
+.PP
+\-c,\-\-create\-v2
+.RS 4
+Create an ID3v2 tag with a XTAG frame for any file that has an ID3v1
+tag but does not have an ID3v2 tag (fields from the ID3v1 tag will
+be copied over).
+.RE
+.PP
+\-C,\-\-always\-create\-v2
+.RS 4
+Always create an ID3v2 tag with the XTAG frame set appropriately for
+any file that does not possess one.
+.RE
+.PP
+\-f,\-\-create\-frame
+.RS 4
+Create a new XTAG frame if not present.
+.RE
+.PP
+\-m,\-\-merge
+.RS 4
+Merge the given tags, don't overwrite
+.RE
+.PP
+\-n,\-\-dry\-run
+.RS 4
+Don't do anything; just print what
+.B would
+be done.
+.RE
+.PP
+\-g,\-\-get
+.RS 4
+Print the existing tag cloud, if any; don't set or update
+.RE
+.PP
+\-o,\-\-owner OWNER
+.RS 4
+Operate only on XTAG frames with this owner, or specify
+the owner in case an XTAG frame is being created.
+.RE
+.PP
+\-t,\-\-tag INDEX
+.RS 4
+Zero-based index of the tag on which to operate; may
+be given more than once to select multiple tags.
+.RE
+.PP
+\-T,\-\-xtags TAG-CLOUD
+.RS 4
+Tags to be set or merged expressed in HTTP query parameter
+style using URL-encoding, e.g. foo&bar=has%20%2c&splat=a,b,c
+.RE
+.RE
+
+.SH AUTHOR
+
+.B scribbu
+is written & maintained by Michael Herstine <sp1ff@pobox.com>. It
+is maintained at https://github.com/sp1ff/scribbu.
+
+.SH "SEE ALSO"
+
+.BR  scribbu "(1), " scribbu-dump "(1), " scribbu-genre "(1), " scribbu-popm "(1), " scribbu-rename "(1), " scribbu-report "(1), " scribbu-split "(1), " scribbu-m3u "(1), " scribbu-encodings "(1), " scribbu-text "(1)"

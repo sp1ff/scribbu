@@ -16,6 +16,8 @@ scribbu m3u \- M3U playlists from one or more files
 .BR
 [-8|--use-utf-8]
 .BR
+[-e|--on-encoding-failure] ON-FAIL
+.BR
 [-v|--verbose]
 .BR
 <file-or-directory> <file-or-directory>...
@@ -136,6 +138,19 @@ When writing to file, this option indicates that the output shall be
 encoded as UTF-8 (rather than the system locale's text encoding, which
 is the default behavior).
 .RE
+.PP
+\-e,\-\-on-encoding-failure ON-FAIL
+.RS 4
+Specify behavior on character encoding failure.
+.I ON-FAIL
+may be one of
+.I fail
+(the default),
+.I
+transliterate
+, or
+.I ignore
+.PP
 
 .SH AUTHOR
 
