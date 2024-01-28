@@ -23,6 +23,7 @@
 
 #include "charsets.hh"
 
+#include <bit>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -771,7 +772,7 @@ namespace scribbu {
                                          srcenc, dstenc, rsp);
   }
 
-    /// Convert encodings from C strings to buffers of unsigned char
+  /// Convert encodings from C strings to buffers of unsigned char
   template <>
   std::vector<unsigned char>
   convert_encoding(char const* const& text,
@@ -800,6 +801,22 @@ namespace scribbu {
     const unsigned char *pbom = nullptr;
     if (add_bom) {
       switch (dstenc) {
+      case encoding::UCS_2:
+        cbbom = 2;
+        if constexpr (std::endian::native == std::endian::big) {
+          pbom = UTF16BE;
+        } else {
+          pbom = UTF16LE;
+        }
+        break;
+      case encoding::UCS_4:
+        cbbom = 4;
+        if constexpr (std::endian::native == std::endian::big) {
+          pbom = UTF32BE;
+        } else {
+          pbom = UTF32LE;
+        }
+        break;
       case encoding::UCS_2BE:
       case encoding::UTF_16BE:
         cbbom = 2;
@@ -840,7 +857,7 @@ namespace scribbu {
     // http://stackoverflow.com/questions/13297458/simple-utf8-utf16-string-conversion-with-iconv
     std::size_t cbout = cbbom + (ntext << 2);
     vector<unsigned char> out(cbout);
-    std::size_t outbytesleft = cbout;
+    std::size_t outbytesleft = cbout - cbbom;
     char *outbuf = reinterpret_cast<char*>(&(out[cbbom]));
     size_t status = iconv(dsc, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
     while (~0 == status && E2BIG == errno) {

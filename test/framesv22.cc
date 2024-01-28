@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( test_com )
   BOOST_CHECK( 0 == C.unicode() );
 
   unsigned char buf[3];
-  BOOST_CHECK( buf + 3 == C.lang(buf) );
+  std::tie(buf[0], buf[1], buf[2]) = C.lang();
   BOOST_CHECK( 'e' == buf[0] && 'n' == buf[1] && 'g' == buf[2] );
 
   BOOST_CHECK( buf + 3 == C.descriptionb(buf) );

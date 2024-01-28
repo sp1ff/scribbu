@@ -695,7 +695,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_3_files )
 
   BOOST_CHECK(1 == C.unicode());
 
-  C.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C.lang();
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
 
   vector<unsigned char> GOLD0 = vector<unsigned char>{0xff, 0xfe};
@@ -919,7 +919,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
 
   BOOST_CHECK(4 == C.size());
   BOOST_CHECK(0 == C[0].unicode());
-  C[0].lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C[0].lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   C[0].descriptionb(back_inserter(dsc));
   BOOST_CHECK(0 == dsc.size());
@@ -930,7 +930,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   txt.resize(0);
 
   BOOST_CHECK(0 == C[1].unicode());
-  C[1].lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C[1].lang();
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
   C[1].descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == GOLD1);
@@ -942,7 +942,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   txt.resize(0);
 
   BOOST_CHECK(0 == C[2].unicode());
-  C[2].lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C[2].lang();
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
   C[2].descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == GOLD2);
@@ -954,7 +954,7 @@ BOOST_AUTO_TEST_CASE( test_funny_files )
   txt.resize(0);
 
   BOOST_CHECK(0 == C[3].unicode());
-  C[3].lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C[3].lang();
   BOOST_CHECK(0 == lang[0] && 0 == lang[1] && 0 == lang[2]);
   C[3].descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == GOLD3);

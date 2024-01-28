@@ -305,7 +305,7 @@ scribbu::tdf_pprinter::pprint_COM(const COM &f, std::ostream &os)
   std::tie(dst, rsp) = encoding_from_stream(os);
 
   char lang[3];
-  f.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = f.lang();
 
   return os << lang[0] << lang[1] << lang[2] << sep_ <<
     f.description<string>(dst, rsp, v2enc_) << sep_ <<
@@ -454,7 +454,7 @@ scribbu::tdf_pprinter::pprint_COMM(const COMM &f, std::ostream &os)
   std::tie(dst, rsp) = encoding_from_stream(os);
 
   char lang[3];
-  f.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = f.lang();
 
   return os << lang[0] << lang[1] << lang[2] << sep_ <<
     f.description<string>(dst, rsp, v2enc_) << sep_ <<
@@ -620,7 +620,7 @@ scribbu::tdf_pprinter::pprint_COMM_2_4(const COMM_2_4 &f, std::ostream &os)
   std::tie(dst, rsp) = encoding_from_stream(os);
 
   char lang[3];
-  f.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = f.lang();
 
   return os << lang[0] << lang[1] << lang[2] << sep_ <<
     f.description<string>(dst, rsp, v2enc_) << sep_ <<

@@ -79,8 +79,8 @@ std::string comment_lang(const scribbu::comments &frame) {
 
   using namespace std;
 
-  char blang[4]{ 0, 0, 0, 0 };
-  frame.lang(blang);
+  char blang[4]{0, 0, 0, 0};
+  std::tie(blang[0], blang[1], blang[2]) = frame.lang();
 
   stringstream stm(blang);
   optional<scribbu::language> strict_lang;

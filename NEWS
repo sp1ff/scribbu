@@ -60,6 +60,7 @@ https://github.com/sp1ff/scribbu/issues/4
 
 ** New Features
 
+*** class `comments` is now mutable
 *** updated the default pretty-printer to list the language field
 *** updated the manual
 

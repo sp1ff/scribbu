@@ -244,6 +244,19 @@ namespace scribbu {
     mutable std::shared_ptr<std::string> pwhat_;
   };
 
+  /// Thrown on a bad "unicode" byte
+  class bad_unicode_value : public error
+  {
+  public:
+    bad_unicode_value(unsigned char b) : b_(b)
+    { }
+    virtual const char * what() const noexcept(true);
+    unsigned char bad_value() const
+    { return b_; }
+  private:
+    unsigned char b_;
+    mutable std::shared_ptr<std::string> pwhat_;
+  };
   /// ID3v2.2 identifier-- a simple UDT representing a three-character,
   /// ASCII-encoded frame ID for use in hashed collections
   class frame_id3
@@ -655,6 +668,13 @@ namespace scribbu {
    * structure, and is meant to be combined into version-specific id3v2_frame
    * sub-classes through multiple inheritence.
    *
+   * It is regrettable that this class is implemented in terms of its on-disk
+   * format (the comment text & descriptions, for instance, are represented as
+   * vectors of unsigned char in the frame's target encoding).  It would be
+   * preferrable to pick a general representation (UTF-8 strings, to continue
+   * to the example) and only worry about the on-disk frame representation at
+   * I/O time.
+   *
    *
    */
 
@@ -668,11 +688,41 @@ namespace scribbu {
     comments(id3v2_version ver,
              forward_input_iterator p0,
              forward_input_iterator p1):
+      ver_(ver),
       cbnil_(1)
     {
       if (p0 != p1) {
 
         unicode_ = *p0++;
+        if (id3v2_version::v2 == ver_ || id3v2_version::v3 == ver) {
+          switch (unicode_) {
+          case 0:
+            dst_enc_ = encoding::ISO_8859_1;
+            break;
+          case 1:
+            dst_enc_ = encoding::UCS_2;
+            break;
+          default:
+            throw bad_unicode_value(unicode_);
+          }
+        } else {
+          switch (unicode_) {
+          case 0:
+            dst_enc_ = encoding::ISO_8859_1;
+            break;
+          case 1:
+            dst_enc_ = encoding::UTF_16;
+            break;
+          case 2:
+            dst_enc_ = encoding::UTF_16BE;
+            break;
+          case 3:
+            dst_enc_ = encoding::UTF_8;
+            break;
+          default:
+            throw bad_unicode_value(unicode_);
+          }
+        }
 
         if (id3v2_version::v2 == ver || id3v2_version::v3 == ver) {
           cbnil_ = unicode_ ? 2 : 1;
@@ -715,12 +765,10 @@ namespace scribbu {
       return unicode_;
     }
 
-    template <typename forward_output_iterator>
-    forward_output_iterator lang(forward_output_iterator p) const {
-      *p++ = lang_[0];
-      *p++ = lang_[1];
-      *p++ = lang_[2];
-      return p;
+    typedef std::tuple<unsigned char, unsigned char, unsigned char> lang_type;
+
+    lang_type lang() const {
+      return std::make_tuple(lang_[0], lang_[1], lang_[2]);
     }
 
     template <typename forward_output_iterator>
@@ -733,6 +781,11 @@ namespace scribbu {
       return std::copy(text_.begin(), text_.end(), p);
     }
 
+    /// Set the description
+    void description(const std::string &text, encoding src);
+    /// Set the commente text
+    void text(const std::string &text, encoding src);
+
     /// Return the size, in bytes, of this structure, prior to
     /// desynchronisation, compression, and/or encryption exclusive of the
     /// header
@@ -742,9 +795,14 @@ namespace scribbu {
     std::size_t write(std::ostream &os) const;
 
   private:
+    /// Derive from our version & destination encoding whether we need to
+    /// ad a byte-order mark
+    bool add_bom() const;
     std::size_t count_syncs(bool false_only) const;
 
   private:
+    id3v2_version ver_;
+    encoding dst_enc_;
     unsigned char cbnil_;
     unsigned char unicode_;
     unsigned char lang_[3];

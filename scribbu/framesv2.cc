@@ -315,6 +315,22 @@ scribbu::unknown_text_frame::what() const noexcept(true)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+//                          class bad_unicode_value                          //
+///////////////////////////////////////////////////////////////////////////////
+
+/*virtual*/ const char *
+scribbu::bad_unicode_value::what() const noexcept(true)
+{
+  // lazily format
+  if ( ! pwhat_ ) {
+    std::stringstream stm;
+    stm << "Unknown value for the Unicode byte: " << b_;
+    pwhat_.reset(new std::string(stm.str()));
+  }
+  return pwhat_->c_str();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 //                              class frame_id3                              //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -920,13 +936,13 @@ scribbu::comments::comments(id3v2_version ver,
       cbnil_ = 1;
       break;
     case use_unicode::yes:
-      unicode_ = 4;
+      unicode_ = 3;
       dst = encoding::UTF_8;
       add_bom = false;
       cbnil_ = 1;
       break;
     case use_unicode::with_bom:
-      unicode_ = 4;
+      unicode_ = 3;
       dst = encoding::UTF_8;
       add_bom = true;
       cbnil_ = 1;
@@ -939,6 +955,18 @@ scribbu::comments::comments(id3v2_version ver,
     description_ = convert_encoding(dsc, src, dst, add_bom);
   }
 
+}
+
+void
+scribbu::comments::description(const std::string &text, encoding src)
+{
+  description_ = convert_encoding(text, src, dst_enc_, add_bom());
+}
+
+void
+scribbu::comments::text(const std::string &text, encoding src)
+{
+  text_ = convert_encoding(text, src, dst_enc_, add_bom());
 }
 
 std::size_t
@@ -1027,6 +1055,15 @@ scribbu::comments::count_syncs(bool false_only) const
   cb += detail::count_syncs(text_.begin(), text_.end(), false_only);
 
   return cb;
+}
+
+bool
+scribbu::comments::add_bom() const
+{
+  return (id3v2_version::v2 == ver_ && encoding::UCS_2  == dst_enc_) ||
+         (id3v2_version::v3 == ver_ && encoding::UCS_2  == dst_enc_) ||
+         (id3v2_version::v4 == ver_ && encoding::UTF_16 == dst_enc_);
+
 }
 
 
@@ -1521,6 +1558,3 @@ scribbu::tag_cloud::parse_to_map(const std::string &text,
   }
 
 }
-
-
-

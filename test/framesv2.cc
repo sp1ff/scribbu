@@ -22,13 +22,13 @@
  */
 
 #include <scribbu/framesv2.hh>
+#include <scribbu/scribbu.hh>
 
-#include <sstream>
-
-#include <fstream>
 #include <boost/test/unit_test.hpp>
 
-#include <scribbu/scribbu.hh>
+#include <bit>
+#include <fstream>
+#include <sstream>
 
 BOOST_AUTO_TEST_CASE( test_frame_id3 )
 {
@@ -484,7 +484,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C1(id3v2_version::v3, B1.begin(), B1.end());
   BOOST_CHECK(0 == C1.unicode());
-  C1.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C1.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C1.descriptionb(back_inserter(outbuf));
@@ -508,7 +508,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C2(id3v2_version::v3, B2.begin(), B2.end());
   BOOST_CHECK(1 == C2.unicode());
-  C2.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C2.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C2.descriptionb(back_inserter(outbuf));
@@ -531,7 +531,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C3(id3v2_version::v3, B3.begin(), B3.end());
   BOOST_CHECK(0 == C3.unicode());
-  C3.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C3.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C3.descriptionb(back_inserter(outbuf));
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C4(id3v2_version::v3, B4.begin(), B4.end());
   BOOST_CHECK(0 == C4.unicode());
-  C4.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C4.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C4.descriptionb(back_inserter(outbuf));
@@ -574,7 +574,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C5(id3v2_version::v3, B5.begin(), B5.end());
   BOOST_CHECK(0 == C5.unicode());
-  C5.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C5.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C5.descriptionb(back_inserter(outbuf));
@@ -614,7 +614,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C7(id3v2_version::v3, B7.begin(), B7.end());
   BOOST_CHECK(1 == C7.unicode());
-  C7.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C7.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C7.descriptionb(back_inserter(outbuf));
@@ -636,7 +636,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C8(id3v2_version::v3, B8.begin(), B8.end());
   BOOST_CHECK(1 == C8.unicode());
-  C8.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C8.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C8.descriptionb(back_inserter(outbuf));
@@ -657,7 +657,7 @@ BOOST_AUTO_TEST_CASE( test_comments )
 
   comments C9(id3v2_version::v3, B9.begin(), B9.end());
   BOOST_CHECK(1 == C9.unicode());
-  C9.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C9.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   outbuf.erase(outbuf.begin(), outbuf.end());
   C9.descriptionb(back_inserter(outbuf));
@@ -685,6 +685,61 @@ BOOST_AUTO_TEST_CASE( test_comments )
   C10.textb(back_inserter(outbuf));
   BOOST_CHECK(outbuf.empty());
 
+}
+
+BOOST_AUTO_TEST_CASE(test_comments_mut)
+{
+  using namespace std;
+  using namespace scribbu;
+
+  vector<unsigned char> B1 = {
+      0x00,                   // ISO-8859-1
+      0x65, 0x6e, 0x67,       // eng
+      0x64, 0x73, 0x63, 0x00, // "dsc"
+      0x76, 0x61, 0x6c,       // "val"
+  };
+
+  comments C1(id3v2_version::v3, B1.begin(), B1.end());
+  C1.description("sp1ff@pobox.com", encoding::ASCII);
+  C1.text("Hello, world!", encoding::UTF_8);
+
+  const char DSC[] = "sp1ff@pobox.com";
+  const size_t NDSC = strlen(DSC);
+
+  const char TEXT[] = "Hello, world!";
+  const size_t NTEXT = strlen(TEXT);
+
+  vector<unsigned char> outbuf;
+  C1.descriptionb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(DSC, DSC + NDSC, outbuf.begin(), outbuf.end());
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C1.textb(back_inserter(outbuf));
+  BOOST_CHECK_EQUAL_COLLECTIONS(TEXT, TEXT + NTEXT, outbuf.begin(), outbuf.end());
+
+  vector<unsigned char> B2 =
+    { 0x01, // UCS-2
+      0x65, 0x6e, 0x67, // eng
+      0xfe, 0xff, 0x00, 0x64, 0x00, 0x73, 0x00, 0x63, 0x00, 0x00, // "dsc"
+      0xfe, 0xff, 0x00, 0x76, 0x00, 0x61, 0x00, 0x6c, // "val"
+    };
+
+  comments C2(id3v2_version::v3, B2.begin(), B2.end());
+  C2.description("sp1ff", encoding::ASCII);
+
+  const unsigned char UDSCLE[] =
+    { 0xff, 0xfe, 0x73, 0x00, 0x70, 0x00, 0x31, 0x00, 0x66, 0x00, 0x66, 0x00 };
+  const unsigned char UDSCBE[] =
+    { 0xff, 0xfe, 0x00, 0x73, 0x00, 0x70, 0x00, 0x31, 0x00, 0x66, 0x00, 0x66 };
+  const size_t NUDSC = sizeof(UDSCLE);
+
+  outbuf.erase(outbuf.begin(), outbuf.end());
+  C2.descriptionb(back_inserter(outbuf));
+
+  if constexpr (std::endian::native == std::endian::big) {
+    BOOST_CHECK_EQUAL_COLLECTIONS(UDSCBE, UDSCBE + NUDSC, outbuf.begin(), outbuf.end());
+  } else {
+    BOOST_CHECK_EQUAL_COLLECTIONS(UDSCLE, UDSCLE + NUDSC, outbuf.begin(), outbuf.end());
+  }
 }
 
 BOOST_AUTO_TEST_CASE( test_play_count )

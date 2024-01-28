@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
   char lang[3];
   vector<unsigned char> dsc, text;
   BOOST_CHECK(0 == C0.unicode());
-  C0.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C0.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   C0.descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == DSC0);
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE( test_id3v2_2_tag )
 
   const COM &C1 = C[1];
   BOOST_CHECK(0 == C1.unicode());
-  C1.lang(lang);
+  std::tie(lang[0], lang[1], lang[2]) = C1.lang();
   BOOST_CHECK('e' == lang[0] && 'n' == lang[1] && 'g' == lang[2]);
   C1.descriptionb(back_inserter(dsc));
   BOOST_CHECK(dsc == DSC1);

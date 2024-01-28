@@ -428,7 +428,7 @@ namespace {
     SCM x = init_frame("<comment-frame>", sym_comment_frame);
 
     char lang[4] = { 0, 0, 0, 0 };
-    f.lang(lang);
+    std::tie(lang[0], lang[1], lang[2]) = f.lang();
     if (0 != (lang[0] & 0x80)) lang[0] = 0;
     if (0 != (lang[1] & 0x80)) lang[1] = 0;
     if (0 != (lang[2] & 0x80)) lang[2] = 0;
@@ -454,7 +454,7 @@ namespace {
                        f.readonly());
 
     char lang[4] = { 0, 0, 0, 0 };
-    f.lang(lang);
+    std::tie(lang[0], lang[1], lang[2]) = f.lang();
     if (0 != (lang[0] & 0x80)) lang[0] = 0;
     if (0 != (lang[1] & 0x80)) lang[1] = 0;
     if (0 != (lang[2] & 0x80)) lang[2] = 0;
@@ -480,7 +480,7 @@ namespace {
                        f.readonly(), f.unsynchronised());
 
     char lang[4] = { 0, 0, 0, 0 };
-    f.lang(lang);
+    std::tie(lang[0], lang[1], lang[2]) = f.lang();
     if (0 != (lang[0] & 0x80)) lang[0] = 0;
     if (0 != (lang[1] & 0x80)) lang[1] = 0;
     if (0 != (lang[2] & 0x80)) lang[2] = 0;
