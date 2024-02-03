@@ -111,6 +111,7 @@ const scribbu::frame_id4 IDTXXX("TXXX");
 const scribbu::frame_id4 IDPCNT("PCNT");
 const scribbu::frame_id4 IDPOPM("POPM");
 const scribbu::frame_id4 IDXTAG("XTAG");
+const scribbu::frame_id4 IDPRIV("PRIV");
 
 SCM sym_unknown_frame;              // 'unknown-frame
 
@@ -158,6 +159,7 @@ SCM sym_udt_frame;                  // 'udt-frame, TXX/TXXX
 SCM sym_play_count_frame;           // 'play-count-frame, CNT/PCNT
 SCM sym_popm_frame;                 // 'popm-frame, POP/POPM
 SCM sym_tag_cloud_frame;            // 'tag-cloud-frame, XTG/XTAG
+SCM sym_priv_frame;                 // 'priv-frame, PRIV
 
 SCM scribbu::sym_as_needed;
 SCM scribbu::kw_apply_unsync;
@@ -229,6 +231,7 @@ void scribbu::init_symbols() {
   DEFSYMX(play_count_frame,            play-count-frame,            IDCNT, IDPCNT);
   DEFSYMX(popm_frame,                  popm-frame,                  IDPOP, IDPOPM);
   DEFSYMX(tag_cloud_frame,             tag-cloud-frame,             IDXTG, IDXTAG);
+  DEFSYM4(priv_frame,                  priv-frame,                         IDPRIV);
 
 # undef DEFSYM4
 # undef DEFSYMX
@@ -724,6 +727,54 @@ namespace {
       lst = scm_acons(scm_from_utf8_string(kv.first.c_str()), scm_vals, lst);
     }
     SCM_SET_SLOT(x, 6, lst);
+
+    return x;
+  }
+
+  SCM
+  de_priv_2_3(const scribbu::PRIV &f, bool unsync)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    SCM x = init_frame("<priv-frame>", sym_tag_cloud_frame,
+                       f.tag_alter_preserve(), f.file_alter_preserve(),
+                       f.readonly());
+
+    string own = f.email<string>();
+    SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
+
+    vector<unsigned char> c;
+    f.contentsb(back_inserter(c));
+
+    SCM bv = scm_c_make_bytevector(c.size());
+    memcpy(SCM_BYTEVECTOR_CONTENTS(bv), c.data(), c.size());
+
+    SCM_SET_SLOT(x, 6, bv);
+
+    return x;
+  }
+
+  SCM
+  de_priv_2_4(const scribbu::PRIV_2_4 &f, bool unsync)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    SCM x = init_frame("<priv-frame>", sym_tag_cloud_frame,
+                       f.tag_alter_preserve(), f.file_alter_preserve(),
+                       f.readonly(), f.unsynchronised());
+
+    string own = f.email<string>();
+    SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
+
+    vector<unsigned char> c;
+    f.contentsb(back_inserter(c));
+
+    SCM bv = scm_c_make_bytevector(c.size());
+    memcpy(SCM_BYTEVECTOR_CONTENTS(bv), c.data(), c.size());
+
+    SCM_SET_SLOT(x, 6, bv);
 
     return x;
   }
@@ -1338,6 +1389,74 @@ namespace {
                                                   boost::none));
   }
 
+  std::unique_ptr<scribbu::id3v2_3_frame>
+  ser_priv_2_3(SCM scm)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
+      tag_alter_preservation;
+    typedef id3v2_3_plus_frame::file_alter_preservation
+      file_alter_preservation;
+    typedef id3v2_3_plus_frame::read_only read_only;
+
+    dynwind_context ctx;
+
+    string id_txt;
+    tag_alter_preservation tap;
+    file_alter_preservation fap;
+    read_only ro;
+
+    tie(id_txt, tap, fap, ro) = ser_frame_2_3("<priv-frame>", scm, ctx);
+
+    string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
+
+    SCM scm_bv = SCM_SLOT(scm, 6);
+
+    size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
+    unsigned char *p = (unsigned char*) SCM_BYTEVECTOR_CONTENTS(scm_bv);
+
+    return unique_ptr<id3v2_3_frame>(new PRIV(own, p, p + cb,
+                                              tap, fap, ro, boost::none,
+                                              boost::none, boost::none));
+  }
+
+  std::unique_ptr<scribbu::id3v2_4_frame>
+  ser_priv_2_4(SCM scm)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
+      tag_alter_preservation;
+    typedef id3v2_3_plus_frame::file_alter_preservation
+      file_alter_preservation;
+    typedef id3v2_3_plus_frame::read_only read_only;
+
+    dynwind_context ctx;
+
+    string id_txt;
+    tag_alter_preservation tap;
+    file_alter_preservation fap;
+    read_only ro;
+    bool unsync;
+
+    tie(id_txt, tap, fap, ro, unsync) =
+      ser_frame_2_4("<priv-frame>", scm, ctx);
+
+    string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
+
+    SCM scm_bv = SCM_SLOT(scm, 6);
+
+    size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
+    unsigned char *p = (unsigned char*) SCM_BYTEVECTOR_CONTENTS(scm_bv);
+
+    return unique_ptr<id3v2_4_frame>(new PRIV_2_4(
+        own, p, p + cb, tap, fap, ro, boost::none, boost::none,
+        false, unsync, boost::none));
+  }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1786,7 +1905,7 @@ scribbu::scheme_serde_dispatcher::de_unknown_frame_2_2(const scribbu::id3v2_2_fr
 
 SCM
 scribbu::scheme_serde_dispatcher::de_unknown_frame_2_3(const scribbu::id3v2_3_frame &f,
-                                              bool unsync) const
+                                                       bool unsync) const
 {
   typedef scribbu::id3v2_3_plus_frame::tag_alter_preservation
     tag_alter_preservation;

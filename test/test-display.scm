@@ -30,9 +30,12 @@
   "Exercise pretty-printing tags."
   (let ((tag (read-id3v1-tag (format #f "~a/data/elliot-goldenthal.id3v1.tag" srcdir))))
     (format (current-output-port) "~a\n" tag))
-  (let ((tag (caar (read-tagset (format #f "~a/data/lorca.mp3" srcdir)))))
-    (format (current-output-port) "~a\n" tag)))
-
+  (let* ((tag (caar (read-tagset (format #f "~a/data/lorca.mp3" srcdir))))
+         (frames (slot-ref tag 'frames)))
+    (format (current-output-port) "~a\n" tag)
+    (while (> (length frames) 0)
+           (format (current-output-port) "~a\n" (car frames))
+           (set! frames (cdr frames)))))
 
 (let ((cl (cdr (command-line))))
   (if (= 1 (length cl))

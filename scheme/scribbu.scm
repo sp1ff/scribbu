@@ -100,7 +100,6 @@ at `root'"
 						            (stm (cadr here))
 						            (pth (car here))
 						            (entry (readdir stm))) ; may be *eof*
-				           ;; (display entry) (newline)
 				           (set! next
 						             ;; Evaluates to either #f or the next entry
 						             (while (not (eof-object? entry))
@@ -177,6 +176,7 @@ at `root'"
 (make-symbol "play-count-frame")            ;; CNT/PCNT
 (make-symbol "playlist-delay-frame")        ;; TDY/TDLY
 (make-symbol "popm-frame")                  ;; POP/POPM
+(make-symbol "priv-frame")                  ;; PRIV
 (make-symbol "publisher-frame")             ;; TPB/TPUB
 (make-symbol "recording-dates-frame")       ;; TRD/TRDA
 (make-symbol "settings-frame")              ;; TSS/TSSE
@@ -202,29 +202,77 @@ at `root'"
   (id-text #:init-value ""     #:accessor frameid #:init-keyword #:frameid)
   (data    #:init-value #vu8() #:accessor data    #:init-keyword #:data))
 
+(define (pp-bytevector bv)
+  "Pretty-print a byte vector. BV is a bytevector. Return a string"
+  (let ((len (min (bytevector-length bv) 8))
+        (hex '())
+        (ascii '()))
+    ;; Two loops-- one to display hex values...
+    (do ((i 0 (1+ i))) ((> i (1- len)))
+      (set! hex (append hex (list (format #f "~2,'0x " (bytevector-u8-ref bv i))))))
+    ;; and one for the ASCII representation
+    (do ((i 0 (1+ i))) ((> i (1- len)))
+      (let* ((x (bytevector-u8-ref bv i))
+             (c (if (and (> x 31) (< x 127))
+                    (integer->char x)
+                    #\.)))
+        (set! ascii (append ascii (list (format #f "~c" c))))))
+    (format #f "{~a <~a>}"
+            (string-join hex "") (string-join ascii ""))))
+
+(define-method (display (f <unk-frame>) out)
+  (format out "<unk-frame ~s ~a>" (slot-ref f 'id-text) (pp-bytevector (slot-ref f 'data))))
+
 (define-class <text-frame> (<id3v2-frame>)
   (text #:init-value "" #:accessor text #:init-keyword #:text))
+
+(define-method (display (f <text-frame>) out)
+  (format out "<~a ~s>" (slot-ref f 'id) (slot-ref f 'text)))
 
 (define-class <comment-frame> (<id3v2-frame>)
   (lang  #:init-value "eng" #:accessor lang #:init-keyword #:lang)
   (dsc   #:init-value ""    #:accessor dsc  #:init-keyword #:dsc)
   (text  #:init-value ""    #:accessor text #:init-keyword #:text))
 
+(define-method (display (f <comment-frame>) out)
+  (format out "<comment (~a, ~a) ~a>" (slot-ref f 'lang) (slot-ref f 'dsc)
+          (slot-ref f 'text)))
+
 (define-class <user-defined-text-frame> (<id3v2-frame>)
   (dsc   #:init-value "" #:accessor dsc  #:init-keyword #:dsc)
   (text  #:init-value "" #:accessor text #:init-keyword #:text))
 
+(define-method (display (f <user-defined-text-frame>) out)
+  (format out "<user-defined-text ~a>" (slot-ref f 'dsc)))
+
 (define-class <play-count-frame> (<id3v2-frame>)
   (count #:init-value 0 #:accessor count #:init-keyword #:count))
+
+(define-method (display (f <play-count-frame>) out)
+  (format out "<play-count ~a>" (slot-ref f 'count)))
 
 (define-class <popm-frame> (<id3v2-frame>)
   (e-mail #:init-value "" #:accessor e-mail #:init-keyword #:e-mail)
   (rating #:init-value 0  #:accessor rating #:init-keyword #:rating)
   (count  #:init-value 0  #:accessor count  #:init-keyword #:count))
 
+(define-method (display (f <popm-frame>) out)
+  (format out "<popularimeter ~a, ~a, ~a>" (slot-ref f 'e-mail)
+          (slot-ref f 'rating) (slot-ref f 'count)))
+
 (define-class <tag-cloud-frame> (<id3v2-frame>)
   (owner #:init-value ""  #:accessor owner #:init-keyword #:owner)
   (tags  #:init-value '() #:accessor tags  #:init-keyword #:tags))
+
+(define-method (display (f <tag-cloud-frame>) out)
+  (format out "<tag cloud (~a) ~a>" (slot-ref f 'owner) (slot-ref f 'tags)))
+
+(define-class <priv-frame> (<id3v2-frame>)
+  (owner #:init-value ""     #:accessor owner #:init-keyword #:owner)
+  (data  #:init-value #vu8() #:accessor data  #:init-keyword #:data))
+
+(define-method (display (f <priv-frame>) out)
+  (format out "<private (~a) ~a>" (slot-ref f 'owner) (pp-bytevector (slot-ref f 'data))))
 
 (define-class <id3v2-tag> ()
   (experimental #:init-value '() #:accessor experimental
