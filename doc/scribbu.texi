@@ -2197,6 +2197,7 @@ Module @code{scribbu} defines a few @code{<id3v2-frame>} sub-classes.
 * @code{<user-defined-text-frame>}::
 * @code{<play-count-frame>}::
 * @code{<popm-frame>}::
+* @code{<tag-cloud-frame>}::
 * @code{<unk-frame>}::
 @end menu
 

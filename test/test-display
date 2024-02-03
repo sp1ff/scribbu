@@ -15,7 +15,7 @@ if [ ! -z "$t_err" ]; then
 fi
 
 output=$(echo $t_std|tr \\n :)
-if [ "$output" != "<id3v1-tag Sinead O'Connor - Easter Rebellion (Performed by> <id3v2-tag The Pogues - Lorca's Novena (335921 bytes padding)>:" ]; then
+if [ "$output" != "<id3v1-tag Sinead O'Connor - Easter Rebellion (Performed by> <id3v2-tag The Pogues - Lorca's Novena (335921 bytes padding)> <title-frame \"Lorca's Novena\"> <artist-frame \"The Pogues\"> <album-frame \"Hell's Ditch [Expanded] (US Version)\"> <genre-frame \"Pop\"> <composer-frame \"\"> <conductor-frame \"\"> <track-frame \"5\"> <year-frame \"1990\"> <band-frame \"The Pogues\"> <comment (eng, ) Amazon.com Song ID: 203558254> <copyright-frame \"2004 Warner Music UK Ltd.\"> <part-of-a-set-frame \"1\"> <unk-frame \"APIC\" {41 50 49 43 00 01 c3 62 <APIC...b>}> <unk-frame \"PRIV\" {50 52 49 56 00 00 04 62 <PRIV...b>}>:" ]; then
     echo $output
     exit 1
 fi

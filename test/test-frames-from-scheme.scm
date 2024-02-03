@@ -47,18 +47,18 @@
                                 (slot-ref tag 'padding))))
       ;; Brute-force test for deserializing
 
-      ;; class           id                  'text or 'id-text
-      ;; =====================================================
-      ;; <text-frame>    title-frame         "Lorca's Novena"
-      ;; <text-frame>    artist-frame        "The Pogues"
-      ;; <text-frame>    album-frame         "Hell's Ditch [Expanded] (US Version)"
-      ;; <text-frame>    genre-frame         "Pop"
-      ;; <text-frame>    composer-frame      ""
-      ;; <text-frame>    conductor-frame     ""
-      ;; <text-frame>    track-frame         "5"
-      ;; <text-frame>    year-frame          "1990"
-      ;; <text-frame>    band-frame          "The Pogues"
-      ;; <comment-frame> comment-frame
+      ;;   class           id                  'text or 'id-text
+      ;; ========================================================
+      ;; 0 <text-frame>    title-frame         "Lorca's Novena"
+      ;; 1 <text-frame>    artist-frame        "The Pogues"
+      ;; 2 <text-frame>    album-frame         "Hell's Ditch [Expanded] (US Version)"
+      ;; 3 <text-frame>    genre-frame         "Pop"
+      ;; 4 <text-frame>    composer-frame      ""
+      ;; 5 <text-frame>    conductor-frame     ""
+      ;; 6 <text-frame>    track-frame         "5"
+      ;; 7 <text-frame>    year-frame          "1990"
+      ;; 8 <text-frame>    band-frame          "The Pogues"
+      ;; 9 <comment-frame> comment-frame
       ;; <text-frame>    copyright-frame     "2004 Warner Music UK Ltd."
       ;; <text-frame>    part-of-a-set-frame "1"
       ;; <unk-frame>     unknown-frame       "APIC"
