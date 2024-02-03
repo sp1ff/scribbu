@@ -1,7 +1,7 @@
 /**
  * \file id3v1.hh
  *
- * Copyright (C) 2015-2022 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2024 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *

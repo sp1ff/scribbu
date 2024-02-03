@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([scribbu], [0.6.23], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
+AC_INIT([scribbu], [0.7.0], [sp1ff@pobox.com], [scribbu], [https://github.com/sp1ff/scribbu])
 AC_CONFIG_MACRO_DIR([macros])
 AC_CONFIG_SRCDIR([src/scribbu.cc])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -15,6 +15,8 @@ esac
 
 # Checks for programs.
 AC_PROG_CXX
+# breaks on Autoconf 2.71 (?)
+# AC_PROG_AR
 AC_C_VARARRAYS
 AC_PROG_AWK
 AC_PROG_CC

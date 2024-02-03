@@ -7,7 +7,7 @@
    *
    * Note that this will be processed into a .cc file by autoconf.
    *
-   * Copyright (C) 2015-2022 Michael Herstine <sp1ff@pobox.com>
+   * Copyright (C) 2015-2024 Michael Herstine <sp1ff@pobox.com>
    *
    * This file is part of scribbu.
    *

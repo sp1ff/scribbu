@@ -1,6 +1,6 @@
 ;;;; test-display.scm
 ;;;;
-;;;; Copyright (C) 2023 Michael Herstine <sp1ff@pobox.com>
+;;;; Copyright (C) 2023-2024 Michael Herstine <sp1ff@pobox.com>
 ;;;;
 ;;;; This file is part of scribbu.
 ;;;;

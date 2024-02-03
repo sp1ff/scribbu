@@ -65,7 +65,7 @@ libscribbu_la_LIBADD = $(GUILE_LIBS)	 \
 	$(BOOST_REGEX_LIB)               \
 	$(BOOST_SYSTEM_LIB)
 
-libscribbu_la_LDFLAGS = -version-info 4:1:0 $(BOOST_LDFLAGS) $(LIBUNISTRING)
+libscribbu_la_LDFLAGS = -version-info 5:0:0 $(BOOST_LDFLAGS) $(LIBUNISTRING)
 
 # automake will figure out how to make tbt-parser.hh, but we need to tell it how 
 # to make tbt-lexer.h:

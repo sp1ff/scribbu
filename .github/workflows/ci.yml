@@ -352,7 +352,7 @@ jobs:
         install_name_tool -change @rpath/libboost_system.dylib              ${there}/libboost_system.dylib          src/.libs/scribbu
         there=$(cd scribbu/.libs; pwd)
         echo "Changing the load location for scribbu lib to be ${there}."
-        install_name_tool -change /usr/local/lib/libscribbu.4.dylib ${there}/libscribbu.4.dylib src/.libs/scribbu
+        install_name_tool -change /usr/local/lib/libscribbu.5.dylib ${there}/libscribbu.5.dylib src/.libs/scribbu
         echo "===================================="
         otool -L src/.libs/scribbu
         src/.libs/scribbu --version
@@ -371,7 +371,7 @@ jobs:
         install_name_tool -change @rpath/libboost_unit_test_framework.dylib ${there}/libboost_unit_test_framework.dylib .libs/unit
         there=$(cd ../scribbu/.libs; pwd)
         echo "Changing the load location for unit lib to be ${there}."
-        install_name_tool -change /usr/local/lib/libscribbu.4.dylib ${there}/libscribbu.4.dylib .libs/unit
+        install_name_tool -change /usr/local/lib/libscribbu.5.dylib ${there}/libscribbu.5.dylib .libs/unit
         echo "===================================="
         otool -L .libs/unit
         .libs/unit --help

@@ -3,8 +3,8 @@ scribbu_SOURCES = scribbu.cc command-utilities.hh command-utilities.cc \
 	rename.cc report.cc split.cc dump.cc popm.cc xtag.cc text.cc   \
         genre.cc m3u.cc encodings.cc
 
-AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS) -DDATADIR=\"$(datadir)\" -DSCRIBBU_ALWAYS_DUMP_CORE
-# AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS) -DDATADIR=\"$(datadir)\"
+# AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS) -DDATADIR=\"$(datadir)\" -DSCRIBBU_ALWAYS_DUMP_CORE
+AM_CPPFLAGS = -I$(srcdir)/.. $(BOOST_CPPFLAGS) $(GUILE_CFLAGS) -DDATADIR=\"$(datadir)\"
 
 AM_CXXFLAGS = -std=c++20 $(GUILE_CFLAGS)
 AM_LDFLAGS  = $(BOOST_LDFLAGS) $(LIBUNISTRING)
