@@ -24,6 +24,7 @@
 #include "config.h"
 #include <scribbu/winamp-genres.hh>
 
+#include <algorithm>
 #include <codecvt>
 #include <locale>
 #include <string>
