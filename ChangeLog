@@ -1,3 +1,10 @@
+2024-10-09  Michael Herstine  <sp1ff@pobox.com>
+
+	Cut release 0.7.1; fix CI.
+
+	Fix a build error in winamp-genres.cc.
+	...by explicitly including `<algorithm>`.
+
 2024-02-03  Michael Herstine  <sp1ff@pobox.com>
 
 	Make pre-release updates.

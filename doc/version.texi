@@ -1,4 +1,4 @@
-@set UPDATED 3 February 2024
-@set UPDATED-MONTH February 2024
-@set EDITION 0.7.0
-@set VERSION 0.7.0
+@set UPDATED 10 October 2024
+@set UPDATED-MONTH October 2024
+@set EDITION 0.7.1
+@set VERSION 0.7.1

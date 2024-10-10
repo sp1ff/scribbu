@@ -1,5 +1,10 @@
 scribbu News -- history of user-visible changes -*- outline -*-
 
+* Changes in scribbu 0.7
+
+** Bug Fixes
+
+*** Fix a build error in `winamp-genres.cc`
 * Changes in scribbu 0.6
 
 ** Bug Fixes

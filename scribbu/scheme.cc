@@ -48,7 +48,7 @@ using scribbu::scheme_serde_dispatcher;
 //                              utility code                                 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#define AUTHOR                  "Michael Herstine"
+#define AUTHOR                   "Michael Herstine"
 #define COPYRIGHT       "2017-2024"
 #define READ_ID3V1_TAG  "read-id3v1-tag"
 #define READ_TAGSET     "read-tagset"
