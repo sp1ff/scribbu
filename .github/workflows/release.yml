@@ -24,8 +24,8 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     # Un-comment this for testing
-    # env:
-    #   RELEASE_VERSION: 0.6.23
+    env:
+      RELEASE_VERSION: 0.7.1
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -53,7 +53,7 @@ jobs:
         run: echo "${{ env.RELEASE_VERSION }}" > artifacts/release-version
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: artifacts
@@ -62,6 +62,7 @@ jobs:
   # This job will actually create the artifacts I want to include with
   # the release
   ####################################################################
+
   build-release:
     name: build-release
     needs: ['create-release']
@@ -155,7 +156,7 @@ jobs:
         sudo apt-get install -y libboost-all-dev
 
     - name: Get release download URL
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: artifacts
         path: artifacts
