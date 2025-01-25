@@ -4,6 +4,11 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** `scribbu m3u` will seek for a sync point
+
+`scribbu m3u` reads any ID3v2 tags from the file, then assumed it was
+at an mp3 sync point; if not, scribbu will now seek for the next sync
+point.
 *** Fix a build error in `winamp-genres.cc`
 * Changes in scribbu 0.6
 

@@ -37,7 +37,7 @@
  *
  * \section scribbu_mp3_overview Overview
  *
- * The MPEG specification went through three reviesions. MPEG 1 (ISO/IEC
+ * The MPEG specification went through three revisions. MPEG 1 (ISO/IEC
  * 13818-3) and MPEG 2 (ISO/IEC 11172-3) are ISO standards. MPEG 2.5 is an
  * unofficial extension of MPEG 2 to support lower sampling rates. MPEG 2/2.5 is
  * also known by the abbreviation LSF, which stands for Lower Sampling
@@ -51,13 +51,13 @@
  *
  * Layer III can make use of a technique known as the "bit resevoir" wherein
  * unused space at the end of a frame can be used to hold data for subsequent
- * frames, meaning that decode a given frame may required previous frames. In
+ * frames, meaning that decoding a given frame may require previous frames. In
  * the worst case, a decoder may need to read nine frames before being able to
  * decode one (\ref scribbu_mp3_ref_03 "[3]").
  *
  * In all layers & all versions of the spec, each frame begins with a 32 bit
- * header, followed by, perhaps, a 16-bit CRC in big-endian format. Next comes a
- * block of information required by decoders to interpret the audio samples &
+ * header, followed by, perhaps, a 16-bit CRC in big-endian format. Next comes
+ * a block of information required by decoders to interpret the audio samples &
  * finally the audio samples themselves.
  *
  * The audio data contains a fixed number of samples across all frames (the
@@ -161,14 +161,14 @@
                         values of bitrate. Very few decoders handle this.
 
   F     2      11-10    sampling rate frequency index (values are in Hz)
-                        +------+-------+-------+---------+
-                        | bits | MPEG1 | MPEG2 | MPEG2.5 |
-                        +------+-------+-------+---------+
-                        | 00   | 44100 | 22050 |  11025  |
-                        | 01   | 48000 | 24000 |  12000  |
-                        | 10   | 32000 | 16000 |  8000   |
-                        | 11   | reserv| reserv| reserv  |
-                        +------+-------+-------+---------+
+                        +------+----------+----------+----------+
+                        | bits | MPEG1    | MPEG2    | MPEG2.5  |
+                        +------+----------+----------+----------+
+                        | 00   | 44100    | 22050    |  11025   |
+                        | 01   | 48000    | 24000    |  12000   |
+                        | 10   | 32000    | 16000    |  8000    |
+                        | 11   | reserved | reserved | reserved |
+                        +------+----------+----------+----------+
 
   G     1      9        padding bit
                         0 - frame is not padded
@@ -264,6 +264,7 @@
  * Also: "The CRC is calculated by applying the CRC-16 algorithm (with the
  * generator polynom 0x8005)" \ref scribbu_mp3_ref_01 "[1]".
  *
+
  * \section scribbu_mp3_frame_side_data Side Data
  *
  * scribbu does not explicitly model the side data at this time, but it
@@ -284,7 +285,7 @@
  *
  * \section scribbu_mp3_frame_header_vbri Variable Bitrate Information
  *
- * Of particular interest to this implementation is detrmining the track
+ * Of particular interest to this implementation is determining the track
  * time-length, or duration.  Files can be encoded at a constant bitrate (CBR)
  * wherein each frame uses the same bitrate, or at a variable bitrate (VBR) in
  * which the bitrate varies by frame. The former makes calculating the duration
@@ -328,7 +329,7 @@
  * via bitrate & frame-size) and multiply it by the number of frames.
  *
  * MPD, for instance, after the initial guess above, checks for an Xing
- * header, and if found, instead computes the duration by muliplying
+ * header, and if found, instead computes the duration by multiplying
  * the number of frames by the first frame's duration (computed, through
  * libmad, by the sample rate).
  *
@@ -688,6 +689,18 @@ namespace scribbu {
     std::uint8_t bitrate_;
     std::uint32_t size_bytes_;
   };
+
+  /**
+   * \brief Find the next mp3 sync in \a is
+   *
+   *
+   * \param is [in,out] an input stream; on return, it will either point to
+   * an mp3 sync point, or past the end of the stream
+   *
+   *
+   */
+  void
+  find_sync(std::istream &is);
 
   inline
   bool

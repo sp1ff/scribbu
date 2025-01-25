@@ -551,6 +551,38 @@ scribbu::mp3_audio_frame::vbri() const
   }
 }
 
+void
+scribbu::find_sync(std::istream &is)
+{
+  // OK, we're looking for a two-byte pattern of the form ff e* or ff f*.
+  // So, let's read two bytes. Cases:
+  // - they match -- done, reset pointer
+  // - byte two is ff, advance by one, read one more byte & repeat
+  // - skip forward two bytes & try again
+
+  const std::ios_base::iostate EXC_MASK = std::ios_base::badbit;
+
+  // Copy off the stream's exception mask, in case the caller is
+  // counting on it...
+  std::ios_base::iostate exc_mask = is.exceptions();
+  // and set it to a value convenient for our use.
+  is.exceptions(EXC_MASK);
+
+  std::istream::pos_type here = is.tellg();
+  std::uint8_t buf[2];
+  is.read((char*)buf, 2);
+  bool hit = is_sync(buf);
+  while (is && !hit) {
+    here += buf[1] == 0xff ? 1 : 2;
+    is.seekg(here, std::ios_base::beg);
+    is.read((char*)buf, 2);
+    hit = is_sync(buf);
+  }
+  if (hit) {
+    is.seekg(here, std::ios_base::beg);
+  }
+}
+
 double
 scribbu::get_mp3_duration(std::istream &is)
 {
@@ -566,6 +598,10 @@ scribbu::get_mp3_duration(std::istream &is)
 
   std::uint8_t hdr[4];
   is.read((char*)hdr, 4);
+  if (is && !is_sync(hdr)) {
+    find_sync(is);
+    is.read((char*)hdr, 4);
+  }
   if (!is || !is_sync(hdr)) {
     is.clear();
     is.seekg(here, std::ios_base::beg);
@@ -602,5 +638,6 @@ scribbu::get_mp3_duration(std::istream &is)
   }
 
   is.exceptions(exc_mask);
+
   return dur;
 }

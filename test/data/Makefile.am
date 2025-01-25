@@ -11,4 +11,4 @@ duplicate_id3v2.mp3 with-track-in-golden.log unsynch.id3 searchresults.dat \
 id3v22-tda.mp3 230-compressed.tag 230-picture.tag ozzy.tag rare_frames.mp3 \
 golden-test-cleanup-encoded-by.out id3v2.4.ext.tag exit.tag \
 golden-test-cleanup-from-audacity.out v1-only.mp3 wy.mp3 la-mer.mp3 \
-LAME_aots_3951.mp3 VBRI_16M.mp3 sat.mp3 3931.mp3
+LAME_aots_3951.mp3 VBRI_16M.mp3 sat.mp3 3931.mp3 zoe.mp3
