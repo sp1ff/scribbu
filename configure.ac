@@ -5,7 +5,7 @@ AC_INIT([scribbu], [0.7.1], [sp1ff@pobox.com], [scribbu], [https://github.com/sp
 AC_CONFIG_MACRO_DIR([macros])
 AC_CONFIG_SRCDIR([src/scribbu.cc])
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([-Wall -Werror dist-bzip2 dist-xz dist-zstd])
+AM_INIT_AUTOMAKE([-Wall -Werror dist-xz dist-zstd])
 AC_CANONICAL_HOST
 AH_TEMPLATE([MACOS],[Defined when running on a MacOS.])
 case "${host_os}" in
