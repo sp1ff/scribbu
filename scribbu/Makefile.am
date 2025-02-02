@@ -11,6 +11,7 @@ libscribbu_la_SOURCES = tbt-parser.yy		\
 			framesv22.cc		\
 			framesv23.cc		\
 			framesv24.cc		\
+			json-pprinter.cc	\
 			id3v2.cc		\
 			id3v22.cc		\
 			id3v23.cc		\
@@ -36,6 +37,7 @@ pkginclude_HEADERS = scribbu.hh		\
 		     framesv22.hh	\
 		     framesv23.hh	\
 		     framesv24.hh	\
+		     json-pprinter.hh	\
 		     id3v2.hh		\
 		     id3v22.hh		\
 		     id3v23.hh		\

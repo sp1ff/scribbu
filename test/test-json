@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+../src/scribbu dump --format=json ${srcdir}/data/cerulean.mp3 2>&1 > test-json.out
+diff test-json.out ${srcdir}/data/dump.golden.json
+exit $?

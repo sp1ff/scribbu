@@ -1066,9 +1066,7 @@ scribbu::standard_pprinter::print_id3v2_tag(const id3v2_tag &tag,
   if (tag.has_encoded_by()) {
     os << sin_ << "Encoded by " << tag.encoded_by(dst, rsp, v2enc_) << "\n";
   }
-
 }
-
 
 std::ostream&
 scribbu::operator<<(std::ostream &os, const id3v2_tag &tag)

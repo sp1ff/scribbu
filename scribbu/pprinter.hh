@@ -64,9 +64,9 @@
  \endcode
  *
  * It quickly became clear that this would become a mess; every time I wanted
- * to add a new format I would need to remember, and touch every tag & frame
- * pretty-print implementation. Each of those functions would become more
- * complex as I added more styles of pretty-printing.
+ * to add a new format I would need to remember, and touch, every tag & frame
+ * pretty-print implementation. Furthermore, each of those functions would
+ * become ever more complex as I added more styles of pretty-printing.
  *
  * \subsection scribbu_pprinter_discuss_visitor Visitor
  *
@@ -78,7 +78,7 @@
  * eliminating the problems described above. The cost would be adding an
  * "accept" virtual to each tag & frame type, which would then invoke the
  * relevant visitor method (for two virtual function lookups). There was one
- * wrinkle where frames were involved; employing Visitor in this way would mean:
+ * wrinkle where frames were involved: employing Visitor in this way would mean:
  *
  *    1. operator<< constructing a Visitor of the appropriate type and invoking
  *       accept on the tag, passing the Visitor as an argument (one virtual
@@ -181,7 +181,7 @@
  *   1. it preserves the \ref ref_03 "Open/Closed Principle", unlike my first,
  *      naive implementation (but like both Visitor variants)
  *
- *   2. it breakes up the dependency cycle that Visitor entails
+ *   2. it breaks up the dependency cycle that Visitor entails
  *
  *   3. it captures (and checks at compile-time) the contract a new pretty-print
  *      implementation will have to satisfy (rather than simply writing them

@@ -656,11 +656,12 @@ pretty-printed (non-matches will be ignored).
 
 @item
 @option{-f FMT|--format=FMT} specify the desired output format; at
-present, only two values are supported for this option:
+present, there are three values supported for this option:
 @code{standard}, which is the default, pretty-prints the selectd
 portions of each file to @verb{.stdout.} with one attribute (artist,
 title &c) per line.  A format of @code{csv} will print one line in CSV
-format per file.
+format per file. A format of @code{json} will print a JSON object
+for each tag as well as the track data.
 
 The precise columns output in @code{csv} format will depend on the
 other options, but for ID3v2 tags include:

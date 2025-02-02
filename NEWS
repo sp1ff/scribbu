@@ -1,5 +1,10 @@
 scribbu News -- history of user-visible changes -*- outline -*-
 
+* Changes in NEXT RELEASE
+
+** New Features
+
+*** JSON output now supported for `scribbu dump`
 * Changes in scribbu 0.7
 
 ** Bug Fixes

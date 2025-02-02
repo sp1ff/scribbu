@@ -28,6 +28,7 @@
 #include <scribbu/id3v1.hh>
 #include <scribbu/id3v2-utils.hh>
 #include <scribbu/id3v2.hh>
+#include <scribbu/json-pprinter.hh>
 #include <scribbu/scribbu.hh>
 
 #include <exception>
@@ -77,7 +78,9 @@ namespace {
       /// Comma-separated variable format
       csv,
       /// Multi-line output format
-      standard
+      standard,
+      /// JavaScript Object Notation
+      json,
     };
 
     enum class dump_id3v1 { yes, no };
@@ -92,7 +95,10 @@ namespace {
     /// Print in CSV format
     dumper(const boost::regex &file_regex, dump_id3v2 d0, dump_track d1,
            dump_id3v1 d2, scribbu::encoding v1enc, std::size_t ncomm);
-    /// Process one directory entitty
+    /// Print in JSON format
+    dumper(const boost::regex &file_regex, dump_id3v2 d0, dump_track d1,
+           dump_id3v1 d2, scribbu::encoding v1enc);
+    /// Process one directory entity
     void operator()(const fs::path &pth, bool explict = false);
 
   private:
@@ -162,6 +168,28 @@ namespace {
     cout << print_as_csv(ncomm_, v1enc_);
   }
 
+  dumper::dumper(const boost::regex &file_regex,
+                 dump_id3v2 d0,
+                 dump_track d1,
+                 dump_id3v1 d2,
+                 scribbu::encoding v1enc):
+    file_regex_(file_regex),
+    fmt_(format::json),
+    dump_id3v2_(d0 == dump_id3v2::yes),
+    dump_track_(d1 == dump_track::yes),
+    dump_id3v1_(d2 == dump_id3v1::yes),
+    v1enc_(v1enc)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    if (!dump_id3v2_ && !dump_track_ && !dump_id3v1_) {
+      dump_id3v2_ = dump_track_ = dump_id3v1_ = true;
+    }
+
+    cout << print_as_json(v1enc_);
+  }
+
   /**
    * \brief Process one directory entitty
    *
@@ -211,7 +239,11 @@ namespace {
       scribbu::track_data td((istream&)ifs);
       unique_ptr<scribbu::id3v1_tag> pid3v1 = scribbu::process_id3v1(ifs);
 
-      cout << pth << ":\nLast Modified: " << put_time(localtime(&mtime), TMFMT) << endl;
+      if (format::json != fmt_) {
+        cout << pth
+             << ":\nLast Modified: " << put_time(localtime(&mtime), TMFMT)
+             << endl;
+      }
 
       if (dump_id3v2_) {
         for (ptrdiff_t i = 0, n = id3v2.size(); i < n; ++i) {
@@ -241,6 +273,7 @@ namespace {
   {
     static const boost::regex CSV("1|csv");
     static const boost::regex STANDARD("2|standard|std");
+    static const boost::regex JSON("3|json");
 
     std::string s;
     is >> s;
@@ -250,6 +283,9 @@ namespace {
     }
     else if (boost::regex_match(s, STANDARD)) {
       fmt = dumper::format::standard;
+    }
+    else if (boost::regex_match(s, JSON)) {
+      fmt = dumper::format::json;
     }
     else {
       throw std::invalid_argument("Unknown format");
@@ -268,6 +304,9 @@ namespace {
       break;
     case dumper::format::standard:
       os << "standard";
+      break;
+    case dumper::format::json:
+      os << "json";
       break;
     default:
       throw std::logic_error("Unknown format");
@@ -415,12 +454,15 @@ namespace {
         encoding v1enc  =   vm["v1-encoding"    ].as<encoding>();
         p.reset(new dumper(file_regex, f0, f1, f2,
                            indent, expand, v1enc));
-      }
-      else {
+      } else if (dumper::format::csv == fmt) {
         encoding v1enc = vm["v1-encoding" ].as<encoding>();
         size_t   ncomm = vm["num-comments"].as<size_t  >();
         p.reset(new dumper(file_regex, f0, f1, f2,
                            v1enc, ncomm));
+      }
+      else {
+        encoding v1enc = vm["v1-encoding" ].as<encoding>();
+        p.reset(new dumper(file_regex, f0, f1, f2, v1enc));
       }
 
       for (auto x: arguments) {
