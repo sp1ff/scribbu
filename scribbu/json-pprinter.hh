@@ -48,6 +48,15 @@ namespace scribbu {
   public:
     static std::string escape(const std::string &s);
 
+      template <typename Iter>
+      static std::string join_quote_escape(Iter p0, Iter p1, const std::string &sep) {
+          std::string acc = "\"" + escape(*p0++) + "\"";
+          while (p0 != p1) {
+              acc += sep + "\"" + escape(*p0++) + "\"";
+          }
+          return acc;
+      }
+
   public:
     json_pprinter(const boost::optional<encoding> &v1enc = DEFAULT_V1ENC,
                   const boost::optional<encoding> &v2enc = DEFAULT_V2ENC):
