@@ -472,7 +472,7 @@ scribbu::json_pprinter::pprint_PCNT(const PCNT &pcnt, std::ostream &os)
 {
   using namespace std;
 
-  return os << R"({"id":"PCNT,"size":)" << setbase(10) << pcnt.size()
+  return os << R"({"id":"PCNT","size":)" << setbase(10) << pcnt.size()
             << R"(,"count":)" << pcnt.count() << "}";
 }
 
@@ -518,14 +518,16 @@ scribbu::json_pprinter::pprint_XTAG(const XTAG &frm,
                 return "{\"" + first + R"(":")" + escape(*pr.second.begin()) +
                   "\"}";
               default:
-                return "{\"" + first + R"(":[)" + join(pr.second, ",") + "]}";
+                return "{\"" + first + R"(":[)" +
+                    join_quote_escape(pr.second.begin(), pr.second.end(), ",") +
+                    R"(]})";
                }
             });
 
-  return os << R"({"id":")" << frm.id() << R"(",size":)"
+  return os << R"({"id":")" << frm.id() << R"(","size":)"
             << setbase(10) << (int)frm.size()
             << R"(,"owner":")" << escape(frm.owner())
-            << R"(","cloud":"[)" << join(tags, ",")
+            << R"(","cloud":[)" << join(tags, ",")
             << R"(]})";
 }
 
@@ -663,7 +665,7 @@ scribbu::json_pprinter::pprint_PCNT_2_4(const PCNT_2_4 &pcnt, std::ostream &os)
 {
   using namespace std;
 
-  return os << R"({"id":"PCNT,"size":)" << setbase(10) << pcnt.size()
+  return os << R"({"id":"PCNT","size":)" << setbase(10) << pcnt.size()
             << R"(,"count":)" << pcnt.count() << "}";
 }
 
@@ -709,14 +711,16 @@ scribbu::json_pprinter::pprint_XTAG_2_4(const XTAG_2_4 &frm,
                 return "{\"" + first + R"(":")" + escape(*pr.second.begin()) +
                   "\"}";
               default:
-                return "{\"" + first + R"(":[)" + join(pr.second, ",") + "]}";
+                return "{\"" + first + R"(":[)" +
+                    join_quote_escape(pr.second.begin(), pr.second.end(), ",") +
+                    R"(]})";
                }
             });
 
-  return os << R"({"id":")" << frm.id() << R"(",size":)"
+  return os << R"({"id":")" << frm.id() << R"(","size":)"
             << setbase(10) << (int)frm.size()
             << R"(,"owner":")" << escape(frm.owner())
-            << R"(","cloud":"[)" << join(tags, ",")
+            << R"(","cloud":[)" << join(tags, ",")
             << R"(]})";
 }
 

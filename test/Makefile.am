@@ -33,7 +33,7 @@ CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	test-m3u-tmp/smoke_tests/sat.mp3 \
 	test-m3u-tmp/smoke_tests/VBRI_16M.mp3 \
 	test-m3u-tmp/smoke_tests/zoe.mp3 \
-	test-json.out
+	test-json.out fm-json.out
 TESTS = $(check_PROGRAMS) test-split test-rename test-report test-report-tdf \
 	test-dump test-with-track-in test-fs-generator \
 	test-cleanup-encoded-by test-cleanup-from-audacity \

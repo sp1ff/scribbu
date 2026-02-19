@@ -113,7 +113,7 @@ jobs:
       # On Ubuntu, we install "latest" directly from the package repositories.
       if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest'
       id: cache-boost-ubuntu
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: boost_${{ matrix.boost-ver }}/installdir
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
@@ -121,7 +121,7 @@ jobs:
     - name: Cache boost (MacOS)
       if: matrix.os == 'macos-14'
       id: cache-boost-macos
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: boost_${{ matrix.boost-ver }}/installdir
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
