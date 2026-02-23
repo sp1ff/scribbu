@@ -1097,7 +1097,12 @@ scribbu::play_count::count() const
 std::size_t
 scribbu::play_count::size() const
 {
-  return counter_.size();
+  size_t cb = 0;
+  if (counter_.size() < 4) {
+    cb = 4 - counter_.size();
+  }
+
+  return cb + counter_.size();
 }
 
 std::size_t
@@ -1119,10 +1124,21 @@ scribbu::play_count::needs_unsynchronisation() const
 std::size_t
 scribbu::play_count::write(std::ostream &os) const
 {
+  // Per <https://web.archive.org/web/20210706041516/https://id3.org/d3v2.3.0>
+  // "The counter must be at least 32-bits long to begin with." The Rust
+  // Symphonia library, at least, enforces this.
+  const static unsigned char PAD[4] = {0, 0, 0, 0};
+
+  size_t cb = 0;
+  if (counter_.size() < 4) {
+    cb = 4 - counter_.size();
+    os.write((const char*) PAD, cb);
+  }
+    
   if (!counter_.empty()) {
     os.write((const char*)&(counter_[0]), counter_.size());
   }
-  return counter_.size();
+  return cb + counter_.size();
 }
 
 std::size_t

@@ -1886,6 +1886,9 @@ BOOST_AUTO_TEST_CASE( test_trailing_ff_3 )
     0x00, 0x00, 0x00, 0x01, // frame size (less header)
     0x00, 0x00,             // no flags set
     0xff,                   // 255 plays
+    // 👆 this is actually not a valid ID3v2 frame; the specification states
+    // that the counter must be at least four bytes. However, this makes this
+    // a very good test of my "fix on write" approach.
   }; // 21 bytes
 
   stringstream stm(string((const char*)TAG, sizeof(TAG)));
@@ -1899,18 +1902,24 @@ BOOST_AUTO_TEST_CASE( test_trailing_ff_3 )
   // OK-- the heart of the matter. Given the trailing 0xff, in ID3v2.3 we should
   // append a trailing null when writing when applying unsynchronisation.
   BOOST_TEST_MESSAGE( "size is " << tag.size(true) );
-  BOOST_CHECK( sizeof(TAG) - 10 + 1 == tag.size(true) );
+  BOOST_CHECK( sizeof(TAG) - 10 + 1 + 3 == tag.size(true) );
+  // On write, scribbu will add       👆 three bytes of padding at the front
+  // of the counter.
   BOOST_CHECK( tag.needs_unsynchronisation() );
 
   // Add a single byte of padding, so now the tag ends in 0xff, 0x00, so
   // we should unsync as usual.
   tag.padding(1);
   BOOST_TEST_MESSAGE( "size is " << tag.size(true) );
-  BOOST_CHECK( sizeof(TAG) - 10 + 2 == tag.size(true) );
+  BOOST_CHECK( sizeof(TAG) - 10 + 2 + 3 == tag.size(true) );
+  // On write, scribbu will add       👆 three bytes of padding at the front
+  // of the counter.
   BOOST_CHECK( tag.needs_unsynchronisation() );
 
   tag.padding(2);
   BOOST_TEST_MESSAGE( "size is " << tag.size(true) );
-  BOOST_CHECK( sizeof(TAG) - 10 + 3 == tag.size(true) );
+  BOOST_CHECK( sizeof(TAG) - 10 + 3 + 3 == tag.size(true) );
+  // On write, scribbu will add       👆 three bytes of padding at the front
+  // of the counter.
   BOOST_CHECK( tag.needs_unsynchronisation() );
 }
