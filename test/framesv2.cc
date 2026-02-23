@@ -785,8 +785,8 @@ BOOST_AUTO_TEST_CASE( test_play_count )
   play_count p02(x);
 
   BOOST_CHECK( 11 == p02.count() );
-  BOOST_CHECK( 1 == p02.size() );
-  BOOST_CHECK( 1 == p02.serialized_size(true) );
+  BOOST_CHECK( 4 == p02.size() );
+  BOOST_CHECK( 4 == p02.serialized_size(true) );
   BOOST_CHECK( !p02.needs_unsynchronisation() );
 
   //////////////////////////////////////////////////////////////////////////
@@ -795,7 +795,7 @@ BOOST_AUTO_TEST_CASE( test_play_count )
 
   play_count p03(0);
   BOOST_CHECK( 0 == p03.count() );
-  BOOST_CHECK( 1 == p03.size() );
+  BOOST_CHECK( 4 == p03.size() );
 
   //////////////////////////////////////////////////////////////////////////////
   // test issue #7

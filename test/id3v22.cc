@@ -413,6 +413,9 @@ BOOST_AUTO_TEST_CASE( test_trailing_ff_2 )
     0x43, 0x4e, 0x54,       // "CNT"
     0x00, 0x00, 0x01,       // frame size is one byte
     0xff,                   // 255 plays
+    // 👆 this is actually not a valid ID3v2 frame; the specification states
+    // that the counter must be at least four bytes. However, this makes this
+    // a very good test of my "fix on write" approach.
   };
 
   stringstream stm(string((const char*)TAG, sizeof(TAG)));
@@ -427,6 +430,8 @@ BOOST_AUTO_TEST_CASE( test_trailing_ff_2 )
   // should *not* append a trailing null when writing when applying
   // unsynchronisation.
   BOOST_TEST_MESSAGE( "size is " << tag.size(true) );
-  BOOST_CHECK( sizeof(TAG) - 10 == tag.size(true) );
+  BOOST_CHECK( sizeof(TAG) - 10 + 3 == tag.size(true) );
+  // On write, scribbu will add   👆 three bytes of padding at the front
+  // of the counter.
   BOOST_CHECK( ! tag.needs_unsynchronisation() );
 }
