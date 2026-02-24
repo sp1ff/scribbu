@@ -9,6 +9,9 @@ scribbu News -- history of user-visible changes -*- outline -*-
 
 ** Bug Fixes
 
+*** PCNT frames are now written as at least four octets
+
+The PCNT frame _was_ writing only as many octets as needed to hold the count (i.e. one byte for a count of 0-255, two for counts 256-65535, and so on). However, the Rust Symphonia library caught the fact that the ID3v2 spec dictates that "The counter must be at least 32-bits long to begin with."
 *** `scribbu m3u` will seek for a sync point
 
 `scribbu m3u` reads any ID3v2 tags from the file, then assumed it was
