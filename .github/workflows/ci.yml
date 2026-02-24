@@ -28,7 +28,7 @@ jobs:
         # Coming back to this 2024-10-09, I can no longer get 1.75 to build on MacOS--
         # removing it for now. Actually, just giving-up on MacOS for now,
         # os: [macos-14, ubuntu-22.04]
-        os: [ubuntu-22.04]
+        os: [ubuntu-latest]
         # I moved to C++ 20 2024-01-12-- the earliest version of boost that can compile
         # under C++ 20 seems to be 1.75. That was released 2020-12-11, over three years
         # ago so I'm comfortable calling that "oldest", now. Let's call 1.81 (one year ago)
@@ -47,15 +47,15 @@ jobs:
         #   boost: latest
         #   boost-ver: 1_84_0
         #   boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
-        - os: ubuntu-22.04
+        - os: ubuntu-latest
           boost: oldest
           boost-ver: 1_75_0
           boost-dl: https://sourceforge.net/projects/boost/files/boost/1.75.0/boost_1_75_0.tar.bz2/download
-        - os: ubuntu-22.04
+        - os: ubuntu-latest
           boost: pinned
           boost-ver: 1_81_0
           boost-dl: https://sourceforge.net/projects/boost/files/boost/1.81.0/boost_1_81_0.tar.bz2/download
-        - os: ubuntu-22.04
+        - os: ubuntu-latest
           boost: latest
           boost-ver: latest
     runs-on: ${{ matrix.os }}
@@ -83,7 +83,7 @@ jobs:
         echo "SCRIBBU_BUILD_NUMBER=${version}" >> $GITHUB_ENV
 
     - name: Install pre-requisites (Ubuntu)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -x
@@ -111,7 +111,7 @@ jobs:
 
     - name: Cache boost (Ubuntu)
       # On Ubuntu, we install "latest" directly from the package repositories.
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost != 'latest'
       id: cache-boost-ubuntu
       uses: actions/cache@v4
       with:
@@ -127,14 +127,14 @@ jobs:
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
 
     - name: Install boost (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost == 'latest'
       run: |
         set -x
         pwd
         sudo apt-get install -y libboost-all-dev
 
     - name: Get boost (Ubuntu, non-latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest' && steps.cache-boost-ubuntu.outputs.cache-hit != 'true'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost != 'latest' && steps.cache-boost-ubuntu.outputs.cache-hit != 'true'
       run: |
         set -ex
         pwd
@@ -272,7 +272,7 @@ jobs:
         echo ================================================
 
     - name: Configure scribbu (Ubuntu, non-latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost != 'latest'
       shell: bash
       run: |
         autoconf --version
@@ -284,7 +284,7 @@ jobs:
         ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd)
 
     - name: Configure scribbu (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost == 'latest'
       shell: bash
       run: |
         autoconf --version
@@ -309,7 +309,7 @@ jobs:
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
 
     - name: Make scribbu (Ubuntu)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -x
@@ -380,7 +380,7 @@ jobs:
         .libs/unit --help
 
     - name: Test scribbu (Ubuntu, non-latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost != 'latest'
       shell: bash
       run: |
         set -x
@@ -396,7 +396,7 @@ jobs:
         fi
 
     - name: Test scribbu (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost == 'latest'
       shell: bash
       run: |
         set -x
@@ -420,7 +420,7 @@ jobs:
 
     - name: Test the Autotools distribution (Ubuntu, non-latest)
       # I only make the Autotools distro on Ubuntu, so just test there
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost != 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost != 'latest'
       shell: bash
       run: |
         set -x
@@ -438,7 +438,7 @@ jobs:
         fi
 
     - name: Test the Autotools distribution (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-22.04' && matrix.boost == 'latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.boost == 'latest'
       shell: bash
       run: |
         pwd
