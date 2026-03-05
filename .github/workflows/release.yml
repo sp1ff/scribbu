@@ -24,8 +24,8 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     # Un-comment this for testing
-    # env:
-    #   RELEASE_VERSION: 0.7.1
+    env:
+      RELEASE_VERSION: 0.7.2
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -69,15 +69,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [linux, macos]
+        # Just giving-up on MacOS for now.
+        # build: [linux, macos]
+        build: [linux]
         include:
         - build: linux
-          os: ubuntu-22.04
-        - build: macos
-          os: macos-10.15
-          boost: latest
-          boost-ver: 1_76_0
-          boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2
+          os: ubuntu-latest
+        # - build: macos
+        #   os: macos-10.15
+        #   boost: latest
+        #   boost-ver: 1_76_0
+        #   boost-dl: https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2
 
     steps:
 
@@ -85,7 +87,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install pre-requisites (MacOS)
-      if: matrix.os == 'macos-10.15'
+      if: matrix.os == 'macos-latest'
       shell: bash
       run: |
         set -x
@@ -94,7 +96,7 @@ jobs:
         bison graphviz texinfo
 
     - name: Install pre-requisites (Ubuntu)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -x
@@ -104,15 +106,15 @@ jobs:
         guile-3.0-dev doxygen flex bison graphviz libunistring-dev texlive
 
     - name: Cache boost (MacOS)
-      if: matrix.os == 'macos-10.15'
+      if: matrix.os == 'macos-latest'
       id: cache-boost-macos
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: boost_${{ matrix.boost-ver }}/installdir
         key: ${{ runner.os }}-${{ matrix.boost-ver }}
 
     - name: Get boost (MacOS)
-      if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      if: matrix.os == 'macos-latest' && steps.cache-boost-macos.outputs.cache-hit != 'true'
       run: |
         set -x
         pwd
@@ -123,7 +125,7 @@ jobs:
         mkdir boost_${{ matrix.boost-ver }}/installdir
 
     - name: Build boost (MacOS)
-      if: matrix.os == 'macos-10.15' && steps.cache-boost-macos.outputs.cache-hit != 'true'
+      if: matrix.os == 'macos-latest' && steps.cache-boost-macos.outputs.cache-hit != 'true'
       shell: bash
       run: |
         pwd
@@ -149,7 +151,7 @@ jobs:
         install_name_tool -change libboost_system.dylib     ${here}/libboost_system.dylib     libboost_thread.dylib
 
     - name: Install boost (Ubuntu, latest)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       run: |
         set -x
         pwd
@@ -182,7 +184,7 @@ jobs:
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" ./configure --with-boost=$(cd boost_${{ matrix.boost-ver }}/installdir; pwd) --with-openssl=/usr/local/opt/openssl CPPFLAGS="-D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
 
     - name: Configure scribbu (Ubuntu)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -x
@@ -190,12 +192,12 @@ jobs:
         ls
         ./bootstrap
         ./configure
-        echo "DISTRO_BZ2=scribbu-${{ env.RELEASE_VERSION }}.tar.bz2" >> $GITHUB_ENV
+        echo "DISTRO_ZST=scribbu-${{ env.RELEASE_VERSION }}.tar.zst" >> $GITHUB_ENV
         echo "DISTRO_GZ=scribbu-${{ env.RELEASE_VERSION }}.tar.gz" >> $GITHUB_ENV
         echo "DISTRO_XZ=scribbu-${{ env.RELEASE_VERSION }}.tar.xz" >> $GITHUB_ENV
 
     - name: Make scribbu (MacOS)
-      if: matrix.os == 'macos-10.15'
+      if: matrix.os == 'macos-latest'
       shell: bash
       run: |
         set -x
@@ -203,7 +205,7 @@ jobs:
         PATH="/usr/local/opt/bison/bin:/usr/local/opt/texinfo/bin:$PATH" make
 
     - name: Make scribbu (Ubuntu)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -x
@@ -211,7 +213,7 @@ jobs:
         make
 
     - name: Patch boost dependencies (MacOS)
-      if: matrix.os == 'macos-10.15'
+      if: matrix.os == 'macos-latest'
       shell: bash
       run: |
         set -x
@@ -261,7 +263,7 @@ jobs:
     - name: Test the Autotools distribution (Ubuntu)
       # I only make the Autotools distro on Ubuntu, so just test there
       # (besides, I can't get 'distcheck' to work on MacOS anyway)
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -x
@@ -273,18 +275,18 @@ jobs:
     # TODO(sp1ff): assemble pre-built binaries?
 
     - name: Upload bzip2 tarball
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-        asset_path: ${{ env.DISTRO_BZ2 }}
-        asset_name: ${{ env.DISTRO_BZ2 }}
+        asset_path: ${{ env.DISTRO_ZST }}
+        asset_name: ${{ env.DISTRO_ZST }}
         asset_content_type: application/octet-stream
 
     - name: Upload gzip tarball
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -295,7 +297,7 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: Upload xzip tarball
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
