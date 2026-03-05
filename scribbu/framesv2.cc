@@ -1,7 +1,7 @@
 /**
  * \file framesv2.cc
  *
- * Copyright (C) 2015-2024 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2015-2026 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *
@@ -1134,7 +1134,7 @@ scribbu::play_count::write(std::ostream &os) const
     cb = 4 - counter_.size();
     os.write((const char*) PAD, cb);
   }
-    
+
   if (!counter_.empty()) {
     os.write((const char*)&(counter_[0]), counter_.size());
   }
