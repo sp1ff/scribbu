@@ -1,7 +1,7 @@
 /**
  * \file json-pprinter.cc
  *
- * Copyright (C) 2025 Michael Herstine <sp1ff@pobox.com>
+ * Copyright (C) 2025-2026 Michael Herstine <sp1ff@pobox.com>
  *
  * This file is part of scribbu.
  *

@@ -1,3 +1,80 @@
+2026-03-05  Michael Herstine  <sp1ff@pobox.com>
+
+	Cut release 0.7.2
+	    - Update the version
+	    - Update boilerplate throughout
+	    - Get the release workflow ready
+
+	Fix CI.
+	    - Forgot to add fm.mp3
+	    - Upgrade to ubuntu-latest
+	    - Add dump.golden.fm.json
+	    - Updated m4 files; got admin/dev-test working
+
+2026-03-05  Michael Herstine  <sp1ff@pobox.com>
+
+	Ensure that the PCNT counter is at least four octets.
+	The PCNT frame _was_ writing only as many octets as needed to
+	hold the count (i.e. one byte for a count of 0-255, two for counts
+	256-65535, and so on). However, the Rust Symphonia library caught
+	the fact that the ID3v2 spec dictates that "The counter must be
+	at least 32-bits long to begin with."
+
+	Close issue #9.
+
+2026-03-05  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix a JSON bug.
+	To be honest, these code changes languished in a dirty repo,
+	and I've forgotten exactly what the issue was. However, I've
+	been running this patched build locally for some time, so I
+	suspect it has something to do with JSON output for `tune-truffle`.
+
+2026-02-22  Michael  <sp1ff@pobox.com>
+
+	Merge pull request #8 from sp1ff/dependabot/github_actions/dot-github/workflows/actions/download-artifact-4.1.7
+	Bump actions/download-artifact from 1 to 4.1.7 in /.github/workflows
+
+2026-02-22  dependabot[bot]  <49699333+dependabot[bot]@users.noreply.github.com>
+
+	Bump actions/download-artifact from 1 to 4.1.7 in /.github/workflows
+	Bumps [actions/download-artifact](https://github.com/actions/download-artifact) from 1 to 4.1.7.
+	- [Release notes](https://github.com/actions/download-artifact/releases)
+	- [Commits](https://github.com/actions/download-artifact/compare/v1...v4.1.7)
+
+	---
+	updated-dependencies:
+	- dependency-name: actions/download-artifact
+	  dependency-type: direct:production
+	...
+
+2025-02-01  Michael Herstine  <sp1ff@pobox.com>
+
+	Add a new dump format: JSON.
+	This patch will add a new format to the `scribbu dump` command:
+	JSON. It contains the new pretty-printer itself, updates the "dump"
+	sub-command, and adds a few tests.
+
+2025-01-27  Michael Herstine  <sp1ff@pobox.com>
+
+	Remove the bzip2 distribution
+
+	Remove Vagrantfile
+
+2025-01-25  Michael Herstine  <sp1ff@pobox.com>
+
+	Seek for next mp3 sync point when computing duration.
+	`get_mp3_duration` assumed that the first mp3 sync point occurred
+	directly after the last ID3v2 tag, which is not necessarily the case.
+	This patch will seek from that point to the first mp3 sync.
+
+	Also, update the boost download locations. The boost tarballs are
+	now hosted at SourceForge.
+
+2024-10-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Fix release workflow
+
 2024-10-09  Michael Herstine  <sp1ff@pobox.com>
 
 	Cut release 0.7.1; fix CI.
