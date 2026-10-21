@@ -22,9 +22,12 @@
 
 
 (use-modules (ice-9 format))
+(use-modules (ice-9 iconv))
+(use-modules (ice-9 match))
 (use-modules (oop goops))
 (use-modules (oop goops describe))
 (use-modules (scribbu))
+(use-modules (rnrs bytevectors))
 
 (setlocale LC_ALL "")
 
@@ -288,7 +291,6 @@
                                          (acons
                                           "90s" '() '())))))))
         (out "test-xtag.tag"))
-
     (write-tagset (list (list tag 3)) out)
 
     ;; 000000 49 44 33 03 00 00 00 00 00 4b                    ID3v2.3 tag, no flags, 0x4b = 75 bytes
@@ -343,6 +345,32 @@
                 (throw 'failure "expected '() got ~a" nineties)))))))
     (delete-file out)))
 
+(define (test-ufid dir)
+  "Run some simple tests for UFID."
+  (let ((tag (make <id3v2-tag>
+               #:frames (list
+                         (make <ufid-frame>
+                           #:id 'ufid-frame
+                           #:owner "sp1ff@pobox.com"
+                           #:data (string->utf8 "abc")))))
+        (out "test-ufid.tag"))
+    (write-tagset (list (list tag 3)) out)
+    (match (read-tagset out)
+      (((tag version _))
+       (unless (eq? 3 version)
+         (throw 'failure (format #f "expected version 3, got ~d" ver)))
+       (match (slot-ref tag 'frames)
+         (((? (lambda (frame) (is-a? frame <ufid-frame>)) frame))
+          (unless (equal? (slot-ref frame 'owner) "sp1ff@pobox.com")
+            throw 'failure (format #f "Unexpected owner: ~a"
+                                   (slot-ref frame 'owner)))
+          (unless (equal? (bytevector->string (slot-ref frame 'data) "UTF-8")
+                          "abc")
+            throw 'failure (format #f "Unexpected data: ~a"
+                                   (slot-ref frame 'data))))
+         (frames throw 'failure (format #f "Unexpected frames: ~a" frames))))
+      (tags throw 'failure (format #f "Unexpected tag read: ~a" tags)))))
+
 (define (main dir)
   "Test reading & writing assorted frames in Scheme"
   (format #t "`test-play-count'...")
@@ -353,7 +381,10 @@
   (format #t "...done.\n")
   (format #t "`test-tag-cloud'...")
   (test-tag-cloud dir)
-  (format #t "...done.\n"))
+  (format #t "...done.\n")
+  (format #t "`test-ufid'...")
+  (test-ufid dir)
+  (format #t "`test-ufid'...done."))
 
 (let ((cl (cdr (command-line))))
   (if (= 1 (length cl))

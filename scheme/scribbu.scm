@@ -30,7 +30,7 @@
   #:export (flat-file-system-tree fs-tree-generator
             <id3v1-tag> <id3v2-frame> <unk-frame> <text-frame>
             <comment-frame> <user-defined-text-frame> <play-count-frame>
-            <popm-frame> <tag-cloud-frame> <id3v2-tag>
+            <popm-frame> <tag-cloud-frame> <ufid-frame> <id3v2-tag>
             unknown-frame album-frame artist-frame
             has-frame? get-frames))
 
@@ -189,6 +189,7 @@ at `root'"
 (make-symbol "title-frame")                 ;; TT2/TIT2
 (make-symbol "track-frame")                 ;; TRK/TRCK
 (make-symbol "udt-frame")                   ;; TXX/TXXX
+(make-symbol "ufid-frame")                  ;; UFI/UFID
 (make-symbol "year-frame")                  ;; TYE/TYER
 
 (define-class <id3v2-frame> ()
@@ -273,6 +274,13 @@ at `root'"
 
 (define-method (display (f <priv-frame>) out)
   (format out "<private (~a) ~a>" (slot-ref f 'owner) (pp-bytevector (slot-ref f 'data))))
+
+(define-class <ufid-frame> (<id3v2-frame>)
+  (owner #:init-value ""     #:accessor owner #:init-keyword #:owner)
+  (data  #:init-value #vu8() #:accessor data  #:init-keyword #:data))
+
+(define-method (display (f <ufid-frame>) out)
+  (format out "<ufid (~a) ~a>" (slot-ref f 'owner) (pp-bytevector (slot-ref f 'data))))
 
 (define-class <id3v2-tag> ()
   (experimental #:init-value '() #:accessor experimental

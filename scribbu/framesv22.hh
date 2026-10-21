@@ -255,6 +255,13 @@ namespace scribbu {
       id3v2_2_frame("UFI"),
       unique_file_id(p0, p1)
     { }
+    template <typename forward_input_iterator>
+    UFI(const std::string &owner,
+        forward_input_iterator p0,
+        forward_input_iterator p1):
+        id3v2_2_frame("UFI"),
+        unique_file_id(owner, p0, p1)
+    { }
 
     virtual id3v2_2_frame* clone() const
     { return new UFI(*this); }

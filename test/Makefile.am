@@ -16,7 +16,7 @@ CLEANFILES = id3v20B id3v21B report.last.csv report-tdf.last.tdf \
 	Pogues,\ The\ --\ Lorca\'s\ Novena.mp3 dump1.log \
 	dump2.log with-track-in.log test.write.2.2.dat tag22.dat \
 	elliot-goldenthal.id3v1.tag.out test-cleanup-encoded-by.out \
-	test.tag test-cleanup-from-audacity.out \
+	test.tag test-ufid.tag test-cleanup-from-audacity.out \
 	test-xtag-tmp/xtag_smoke_tests/id3v2.3.tag \
 	test-xtag-tmp/xtag_smoke_tests/id3v2.3.tag.1 \
 	test-popm-tmp/smoke_tests/id3v2.3.tag \

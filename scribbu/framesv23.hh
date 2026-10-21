@@ -532,6 +532,19 @@ namespace scribbu {
       id3v2_3_frame("UFID", tap, fap, ro, encmth, gid, decsz),
     unique_file_id(p0, p1)
     { }
+    template <typename forward_input_iterator>
+    UFID(const std::string       &owner,
+         forward_input_iterator   p0,
+         forward_input_iterator   p1,
+         tag_alter_preservation   tap,
+         file_alter_preservation  fap,
+         read_only                ro,
+         const id_type           &encmth,
+         const id_type           &gid,
+         const opt_sz_type       &decsz):
+        id3v2_3_frame(("UFID"), tap, fap, ro, encmth, gid, decsz),
+        unique_file_id(owner, p0, p1)
+      { }
 
     virtual id3v2_3_frame* clone() const
     { return new UFID(*this); }

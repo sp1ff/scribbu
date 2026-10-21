@@ -478,6 +478,14 @@ namespace scribbu {
         std::copy(p + 1, p1, std::back_inserter(id_));
       }
     }
+    /// Construct "from scratch"-- [p0, p1) will be used to initialize the
+    /// tag cloud, so the value_type shall be pair<const string, set<string>>
+    template <typename forward_input_iterator>
+    unique_file_id(const std::string &owner,
+                   forward_input_iterator p0,
+                   forward_input_iterator p1):
+        owner_(owner.begin(), owner.end()), id_(p0, p1)
+    { }
 
   public:
     /// Owner identifier for this scheme

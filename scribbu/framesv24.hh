@@ -253,6 +253,22 @@ namespace scribbu {
                     cmprsd, unsynch, dli),
       unique_file_id(p0, p1)
     { }
+    template <typename forward_input_iterator>
+    UFID_2_4(const std::string &owner,
+             forward_input_iterator p0,
+             forward_input_iterator p1,
+             tag_alter_preservation tap,
+             file_alter_preservation fap,
+             read_only ro,
+             const boost::optional<unsigned char> &enc,
+             const boost::optional<unsigned char> &gid,
+             bool cmprsd,
+             bool unsynch,
+             const boost::optional<std::size_t> &dli):
+      id3v2_4_frame("UFID", tap, fap, ro, enc, gid,
+                    cmprsd, unsynch, dli),
+      unique_file_id(owner, p0, p1)
+    { }
 
     virtual id3v2_4_frame* clone() const
     { return new UFID_2_4(*this); }

@@ -66,6 +66,7 @@ const scribbu::frame_id3 IDTXX("TXX");
 const scribbu::frame_id3 IDCNT("CNT");
 const scribbu::frame_id3 IDPOP("POP");
 const scribbu::frame_id3 IDXTG("XTG");
+const scribbu::frame_id3 IDUFI("UFI");
 
 const scribbu::frame_id4 TALB("TALB");
 const scribbu::frame_id4 TBPM("TBPM");
@@ -112,6 +113,7 @@ const scribbu::frame_id4 IDPCNT("PCNT");
 const scribbu::frame_id4 IDPOPM("POPM");
 const scribbu::frame_id4 IDXTAG("XTAG");
 const scribbu::frame_id4 IDPRIV("PRIV");
+const scribbu::frame_id4 IDUFID("UFID");
 
 SCM sym_unknown_frame;              // 'unknown-frame
 
@@ -152,6 +154,7 @@ SCM sym_subtitle_frame;             // 'subtitle-frame, TT3/TIT3
 SCM sym_time_frame;                 // 'time-frame, TIM/TIME
 SCM sym_title_frame;                // 'title-frame, TT2/TIT2
 SCM sym_track_frame;                // 'track-frame, TRK/TRCK
+SCM sym_ufid_frame;                 // 'ufid-frame, UFI/UFID
 SCM sym_year_frame;                 // 'year-frame, TYE/TYER
 
 SCM sym_comment_frame;              // 'comment-frame, COM/COMM
@@ -224,7 +227,6 @@ void scribbu::init_symbols() {
   DEFSYMX(title_frame,                 title-frame,                 TT2, TIT2);
   DEFSYMX(track_frame,                 track-frame,                 TRK, TRCK);
   DEFSYMX(year_frame,                  year-frame,                  TYE, TYER);
-  DEFSYMX(year_frame,                  year-frame,                  TYE, TYER);
 
   DEFSYMX(comment_frame,               comment-frame,               IDCOM, IDCOMM);
   DEFSYMX(udt_frame,                   udt-frame,                   IDTXX, IDTXXX);
@@ -232,6 +234,7 @@ void scribbu::init_symbols() {
   DEFSYMX(popm_frame,                  popm-frame,                  IDPOP, IDPOPM);
   DEFSYMX(tag_cloud_frame,             tag-cloud-frame,             IDXTG, IDXTAG);
   DEFSYM4(priv_frame,                  priv-frame,                         IDPRIV);
+  DEFSYMX(ufid_frame,                  ufid-frame,                  IDUFI, IDUFID);
 
 # undef DEFSYM4
 # undef DEFSYMX
@@ -779,6 +782,71 @@ namespace {
     return x;
   }
 
+  SCM
+  de_ufid_2_2(const scribbu::UFI &f, bool unsync)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    SCM x = init_frame("<ufid-frame>", sym_ufid_frame);
+
+    string own = f.owner<std::string>();
+    SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
+
+    vector<unsigned char> c;
+    f.idb(back_inserter(c));
+
+    SCM bv = scm_c_make_bytevector(c.size());
+    memcpy(SCM_BYTEVECTOR_CONTENTS(bv), c.data(), c.size());
+
+    SCM_SET_SLOT(x, 6, bv);
+
+    return x;
+  }
+
+  SCM
+  de_ufid_2_3(const scribbu::UFID &f, bool unsync)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    SCM x = init_frame("<ufid-frame>", sym_ufid_frame);
+
+    string own = f.owner<std::string>();
+    SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
+
+    vector<unsigned char> c;
+    f.idb(back_inserter(c));
+
+    SCM bv = scm_c_make_bytevector(c.size());
+    memcpy(SCM_BYTEVECTOR_CONTENTS(bv), c.data(), c.size());
+
+    SCM_SET_SLOT(x, 6, bv);
+
+    return x;
+  }
+
+  SCM
+  de_ufid_2_4(const scribbu::UFID_2_4 &f, bool unsync)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    SCM x = init_frame("<ufid-frame>", sym_ufid_frame);
+
+    string own = f.owner<std::string>();
+    SCM_SET_SLOT(x, 5, scm_from_utf8_string(own.c_str()));
+
+    vector<unsigned char> c;
+    f.idb(back_inserter(c));
+
+    SCM bv = scm_c_make_bytevector(c.size());
+    memcpy(SCM_BYTEVECTOR_CONTENTS(bv), c.data(), c.size());
+
+    SCM_SET_SLOT(x, 6, bv);
+
+    return x;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1457,6 +1525,92 @@ namespace {
         false, unsync, boost::none));
   }
 
+  std::unique_ptr<scribbu::id3v2_2_frame>
+  ser_ufid_2_2(SCM scm)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    dynwind_context ctx;
+    ser_frame_2_2("<ufid-frame>", scm, ctx);
+
+    string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
+
+    SCM scm_bv = SCM_SLOT(scm, 6);
+
+    size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
+    unsigned char *p = (unsigned char*) SCM_BYTEVECTOR_CONTENTS(scm_bv);
+
+    return unique_ptr<id3v2_2_frame>(new UFI(own, p, p + cb));
+  }
+
+  std::unique_ptr<scribbu::id3v2_3_frame>
+  ser_ufid_2_3(SCM scm)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
+      tag_alter_preservation;
+    typedef id3v2_3_plus_frame::file_alter_preservation
+      file_alter_preservation;
+    typedef id3v2_3_plus_frame::read_only read_only;
+
+    dynwind_context ctx;
+
+    string id_txt;
+    tag_alter_preservation tap;
+    file_alter_preservation fap;
+    read_only ro;
+
+    tie(id_txt, tap, fap, ro) = ser_frame_2_3("<ufid-frame>", scm, ctx);
+
+    string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
+
+    SCM scm_bv = SCM_SLOT(scm, 6);
+
+    size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
+    unsigned char *p = (unsigned char*) SCM_BYTEVECTOR_CONTENTS(scm_bv);
+
+    return unique_ptr<id3v2_3_frame>(new UFID(own, p, p + cb,
+                                              tap, fap, ro, boost::none,
+                                              boost::none, boost::none));
+  }
+
+  std::unique_ptr<scribbu::id3v2_4_frame>
+  ser_ufid_2_4(SCM scm)
+  {
+    using namespace std;
+    using namespace scribbu;
+
+    typedef id3v2_3_plus_frame::tag_alter_preservation
+      tag_alter_preservation;
+    typedef id3v2_3_plus_frame::file_alter_preservation
+      file_alter_preservation;
+    typedef id3v2_3_plus_frame::read_only read_only;
+
+    dynwind_context ctx;
+
+    string id_txt;
+    tag_alter_preservation tap;
+    file_alter_preservation fap;
+    read_only ro;
+    bool unsync;
+
+    tie(id_txt, tap, fap, ro, unsync) =
+      ser_frame_2_4("<ufid-frame>", scm, ctx);
+
+    string own = ctx.free_utf8_string(SCM_SLOT(scm, 5));
+
+    SCM scm_bv = SCM_SLOT(scm, 6);
+
+    size_t cb = SCM_BYTEVECTOR_LENGTH(scm_bv);
+    unsigned char *p = (unsigned char*) SCM_BYTEVECTOR_CONTENTS(scm_bv);
+
+    return unique_ptr<id3v2_4_frame>(new UFID_2_4(
+        own, p, p + cb, tap, fap, ro, boost::none, boost::none,
+        false, unsync, boost::none));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1511,6 +1665,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_DE(2_2, CNT,                de_cnt_2_2,        CNT, 3);
   REG_DE(2_2, POP,                de_popm_2_2,       POP, 3);
   REG_DE(2_2, XTG,                de_xtag_2_2,       XTG, 3);
+  REG_DE(2_2, UFI,                de_ufid_2_2,       UFI, 3);
 
   REG_DE(2_3, id3v2_3_text_frame, de_text_frame_2_3, TALB, 4);
   REG_DE(2_3, id3v2_3_text_frame, de_text_frame_2_3, TBPM, 4);
@@ -1555,6 +1710,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_DE(2_3, PCNT,               de_cnt_2_3,        PCNT, 4);
   REG_DE(2_3, POPM,               de_popm_2_3,       POPM, 4);
   REG_DE(2_3, XTAG,               de_xtag_2_3,       XTAG, 4);
+  REG_DE(2_3, UFID,               de_ufid_2_3,       UFID, 4);
 
   REG_DE(2_4, id3v2_4_text_frame, de_text_frame_2_4, TALB, 4);
   REG_DE(2_4, id3v2_4_text_frame, de_text_frame_2_4, TBPM, 4);
@@ -1599,6 +1755,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_DE(2_4, PCNT_2_4,           de_cnt_2_4,        PCNT, 4);
   REG_DE(2_4, POPM_2_4,           de_popm_2_4,       POPM, 4);
   REG_DE(2_4, XTAG_2_4,           de_xtag_2_4,       XTAG, 4);
+  REG_DE(2_4, UFID_2_4,           de_ufid_2_4,       UFID, 4);
 
   REG_SER(2_2, ser_text_frame_2_2, album-frame                 );
   REG_SER(2_2, ser_text_frame_2_2, artist-frame                );
@@ -1640,6 +1797,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_2, ser_cnt_2_2,        play-count-frame            );
   REG_SER(2_2, ser_pop_2_2,        popm-frame                  );
   REG_SER(2_2, ser_xtag_2_2,       tag-cloud-frame             );
+  REG_SER(2_2, ser_ufid_2_2,       ufid-frame                  );
 
   REG_SER(2_3, ser_text_frame_2_3, album-frame                 );
   REG_SER(2_3, ser_text_frame_2_3, artist-frame                );
@@ -1684,6 +1842,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_3, ser_cnt_2_3,        play-count-frame            );
   REG_SER(2_3, ser_pop_2_3,        popm-frame                  );
   REG_SER(2_3, ser_xtag_2_3,       tag-cloud-frame             );
+  REG_SER(2_3, ser_ufid_2_3,       ufid-frame                  );
 
   REG_SER(2_4, ser_text_frame_2_4, album-frame                 );
   REG_SER(2_4, ser_text_frame_2_4, artist-frame                );
@@ -1728,6 +1887,7 @@ scribbu::scheme_serde_dispatcher::scheme_serde_dispatcher()
   REG_SER(2_4, ser_cnt_2_4,        play-count-frame            );
   REG_SER(2_4, ser_pop_2_4,        popm-frame                  );
   REG_SER(2_4, ser_xtag_2_4,       tag-cloud-frame             );
+  REG_SER(2_4, ser_ufid_2_4,       ufid-frame                  );
 
 # undef REG_SER
 # undef REG_DE
