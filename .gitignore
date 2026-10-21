@@ -28,3 +28,4 @@ GTAGS
 compile_commands.json
 *.zst
 .cache
+po

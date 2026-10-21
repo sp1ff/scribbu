@@ -2,6 +2,9 @@ SUBDIRS = scribbu src scheme test doc
 ACLOCAL_AMFLAGS = -I macros
 EXTRA_DIST = examples
 
+distclean-local:
+	-rm -rf po
+
 # No idea why, but the (empty) file 'config.rpath' is included in the
 # .tar.xz distro, but not the .tar.gz distro; this breaks 'make
 # distcheck'
