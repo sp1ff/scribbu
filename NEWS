@@ -5,6 +5,7 @@ scribbu News -- history of user-visible changes -*- outline -*-
 ** New Features
 
 *** JSON output now supported for `scribbu dump`
+*** UFI/UFID frame support added to scribbu.scm
 * Changes in scribbu 0.7
 
 ** Bug Fixes
