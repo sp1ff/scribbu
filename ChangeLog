@@ -1,6 +1,23 @@
+2026-10-21  Michael Herstine  <sp1ff@pobox.com>
+
+	Cutting release 0.7.3
+
+	Updating NEWS ahead of merge
+
+	Autotools update.
+	Autotools updated several macro files; also a `po/` directory started
+	to appear-- I'm having git ignore it, and remove it on distclean.
+
+	Add the UFID frame to the Scheme interface.
+	This patch adds the UFI/UFID frame to `scribbu.scm`, along with
+	support in `scheme-serde.cc`. A simple unit test is supplied.
+
 2026-03-05  Michael Herstine  <sp1ff@pobox.com>
 
+	Fix the release workflow
+
 	Cut release 0.7.2
+	    - fix issue #9
 	    - Update the version
 	    - Update boilerplate throughout
 	    - Get the release workflow ready
